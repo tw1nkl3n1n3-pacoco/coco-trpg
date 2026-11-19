@@ -316,7 +316,7 @@ async function retry(fn){
 
 // ---------- state ----------
 let _sys=null;try{_sys=localStorage.getItem("trpg-sys")||null;}catch(e){}
-const S={sysFilter:_sys,fresh:new Set(),showZero:false,db:null,user:null,canWrite:false,canAdmin:false,ready:false,auth:null,authUser:null,editors:[],owner:"",setupNeeded:false,
+const S={ops:{},sysFilter:_sys,fresh:new Set(),showZero:false,db:null,user:null,canWrite:false,canAdmin:false,ready:false,auth:null,authUser:null,editors:[],owner:"",setupNeeded:false,
   sessions:[],sid:null,meta:null,chunks:{},flat:[],byId:new Map(),
   sel:null,q:"",spFilter:null,follow:true,undo:[],
   dirty:new Set(),inflight:new Set(),tmr:{},err:null,
@@ -471,7 +471,7 @@ function route(){
 }
 
 // ---------- session load ----------
-function closeSession(){const a=document.getElementById("aud");if(a&&S.audioUrl){a.pause();a.removeAttribute("src");a.load();if(!S.audioCloud)URL.revokeObjectURL(S.audioUrl);S.audioUrl=null;S.playingId=null;}S.audioCloud=false;S.audioLoading=false;S.unsub.forEach(u=>{try{u()}catch(e){}});S.unsub=[];S.meta=null;S.chunks={};S.flat=[];S.chunksLoaded=false;S.ensured=false;S.byId.clear();S.sel=null;S.undo=[];S.spFilter=null;S.q="";}
+function closeSession(){flushAll();S.ops={};S.dirty.clear();const a=document.getElementById("aud");if(a&&S.audioUrl){a.pause();a.removeAttribute("src");a.load();if(!S.audioCloud)URL.revokeObjectURL(S.audioUrl);S.audioUrl=null;S.playingId=null;}S.audioCloud=false;S.audioLoading=false;S.unsub.forEach(u=>{try{u()}catch(e){}});S.unsub=[];S.meta=null;S.chunks={};S.flat=[];S.chunksLoaded=false;S.ensured=false;S.byId.clear();S.sel=null;S.undo=[];S.spFilter=null;S.q="";}
 function openSession(sid){
   if(S.local&&sid===null){/* leaving local view */S.local=false;}
   closeSession();S.sid=sid;
@@ -489,7 +489,7 @@ function openSession(sid){
     let changed=false;
     snap.docs.forEach(d=>{
       const ci=d.data().i;
-      if(S.dirty.has(ci)||S.inflight.has(ci))return;
+      if(S.dirty.has(ci)||S.inflight.has(ci)||(S.ops[ci]||[]).length)return;
       const b=d.data().b||[];
       if(JSON.stringify(S.chunks[ci])!==JSON.stringify(b)){S.chunks[ci]=JSON.parse(JSON.stringify(b));changed=true;}
     });
@@ -508,19 +508,60 @@ function rebuild(){
 }
 
 // ---------- persistence ----------
+// 고친 내용을 "작업"(op) 단위로 모았다가, 저장할 때 최신 내용을 다시 읽어 그 위에 작업만 덧붙여요.
+// 그래서 여럿이 같은 부분을 동시에 고쳐도 서로의 수정이 덮이지 않아요.
+const clone=o=>JSON.parse(JSON.stringify(o));
+function applyOp(arr,op){
+  if(op.t==="set"){const b=arr.find(x=>x.id===op.id);if(b)Object.keys(op.f).forEach(k=>{if(op.f[k]===undefined)delete b[k];else b[k]=op.f[k];});}
+  else if(op.t==="ins"){
+    if(arr.some(x=>x.id===op.b.id))return;
+    let i;
+    if(op.after===null)i=0;
+    else{const j=arr.findIndex(x=>x.id===op.after);
+      if(j>=0)i=j+1;else{i=0;arr.forEach((x,k)=>{if(x.t<=op.b.t)i=k+1;});}}
+    arr.splice(i,0,clone(op.b));
+  }
+  else if(op.t==="del"){const i=arr.findIndex(x=>x.id===op.id);if(i>=0)arr.splice(i,1);}
+}
+function invOp(arr,op){
+  if(op.t==="set"){const b=arr.find(x=>x.id===op.id)||{};const f={};Object.keys(op.f).forEach(k=>f[k]=b[k]);return {t:"set",id:op.id,f};}
+  if(op.t==="ins")return {t:"del",id:op.b.id};
+  const i=arr.findIndex(x=>x.id===op.id);return {t:"ins",after:i>0?arr[i-1].id:null,b:clone(arr[i])};
+}
+// list: [{ci,op}] — 화면에 바로 반영하고 저장 대기열에 넣어요
+function doOps(list,label){
+  const inv=[];
+  list.forEach(({ci,op})=>{const arr=S.chunks[ci];if(!arr)return;inv.unshift({ci,op:invOp(arr,op)});applyOp(arr,op);(S.ops[ci]=S.ops[ci]||[]).push(op);});
+  if(label){S.undo.push({label,inv});if(S.undo.length>100)S.undo.shift();}
+  rebuild();[...new Set(list.map(x=>x.ci))].forEach(ci=>touch(ci));
+}
 function touch(ci){
   if(S.local){renderStatus();return;}
   S.dirty.add(ci);clearTimeout(S.tmr[ci]);S.tmr[ci]=setTimeout(()=>flush(ci),700);renderStatus();
 }
 async function flush(ci){
   if(S.inflight.has(ci))return;
-  S.inflight.add(ci);S.dirty.delete(ci);renderStatus();
-  try{await retry(()=>S.db.doc(`sessions/${S.sid}/chunks/${ckey(ci)}`).set({i:ci,b:S.chunks[ci]}));S.err=null;}
-  catch(e){writeFail(e);}
+  const ops=S.ops[ci]||[];
+  if(!ops.length){S.dirty.delete(ci);renderStatus();return;}
+  const sid=S.sid,ref=S.db.doc(`sessions/${sid}/chunks/${ckey(ci)}`);
+  S.ops[ci]=[];S.inflight.add(ci);S.dirty.delete(ci);renderStatus();
+  try{
+    const merged=await S.db.runTransaction(async tx=>{
+      const d=await tx.get(ref);const arr=d.exists?clone(d.data().b||[]):[];
+      ops.forEach(op=>applyOp(arr,op));tx.set(ref,{i:ci,b:arr});return arr;
+    });
+    S.err=null;
+    if(S.sid===sid){ // 다른 사람 수정까지 합쳐진 최신 내용 + 아직 안 보낸 내 작업
+      const arr=clone(merged);(S.ops[ci]||[]).forEach(op=>applyOp(arr,op));
+      if(JSON.stringify(arr)!==JSON.stringify(S.chunks[ci])){S.chunks[ci]=arr;rebuild();renderAllRows(true);renderSideCounts();}
+    }
+  }catch(e){if(S.sid===sid)S.ops[ci]=ops.concat(S.ops[ci]||[]);writeFail(e);}
   S.inflight.delete(ci);
-  if(S.dirty.has(ci)){clearTimeout(S.tmr[ci]);flush(ci);}
+  if(S.sid===sid&&(S.ops[ci]||[]).length&&!S.err){S.dirty.add(ci);flush(ci);}
   renderStatus();
 }
+function flushAll(){Object.keys(S.ops).forEach(ci=>{if((S.ops[ci]||[]).length){clearTimeout(S.tmr[ci]);flush(+ci);}});}
+window.addEventListener("beforeunload",ev=>{if(Object.values(S.ops).some(o=>o&&o.length)||S.inflight.size){flushAll();ev.preventDefault();ev.returnValue="";}});
 function writeFail(e){
   if(e&&(e.code==="invalid_argument"||e.code==="permission-denied")){S.canWrite=false;S.err="고칠 권한이 없어서 보기 전용으로 바뀌었어요. 비밀번호가 바뀌었다면 시나리오 링크로 다시 들어와 새 비밀번호를 넣어 주세요.";render();}
   else if(e&&e.code==="quota_exceeded"){S.err="저장 공간이 가득 찼어요: "+(e.message||"");}
@@ -536,14 +577,11 @@ async function saveMeta(){
   if(S.metaAgain){S.metaAgain=false;saveMeta();}
   renderStatus();
 }
-function pushUndo(cis,label){
-  const snap={};cis.forEach(ci=>snap[ci]=JSON.parse(JSON.stringify(S.chunks[ci])));
-  S.undo.push({snap,label});if(S.undo.length>100)S.undo.shift();
-}
+// 되돌리기: 내가 한 작업만 거꾸로 적용해요 (다른 사람 수정은 건드리지 않아요)
 function undo(){
   const u=S.undo.pop();if(!u){toast("되돌릴 작업이 없어요");return;}
-  Object.entries(u.snap).forEach(([ci,b])=>{S.chunks[ci]=b;touch(+ci);});
-  rebuild();renderAllRows(true);renderSide();toast("되돌림: "+u.label);
+  doOps(u.inv.filter(x=>S.chunks[x.ci]),null);
+  renderAllRows(true);renderSide();toast("되돌림: "+u.label);
 }
 
 // ---------- scenarios ----------
@@ -563,6 +601,20 @@ async function saveScen(sc){
   if(S.scAgain[id]){S.scAgain[id]=false;await saveScen(scenById(id)||sc);}
   renderStatus();
 }
+// 시나리오 정보도 저장 순간의 최신 내용을 읽어서 바꾼 부분만 적용해요
+async function mutateScen(id,fn){
+  const sc=scenById(id);if(sc)fn(sc);
+  if(S.local||!S.db)return;
+  S.scBusy[id]=(S.scBusy[id]||0)+1;renderStatus();
+  try{
+    await S.db.runTransaction(async tx=>{
+      const ref=S.db.doc("scenarios/"+id);const d=await tx.get(ref);
+      const body=d.exists?clone(d.data()):(sc?clone(sc):{});body.sp=body.sp||[];
+      fn(body);delete body.id;tx.set(ref,clone(body));
+    });
+  }catch(e){writeFail(e);}
+  S.scBusy[id]--;renderStatus();
+}
 function createScen(name,sp){
   const sc={id:newScenId(name),name,system:"",summary:"",rules:"",sp:sp||[],created:Date.now()};
   S.scens.push(sc);return sc;
@@ -577,18 +629,14 @@ async function ensureScen(){
   const own=S.meta.sp||[];
   if(!sc){sc=createScen(name,JSON.parse(JSON.stringify(own)));await saveScen(sc);}
   else if(own.length){
-    const remap={};let changed=false;
+    const remap={},toAdd=[];
     own.forEach(e=>{
       if(sc.sp.some(x=>x.k===e.k))return;
       const same=sc.sp.find(x=>x.name===e.name);
-      if(same)remap[e.k]=same.k;else{sc.sp.push({...e});changed=true;}
+      if(same)remap[e.k]=same.k;else toAdd.push({...e});
     });
-    if(changed)await saveScen(sc);
-    if(Object.keys(remap).length){
-      const cis=new Set();
-      S.flat.forEach(x=>{if(remap[x.b.s]){x.b.s=remap[x.b.s];cis.add(x.ci);}});
-      cis.forEach(ci=>touch(ci));
-    }
+    if(toAdd.length)await mutateScen(sc.id,d=>{toAdd.forEach(e=>{if(!d.sp.some(x=>x.k===e.k))d.sp.push({...e});});});
+    if(Object.keys(remap).length)doOps(S.flat.filter(x=>remap[x.b.s]).map(x=>({ci:x.ci,op:{t:"set",id:x.b.id,f:{s:remap[x.b.s]}}})),null);
   }
   if(own.length||!S.meta.scen){S.meta.sp=[];Object.assign(S.meta,info(S.meta));await saveMeta();}
   S.ensured=true;renderSide();renderAllRows(true);
@@ -612,9 +660,8 @@ async function cleanupZero(){
   let other;try{other=await countsElsewhere();}catch(e){return;}
   const dead=new Set(cand.filter(p=>!(other[p.k]>0)&&!(counts()[p.k]>0)).map(p=>p.k));
   if(!dead.size)return;
-  sc.sp=sc.sp.filter(p=>!dead.has(p.k));
   if(dead.has(S.spFilter))S.spFilter=null;
-  await saveScen(sc);renderSide();
+  await mutateScen(sc.id,d=>{d.sp=d.sp.filter(p=>!dead.has(p.k));});renderSide();
 }
 async function usageElsewhere(k){
   const sc=curScen();if(!sc)return 0;
@@ -627,61 +674,61 @@ async function usageElsewhere(k){
 }
 
 // ---------- speakers ----------
+const ALL="__all",ALLSP={k:ALL,name:"전원",c:"#8a8178"};
 const gmKey=sc=>sc&&sc.gm&&(sc.sp||[]).some(x=>x.k===sc.gm)?sc.gm:null;
 const gmFirst=(arr,g)=>g?[...arr.filter(x=>x.k===g),...arr.filter(x=>x.k!==g)]:arr;
 function spList(){
-  const sc=curScen();const own=S.meta?.sp||[];
-  if(!sc)return own;
-  return gmFirst(sc.sp.concat(own.filter(o=>!sc.sp.some(x=>x.k===o.k))),gmKey(sc));
+  const sc=curScen();const own=(S.meta?.sp||[]).filter(o=>o.k!==ALL);
+  if(!sc)return own.concat(ALLSP);
+  return gmFirst(sc.sp.filter(x=>x.k!==ALL).concat(own.filter(o=>!sc.sp.some(x=>x.k===o.k))),gmKey(sc)).concat(ALLSP);
 }
 const isGM=k=>!!k&&gmKey(curScen())===k;
 const gmTag='<span class="gmtag">GM</span>';
 const spBy=k=>spList().find(s=>s.k===k)||{k,name:"(목록에 없는 화자)",c:"#888"};
 function spTarget(){const sc=curScen();return sc?sc.sp:S.meta.sp;}
-function saveSp(){const sc=curScen();if(sc)saveScen(sc);else saveMeta();}
+function saveSp(){saveMeta();}
 function counts(){const c={};S.flat.forEach(e=>{if(e.b.s!==NOTE)c[e.b.s]=(c[e.b.s]||0)+1;});return c;}
 function addNote(afterId){
   if(!S.canWrite)return;
   const e=S.byId.get(afterId);if(!e)return;
-  pushUndo([e.ci],"상황 묘사 추가");
   const nb={id:rid(),s:NOTE,t:e.b.t,x:""};
-  S.chunks[e.ci].splice(e.bi+1,0,nb);
-  rebuild();touch(e.ci);renderAllRows(true);select(nb.id,false);editRow(nb.id);
+  doOps([{ci:e.ci,op:{t:"ins",after:e.b.id,b:nb}}],"상황 묘사 추가");
+  renderAllRows(true);select(nb.id,false);editRow(nb.id);
 }
 function addSpeaker(name){
   name=name.trim();if(!name)return null;
   const ex=spList().find(s=>s.name===name);if(ex)return ex.k;
   const k="k"+rid();const c=counts();const arr=spTarget();
   // 새 화자는 '주요 화자'(대사 10개 이상) 바로 뒤에 넣어서 숫자키 1~9 안에 들어오게
-  let at=arr.findIndex(s=>(c[s.k]||0)>0&&(c[s.k]||0)<10);if(at<0)at=arr.length;
-  arr.splice(at,0,{k,name,c:COLORS[arr.length%COLORS.length]});
-  S.fresh.add(k);saveSp();renderSide();return k;
+  const before=(arr.find(s=>(c[s.k]||0)>0&&(c[s.k]||0)<10)||{}).k||null;
+  const np={k,name,c:COLORS[arr.length%COLORS.length]};
+  const ins=a=>{if(a.some(x=>x.k===k))return;const i=before?a.findIndex(x=>x.k===before):-1;if(i<0)a.push({...np});else a.splice(i,0,{...np});};
+  S.fresh.add(k);
+  const sc=curScen();if(sc)mutateScen(sc.id,d=>ins(d.sp));else{ins(arr);saveMeta();}
+  renderSide();return k;
 }
 function assign(id,k){
   const e=S.byId.get(id);if(!e||e.b.s===k)return;
   const old=e.b.s;
-  pushUndo([e.ci],"화자 변경");e.b.s=k;touch(e.ci);updateRow(id);
+  doOps([{ci:e.ci,op:{t:"set",id,f:{s:k}}}],"화자 변경");updateRow(id);
   const c=counts();
   if((c[k]||0)===1||!(c[old]>0)){renderSide();}else renderSideCounts();
   if(!(c[old]>0)&&!isGM(old)&&!S.fresh.has(old)){clearTimeout(S.zeroTmr);S.zeroTmr=setTimeout(cleanupZero,4000);}
 }
 function shownSp(){
   const c=counts();
-  return spList().filter(s=>S.showZero||(c[s.k]||0)>0||isGM(s.k)||S.fresh.has(s.k));
+  return spList().filter(s=>s.k!==ALL&&(S.showZero||(c[s.k]||0)>0||isGM(s.k)||S.fresh.has(s.k)));
 }
 async function removeSpeakerIfUnused(k){
   if((counts()[k]||0)>0)return false;
   const n=await usageElsewhere(k);
   if(n>0){toast(`같은 시나리오의 다른 녹음에서 ${n}개 대사가 이 화자로 되어 있어서 목록에는 남겨뒀어요`,3500);return false;}
-  const sc=curScen();if(sc){sc.sp=sc.sp.filter(x=>x.k!==k);saveScen(sc);}
+  const sc=curScen();if(sc)mutateScen(sc.id,d=>{d.sp=d.sp.filter(x=>x.k!==k);});
   if(S.meta.sp?.some(x=>x.k===k)){S.meta.sp=S.meta.sp.filter(x=>x.k!==k);saveMeta();}
   if(S.spFilter===k)S.spFilter=null;renderSide();return true;
 }
 async function mergeSpeaker(from,to){
-  const cis=[...new Set(S.flat.filter(e=>e.b.s===from).map(e=>e.ci))];
-  pushUndo(cis,"화자 합치기");
-  S.flat.forEach(e=>{if(e.b.s===from)e.b.s=to;});
-  cis.forEach(ci=>touch(ci));
+  doOps(S.flat.filter(e=>e.b.s===from).map(e=>({ci:e.ci,op:{t:"set",id:e.b.id,f:{s:to}}})),"화자 합치기");
   if(S.spFilter===from)S.spFilter=null;
   renderAllRows();renderSide();toast("옮겼어요");
   await removeSpeakerIfUnused(from);
@@ -691,31 +738,27 @@ async function mergeSpeaker(from,to){
 function splitBlock(id,lineIdx){
   const e=S.byId.get(id);if(!e)return;
   const lines=e.b.x.split("\n");if(lineIdx<=0||lineIdx>=lines.length)return;
-  pushUndo([e.ci],"나누기");
   const nb={id:rid(),s:e.b.s,t:e.b.t,x:lines.slice(lineIdx).join("\n")};
-  e.b.x=lines.slice(0,lineIdx).join("\n");
-  S.chunks[e.ci].splice(e.bi+1,0,nb);
-  rebuild();touch(e.ci);renderAllRows(true);renderSideCounts();select(nb.id);
+  doOps([{ci:e.ci,op:{t:"set",id,f:{x:lines.slice(0,lineIdx).join("\n")}}},{ci:e.ci,op:{t:"ins",after:id,b:nb}}],"나누기");
+  renderAllRows(true);renderSideCounts();select(nb.id);
 }
 function mergePrev(id){
   const e=S.byId.get(id);if(!e)return;
   const idx=S.flat.indexOf(e);if(idx<=0)return;
   const p=S.flat[idx-1];
-  pushUndo([...new Set([p.ci,e.ci])],"위와 합치기");
-  p.b.x=p.b.x+"\n"+e.b.x;
-  S.chunks[e.ci].splice(e.bi,1);
-  rebuild();touch(p.ci);if(e.ci!==p.ci)touch(e.ci);renderAllRows(true);renderSideCounts();select(p.b.id);
+  doOps([{ci:p.ci,op:{t:"set",id:p.b.id,f:{x:p.b.x+"\n"+e.b.x}}},{ci:e.ci,op:{t:"del",id}}],"위와 합치기");
+  renderAllRows(true);renderSideCounts();select(p.b.id);
 }
 function delBlock(id){
   const e=S.byId.get(id);if(!e)return;
   const idx=S.flat.indexOf(e);const nxt=S.flat[idx+1]||S.flat[idx-1];
-  pushUndo([e.ci],"삭제");S.chunks[e.ci].splice(e.bi,1);
-  rebuild();touch(e.ci);renderAllRows(true);renderSideCounts();if(nxt)select(nxt.b.id);toast("삭제했어요 · Ctrl+Z로 되돌리기");
+  doOps([{ci:e.ci,op:{t:"del",id}}],"삭제");
+  renderAllRows(true);renderSideCounts();if(nxt)select(nxt.b.id);toast("삭제했어요 · Ctrl+Z로 되돌리기");
 }
 function setText(id,x){
   const e=S.byId.get(id);if(!e)return;x=x.replace(/\n{2,}/g,"\n").trim();
   if(!x){delBlock(id);return;}
-  if(x===e.b.x)return;pushUndo([e.ci],"텍스트 수정");e.b.x=x;touch(e.ci);
+  if(x===e.b.x)return;doOps([{ci:e.ci,op:{t:"set",id,f:{x}}}],"텍스트 수정");
 }
 
 // ---------- rendering ----------
@@ -792,7 +835,7 @@ function renderSide(){
   const side=$("#side");if(!side)return;
   const c=counts();
   const sp=shownSp();
-  const hidden=spList().filter(s=>!(c[s.k]>0)&&!isGM(s.k)&&!S.fresh.has(s.k)).length;
+  const hidden=spList().filter(s=>s.k!==ALL&&!(c[s.k]>0)&&!isGM(s.k)&&!S.fresh.has(s.k)).length;
   side.innerHTML=`
     <h3>발언자 · 클릭하면 그 사람만 보기</h3>
     ${curScen()?`<div class="tip" style="margin:-4px 0 8px">이 목록은 '${esc(curScen().name)}'의 모든 녹음이 같이 써요. ⋯에서 캐릭터 이름을 넣으면 로그에 발언자와 같이 나와요.</div>`:""}
@@ -802,7 +845,12 @@ function renderSide(){
         <span class="nm" data-act="filter" title="${esc(s.name)}">${isGM(s.k)?gmTag+" ":""}${esc(s.name)}${s.ch?` <small>${esc(s.ch)}</small>`:""}</span>
         <span class="cnt" data-cnt="${s.k}">${c[s.k]||0}</span>
         ${S.canWrite?`<button class="ghost more" data-act="menu" title="이름 바꾸기·합치기">⋯</button>`:""}
-      </div>`).join("")}</div>
+      </div>`).join("")}
+      <div class="spk ${S.spFilter===ALL?"on":""}" data-k="${ALL}" style="--c:${ALLSP.c}">
+        <span class="key">0</span><span class="dot"></span>
+        <span class="nm" data-act="filter" title="여러 명이 동시에 말한 대사">${ALLSP.name}</span>
+        <span class="cnt" data-cnt="${ALL}">${c[ALL]||0}</span>
+      </div></div>
     ${hidden?`<button class="ghost zt" id="zerot">${S.showZero?"대사 없는 화자 숨기기":`이 녹음에 대사 없는 화자 ${hidden}명 보기`}</button>`:""}
     ${S.canWrite?`<div class="addsp"><input type="text" id="newsp" placeholder="새 화자 이름 (예: 코코)"><button id="addsp">추가</button></div>`:""}
     <h3 class="tip usage">사용법</h3>
@@ -904,8 +952,8 @@ function popAt(anchor,html,bind){
 function whoMenu(anchor,id){
   if(!S.canWrite)return;
   const cur=S.byId.get(id)?.b.s;
-  const shown=shownSp(),rest=spList().filter(x=>!shown.includes(x));
-  popAt(anchor,shown.concat(rest).map((s,i)=>`${i===shown.length&&rest.length?'<hr><div class="tip" style="padding:0 8px">이 녹음에 대사 없는 화자</div>':""}<button data-k="${s.k}" style="--c:${fixC(s.c)}"><span class="k">${i<9&&i<shown.length?i+1:""}</span><span class="dot"></span>${esc(s.name)}${s.k===cur?" ✓":""}</button>`).join("")+
+  const shown=shownSp(),rest=spList().filter(x=>x.k!==ALL&&!shown.includes(x));
+  popAt(anchor,`<button data-k="${ALL}" style="--c:${ALLSP.c}"><span class="k">0</span><span class="dot"></span>${ALLSP.name}${cur===ALL?" ✓":""}</button>`+shown.concat(rest).map((s,i)=>`${i===shown.length&&rest.length?'<hr><div class="tip" style="padding:0 8px">이 녹음에 대사 없는 화자</div>':""}<button data-k="${s.k}" style="--c:${fixC(s.c)}"><span class="k">${i<9&&i<shown.length?i+1:""}</span><span class="dot"></span>${esc(s.name)}${s.k===cur?" ✓":""}</button>`).join("")+
     `<hr>${cur===NOTE?"":`<button data-k="${NOTE}"><span class="k"></span>▤ 상황 묘사로 바꾸기</button>`}<input type="text" placeholder="새 화자 입력 후 Enter" id="pnew">`,p=>{
     p.querySelectorAll("button[data-k]").forEach(b=>b.onclick=()=>{assign(id,b.dataset.k);closePop();});
     const inp=$("#pnew",p);inp.onkeydown=ev=>{if(ev.key==="Enter"){const k=addSpeaker(inp.value);if(k)assign(id,k);closePop();}if(ev.key==="Escape")closePop();};
@@ -924,13 +972,16 @@ function spMenu(anchor,k){
     ${c===0?`<hr><button data-a="del" style="color:var(--bad)">목록에서 지우기</button>`:""}`,p=>{
     const rn=$("#rn",p),rch=$("#rch",p);
     const doRename=()=>{const v=rn.value.trim(),ch=rch.value.trim();const t=spTarget().find(x=>x.k===k)||(S.meta.sp||[]).find(x=>x.k===k);
-      if(t&&v&&(v!==t.name||ch!==(t.ch||""))){t.name=v;t.ch=ch;if(spTarget().includes(t))saveSp();else saveMeta();renderSide();renderAllRows(true);}closePop();};
+      if(t&&v&&(v!==t.name||ch!==(t.ch||""))){const sc=curScen();
+        if(sc&&sc.sp.some(x=>x.k===k))mutateScen(sc.id,d=>{const x=d.sp.find(x=>x.k===k);if(x){x.name=v;x.ch=ch;}});else{t.name=v;t.ch=ch;saveMeta();}
+        renderSide();renderAllRows(true);}closePop();};
     [rn,rch].forEach(i=>i.onkeydown=ev=>{if(ev.key==="Enter")doRename();if(ev.key==="Escape")closePop();});
     p.querySelector('[data-a=rename]').onclick=doRename;
-    p.querySelector('[data-a=up]').onclick=()=>{const a=spTarget();const i=a.findIndex(x=>x.k===k);if(i>0){[a[i-1],a[i]]=[a[i],a[i-1]];saveSp();renderSide();}closePop();};
+    p.querySelector('[data-a=up]').onclick=()=>{const sw=a=>{const i=a.findIndex(x=>x.k===k);if(i>0)[a[i-1],a[i]]=[a[i],a[i-1]];};const sc=curScen();
+      if(sc)mutateScen(sc.id,d=>sw(d.sp));else{sw(spTarget());saveMeta();}renderSide();closePop();};
     p.querySelectorAll("[data-to]").forEach(b=>b.onclick=()=>{closePop();confirmBox(`이 녹음에서 '${s.name}'의 대사 ${c}개를 '${spBy(b.dataset.to).name}'(으)로 옮길까요?`,"옮기기",()=>mergeSpeaker(k,b.dataset.to));});
     const d=p.querySelector('[data-a=del]');if(d)d.onclick=()=>{closePop();removeSpeakerIfUnused(k);};
-    const g=p.querySelector('[data-a=gm]');if(g)g.onclick=()=>{const sc=curScen();if(!sc){closePop();return;}if(isGM(k))delete sc.gm;else sc.gm=k;saveScen(sc);closePop();renderSide();renderAllRows(true);toast(sc.gm?"GM으로 지정했어요. 숫자키 1번이 돼요":"GM을 해제했어요");};
+    const g=p.querySelector('[data-a=gm]');if(g)g.onclick=()=>{const sc=curScen();if(!sc){closePop();return;}const on=!isGM(k);mutateScen(sc.id,d=>{if(on)d.gm=k;else delete d.gm;});closePop();renderSide();renderAllRows(true);toast(on?"GM으로 지정했어요. 숫자키 1번이 돼요":"GM을 해제했어요");};
     setTimeout(()=>rn.select(),0);
   });
 }
@@ -944,7 +995,7 @@ function helpBox(){
   const m=document.createElement("div");m.className="modal";
   m.innerHTML=`<div class="box"><h2>단축키</h2><div class="tip" style="font-size:13.5px;line-height:2">
   <kbd>↑</kbd><kbd>↓</kbd> 또는 <kbd>K</kbd><kbd>J</kbd> 대사 이동<br>
-  <kbd>1</kbd>~<kbd>9</kbd> 고른 대사의 화자 바꾸기 (왼쪽 목록 순서)<br>
+  <kbd>1</kbd>~<kbd>9</kbd> 고른 대사의 화자 바꾸기 (왼쪽 목록 순서) · <kbd>0</kbd> 전원<br>
   <kbd>Enter</kbd> 글 수정 · 수정 중 <kbd>Ctrl</kbd>+<kbd>Enter</kbd> 저장, <kbd>Esc</kbd> 취소<br>
   <kbd>P</kbd> 고른 대사부터 재생 · <kbd>Space</kbd> 재생/정지<br>
   <kbd>[</kbd> <kbd>]</kbd> 5초 뒤로/앞으로<br>
@@ -968,7 +1019,7 @@ function editRow(id){
   let done=false;
   const finish=save=>{if(done)return;done=true;
     if(save)setText(id,ta.value);
-    else if(isNote&&!e.b.x){const x=S.byId.get(id);if(x){S.chunks[x.ci].splice(x.bi,1);S.undo.pop();rebuild();touch(x.ci);renderAllRows(true);}return;}
+    else if(isNote&&!e.b.x){const x=S.byId.get(id);if(x){S.undo.pop();doOps([{ci:x.ci,op:{t:"del",id}}],null);renderAllRows(true);}return;}
     if(S.byId.has(id)){updateRow(id);select(id,false);}};
   ta.onkeydown=ev=>{if(ev.key==="Escape"){ev.preventDefault();finish(false);}if(ev.key==="Enter"&&(ev.ctrlKey||ev.metaKey||(isNote&&!ev.shiftKey))){ev.preventDefault();finish(true);}ev.stopPropagation();};
   ta.onblur=()=>finish(true);
@@ -1072,6 +1123,7 @@ document.addEventListener("keydown",ev=>{
   else if(k==="]"){const a=$("#aud");a&&(a.currentTime+=5);}
   else if(!S.sel)return;
   else if(/^[1-9]$/.test(k)&&S.canWrite){const s=shownSp()[+k-1];if(s){assign(S.sel,s.k);}}
+  else if(k==="0"&&S.canWrite&&S.sel){assign(S.sel,ALL);}
   else if(k==="Enter"){ev.preventDefault();editRow(S.sel);}
   else if((k==="n"||k==="N")&&S.canWrite){ev.preventDefault();addNote(S.sel);}
   else if(k==="p"||k==="P"){const e=S.byId.get(S.sel);e&&playAt(e.b.t);}
@@ -1396,7 +1448,7 @@ function scenHTML(){
   const days=(groups().find(g=>g.scen===sc.name)||{days:[]}).days;
   const txt=(v,ph)=>v?`<div class="sc-text">${esc(v)}</div>`:`<div class="sc-text empty">${ph}</div>`;
   if(S.scEdit){
-    if(!S.scDraft||S.scDraft.id!==sc.id){S.scDraft=JSON.parse(JSON.stringify(sc));S.scDraft.sp=gmFirst(S.scDraft.sp,gmKey(S.scDraft));}
+    if(!S.scDraft||S.scDraft.id!==sc.id){S.scDraft=JSON.parse(JSON.stringify(sc));S.scDraft.sp=gmFirst(S.scDraft.sp,gmKey(S.scDraft));S.scBase=clone(S.scDraft);}
     const d=S.scDraft;
     return `<div class="sc-page">
       <div class="sc-top"><h2>시나리오 수정</h2><button data-x>취소</button><button class="pri" data-ok>저장</button></div>
@@ -1472,14 +1524,29 @@ function bindSpManage(sc){
     const k=b.dataset.mv,d=+b.dataset.d,g=gmKey(sc);
     const arr=gmFirst(sc.sp,g).slice();const i=arr.findIndex(x=>x.k===k),j=i+d;
     if(j<0||j>=arr.length||arr[j].k===g)return;
-    [arr[i],arr[j]]=[arr[j],arr[i]];sc.sp=arr;saveScen(sc);render();
+    [arr[i],arr[j]]=[arr[j],arr[i]];const order=arr.map(x=>x.k);sc.sp=arr;
+    mutateScen(sc.id,L=>{const pos=new Map(order.map((k,i)=>[k,i]));L.sp=[...L.sp.filter(p=>pos.has(p.k)).sort((a,b)=>pos.get(a.k)-pos.get(b.k)),...L.sp.filter(p=>!pos.has(p.k))];});render();
   });
-  const del=ks=>{sc.sp=sc.sp.filter(x=>!ks.includes(x.k));saveScen(sc);render();toast(ks.length>1?`${ks.length}명 지웠어요`:"지웠어요");};
+  const del=ks=>{mutateScen(sc.id,L=>{L.sp=L.sp.filter(x=>!ks.includes(x.k));});render();toast(ks.length>1?`${ks.length}명 지웠어요`:"지웠어요");};
   document.querySelectorAll("[data-spdel]").forEach(b=>b.onclick=()=>{const p=sc.sp.find(x=>x.k===b.dataset.spdel);if(p)confirmBox(`'${p.name}'을(를) 발언자 목록에서 지울까요?`,"지우기",()=>del([p.k]));});
   const z=$("#spzero");if(z)z.onclick=()=>{const c=SCC[sc.id]||{},g=gmKey(sc);const ks=sc.sp.filter(p=>p.k!==g&&!(c[p.k]>0)).map(p=>p.k);confirmBox(`대사가 하나도 없는 발언자 ${ks.length}명을 지울까요?`,"지우기",()=>del(ks));};
 }
 // 녹음 목록을 다 받아온 뒤에만 대사 수를 세요 (빈 목록으로 세면 모두 0이 돼요)
 function sessionsReady(id){return S.canAdmin?!!SUB.sessData.all:!!SUB.sessData[id];}
+// 수정 창에서 바꾼 부분만 최신 시나리오에 적용 (다른 사람이 그 사이에 바꾼 건 그대로 둬요)
+function mergeScenEdit(L,base,d){
+  ["name","system","summary"].forEach(f=>{if((d[f]||"")!==(base[f]||""))L[f]=d[f];});
+  if(JSON.stringify(d.aliases||[])!==JSON.stringify(base.aliases||[]))L.aliases=d.aliases;
+  if((d.gm||null)!==(base.gm||null)){if(d.gm)L.gm=d.gm;else delete L.gm;}
+  const bk=new Map((base.sp||[]).map(p=>[p.k,p])),dk=new Map((d.sp||[]).map(p=>[p.k,p]));
+  let arr=(L.sp||[]).filter(p=>!(bk.has(p.k)&&!dk.has(p.k)));
+  (d.sp||[]).forEach(p=>{const b=bk.get(p.k)||{},l=arr.find(x=>x.k===p.k);if(!l)return;["name","ch","c"].forEach(f=>{if((p[f]||"")!==(b[f]||""))l[f]=p[f];});});
+  if((d.sp||[]).map(p=>p.k).join()!==(base.sp||[]).map(p=>p.k).join()){
+    const pos=new Map(d.sp.map((p,i)=>[p.k,i]));
+    arr=[...arr.filter(p=>pos.has(p.k)).sort((a,b)=>pos.get(a.k)-pos.get(b.k)),...arr.filter(p=>!pos.has(p.k))];
+  }
+  L.sp=arr;
+}
 function shareUrl(id){return location.origin+location.pathname+"#c-"+id;}
 function bindScen(){
   bindPartEdit();renderAuth();
@@ -1512,9 +1579,9 @@ function bindScen(){
     if(d.name!==old&&other&&other.id!==sc.id){toast("같은 이름의 시나리오가 이미 있어요. 합치려면 아래 '다른 시나리오와 합치기'를 써 주세요",3500);return;}
     const mine=S.sessions.filter(x=>info(x).scen===old);
     if(d.name!==old){d.aliases=[...new Set([...(d.aliases||[]),old])].filter(a=>a!==d.name);}
-    Object.assign(sc,JSON.parse(JSON.stringify(d)));if(!d.gm)delete sc.gm;
-    S.scEdit=false;S.scDraft=null;render();
-    await saveScen(sc);
+    const base=S.scBase||clone(sc),dd=clone(d);
+    S.scEdit=false;S.scDraft=null;S.scBase=null;render();
+    await mutateScen(sc.id,L=>mergeScenEdit(L,base,dd));
     if(d.name!==old){
       for(const s of mine){
         try{await retry(()=>S.db.doc("sessions/"+s.id).update({scen:d.name}));}catch(e){writeFail(e);}
@@ -1564,7 +1631,7 @@ async function importSession(r,inf,pre=""){
   const prog=$("#iprog"),btn=$("#igo");btn.disabled=true;
   try{
     prog.textContent=pre+"세션 만드는 중…";
-    await saveScen(sc);
+    await mutateScen(sc.id,L=>{if(!L.name)Object.assign(L,clone(sc));sc.sp.forEach(e=>{if(!L.sp.some(x=>x.k===e.k))L.sp.push(clone(e));});});
     await retry(()=>S.db.doc("sessions/"+sid).set(meta));
     for(let i=0;i<chunks.length;i++){
       prog.textContent=`${pre}대사 올리는 중… ${i+1}/${chunks.length}`;
