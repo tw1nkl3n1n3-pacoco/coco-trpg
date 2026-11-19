@@ -111,6 +111,18 @@ mark{background:#f2c970;color:inherit;border-radius:3px}
 .ro .act .w{display:none}
 .tx textarea{width:100%;min-height:60px;resize:vertical;line-height:1.6}
 .edhint{font-size:11.5px;color:var(--faint);margin-top:3px}
+.row.dice{margin:6px 0}
+.row.dice .body{box-shadow:none}
+.row.dice .tx{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;background:#f7f3ec;border:1px solid #e8dcc8;border-left:3px solid var(--c);border-radius:8px;padding:6px 12px;max-width:none;font-size:14px}
+.row.dice.editing .tx{display:block}
+.dw{color:var(--c)}.row.dice small{color:#8a7a68;font-size:12px;margin-left:-6px}
+.dl{color:#5a4a3a}.dr{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700;color:var(--ink)}
+.dres{display:inline-block;font-size:11.5px;font-weight:800;letter-spacing:.3px;border-radius:5px;padding:1px 8px;color:#fff;background:#888;border:0}
+.dres.secret{background:#3a2e4a}.dres.success{background:#3f7a3a}.dres.failure{background:#8a8178}.dres.critical{background:#c08a14}.dres.fumble{background:#a83a2a}
+.dform{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.dform select,.dform input{font:inherit;font-size:13.5px;padding:4px 6px}
+.dform input[data-f=x]{width:130px}.dform input[data-f=r]{width:170px}
+.dos{display:inline-flex;gap:4px}.dos .dres{opacity:.35;cursor:pointer;padding:3px 9px}.dos .dres.on{opacity:1;outline:2px solid #3a2e22;outline-offset:1px}
 .row.note{margin:12px 0 4px;padding:6px 10px 6px 6px}
 .row.note .body{box-shadow:none;padding-left:0;text-align:center}
 .row.note .tx{max-width:none;margin:0 auto;color:#8a7a68;font-size:14px;line-height:1.7;display:flex;align-items:center;gap:14px;justify-content:center}
@@ -151,6 +163,7 @@ h1,h2,.scen-h h3{color:#4a2c17}
 .scen-h .d{font-size:12.5px;color:var(--faint)}
 .day{display:flex;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--line);flex-wrap:wrap}
 .day-h{display:flex;gap:10px;align-items:baseline;min-width:190px}
+.dexp{font-size:11px;padding:1px 7px;border-radius:6px;opacity:.75}.dexp:hover{opacity:1}
 .day-h .nth{font-size:12px;color:#fff8ec;background:var(--acc2);border-radius:6px;padding:1px 7px}
 .parts{display:flex;gap:6px;flex-wrap:wrap}
 .part{display:flex;gap:6px;align-items:baseline;text-decoration:none;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:4px 11px}
@@ -687,12 +700,20 @@ const gmTag='<span class="gmtag">GM</span>';
 const spBy=k=>spList().find(s=>s.k===k)||{k,name:"(목록에 없는 화자)",c:"#888"};
 function spTarget(){const sc=curScen();return sc?sc.sp:S.meta.sp;}
 function saveSp(){saveMeta();}
-function counts(){const c={};S.flat.forEach(e=>{if(e.b.s!==NOTE)c[e.b.s]=(c[e.b.s]||0)+1;});return c;}
+function counts(){const c={};S.flat.forEach(e=>{if(e.b.s!==NOTE&&e.b.s!==DICE)c[e.b.s]=(c[e.b.s]||0)+1;});return c;}
 function addNote(afterId){
   if(!S.canWrite)return;
   const e=S.byId.get(afterId);if(!e)return;
   const nb={id:rid(),s:NOTE,t:e.b.t,x:""};
   doOps([{ci:e.ci,op:{t:"ins",after:e.b.id,b:nb}}],"상황 묘사 추가");
+  renderAllRows(true);select(nb.id,false);editRow(nb.id);
+}
+function addDice(afterId){
+  if(!S.canWrite)return;
+  const e=S.byId.get(afterId);if(!e)return;
+  const w=e.b.s===DICE?e.b.w:(e.b.s===NOTE?"":e.b.s);
+  const nb={id:rid(),s:DICE,t:e.b.t,x:"",w:w||"",r:"",o:""};
+  doOps([{ci:e.ci,op:{t:"ins",after:e.b.id,b:nb}}],"주사위 추가");
   renderAllRows(true);select(nb.id,false);editRow(nb.id);
 }
 function addSpeaker(name){
@@ -760,6 +781,79 @@ function setText(id,x){
   if(!x){delBlock(id);return;}
   if(x===e.b.x)return;doOps([{ci:e.ci,op:{t:"set",id,f:{x}}}],"텍스트 수정");
 }
+
+// ---------- HTML로 내보내기 (회차 단위, 코코포리아 로그 형식) ----------
+async function buildDayHTML(scen,day){
+  const sc=findScen(scen);
+  const ss=S.sessions.filter(s=>{const i=info(s);return i.scen===scen&&i.day===day;}).map(s=>({...s,...info(s)})).sort((a,b)=>a.part-b.part);
+  const days=[...new Set(S.sessions.map(info).filter(i=>i.scen===scen).map(i=>i.day))].sort();
+  const nth=days.indexOf(day)+1;
+  const g=gmKey(sc);
+  const base=(sc?.sp||[]).filter(x=>x.k!==ALL).concat(ALLSP);
+  const parts=[];
+  for(const s of ss){
+    const snap=await S.db.collection(`sessions/${s.id}/chunks`).get();
+    const bl=snap.docs.map(d=>d.data()).sort((a,b)=>a.i-b.i).flatMap(c=>c.b||[]);
+    parts.push({part:s.part,bl,sp:base.concat((s.sp||[]).filter(o=>!base.some(x=>x.k===o.k)))});
+  }
+  const title=`${scen} ${nth}회차`;
+  // 같은 사람이 이어서 말하면 이름은 한 번만, 대사는 줄바꿈으로 붙여요
+  const lines=(bl,sp)=>{
+    const out=[];let i=0;
+    while(i<bl.length){
+      const b=bl[i];
+      if(b.s===NOTE){out.push(`<p class="note">${esc(b.x).replace(/\n/g,"<br>")}</p>`);i++;continue;}
+      if(b.s===DICE){
+        const p=b.w?(sp.find(z=>z.k===b.w)||{name:"?",c:"#888"}):null,c=p?fixC(p.c):"#8a8178";
+        out.push(`<p class="dice" style="color:${c};--c:${c}">🎲 ${p?`<span class="nm"><b>${esc(p.ch||p.name)}</b></span> : `:""}<span class="tx">${b.x?esc(b.x)+" ":""}${b.r?`<span class="dr">${esc(b.r)}</span>`:""}</span>${b.sec?` <span class="res secret">Secret Dice</span>`:""}${b.o&&OUT[b.o]?` <span class="res ${b.o}">${OUT[b.o]}</span>`:""}</p>`);
+        i++;continue;}
+      const run=[];while(i<bl.length&&bl[i].s===b.s){run.push(bl[i].x);i++;}
+      const p=sp.find(z=>z.k===b.s)||{name:"?",c:"#888"};
+      const c=fixC(p.c),gm=b.s===g;
+      const nm=`<b>${esc(p.name)}</b>${p.ch?`<small> ${esc(p.ch)}</small>`:""}`;
+      const x=run.map(t=>esc(t).replace(/\n/g,"<br>")).join("<br>");
+      out.push(`<p${gm?' class="gm"':""} style="color:${c};--c:${c}"><span class="nm">${gm?'<span class="gmt">GM</span>':""}${nm}</span> : <span class="tx">${x}</span></p>`);
+    }
+    return out.join("\n");
+  };
+  const body=parts.map(p=>(parts.length>1?`<h2>${p.part}부</h2>`:"")+lines(p.bl,p.sp)).join("\n");
+  return `<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(title)}</title>
+<style>
+body{margin:0;background:#fff;color:#222;font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-size:15px;line-height:1.7}
+main{max-width:860px;margin:0 auto;padding:28px 20px 60px}
+header{border-bottom:1px solid #ddd;margin-bottom:18px;padding-bottom:10px}
+header h1{font-size:20px;margin:0}header div{color:#888;font-size:13px}
+h2{font-size:14px;color:#999;font-weight:600;text-align:center;margin:28px 0 12px;display:flex;align-items:center;gap:10px}
+h2:before,h2:after{content:"";flex:1;border-top:1px solid #e3e3e3}
+p{margin:0;padding:6px 2px;border-bottom:1px solid #ece7df;word-break:keep-all;overflow-wrap:anywhere}
+.nm b{font-weight:700}.nm small{font-size:12px;font-weight:400;opacity:.85}
+.gm{background:#faf6ee;border-left:3px solid currentColor;padding:6px 8px}
+.gm .tx{color:#3a2e22}
+.gmt{display:inline-block;font-size:10px;font-weight:800;color:#fff;background:var(--c);border-radius:3px;padding:0 4px;margin-right:5px;vertical-align:2px;line-height:15px}
+.note{color:#8a8178;font-style:italic;text-align:center;padding:10px 2px}
+.dice{background:#f7f5f0;border-left:3px solid var(--c);padding:6px 8px}
+.dice .tx{color:#3a2e22}.dice .dr{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700}
+.res{display:inline-block;font-size:11px;font-weight:800;color:#fff;border-radius:4px;padding:0 7px;margin-left:4px;line-height:18px;vertical-align:1px}
+.res.secret{background:#3a2e4a}.res.success{background:#3f7a3a}.res.failure{background:#8a8178}.res.critical{background:#c08a14}.res.fumble{background:#a83a2a}
+</style></head><body><main>
+<header><h1>${esc(title)}</h1><div>${esc(fmtDay(day))}${sc?.system?" · "+esc(sc.system):""}</div></header>
+${body}
+</main></body></html>`;
+}
+async function exportDay(scen,day){
+  toast("HTML 만드는 중…");
+  try{
+    const html=await buildDayHTML(scen,day);
+    const days=[...new Set(S.sessions.map(info).filter(i=>i.scen===scen).map(i=>i.day))].sort();
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob([html],{type:"text/html"}));
+    a.download=`${scen} ${days.indexOf(day)+1}회차.html`.replace(/[\\/:*?"<>|]/g,"_");
+    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+  }catch(e){toast("내보내기에 실패했어요: "+(e.code||e.message||e),3500);}
+}
+document.addEventListener("click",ev=>{const b=ev.target.closest("[data-exps]");if(!b)return;ev.preventDefault();ev.stopPropagation();exportDay(b.dataset.exps,b.dataset.expd);},true);
 
 // ---------- rendering ----------
 function render(){
@@ -857,7 +951,7 @@ function renderSide(){
     <div class="tip usage">
       대사를 클릭해 고르고 숫자키 <kbd>1</kbd>~<kbd>9</kbd>로 화자를 바꿔요. 이름을 클릭해도 바꿀 수 있어요.<br>
       한 칸에 두 사람 말이 섞였으면 대사를 클릭해서 고른 뒤 문장 사이의 <b>✂</b>를 눌러 나눠요.<br>
-      <kbd>N</kbd> 고른 대사 아래에 상황 묘사 넣기<br>
+      <kbd>N</kbd> 고른 대사 아래에 상황 묘사 넣기 · <kbd>D</kbd> 주사위 넣기<br>
       <kbd>↑</kbd><kbd>↓</kbd> 이동 · <kbd>Enter</kbd> 글 수정 · <kbd>P</kbd> 여기서 재생 · <kbd>Space</kbd> 재생/정지 · <kbd>Ctrl</kbd>+<kbd>Z</kbd> 되돌리기
     </div>`;
   bindSide();
@@ -869,14 +963,31 @@ function hl(text){
   if(S.q){const q=esc(S.q).replace(/[.*+?^${}()|[\]\\]/g,"\\$&");h=h.replace(new RegExp(q,"gi"),m=>`<mark>${m}</mark>`);}
   return h;
 }
-const NOTE="__note";
+const NOTE="__note",DICE="__dice";
+const OUT={success:"Success",failure:"Failure",critical:"Critical",fumble:"Fumble"};
+function diceInner(b){
+  const p=b.w?spBy(b.w):null;
+  if(!p&&!b.r&&!b.o&&!b.x&&!b.sec)return '<span class="ph">🎲 주사위 — ✎를 눌러 입력</span>';
+  return `<span class="dd">🎲</span>${p?`<b class="dw">${esc(p.ch||p.name)}</b>`:""}${b.x?`<span class="dl">${hl(b.x)}</span>`:""}${b.r?`<span class="dr">${hl(b.r)}</span>`:""}${b.sec?`<span class="dres secret">Secret Dice</span>`:""}${b.o&&OUT[b.o]?`<span class="dres ${b.o}">${OUT[b.o]}</span>`:""}`;
+}
 function rowHTML(e,prev){
+  if(e.b.s===DICE){const b=e.b,p=b.w?spBy(b.w):null;
+    return `<div class="row dice${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}" style="--c:${p?fixC(p.c):"#8a8178"}">
+    <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
+    <div class="body"><div class="tx">${diceInner(b)}</div></div>
+    <div class="act">
+      <button class="w" data-act="edit" title="주사위 수정 (Enter)">✎</button>
+      <button class="w" data-act="note" title="아래에 상황 묘사 추가 (N)">＋상황</button>
+      <button class="w" data-act="dice" title="아래에 주사위 추가 (D)">＋🎲</button>
+      <button class="w" data-act="del" title="삭제">🗑</button>
+    </div></div>`;}
   if(e.b.s===NOTE){const b=e.b;
     return `<div class="row note${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
     <div class="body"><div class="tx">${b.x?hl(b.x).replace(/\n/g,"<br>"):'<span class="ph">상황 묘사</span>'}</div></div>
     <div class="act">
       <button class="w" data-act="note" title="아래에 상황 묘사 추가 (N)">＋상황</button>
+      <button class="w" data-act="dice" title="아래에 주사위 추가 (D)">＋🎲</button>
       <button class="w" data-act="who" title="대사로 바꾸기">👤</button>
       <button class="w" data-act="edit" title="글 수정 (Enter)">✎</button>
       <button class="w" data-act="del" title="삭제">🗑</button>
@@ -896,12 +1007,13 @@ function rowHTML(e,prev){
       <button class="w" data-act="edit" title="글 수정 (Enter)">✎</button>
       <button class="w" data-act="up" title="위 대사와 합치기">⤒</button>
       <button class="w" data-act="note" title="아래에 상황 묘사 추가 (N)">＋상황</button>
+      <button class="w" data-act="dice" title="아래에 주사위 추가 (D)">＋🎲</button>
       <button class="w" data-act="del" title="삭제">🗑</button>
     </div></div>`;
 }
 function visible(e){
-  if(S.spFilter&&e.b.s!==S.spFilter)return false;
-  if(S.q&&!e.b.x.toLowerCase().includes(S.q.toLowerCase()))return false;
+  if(S.spFilter&&e.b.s!==S.spFilter&&!(e.b.s===DICE&&e.b.w===S.spFilter))return false;
+  if(S.q&&!(e.b.x+" "+(e.b.r||"")).toLowerCase().includes(S.q.toLowerCase()))return false;
   return true;
 }
 function renderAllRows(keepScroll){
@@ -913,7 +1025,11 @@ function renderAllRows(keepScroll){
     $("#qcount")&&($("#qcount").textContent="");return;
   }
   const vis=S.flat.filter(visible);
+  // 고치는 중인 줄은 다시 그리지 않고 그대로 둬요 (다른 사람 수정이 들어와도 입력이 안 날아가게)
+  const ed=log.querySelector(".row.editing"),fa=ed&&ed.contains(document.activeElement)?document.activeElement:null;
+  const sel=fa&&"selectionStart" in fa?[fa.selectionStart,fa.selectionEnd]:null;
   log.innerHTML=vis.map((e,i)=>rowHTML(e,vis[i-1])).join("")||`<div class="notice">조건에 맞는 대사가 없어요.</div>`;
+  if(ed){const nr=log.querySelector(`.row[data-id="${ed.dataset.id}"]`);if(nr){nr.replaceWith(ed);if(fa){fa.focus({preventScroll:true});if(sel)try{fa.setSelectionRange(...sel);}catch(e){}}}}
   const qc=$("#qcount");if(qc)qc.textContent=(S.q||S.spFilter)?`${vis.length}개`:`${S.flat.length}개 대사`;
   if(anchor){const r=log.querySelector(`[data-id="${anchor}"]`);if(r)window.scrollBy(0,r.getBoundingClientRect().top-off);}
 }
@@ -922,7 +1038,7 @@ function updateRow(id){
   if(!old||!e)return;
   if(!visible(e)){renderAllRows(true);return;}
   const t=document.createElement("div");t.innerHTML=rowHTML(e,prevVis(e));const nr=t.firstElementChild;old.replaceWith(nr);
-  const nx=nr.nextElementSibling;if(nx&&nx.dataset.id){const ne=S.byId.get(nx.dataset.id);if(ne){t.innerHTML=rowHTML(ne,e);nx.replaceWith(t.firstElementChild);}}
+  const nx=nr.nextElementSibling;if(nx&&nx.dataset.id&&!nx.classList.contains("editing")){const ne=S.byId.get(nx.dataset.id);if(ne){t.innerHTML=rowHTML(ne,e);nx.replaceWith(t.firstElementChild);}}
 }
 function prevVis(e){let i=S.flat.indexOf(e)-1;while(i>=0&&!visible(S.flat[i]))i--;return i>=0?S.flat[i]:null;}
 
@@ -999,7 +1115,7 @@ function helpBox(){
   <kbd>Enter</kbd> 글 수정 · 수정 중 <kbd>Ctrl</kbd>+<kbd>Enter</kbd> 저장, <kbd>Esc</kbd> 취소<br>
   <kbd>P</kbd> 고른 대사부터 재생 · <kbd>Space</kbd> 재생/정지<br>
   <kbd>[</kbd> <kbd>]</kbd> 5초 뒤로/앞으로<br>
-  <kbd>N</kbd> 고른 대사 아래에 상황 묘사 넣기<br>
+  <kbd>N</kbd> 고른 대사 아래에 상황 묘사 넣기 · <kbd>D</kbd> 주사위 넣기<br>
   <kbd>Ctrl</kbd>+<kbd>Z</kbd> 되돌리기 (이 창에서 한 작업만)</div>
   <div class="btns"><button class="pri" data-x>닫기</button></div></div>`;
   document.body.appendChild(m);m.querySelector("[data-x]").onclick=()=>m.remove();m.onclick=ev=>{if(ev.target===m)m.remove();};
@@ -1012,6 +1128,7 @@ function editRow(id){
   const r=document.querySelector(`.row[data-id="${id}"]`);const e=S.byId.get(id);if(!r||!e)return;
   select(id,false);
   const tx=r.querySelector(".tx");
+  if(e.b.s===DICE){editDice(r,e);return;}
   const isNote=e.b.s===NOTE;
   r.classList.add("editing");
   tx.innerHTML=`<textarea placeholder="${isNote?"예: 아래층에서 소음이 들린다":""}">${esc(e.b.x)}</textarea><div class="edhint">${isNote?"Enter 저장 · Esc 취소":"줄바꿈으로 나눌 곳을 만든 뒤 ✂로 나눌 수 있어요 · Ctrl+Enter 저장 · Esc 취소"}</div>`;
@@ -1023,6 +1140,34 @@ function editRow(id){
     if(S.byId.has(id)){updateRow(id);select(id,false);}};
   ta.onkeydown=ev=>{if(ev.key==="Escape"){ev.preventDefault();finish(false);}if(ev.key==="Enter"&&(ev.ctrlKey||ev.metaKey||(isNote&&!ev.shiftKey))){ev.preventDefault();finish(true);}ev.stopPropagation();};
   ta.onblur=()=>finish(true);
+}
+
+function editDice(r,e){
+  const id=e.b.id,b=e.b,tx=r.querySelector(".tx");
+  r.classList.add("editing");
+  let o=b.o||"",sec=!!b.sec;
+  const opts=spList().map(p=>`<option value="${p.k}"${p.k===b.w?" selected":""}>${p.ch?esc(p.ch)+" ("+esc(p.name)+")":esc(p.name)}</option>`).join("");
+  tx.innerHTML=`<div class="dform">
+    <select data-f="w"><option value="">인물 고르기</option>${opts}</select>
+    <input data-f="x" type="text" placeholder="판정 (선택) 예: 지각" value="${esc(b.x||"")}">
+    <input data-f="r" type="text" placeholder="결과 예: 1d20+3 → 17" value="${esc(b.r||"")}">
+    <span class="dos"><button type="button" class="dres secret${sec?" on":""}" data-sec title="결과를 몰라도 돼요">Secret Dice</button>${Object.entries(OUT).map(([k,v])=>`<button type="button" class="dres ${k}${o===k?" on":""}" data-o="${k}">${v}</button>`).join("")}</span>
+    <button type="button" class="pri" data-f="ok">저장</button><button type="button" data-f="no">취소</button>
+  </div><div class="edhint">Enter 저장 · Esc 취소 · 성공 여부는 다시 누르면 해제돼요</div>`;
+  const f=k=>tx.querySelector(`[data-f="${k}"]`);
+  tx.querySelector("[data-sec]").onclick=ev=>{sec=!sec;ev.currentTarget.classList.toggle("on",sec);};
+  tx.querySelectorAll("[data-o]").forEach(x=>x.onclick=()=>{o=o===x.dataset.o?"":x.dataset.o;tx.querySelectorAll("[data-o]").forEach(y=>y.classList.toggle("on",y.dataset.o===o));});
+  let done=false;
+  const finish=save=>{if(done)return;done=true;
+    const v={w:f("w").value,x:f("x").value.trim(),r:f("r").value.trim(),o,sec};
+    const empty=!v.x&&!v.r&&!v.o&&!v.sec,wasEmpty=!b.x&&!b.r&&!b.o&&!b.sec;
+    if((save&&empty)||(!save&&wasEmpty)){const x=S.byId.get(id);if(x){if(wasEmpty&&S.undo.length&&S.undo[S.undo.length-1].label==="주사위 추가")S.undo.pop();doOps([{ci:x.ci,op:{t:"del",id}}],wasEmpty?null:"삭제");renderAllRows(true);}return;}
+    if(save&&(v.w!==(b.w||"")||v.x!==(b.x||"")||v.r!==(b.r||"")||v.o!==(b.o||"")||v.sec!==!!b.sec))doOps([{ci:e.ci,op:{t:"set",id,f:v}}],"주사위 수정");
+    if(S.byId.has(id)){updateRow(id);select(id,false);}};
+  f("ok").onclick=()=>finish(true);f("no").onclick=()=>finish(false);
+  tx.onkeydown=ev=>{if(ev.key==="Escape"){ev.preventDefault();finish(false);}else if(ev.key==="Enter"&&!ev.target.matches("button")){ev.preventDefault();finish(true);}ev.stopPropagation();};
+  tx.onclick=ev=>ev.stopPropagation();
+  (b.w?f("r"):f("w")).focus();
 }
 
 // ---------- audio ----------
@@ -1092,7 +1237,7 @@ function bindSession(){
   const q=$("#q");q.oninput=()=>{clearTimeout(qTimer);qTimer=setTimeout(()=>{S.q=q.value.trim();renderAllRows();},200);};
   q.onkeydown=ev=>{ev.stopPropagation();if(ev.key==="Escape"){q.value="";S.q="";renderAllRows();q.blur();}};
   $("#copyAll").onclick=async()=>{
-    const txt=S.flat.filter(visible).map(e=>e.b.s===NOTE?`\n— ${e.b.x.replace(/\n/g," ")} —\n`:`[${fmt(e.b.t)}] ${spBy(e.b.s).name}: ${e.b.x.replace(/\n/g," ")}`).join("\n");
+    const txt=S.flat.filter(visible).map(e=>e.b.s===DICE?`🎲 ${e.b.w?(spBy(e.b.w).ch||spBy(e.b.w).name):""} ${e.b.x||""} ${e.b.r||""} ${e.b.sec?"Secret Dice":""} ${OUT[e.b.o]||""}`.replace(/\s+/g," ").trim():e.b.s===NOTE?`\n— ${e.b.x.replace(/\n/g," ")} —\n`:`[${fmt(e.b.t)}] ${spBy(e.b.s).name}: ${e.b.x.replace(/\n/g," ")}`).join("\n");
     try{await navigator.clipboard.writeText((S.meta?.title?S.meta.title+"\n\n":"")+txt);toast("복사했어요");}catch(e){toast("복사가 막혔어요. 브라우저 권한을 확인해 주세요");}
   };
   $("#log").onclick=ev=>{
@@ -1105,9 +1250,10 @@ function bindSession(){
     if(act==="up"){mergePrev(id);return;}
     if(act==="del"){delBlock(id);return;}
     if(act==="note"){addNote(id);return;}
+    if(act==="dice"){addDice(id);return;}
     if(!ev.target.closest("textarea"))select(id,false);
   };
-  $("#log").ondblclick=ev=>{const row=ev.target.closest(".row");if(row&&ev.target.closest(".tx")&&!ev.target.closest("textarea"))editRow(row.dataset.id);};
+  $("#log").ondblclick=ev=>{const row=ev.target.closest(".row");if(row&&ev.target.closest(".tx")&&!ev.target.closest("textarea,.dform"))editRow(row.dataset.id);};
 }
 document.addEventListener("keydown",ev=>{
   if(!S.sid&&!S.local)return;
@@ -1125,7 +1271,8 @@ document.addEventListener("keydown",ev=>{
   else if(/^[1-9]$/.test(k)&&S.canWrite){const s=shownSp()[+k-1];if(s){assign(S.sel,s.k);}}
   else if(k==="0"&&S.canWrite&&S.sel){assign(S.sel,ALL);}
   else if(k==="Enter"){ev.preventDefault();editRow(S.sel);}
-  else if((k==="n"||k==="N")&&S.canWrite){ev.preventDefault();addNote(S.sel);}
+  else if((k==="n"||k==="N"||k==="ㅜ")&&S.canWrite){ev.preventDefault();addNote(S.sel);}
+  else if((k==="d"||k==="D"||k==="ㅇ")&&S.canWrite){ev.preventDefault();addDice(S.sel);}
   else if(k==="p"||k==="P"){const e=S.byId.get(S.sel);e&&playAt(e.b.t);}
 });
 
@@ -1334,7 +1481,7 @@ function castHTML(sc){
 }
 function daysHTML(days){
   return days.map((d,i)=>`<div class="day">
-    <div class="day-h"><span class="nth">${i+1}회차</span><span>${esc(fmtDay(d.day))}</span></div>
+    <div class="day-h"><span class="nth">${i+1}회차</span><span>${esc(fmtDay(d.day))}</span>${S.db&&d.parts.length?`<button class="ghost dexp" data-exps="${esc(d.parts[0].scen)}" data-expd="${esc(d.day)}" title="이 회차 로그를 HTML 파일로 받기">HTML</button>`:""}</div>
     <div class="parts">${d.parts.map(p=>`<span class="partw"><a class="part" href="#s-${esc(p.id)}"><b>${p.part}부</b><span>${p.n?p.n+"개 대사":""}</span></a>${S.canAdmin&&S.db?`<button class="pset" data-edit="${esc(p.id)}" title="시나리오·날짜·순서·녹음 링크 고치기">⚙</button>`:""}</span>`).join("")}</div>
   </div>`).join("");
 }
