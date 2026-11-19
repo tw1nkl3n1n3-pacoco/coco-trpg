@@ -1206,7 +1206,7 @@ function homeHTML(){
   const gs=S.sysFilter?all.filter(g=>sysOf(g)===S.sysFilter):all;
   return `<div class="home">
     <div class="hometop"><h2>코코네 로그방</h2><span class="authbox"></span></div>
-    <div class="tip" style="font-size:13.5px">녹음에서 뽑은 대사를 모두 같이 보고 고치는 곳이에요. 화자가 틀린 곳을 고치면 다른 사람에게도 바로 반영돼요.</div>
+    <div class="tip" style="font-size:13.5px">슬슬 로그백업이 절실해져서 팠어요... thanks to 클로드쨩</div>
     ${S.err?`<div class="notice bad">${esc(S.err)}</div>`:""}
     ${!S.ready?`<div class="notice">불러오는 중…</div>`:""}
     ${S.ready&&S.setupNeeded?`<div class="notice bad">아직 Firebase 설정이 비어 있어요. <b>firebase-config.js</b>에 내 Firebase 프로젝트 값을 넣어 주세요. (지금은 txt 미리보기만 돼요)</div>`:""}
