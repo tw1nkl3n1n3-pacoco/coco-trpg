@@ -1216,7 +1216,7 @@ function homeHTML(){
         <div class="scen-h"><h3><a href="#" data-scen="${esc(g.scen)}" title="개요 보기">${esc(g.scen)} ›</a></h3>${g.sc?.system?`<span class="sys">${esc(g.sc.system)}</span>`:""}<span class="d">${g.sc&&!isOpen(g.sc.id)?"🔒":g.days.length?`${g.days.length}회차 · 마지막 ${esc(fmtDay(g.last))}`:"아직 녹음 없음"}</span></div>
         ${g.sc?.summary?`<div class="sum">${esc(g.sc.summary)}</div>`:""}
         ${castHTML(g.sc)}
-        ${g.sc&&!isOpen(g.sc.id)?`<a class="lockrow" href="#c-${esc(g.sc.id)}">🔒 비밀번호를 넣고 들어가기</a>`:daysHTML(g.days)}
+        ${g.sc&&!isOpen(g.sc.id)?"":daysHTML(g.days)}
       </section>`).join("")||(S.ready&&S.db&&S.loaded?`<div class="notice">아직 올린 세션이 없어요.${S.canAdmin?" 아래에서 클로바노트 txt를 올려 주세요.":""}</div>`:"")}</div>
     ${can?`<div class="addscen"><input type="text" id="nscen" placeholder="새 시나리오 이름 (녹음 전에 개요부터 써둘 때)"><button id="nscenb">+ 시나리오</button></div>`:""}
     ${can||!S.db?`<div class="card">
