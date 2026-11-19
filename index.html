@@ -1028,8 +1028,10 @@ function renderAllRows(keepScroll){
   // 고치는 중인 줄은 다시 그리지 않고 그대로 둬요 (다른 사람 수정이 들어와도 입력이 안 날아가게)
   const ed=log.querySelector(".row.editing"),fa=ed&&ed.contains(document.activeElement)?document.activeElement:null;
   const sel=fa&&"selectionStart" in fa?[fa.selectionStart,fa.selectionEnd]:null;
+  S.rerendering=true;
   log.innerHTML=vis.map((e,i)=>rowHTML(e,vis[i-1])).join("")||`<div class="notice">조건에 맞는 대사가 없어요.</div>`;
   if(ed){const nr=log.querySelector(`.row[data-id="${ed.dataset.id}"]`);if(nr){nr.replaceWith(ed);if(fa){fa.focus({preventScroll:true});if(sel)try{fa.setSelectionRange(...sel);}catch(e){}}}}
+  S.rerendering=false;
   const qc=$("#qcount");if(qc)qc.textContent=(S.q||S.spFilter)?`${vis.length}개`:`${S.flat.length}개 대사`;
   if(anchor){const r=log.querySelector(`[data-id="${anchor}"]`);if(r)window.scrollBy(0,r.getBoundingClientRect().top-off);}
 }
@@ -1139,7 +1141,7 @@ function editRow(id){
     else if(isNote&&!e.b.x){const x=S.byId.get(id);if(x){S.undo.pop();doOps([{ci:x.ci,op:{t:"del",id}}],null);renderAllRows(true);}return;}
     if(S.byId.has(id)){updateRow(id);select(id,false);}};
   ta.onkeydown=ev=>{if(ev.key==="Escape"){ev.preventDefault();finish(false);}if(ev.key==="Enter"&&(ev.ctrlKey||ev.metaKey||(isNote&&!ev.shiftKey))){ev.preventDefault();finish(true);}ev.stopPropagation();};
-  ta.onblur=()=>finish(true);
+  ta.onblur=()=>{if(S.rerendering)return;setTimeout(()=>{if(document.activeElement!==ta&&ta.isConnected)finish(true);else if(!ta.isConnected&&!S.byId.has(id))finish(false);},0);};
 }
 
 function editDice(r,e){
