@@ -172,6 +172,9 @@ h1,h2,.scen-h h3{color:#4a2c17}
 .addscen{display:flex;gap:8px;margin:14px 0 4px}
 .hometop{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .lockpage{display:flex;justify-content:center;padding-top:12vh}
+.lockbox.inline{margin:6px auto;box-shadow:none;background:var(--panel2)}
+.lockrow{display:block;padding:10px 0 4px;border-top:1px solid var(--line);color:var(--dim);text-decoration:none;font-size:14px}
+.lockrow:hover{color:var(--acc)}
 .lockbox{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:28px 26px;max-width:380px;width:100%;text-align:center;box-shadow:0 4px 18px rgba(80,50,20,.1)}
 .lockicon{font-size:34px}
 .lockbox h2{font-size:22px;margin-top:6px}
@@ -353,8 +356,10 @@ const SUB={mode:null,all:[],scen:{},sess:{},edQ:null,scData:{},sessData:{},edIds
 function myEmail(){return String(S.authUser&&!S.authUser.isAnonymous&&S.authUser.email||"").toLowerCase();}
 function isEditorOf(id){const sc=scenById(id);return !!sc&&!!myEmail()&&(sc.editors||[]).map(x=>String(x).toLowerCase()).includes(myEmail());}
 // 비밀번호로 연 시나리오는 보기·고치기 모두 가능
-function canWriteScen(id){return S.canAdmin||(!!id&&!!scenById(id));}
-function canReadScen(id){return S.canAdmin||!!scenById(id);}
+// 시나리오 목록·개요는 누구나 보고, 로그는 비밀번호로 연 사람만 (녹음 목록을 받아온 시나리오 = 열린 시나리오)
+function isOpen(id){return S.canAdmin||(!!id&&!!SUB.sessData[id]);}
+function canWriteScen(id){return !!id&&isOpen(id);}
+function canReadScen(id){return isOpen(id);}
 function publish(){
   const old=S.scens;
   const ids=new Set([...Object.keys(SUB.scData)]);
@@ -371,7 +376,7 @@ function markLoaded(){if(!S.loaded){S.loaded=true;S.scensLoaded=true;clearTimeou
 function clearSubs(){
   SUB.all.forEach(u=>{try{u()}catch(e){}});SUB.all=[];
   Object.values(SUB.scen).forEach(u=>{try{u()}catch(e){}});Object.values(SUB.sess).forEach(u=>{try{u()}catch(e){}});
-  if(SUB.edQ){try{SUB.edQ()}catch(e){}}
+
   SUB.scen={};SUB.sess={};SUB.edQ=null;SUB.scData={};SUB.sessData={};SUB.edIds=[];
 }
 function syncSubs(reset){
@@ -385,36 +390,27 @@ function syncSubs(reset){
     SUB.all.push(S.db.collection("secrets").onSnapshot(snap=>{S.secrets={};snap.docs.forEach(d=>S.secrets[d.id]=d.data().pw);if(S.cid&&!S.scEdit)render();ownerMaintain();},()=>{}));
     return;
   }
-  // 비밀번호로 연 시나리오
-  _unlockIds.forEach(id=>watchScen(id));
-  watchScenSessions();
-  if(!_unlockIds.length){markLoaded();publish();}
+  // 시나리오 목록은 누구나
+  if(!SUB.all.length)SUB.all.push(S.db.collection("scenarios").onSnapshot(snap=>{SUB.scData={};snap.docs.forEach(d=>SUB.scData[d.id]=d.data());markLoaded();publish();},e=>{markLoaded();render();}));
+  // 로그(녹음)는 비밀번호로 연 시나리오만
+  _unlockIds.forEach(id=>watchSess(id));
 }
-function watchScen(id){
-  if(SUB.scen[id])return;
-  SUB.scen[id]=S.db.doc("scenarios/"+id).onSnapshot(d=>{
-    if(d.exists){SUB.scData[id]=d.data();watchScenSessions();}else delete SUB.scData[id];
-    markLoaded();publish();
+function watchSess(id){
+  if(SUB.sess[id])return;
+  SUB.sess[id]=S.db.collection("sessions").where("scid","==",id).onSnapshot(snap=>{
+    const m={};snap.docs.forEach(d=>m[d.id]={id:d.id,...d.data()});SUB.sessData[id]=m;publish();
   },e=>{ // 비밀번호가 바뀌었거나 권한이 없어짐
-    delete SUB.scData[id];delete SUB.scen[id];
-    _unlockIds=_unlockIds.filter(x=>x!==id);saveUnlocks();
-    markLoaded();publish();
+    delete SUB.sess[id];delete SUB.sessData[id];
+    _unlockIds=_unlockIds.filter(x=>x!==id);saveUnlocks();publish();
   });
 }
-function watchScenSessions(){
-  Object.keys(SUB.scData).forEach(id=>{
-    if(SUB.sess[id])return;
-    SUB.sess[id]=S.db.collection("sessions").where("scid","==",id).onSnapshot(snap=>{
-      const m={};snap.docs.forEach(d=>m[d.id]={id:d.id,...d.data()});SUB.sessData[id]=m;publish();
-    },e=>{delete SUB.sess[id];delete SUB.sessData[id];});
-  });
-}
+function watchScenSessions(){}
 async function unlockScen(id,pw){
   if(!S.authUser){await S.auth.signInAnonymously();}
   const uid=S.auth.currentUser.uid;
   await S.db.doc(`unlocks/${id}_${uid}`).set({scid:id,uid,pw:String(pw).trim(),at:Date.now()});
   if(!_unlockIds.includes(id)){_unlockIds.push(id);saveUnlocks();}
-  watchScen(id);
+  watchSess(id);
 }
 // 사이트 주인: 녹음에 시나리오 id 달기, 시나리오마다 열람 비밀번호 만들기
 let _maintTimer=null;const _pwMade=new Set();
@@ -1206,21 +1202,21 @@ function homeHTML(){
   const gs=S.sysFilter?all.filter(g=>sysOf(g)===S.sysFilter):all;
   return `<div class="home">
     <div class="hometop"><h2>코코네 로그방</h2><span class="authbox"></span></div>
-    <div class="tip" style="font-size:13.5px">슬슬 로그백업이 절실해져서 팠어요... thanks to 클로드쨩</div>
+    <div class="tip" style="font-size:13.5px">녹음에서 뽑은 대사를 모두 같이 보고 고치는 곳이에요. 화자가 틀린 곳을 고치면 다른 사람에게도 바로 반영돼요.</div>
     ${S.err?`<div class="notice bad">${esc(S.err)}</div>`:""}
     ${!S.ready?`<div class="notice">불러오는 중…</div>`:""}
     ${S.ready&&S.setupNeeded?`<div class="notice bad">아직 Firebase 설정이 비어 있어요. <b>firebase-config.js</b>에 내 Firebase 프로젝트 값을 넣어 주세요. (지금은 txt 미리보기만 돼요)</div>`:""}
-    ${S.ready&&S.db&&S.loaded&&!S.canAdmin&&!S.scens.length?`<div class="notice">시나리오는 비밀번호로 잠겨 있어요. 받은 <b>시나리오 링크</b>로 들어와서 비밀번호를 입력하면 여기에도 보여요.</div>`:""}
+    ${S.ready&&S.db&&S.loaded&&!S.canAdmin&&S.scens.some(x=>!isOpen(x.id))?`<div class="notice">🔒 표시된 시나리오는 같이 플레이한 친구에게 받은 비밀번호를 넣어야 로그를 볼 수 있어요.</div>`:""}
     ${sysKeys.length>1||(sysKeys.length===1&&sysKeys[0]!==NOSYS)?`<div class="systabs">
       <button class="systab${S.sysFilter?"":" on"}" data-sys="">전체 <span>${all.length}</span></button>
       ${sysKeys.map(k=>`<button class="systab${S.sysFilter===k?" on":""}" data-sys="${esc(k)}">${esc(k)} <span>${systems[k]}</span></button>`).join("")}
     </div>`:""}
     <div id="sesslist">${gs.map(g=>`
       <section class="scen">
-        <div class="scen-h"><h3><a href="#" data-scen="${esc(g.scen)}" title="개요 보기">${esc(g.scen)} ›</a></h3>${g.sc?.system?`<span class="sys">${esc(g.sc.system)}</span>`:""}<span class="d">${g.days.length?`${g.days.length}회차 · 마지막 ${esc(fmtDay(g.last))}`:"아직 녹음 없음"}</span></div>
+        <div class="scen-h"><h3><a href="#" data-scen="${esc(g.scen)}" title="개요 보기">${esc(g.scen)} ›</a></h3>${g.sc?.system?`<span class="sys">${esc(g.sc.system)}</span>`:""}<span class="d">${g.sc&&!isOpen(g.sc.id)?"🔒":g.days.length?`${g.days.length}회차 · 마지막 ${esc(fmtDay(g.last))}`:"아직 녹음 없음"}</span></div>
         ${g.sc?.summary?`<div class="sum">${esc(g.sc.summary)}</div>`:""}
         ${castHTML(g.sc)}
-        ${daysHTML(g.days)}
+        ${g.sc&&!isOpen(g.sc.id)?`<a class="lockrow" href="#c-${esc(g.sc.id)}">🔒 비밀번호를 넣고 들어가기</a>`:daysHTML(g.days)}
       </section>`).join("")||(S.ready&&S.db&&S.loaded?`<div class="notice">아직 올린 세션이 없어요.${S.canAdmin?" 아래에서 클로바노트 txt를 올려 주세요.":""}</div>`:"")}</div>
     ${can?`<div class="addscen"><input type="text" id="nscen" placeholder="새 시나리오 이름 (녹음 전에 개요부터 써둘 때)"><button id="nscenb">+ 시나리오</button></div>`:""}
     ${can||!S.db?`<div class="card">
@@ -1364,17 +1360,21 @@ function scenHTML(){
   const sc=scenById(S.cid);
   if(!sc){
     if(!S.loaded||!S.authUser)return `<div class="sc-page"><div class="notice">불러오는 중…</div></div>`;
-    return `<div class="sc-page lockpage">
-      <div class="lockbox">
+    return `<div class="sc-page"><button class="ghost" id="scback">← 목록</button><div class="notice">이 시나리오를 찾을 수 없어요.</div></div>`;
+  }
+  const lockHTML=`<div class="lockbox inline">
         <div class="lockicon">🔒</div>
-        <h2>잠긴 시나리오예요</h2>
+        <h2>로그는 잠겨 있어요</h2>
         <div class="tip" style="margin:6px 0 14px">같이 플레이한 친구에게 받은 비밀번호를 넣어 주세요.</div>
         <form id="unlockf"><input type="text" id="unlockpw" placeholder="열람 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form>
         <div class="tip" id="unlockmsg" style="margin-top:8px"></div>
-        <div class="tip" style="margin-top:18px">비밀번호로 열면 보기와 고치기 모두 할 수 있어요.</div>
-        <div style="margin-top:10px"><button class="ghost" id="scback">← 목록</button></div>
-      </div></div>`;
-  }
+        <div class="tip" style="margin-top:18px">비밀번호로 열면 로그를 보고 고칠 수 있어요.</div>
+      </div>`;
+  // 비밀번호를 넣기 전에는 시나리오 페이지 대신 잠금 화면만
+  if(!isOpen(sc.id))return `<div class="sc-page lockpage"><div style="width:100%;max-width:380px">
+      <div class="sc-top"><button class="ghost" id="scback">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
+      ${lockHTML.replace('lockbox inline','lockbox').replace('<h2>로그는 잠겨 있어요</h2>',`<h2>${esc(sc.name)}</h2><div class="tip">잠긴 시나리오예요</div>`)}
+    </div></div>`;
   const days=(groups().find(g=>g.scen===sc.name)||{days:[]}).days;
   const txt=(v,ph)=>v?`<div class="sc-text">${esc(v)}</div>`:`<div class="sc-text empty">${ph}</div>`;
   if(S.scEdit){
