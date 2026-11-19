@@ -1209,7 +1209,7 @@ function homeHTML(){
   const gs=S.sysFilter?all.filter(g=>sysOf(g)===S.sysFilter):all;
   return `<div class="home">
     <div class="hometop"><h2>코코네 로그방</h2><span class="authbox"></span></div>
-    <div class="tip" style="font-size:13.5px">녹음에서 뽑은 대사를 모두 같이 보고 고치는 곳이에요. 화자가 틀린 곳을 고치면 다른 사람에게도 바로 반영돼요.</div>
+    <div class="tip" style="font-size:13.5px">슬슬 로그백업의 필요성이 느껴져서 만들었어요... #클로드야고마워</div>
     ${S.err?`<div class="notice bad">${esc(S.err)}</div>`:""}
     ${!S.ready?`<div class="notice">불러오는 중…</div>`:""}
     ${S.ready&&S.setupNeeded?`<div class="notice bad">아직 Firebase 설정이 비어 있어요. <b>firebase-config.js</b>에 내 Firebase 프로젝트 값을 넣어 주세요. (지금은 txt 미리보기만 돼요)</div>`:""}
@@ -1228,9 +1228,11 @@ function homeHTML(){
     ${can?`<div class="addscen"><input type="text" id="nscen" placeholder="새 시나리오 이름 (녹음 전에 개요부터 써둘 때)"><button id="nscenb">+ 시나리오</button></div>`:""}
     ${can||!S.db?`<div class="card">
       <b>${can?"녹음 추가":"txt 미리보기"}</b>
-      <div class="tip" style="margin:4px 0 10px">클로바노트에서 <b>텍스트(.txt)로 내보낸 파일</b>을 올려요. 한 번 플레이가 녹음 여러 개로 나뉘었으면 같은 시나리오·같은 날짜로 하나씩 올리면 1부, 2부로 묶여요. 여러 파일을 한꺼번에 골라도 돼요.</div>
-      <span class="filebtn"><button class="pri">📄 txt 파일 고르기</button><input type="file" id="tfile" accept=".txt,text/plain" multiple></span>
+      <div class="tip" style="margin:4px 0 10px">클로바노트에서 내보낸 <b>대사 파일(.txt)</b>과 <b>녹음 파일(.m4a 등)</b>을 한꺼번에 골라요. 이름이 같은 txt와 녹음은 알아서 짝지어요. 예: <code>261114 에버론 1.txt</code> + <code>261114 에버론 1.m4a</code><br>
+      녹음 파일만 고르면 이미 올린 녹음에 이름으로 짝지어 넣어요(있던 녹음은 새 파일로 바뀌어요). 한 번 플레이가 여러 개로 나뉘었으면 같은 시나리오·같은 날짜로 올리면 1부, 2부로 묶여요.</div>
+      <span class="filebtn"><button class="pri">📄🎧 txt · 녹음 파일 고르기</button><input type="file" id="tfile" accept=".txt,text/plain${S.storage&&can?",audio/*,video/*,.m4a,.mp3,.wav,.ogg,.webm":""}" multiple></span>
       <div id="imp"></div>
+      <div id="bulkres" class="tip" style="margin-top:8px">${S.bulkMsg||""}</div>
     </div>`:""}
     ${S.db&&S.canAdmin?`    <div class="card">
       <b>백업 · 옮기기</b>
@@ -1239,12 +1241,7 @@ function homeHTML(){
       <span class="filebtn"><button>⬆ JSON 가져오기</button><input type="file" id="importf" accept=".json,application/json"></span>
       <span class="tip" id="exprog">${esc(S.impMsg||"")}</span>
     </div>
-    ${S.storage?`<div class="card">
-      <b>녹음 파일 한꺼번에 올리기</b>
-      <div class="tip" style="margin:4px 0 10px">파일 이름이 녹음 이름과 같으면 알아서 짝지어 올려요. 예: <code>261114 에버론특급열차살인사건 1.m4a</code> → 에버론 1부. 이미 올린 녹음은 새 파일로 바뀌어요.</div>
-      <span class="filebtn"><button>🎧 녹음 파일 고르기</button><input type="file" id="bulkaudio" accept="audio/*,video/*,.m4a,.mp3,.wav,.ogg,.webm" multiple></span>
-      <div id="bulkres" class="tip" style="margin-top:8px">${S.bulkMsg||""}</div>
-    </div>`:""}`:""}
+    `:""}
   </div>`;
 }
 async function importAll(data,prog){
@@ -1310,8 +1307,8 @@ function bindHome(){
     }catch(e){pr.textContent="내보내지 못했어요: "+(e&&e.message||e);}
     eb.disabled=false;
   };
-  const ba=$("#bulkaudio");if(ba)ba.onchange=async ev=>{
-    const files=[...ev.target.files];if(!files.length)return;const box=$("#bulkres");
+  async function bulkAudio(files){
+    const box=$("#bulkres");
     const pairs=[],miss=[];
     files.forEach(f=>{const s=S.sessions.find(x=>normT(x.title)===normT(f.name));if(s)pairs.push([f,s]);else miss.push(f.name);});
     box.innerHTML=`${pairs.map(([f,s],i)=>`<div id="ba${i}">⏳ ${esc(f.name)} → ${esc(info(s).scen)} ${info(s).part}부</div>`).join("")}${miss.length?`<div style="color:var(--bad)">짝을 못 찾음: ${miss.map(esc).join(", ")} (⚙에서 하나씩 올릴 수 있어요)</div>`:""}`;
@@ -1320,7 +1317,7 @@ function bindHome(){
       try{await uploadAudio(s,f,p=>row.textContent=`⬆ ${f.name} → ${info(s).scen} ${info(s).part}부 · ${p}%`);row.textContent=`✓ ${f.name} → ${info(s).scen} ${info(s).part}부`;}
       catch(e){row.textContent=`✗ ${f.name}: ${e.code||e.message}`;row.style.color="var(--bad)";}}
     S.bulkMsg=box.innerHTML;S.importing=false;render();
-  };
+  }
   const imf=$("#importf");if(imf)imf.onchange=async ev=>{
     const f=ev.target.files[0];if(!f)return;const pr=$("#exprog");
     let data;try{data=JSON.parse(await f.text());}catch(e){pr.textContent="JSON 파일을 읽지 못했어요";return;}
@@ -1331,16 +1328,23 @@ function bindHome(){
   document.querySelectorAll("[data-scen]").forEach(a=>a.onclick=ev=>{ev.preventDefault();gotoScen(a.dataset.scen);});
   const nb=$("#nscenb");if(nb){const ni=$("#nscen");const go=()=>{const v=ni.value.trim();if(!v)return;if(scenByName(v)){gotoScen(v);return;}gotoScen(v,true);};nb.onclick=go;ni.onkeydown=ev=>{if(ev.key==="Enter")go();};}
   if($("#tfile"))$("#tfile").onchange=async ev=>{
-    const files=[...ev.target.files];if(!files.length)return;
-    const box=$("#imp");
+    const all=[...ev.target.files];if(!all.length)return;
+    const isTxt=f=>/\.txt$/i.test(f.name)||f.type==="text/plain";
+    const files=all.filter(isTxt),audios=all.filter(f=>!isTxt(f));
+    const box=$("#imp");S.bulkMsg="";$("#bulkres").innerHTML="";
+    if(!files.length){if(audios.length)await bulkAudio(audios);return;}
     const items=[];
-    for(const f of files){const r=parseClova(await f.text());if(r.blocks.length)items.push(r);}
+    for(const f of files){const r=parseClova(await f.text());if(r.blocks.length){r.fileName=f.name;items.push(r);}}
     if(!items.length){box.innerHTML=`<div class="notice bad">대사를 찾지 못했어요. 클로바노트에서 내보낸 txt가 맞는지 확인해 주세요.</div>`;return;}
+    // txt와 이름이 같은 녹음 파일 짝짓기
+    const audioFor=r=>audios.find(a=>normT(a.name)===normT(r.fileName))||audios.find(a=>normT(a.name)===normT(r.title));
     items.sort((a,b)=>a.title.localeCompare(b.title,"ko",{numeric:true}));
     const g=guessInfo(items[0].title,items[0].dateLine);g.scen=resolveScen(g.scen);
     const exists=S.sessions.some(s=>{const i=info(s);return i.scen===g.scen&&i.day===g.day&&i.part===g.part;});
     const v={...g,part:items.length===1&&!exists?g.part:(exists?nextPart(g.scen,g.day):g.part)};
-    box.innerHTML=`<div class="notice">${items.map(r=>`<b>${esc(r.title)}</b> · 대사 ${r.blocks.length}개 · 화자 ${new Set(r.blocks.map(b=>b.s)).size}명`).join("<br>")}</div>
+    const unmatched=audios.filter(a=>!items.some(r=>audioFor(r)===a));
+    box.innerHTML=`<div class="notice">${items.map(r=>`<b>${esc(r.title)}</b> · 대사 ${r.blocks.length}개 · 화자 ${new Set(r.blocks.map(b=>b.s)).size}명${audioFor(r)?` · 🎧 ${esc(audioFor(r).name)}`:audios.length?` · <span style="color:var(--faint)">녹음 없음</span>`:""}`).join("<br>")}
+      ${unmatched.length?`<br><span style="color:var(--bad)">짝을 못 찾은 녹음: ${unmatched.map(a=>esc(a.name)).join(", ")} (txt와 파일 이름을 같게 해 주세요)</span>`:""}</div>
       ${infoFields(v)}
       ${items.length>1?`<div class="tip">파일 이름 순서대로 ${v.part}부부터 차례로 붙여요.</div>`:""}
       <div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="pri" id="igo">${S.db&&S.canWrite?"올리기":"미리보기"}</button></div><div id="iprog" class="tip" style="margin-top:6px"></div>`;
@@ -1348,7 +1352,14 @@ function bindHome(){
       const f=readFields();
       if(!(S.db&&S.canWrite)){previewLocal(items[0],f);return;}
       let first=null;S.importing=true;
-      try{for(let i=0;i<items.length;i++){const sid=await importSession(items[i],{...f,part:f.part+i},`(${i+1}/${items.length}) `);if(!sid)return;first=first||sid;}}
+      try{for(let i=0;i<items.length;i++){
+        const inf={...f,part:f.part+i};
+        const sid=await importSession(items[i],inf,`(${i+1}/${items.length}) `);if(!sid)return;first=first||sid;
+        const au=audioFor(items[i]);
+        if(au&&S.storage){const pr=$("#iprog");const sc=findScen(inf.scen);
+          try{await uploadAudio({id:sid,scid:sc&&sc.id,title:items[i].title,scen:inf.scen},au,p=>pr.textContent=`(${i+1}/${items.length}) 녹음 올리는 중… ${p}%`);}
+          catch(e){toast(`${au.name} 녹음을 올리지 못했어요: ${e.code||e.message}`,5000);}}
+      }}
       finally{S.importing=false;}
       location.hash="s-"+first;
     };
