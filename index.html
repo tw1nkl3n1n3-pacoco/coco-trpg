@@ -1399,10 +1399,12 @@ function bindSpManage(sc){
   document.querySelectorAll("[data-spdel]").forEach(b=>b.onclick=()=>{const p=sc.sp.find(x=>x.k===b.dataset.spdel);if(p)confirmBox(`'${p.name}'을(를) 발언자 목록에서 지울까요?`,"지우기",()=>del([p.k]));});
   const z=$("#spzero");if(z)z.onclick=()=>{const c=SCC[sc.id]||{},g=gmKey(sc);const ks=sc.sp.filter(p=>p.k!==g&&!(c[p.k]>0)).map(p=>p.k);confirmBox(`대사가 하나도 없는 발언자 ${ks.length}명을 지울까요?`,"지우기",()=>del(ks));};
 }
+// 녹음 목록을 다 받아온 뒤에만 대사 수를 세요 (빈 목록으로 세면 모두 0이 돼요)
+function sessionsReady(id){return S.canAdmin?!!SUB.sessData.all:!!SUB.sessData[id];}
 function shareUrl(id){return location.origin+location.pathname+"#c-"+id;}
 function bindScen(){
   bindPartEdit();renderAuth();
-  {const sc0=scenById(S.cid);if(sc0&&S.canWrite&&!SCC[sc0.id]&&!SCC["_l"+sc0.id]){SCC["_l"+sc0.id]=1;loadScenCounts(sc0).then(()=>{delete SCC["_l"+sc0.id];if(S.cid===sc0.id){if(S.scEdit){const pl=window.__scPull;pl&&pl();}render();}}).catch(()=>{delete SCC["_l"+sc0.id];});}}
+  {const sc0=scenById(S.cid);if(sc0&&S.canWrite&&sessionsReady(sc0.id)&&!SCC[sc0.id]&&!SCC["_l"+sc0.id]){SCC["_l"+sc0.id]=1;loadScenCounts(sc0).then(()=>{delete SCC["_l"+sc0.id];if(S.cid===sc0.id){if(S.scEdit){const pl=window.__scPull;pl&&pl();}render();}}).catch(()=>{delete SCC["_l"+sc0.id];});}}
   const uf=$("#unlockf");if(uf){const inp=$("#unlockpw");setTimeout(()=>inp.focus(),0);uf.onsubmit=async ev=>{ev.preventDefault();const pw=inp.value.trim();if(!pw)return;const msg=$("#unlockmsg");msg.textContent="확인하는 중…";
     try{await unlockScen(S.cid,pw);msg.textContent="열렸어요!";}catch(e){msg.textContent=e&&e.code==="permission-denied"?"비밀번호가 틀렸어요.":"열지 못했어요: "+(e.code||e.message);}};}
   const scx=scenById(S.cid);
