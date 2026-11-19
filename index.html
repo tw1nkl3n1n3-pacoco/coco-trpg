@@ -202,7 +202,7 @@ a.scl:hover{color:var(--acc2)}
 .castc.gm{border-color:#c9a25e;background:#f7ead0}
 .castc.gm b,.row.gm .who{color:#5a3a1e}
 .gmtag{display:inline-block;font:700 10px/1.5 "Noto Sans KR",sans-serif;letter-spacing:.04em;color:#fff8ec;background:var(--gold);border-radius:4px;padding:0 5px;vertical-align:1px;margin-right:4px}
-.roster.ed{grid-template-columns:16px 1fr 1fr 34px}
+.roster.ed{grid-template-columns:16px 1fr 1fr 34px 44px 96px}
 .roster.ed input[type=radio]{accent-color:var(--acc);justify-self:center;width:16px;height:16px}
 .castc span:not(.dot):not(.gmtag){color:var(--faint);font-size:12px}
 .castc .gmtag{margin-right:0}
@@ -316,9 +316,10 @@ const S={sysFilter:_sys,fresh:new Set(),showZero:false,db:null,user:null,canWrit
   dirty:new Set(),inflight:new Set(),tmr:{},err:null,
   unsub:[],local:false,scens:[],scensLoaded:false,cid:null,scBusy:{},scAgain:{},chunksLoaded:false,ensured:false,ensuring:false,scEdit:false,audioUrl:null,playingId:null,metaBusy:false,metaAgain:false,loadTimer:null,loaded:false};
 
-// ---------- boot ----------
-render();
-(async()=>{
+const SCC={};
+// ---------- boot ---------- (스크립트를 다 읽은 뒤 시작)
+setTimeout(async()=>{
+  render();
   const cfg=window.FIREBASE_CONFIG;
   S.owner=String(window.OWNER_EMAIL||"").trim().toLowerCase();
   if(window.firebase&&cfg&&cfg.apiKey&&!/YOUR_|여기에/.test(cfg.apiKey)){
@@ -340,7 +341,7 @@ render();
     });
   }
   route();
-})();
+},0);
 // ---------- data subscriptions (권한에 따라 읽을 수 있는 것만) ----------
 let _unlockIds=[];try{_unlockIds=JSON.parse(localStorage.getItem("trpg-unlocked")||"[]");}catch(e){}
 function saveUnlocks(){try{localStorage.setItem("trpg-unlocked",JSON.stringify(_unlockIds));}catch(e){}}
@@ -1316,7 +1317,7 @@ function scenHTML(){
   const days=(groups().find(g=>g.scen===sc.name)||{days:[]}).days;
   const txt=(v,ph)=>v?`<div class="sc-text">${esc(v)}</div>`:`<div class="sc-text empty">${ph}</div>`;
   if(S.scEdit){
-    if(!S.scDraft||S.scDraft.id!==sc.id)S.scDraft=JSON.parse(JSON.stringify(sc));
+    if(!S.scDraft||S.scDraft.id!==sc.id){S.scDraft=JSON.parse(JSON.stringify(sc));S.scDraft.sp=gmFirst(S.scDraft.sp,gmKey(S.scDraft));}
     const d=S.scDraft;
     return `<div class="sc-page">
       <div class="sc-top"><h2>시나리오 수정</h2><button data-x>취소</button><button class="pri" data-ok>저장</button></div>
@@ -1326,14 +1327,18 @@ function scenHTML(){
         <datalist id="syslist">${[...new Set(S.scens.map(x=>(x.system||"").trim()).filter(Boolean))].map(x=>`<option value="${esc(x)}">`).join("")}</datalist>
       </div></div>
       <div class="sc-sec"><h4>개요</h4><textarea id="e-sum" placeholder="배경, 도입, 목표, 등장 NPC 등">${esc(d.summary||"")}</textarea></div>
-      <div class="sc-sec"><h4>참가자 · 화자</h4>
-        <div class="roster ed"><span></span><span class="h">이름 (로그에 나오는 이름)</span><span class="h">캐릭터</span><span class="h">GM</span>
-        ${d.sp.map((p,i)=>`<button class="swatch" data-sw="${i}" style="--c:${fixC(p.c)}" title="색 바꾸기"></button>
+      <div class="sc-sec"><h4>발언자 · 등장인물</h4>
+        ${(()=>{const c=SCC[sc.id];const zero=c?d.sp.filter(p=>p.k!==d.gm&&!(c[p.k]>0)).length:0;return `
+        <div class="roster ed"><span></span><span class="h">발언자 (로그에 나오는 이름)</span><span class="h">등장인물</span><span class="h">GM</span><span class="h" style="text-align:right">대사</span><span class="h" style="text-align:right">순서 · 지우기</span>
+        ${d.sp.map((p,i)=>{const n=c?(c[p.k]||0):null;return `<button class="swatch" data-sw="${i}" style="--c:${fixC(p.c)}" title="색 바꾸기"></button>
           <input type="text" data-nm="${i}" value="${esc(p.name)}"><input type="text" data-ch="${i}" value="${esc(p.ch||"")}" placeholder="(선택)">
-          <input type="radio" name="gm" data-gm="${p.k}" ${d.gm===p.k?"checked":""} title="GM으로 지정">`).join("")}
+          <input type="radio" name="gm" data-gm="${p.k}" ${d.gm===p.k?"checked":""} title="GM으로 지정">
+          <span class="cnum">${n===null?"…":n}</span>
+          <span class="mgb"><button type="button" class="ghost" data-emv="${i}" data-d="-1" title="위로" ${i===0?"disabled":""}>↑</button><button type="button" class="ghost" data-emv="${i}" data-d="1" title="아래로" ${i===d.sp.length-1?"disabled":""}>↓</button><button type="button" class="ghost" data-edel="${i}" title="${n===0?"목록에서 지우기":"대사가 있어서 못 지워요 (로그 화면에서 다른 발언자로 옮긴 뒤 지울 수 있어요)"}" ${n===0?"":"disabled"}>🗑</button></span>`;}).join("")}
         </div>
-        <div style="margin-top:6px"><label class="chk"><input type="radio" name="gm" data-gm="" ${d.gm?"":"checked"}>GM 없음</label></div>
-        <div class="tip" style="margin-top:8px">GM은 맨 앞(숫자키 1번)에 오고, 나머지는 이 순서가 숫자키 순서예요. 화자를 지우거나 합치는 건 로그 화면의 ⋯ 메뉴에서 해요.</div>
+        <div style="margin-top:6px;display:flex;gap:12px;align-items:center;flex-wrap:wrap"><label class="chk"><input type="radio" name="gm" data-gm="" ${d.gm?"":"checked"}>GM 없음</label>
+          ${zero?`<button type="button" class="ghost" id="ezero">대사 없는 발언자 ${zero}명 한꺼번에 지우기</button>`:""}</div>
+        <div class="tip" style="margin-top:8px">↑↓로 바꾼 순서가 로그 화면의 숫자키 순서예요(GM은 늘 1번). 🗑는 대사가 하나도 없는 발언자만 지울 수 있어요. 바꾼 내용은 <b>저장</b>을 눌러야 반영돼요.</div>`;})()}
       </div>
       ${S.canAdmin&&S.scens.length>1?`<div class="sc-sec"><h4>다른 시나리오와 합치기</h4>
         <div class="tip" style="margin-bottom:8px">실수로 두 개가 된 시나리오를 하나로 합쳐요. 이 시나리오의 녹음이 모두 고른 시나리오로 옮겨가고, 화자 목록은 이름이 같은 사람끼리 합쳐져요. 개요와 룰 시스템은 고른 쪽이 비어 있을 때만 옮겨와요.</div>
@@ -1346,7 +1351,7 @@ function scenHTML(){
     <div class="sc-top"><button class="ghost" id="scback">← 목록</button><span class="sp" style="flex:1"></span><span class="authbox"></span></div>
     <div class="sc-top"><h2>${esc(sc.name)}</h2>${sc.system?`<span class="sys">${esc(sc.system)}</span>`:""}${S.canWrite?`<button id="scedit">✎ 수정</button>`:""}</div>
     <div class="sc-sec"><h4>개요</h4>${txt(sc.summary,"아직 개요가 없어요."+(S.canWrite?" ✎ 수정을 눌러 써 주세요.":""))}</div>
-    <div class="sc-sec"><h4>발언자 · 등장인물</h4>${sc.sp.length?(S.canWrite?spManageHTML(sc):`<div class="roster" style="grid-template-columns:16px 1fr 1fr"><span></span><span class="h">발언자</span><span class="h">등장인물</span>${gmFirst(sc.sp.filter(p=>!isAnon(p)),gmKey(sc)).map(p=>`<span class="dot" style="--c:${fixC(p.c)}"></span><span>${p.k===gmKey(sc)?gmTag+" ":""}<b>${esc(p.name)}</b></span><span style="color:var(--dim);font-size:13.5px">${esc(p.ch||(p.k===gmKey(sc)?"게임 마스터":""))}</span>`).join("")}</div>`):`<div class="sc-text empty">녹음을 올리면 화자가 여기 모여요.</div>`}</div>
+    <div class="sc-sec"><h4>발언자 · 등장인물</h4>${sc.sp.length?(`<div class="roster" style="grid-template-columns:16px 1fr 1fr"><span></span><span class="h">발언자</span><span class="h">등장인물</span>${gmFirst(sc.sp.filter(p=>!isAnon(p)),gmKey(sc)).map(p=>`<span class="dot" style="--c:${fixC(p.c)}"></span><span>${p.k===gmKey(sc)?gmTag+" ":""}<b>${esc(p.name)}</b></span><span style="color:var(--dim);font-size:13.5px">${esc(p.ch||(p.k===gmKey(sc)?"게임 마스터":""))}</span>`).join("")}</div>`):`<div class="sc-text empty">녹음을 올리면 화자가 여기 모여요.</div>`}</div>
     <div class="sc-sec"><h4>녹음</h4>${days.length?daysHTML(days):`<div class="sc-text empty">아직 녹음이 없어요. 목록 화면에서 txt를 올릴 때 시나리오를 '${esc(sc.name)}'(으)로 고르면 여기 묶여요.</div>`}</div>
     ${S.canAdmin?`    <div class="sc-sec"><h4>시나리오 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
       <div class="tip" style="margin-bottom:10px">링크와 비밀번호를 같이 받은 사람만 이 시나리오를 보고 고칠 수 있어요. 비밀번호를 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
@@ -1357,7 +1362,7 @@ function scenHTML(){
   </div>`;
 }
 // 시나리오 페이지에서 발언자 순서 바꾸기·안 쓰는 발언자 지우기
-const SCC={};// 시나리오별 발언자 대사 수 (모든 녹음 합계)
+// SCC: 시나리오별 발언자 대사 수 (모든 녹음 합계), 맨 위에 선언
 async function loadScenCounts(sc){
   const m={};
   for(const s of S.sessions.filter(x=>info(x).scen===sc.name)){
@@ -1397,7 +1402,7 @@ function bindSpManage(sc){
 function shareUrl(id){return location.origin+location.pathname+"#c-"+id;}
 function bindScen(){
   bindPartEdit();renderAuth();
-  if(!S.scEdit)bindSpManage(scenById(S.cid));
+  {const sc0=scenById(S.cid);if(sc0&&S.canWrite&&!SCC[sc0.id]&&!SCC["_l"+sc0.id]){SCC["_l"+sc0.id]=1;loadScenCounts(sc0).then(()=>{delete SCC["_l"+sc0.id];if(S.cid===sc0.id){if(S.scEdit){const pl=window.__scPull;pl&&pl();}render();}}).catch(()=>{delete SCC["_l"+sc0.id];});}}
   const uf=$("#unlockf");if(uf){const inp=$("#unlockpw");setTimeout(()=>inp.focus(),0);uf.onsubmit=async ev=>{ev.preventDefault();const pw=inp.value.trim();if(!pw)return;const msg=$("#unlockmsg");msg.textContent="확인하는 중…";
     try{await unlockScen(S.cid,pw);msg.textContent="열렸어요!";}catch(e){msg.textContent=e&&e.code==="permission-denied"?"비밀번호가 틀렸어요.":"열지 못했어요: "+(e.code||e.message);}};}
   const scx=scenById(S.cid);
@@ -1413,6 +1418,10 @@ function bindScen(){
     document.querySelectorAll("[data-ch]").forEach(i=>{d.sp[+i.dataset.ch].ch=i.value.trim();});
     const g=document.querySelector("[data-gm]:checked");if(g){if(g.dataset.gm)d.gm=g.dataset.gm;else delete d.gm;}};
   document.querySelectorAll("[data-sw]").forEach(btn=>btn.onclick=()=>{pull();const p=d.sp[+btn.dataset.sw];p.c=COLORS[(COLORS.indexOf(p.c)+1)%COLORS.length];render();});
+  window.__scPull=pull;
+  document.querySelectorAll("[data-emv]").forEach(btn=>btn.onclick=()=>{pull();const i=+btn.dataset.emv,j=i+(+btn.dataset.d);if(j<0||j>=d.sp.length)return;[d.sp[i],d.sp[j]]=[d.sp[j],d.sp[i]];render();});
+  document.querySelectorAll("[data-edel]").forEach(btn=>btn.onclick=()=>{pull();const p=d.sp[+btn.dataset.edel];if(!p)return;d.sp=d.sp.filter(x=>x!==p);if(d.gm===p.k)delete d.gm;render();});
+  const ez=$("#ezero");if(ez)ez.onclick=()=>{pull();const c=SCC[sc.id]||{};d.sp=d.sp.filter(p=>p.k===d.gm||c[p.k]>0);render();};
   document.querySelectorAll(".sc-page textarea").forEach(t=>{const fit=()=>{t.style.height="auto";t.style.height=Math.max(140,t.scrollHeight+4)+"px";};fit();t.oninput=fit;});
   document.querySelector("[data-x]").onclick=()=>{S.scEdit=false;S.scDraft=null;render();};
   document.querySelector("[data-ok]").onclick=async()=>{
