@@ -170,6 +170,15 @@ h1,h2,.scen-h h3{color:#4a2c17}
 .fields input{color-scheme:light}
 .addscen{display:flex;gap:8px;margin:14px 0 4px}
 .hometop{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.lockpage{display:flex;justify-content:center;padding-top:12vh}
+.lockbox{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:28px 26px;max-width:380px;width:100%;text-align:center;box-shadow:0 4px 18px rgba(80,50,20,.1)}
+.lockicon{font-size:34px}
+.lockbox h2{font-size:22px;margin-top:6px}
+.authbox .small{font-size:12px;padding:3px 8px;color:var(--faint)}
+.lockbox form{display:flex;gap:8px}
+.lockbox input{flex:1;min-width:0;text-align:center;letter-spacing:.08em}
+.pwrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pw{font:700 18px/1.4 ui-monospace,Menlo,monospace;letter-spacing:.12em;background:#fff;border:1px dashed var(--line);border-radius:8px;padding:5px 12px;color:var(--acc)}
 .hometop h2{flex:1}
 .authbox{display:inline-flex;align-items:center;gap:6px}
 .authbox .me{font-size:12.5px;color:var(--dim)}
@@ -320,35 +329,111 @@ render();
   if(!S.db)render();
   if(S.db){
     S.loadTimer=setTimeout(()=>{if(!S.loaded){S.err="저장소에 아직 연결되지 않았어요. 잠시 후 다시 확인해 주세요.";render();}},10000);
-    S.db.collection("sessions").onSnapshot(snap=>{
-      if(!snap.metadata.fromCache){S.loaded=true;clearTimeout(S.loadTimer);if(S.err&&S.err.startsWith("저장소"))S.err=null;}
-      S.sessions=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(a.title).localeCompare(String(b.title),"ko",{numeric:true}));
-      if(!S.sid){if(!S.importing&&!S.scEdit)render();}else if(S.meta)renderHeader();
-    },e=>{S.err="세션 목록을 불러오지 못했어요.";S.loaded=true;clearTimeout(S.loadTimer);render();});
-    S.db.collection("scenarios").onSnapshot(snap=>{
-      const old=S.scens;
-      S.scens=snap.docs.map(d=>{const o=old.find(x=>x.id===d.id);return (S.scBusy[d.id]&&o)?o:{id:d.id,...JSON.parse(JSON.stringify(d.data()))};});
-      old.forEach(o=>{if(S.scBusy[o.id]&&!S.scens.find(x=>x.id===o.id))S.scens.push(o);});
-      if(!snap.metadata.fromCache)S.scensLoaded=true;
-      if(S.sid){renderSide();renderAllRows(true);renderHeader();maybeEnsure();}
-      else if(!S.importing&&!S.scEdit)render();
-    },e=>{S.scensLoaded=true;});
-    S.db.doc("meta/editors").onSnapshot(d=>{S.editors=((d.exists&&d.data().emails)||[]).map(x=>String(x).trim().toLowerCase());updatePerms();if(!S.sid&&!S.cid&&S.canAdmin&&!S.importing&&!S.scEdit)render();},()=>{});
-    S.auth.onAuthStateChanged(u=>{S.authUser=u;updatePerms();});
+    S.auth.onAuthStateChanged(u=>{
+      S.authUser=u;
+      if(!u){S.auth.signInAnonymously().catch(()=>{S.loaded=true;render();});return;}
+      updatePerms();syncSubs(true);
+    });
   }
   route();
 })();
+// ---------- data subscriptions (권한에 따라 읽을 수 있는 것만) ----------
+let _unlockIds=[];try{_unlockIds=JSON.parse(localStorage.getItem("trpg-unlocked")||"[]");}catch(e){}
+function saveUnlocks(){try{localStorage.setItem("trpg-unlocked",JSON.stringify(_unlockIds));}catch(e){}}
+const SUB={mode:null,all:[],scen:{},sess:{},edQ:null,scData:{},sessData:{},edIds:[]};
+function myEmail(){return String(S.authUser&&!S.authUser.isAnonymous&&S.authUser.email||"").toLowerCase();}
+function isEditorOf(id){const sc=scenById(id);return !!sc&&!!myEmail()&&(sc.editors||[]).map(x=>String(x).toLowerCase()).includes(myEmail());}
+// 비밀번호로 연 시나리오는 보기·고치기 모두 가능
+function canWriteScen(id){return S.canAdmin||(!!id&&!!scenById(id));}
+function canReadScen(id){return S.canAdmin||!!scenById(id);}
+function publish(){
+  const old=S.scens;
+  const ids=new Set([...Object.keys(SUB.scData)]);
+  S.scens=[...ids].map(id=>{const o=old.find(x=>x.id===id);return (S.scBusy[id]&&o)?o:{id,...JSON.parse(JSON.stringify(SUB.scData[id]))};});
+  old.forEach(o=>{if(S.scBusy[o.id]&&!S.scens.find(x=>x.id===o.id))S.scens.push(o);});
+  const all=[];Object.values(SUB.sessData).forEach(m=>Object.values(m).forEach(x=>all.push(x)));
+  S.sessions=all.sort((a,b)=>String(a.title).localeCompare(String(b.title),"ko",{numeric:true}));
+  const cwChanged=refreshCanWrite();
+  if(S.sid){if(cwChanged)render();else{renderSide();renderAllRows(true);renderHeader();}maybeEnsure();}
+  else if(!S.importing&&!S.scEdit)render();
+  if(S.canAdmin)ownerMaintain();
+}
+function markLoaded(){if(!S.loaded){S.loaded=true;S.scensLoaded=true;clearTimeout(S.loadTimer);if(S.err&&S.err.startsWith("저장소"))S.err=null;}}
+function clearSubs(){
+  SUB.all.forEach(u=>{try{u()}catch(e){}});SUB.all=[];
+  Object.values(SUB.scen).forEach(u=>{try{u()}catch(e){}});Object.values(SUB.sess).forEach(u=>{try{u()}catch(e){}});
+  if(SUB.edQ){try{SUB.edQ()}catch(e){}}
+  SUB.scen={};SUB.sess={};SUB.edQ=null;SUB.scData={};SUB.sessData={};SUB.edIds=[];
+}
+function syncSubs(reset){
+  if(!S.db||!S.authUser)return;
+  const mode=S.canAdmin?"owner":"user:"+(myEmail()||"anon");
+  if(reset||mode!==SUB.mode){clearSubs();SUB.mode=mode;}
+  if(S.canAdmin){
+    if(SUB.all.length)return;
+    SUB.all.push(S.db.collection("scenarios").onSnapshot(snap=>{SUB.scData={};snap.docs.forEach(d=>SUB.scData[d.id]=d.data());markLoaded();publish();},e=>{markLoaded();render();}));
+    SUB.all.push(S.db.collection("sessions").onSnapshot(snap=>{const m={};snap.docs.forEach(d=>m[d.id]={id:d.id,...d.data()});SUB.sessData={all:m};markLoaded();publish();},e=>{}));
+    SUB.all.push(S.db.collection("secrets").onSnapshot(snap=>{S.secrets={};snap.docs.forEach(d=>S.secrets[d.id]=d.data().pw);if(S.cid&&!S.scEdit)render();ownerMaintain();},()=>{}));
+    return;
+  }
+  // 비밀번호로 연 시나리오
+  _unlockIds.forEach(id=>watchScen(id));
+  watchScenSessions();
+  if(!_unlockIds.length){markLoaded();publish();}
+}
+function watchScen(id){
+  if(SUB.scen[id])return;
+  SUB.scen[id]=S.db.doc("scenarios/"+id).onSnapshot(d=>{
+    if(d.exists){SUB.scData[id]=d.data();watchScenSessions();}else delete SUB.scData[id];
+    markLoaded();publish();
+  },e=>{ // 비밀번호가 바뀌었거나 권한이 없어짐
+    delete SUB.scData[id];delete SUB.scen[id];
+    _unlockIds=_unlockIds.filter(x=>x!==id);saveUnlocks();
+    markLoaded();publish();
+  });
+}
+function watchScenSessions(){
+  Object.keys(SUB.scData).forEach(id=>{
+    if(SUB.sess[id])return;
+    SUB.sess[id]=S.db.collection("sessions").where("scid","==",id).onSnapshot(snap=>{
+      const m={};snap.docs.forEach(d=>m[d.id]={id:d.id,...d.data()});SUB.sessData[id]=m;publish();
+    },e=>{delete SUB.sess[id];delete SUB.sessData[id];});
+  });
+}
+async function unlockScen(id,pw){
+  if(!S.authUser){await S.auth.signInAnonymously();}
+  const uid=S.auth.currentUser.uid;
+  await S.db.doc(`unlocks/${id}_${uid}`).set({scid:id,uid,pw:String(pw).trim(),at:Date.now()});
+  if(!_unlockIds.includes(id)){_unlockIds.push(id);saveUnlocks();}
+  watchScen(id);
+}
+// 사이트 주인: 녹음에 시나리오 id 달기, 시나리오마다 열람 비밀번호 만들기
+let _maintTimer=null;const _pwMade=new Set();
+function ownerMaintain(){clearTimeout(_maintTimer);_maintTimer=setTimeout(_ownerMaintain,1500);}
+async function _ownerMaintain(){
+  if(!S.canAdmin||!S.db||!S.secrets)return;
+  for(const s of S.sessions){
+    const sc=findScen(info(s).scen);
+    if(sc&&s.scid!==sc.id){try{await S.db.doc("sessions/"+s.id).update({scid:sc.id});}catch(e){}}
+  }
+  for(const sc of S.scens){
+    if(!S.secrets[sc.id]&&!_pwMade.has(sc.id)){_pwMade.add(sc.id);try{const ex=await S.db.doc("secrets/"+sc.id).get();if(!ex.exists)await S.db.doc("secrets/"+sc.id).set({pw:genPw()});}catch(e){_pwMade.delete(sc.id);}}
+  }
+}
+function genPw(){const c="abcdefghjkmnpqrstuvwxyz23456789";let o="";const a=new Uint32Array(8);crypto.getRandomValues(a);a.forEach(n=>o+=c[n%c.length]);return o;}
+function refreshCanWrite(){
+  const id=S.cid||(S.meta&&curScen()?.id)||null;
+  const v=S.sid||S.cid?canWriteScen(id):S.canAdmin;
+  if(v!==S.canWrite){S.canWrite=v;return true;}return false;
+}
 // ---------- login & permissions ----------
 function updatePerms(){
-  const em=String(S.authUser?.email||"").toLowerCase();
-  const before=S.canWrite+"/"+S.canAdmin;
+  const em=myEmail();
+  const before=S.canAdmin;
   S.canAdmin=!!em&&em===S.owner;
-  S.canWrite=S.canAdmin||(!!em&&S.editors.includes(em));
-  if(before!==S.canWrite+"/"+S.canAdmin){
-    if(S.err&&S.err.startsWith("이 계정에는"))S.err=null;
-    if(S.sid||(!S.importing&&!S.scEdit))render();
-    if(S.canWrite)maybeEnsure();
-  }else renderAuth();
+  refreshCanWrite();
+  if(before!==S.canAdmin){if(S.sid||(!S.importing&&!S.scEdit))render();}
+  else renderAuth();
 }
 async function login(){
   try{await S.auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());}
@@ -357,8 +442,8 @@ async function login(){
 function authHTML(){
   if(!S.auth)return "";
   const u=S.authUser;
-  return u?`<span class="me">${esc(u.displayName||u.email)}${S.canWrite?"":" · 보기 전용"}</span><button class="ghost" data-logout>로그아웃</button>`
-    :`<button class="ghost" data-login>구글로 로그인해서 편집</button>`;
+  return u&&!u.isAnonymous?`<span class="me">${esc(u.displayName||u.email)}${S.canAdmin?" · 주인":""}</span><button class="ghost" data-logout>로그아웃</button>`
+    :`<button class="ghost small" data-login title="사이트 주인 전용">관리자 로그인</button>`;
 }
 function renderAuth(){
   document.querySelectorAll(".authbox").forEach(el=>el.innerHTML=authHTML());
@@ -386,8 +471,8 @@ function openSession(sid){
     if(!d.exists){if(!d.metadata.fromCache){S.meta=null;S.err="이 세션을 찾을 수 없어요.";render();}return;}
     if(S.metaBusy)return;
     S.meta=JSON.parse(JSON.stringify(d.data()));
-    renderSide();renderAllRows();renderHeader();maybeEnsure();
-  },e=>{S.err="세션 정보를 불러오지 못했어요.";render();});
+    if(refreshCanWrite())render();else{renderSide();renderAllRows();renderHeader();}maybeEnsure();
+  },e=>{S.err=e&&e.code==="permission-denied"?"이 녹음은 잠겨 있어요. 시나리오 링크로 들어와서 비밀번호를 입력해 주세요.":"세션 정보를 불러오지 못했어요.";render();});
   const u2=S.db.collection("sessions/"+sid+"/chunks").onSnapshot(snap=>{
     let changed=false;
     snap.docs.forEach(d=>{
@@ -399,7 +484,7 @@ function openSession(sid){
     if(!snap.metadata.fromCache)S.chunksLoaded=true;
     if(changed){rebuild();renderAllRows(true);renderSide();}
     maybeEnsure();
-  },e=>{S.err="로그를 불러오지 못했어요.";render();});
+  },e=>{if(!(S.err||"").includes("잠겨"))S.err="로그를 불러오지 못했어요.";render();});
   S.unsub.push(u1,u2);
 }
 
@@ -425,7 +510,7 @@ async function flush(ci){
   renderStatus();
 }
 function writeFail(e){
-  if(e&&(e.code==="invalid_argument"||e.code==="permission-denied")){S.canWrite=false;S.err="이 계정에는 편집 권한이 없어서 보기 전용으로 바뀌었어요. 사이트 주인에게 편집자로 추가해 달라고 해 주세요.";render();}
+  if(e&&(e.code==="invalid_argument"||e.code==="permission-denied")){S.canWrite=false;S.err="고칠 권한이 없어서 보기 전용으로 바뀌었어요. 비밀번호가 바뀌었다면 시나리오 링크로 다시 들어와 새 비밀번호를 넣어 주세요.";render();}
   else if(e&&e.code==="quota_exceeded"){S.err="저장 공간이 가득 찼어요: "+(e.message||"");}
   else S.err="저장에 실패했어요. 잠시 후 다시 시도해 주세요.";
   renderStatus();
@@ -624,6 +709,7 @@ function setText(id,x){
 // ---------- rendering ----------
 function render(){
   const app=$("#app");
+  refreshCanWrite();
   if(S.cid){app.innerHTML=scenHTML();bindScen();return;}
   if(!S.sid){app.innerHTML=homeHTML();bindHome();return;}
   app.innerHTML=`
@@ -1052,7 +1138,7 @@ function editSessionBox(id){
   m.querySelector("[data-ok]").onclick=async()=>{
     const f=readFields();m.remove();
     const patch={...f};
-    if(f.scen!==v.scen){const old=findScen(v.scen);patch.sp=JSON.parse(JSON.stringify([...(old?.sp||[]),...((s.sp||[]).filter(o=>!(old?.sp||[]).some(x=>x.k===o.k)))]));}
+    if(f.scen!==v.scen){const tgt=findScen(f.scen);if(tgt)patch.scid=tgt.id;const old=findScen(v.scen);patch.sp=JSON.parse(JSON.stringify([...(old?.sp||[]),...((s.sp||[]).filter(o=>!(old?.sp||[]).some(x=>x.k===o.k)))]));}
     try{await retry(()=>S.db.doc("sessions/"+id).update(patch));toast("저장했어요");}catch(e){writeFail(e);toast("저장하지 못했어요");}
   };
   const d=m.querySelector("[data-del]");if(d)d.onclick=()=>{m.remove();confirmBox(`'${v.scen} ${v.part}부' 녹음의 로그를 지울까요? 모두에게서 사라지고 되돌릴 수 없어요.`,"삭제",()=>deleteSession(id));};
@@ -1075,8 +1161,7 @@ function homeHTML(){
     ${S.err?`<div class="notice bad">${esc(S.err)}</div>`:""}
     ${!S.ready?`<div class="notice">불러오는 중…</div>`:""}
     ${S.ready&&S.setupNeeded?`<div class="notice bad">아직 Firebase 설정이 비어 있어요. <b>firebase-config.js</b>에 내 Firebase 프로젝트 값을 넣어 주세요. (지금은 txt 미리보기만 돼요)</div>`:""}
-    ${S.ready&&S.db&&!S.authUser?`<div class="notice">누구나 볼 수 있어요. 고치려면 오른쪽 위에서 구글로 로그인해 주세요.</div>`:""}
-    ${S.ready&&S.authUser&&!S.canWrite?`<div class="notice">${esc(S.authUser.email)} 계정은 아직 편집자가 아니에요. 사이트 주인에게 이 이메일을 편집자로 추가해 달라고 해 주세요.</div>`:""}
+    ${S.ready&&S.db&&S.loaded&&!S.canAdmin&&!S.scens.length?`<div class="notice">시나리오는 비밀번호로 잠겨 있어요. 받은 <b>시나리오 링크</b>로 들어와서 비밀번호를 입력하면 여기에도 보여요.</div>`:""}
     ${sysKeys.length>1||(sysKeys.length===1&&sysKeys[0]!==NOSYS)?`<div class="systabs">
       <button class="systab${S.sysFilter?"":" on"}" data-sys="">전체 <span>${all.length}</span></button>
       ${sysKeys.map(k=>`<button class="systab${S.sysFilter===k?" on":""}" data-sys="${esc(k)}">${esc(k)} <span>${systems[k]}</span></button>`).join("")}
@@ -1087,7 +1172,7 @@ function homeHTML(){
         ${g.sc?.summary?`<div class="sum">${esc(g.sc.summary)}</div>`:""}
         ${castHTML(g.sc)}
         ${daysHTML(g.days)}
-      </section>`).join("")||(S.ready&&S.db&&S.loaded?`<div class="notice">아직 올린 세션이 없어요.${S.canWrite?" 아래에서 클로바노트 txt를 올려 주세요.":""}</div>`:"")}</div>
+      </section>`).join("")||(S.ready&&S.db&&S.loaded?`<div class="notice">아직 올린 세션이 없어요.${S.canAdmin?" 아래에서 클로바노트 txt를 올려 주세요.":""}</div>`:"")}</div>
     ${can?`<div class="addscen"><input type="text" id="nscen" placeholder="새 시나리오 이름 (녹음 전에 개요부터 써둘 때)"><button id="nscenb">+ 시나리오</button></div>`:""}
     ${can||!S.db?`<div class="card">
       <b>${can?"녹음 추가":"txt 미리보기"}</b>
@@ -1095,13 +1180,7 @@ function homeHTML(){
       <span class="filebtn"><button class="pri">📄 txt 파일 고르기</button><input type="file" id="tfile" accept=".txt,text/plain" multiple></span>
       <div id="imp"></div>
     </div>`:""}
-    ${S.db&&S.canAdmin?`<div class="card">
-      <b>편집자 관리</b> <span class="tip">(사이트 주인만 보여요)</span>
-      <div class="tip" style="margin:4px 0 10px">여기 있는 구글 계정만 로그인해서 고칠 수 있어요. 보는 건 누구나 돼요.</div>
-      <div id="edlist">${S.editors.length?S.editors.map(e=>`<span class="edchip">${esc(e)}<button class="ghost" data-rmed="${esc(e)}" title="편집자에서 빼기">✕</button></span>`).join(""):'<span class="tip">아직 추가한 편집자가 없어요.</span>'}</div>
-      <div class="addscen" style="margin-top:8px"><input type="text" id="nedit" placeholder="친구의 구글 이메일 (예: friend@gmail.com)"><button id="neditb">+ 편집자</button></div>
-    </div>
-    <div class="card">
+    ${S.db&&S.canAdmin?`    <div class="card">
       <b>백업 · 옮기기</b>
       <div class="tip" style="margin:4px 0 10px">전체 데이터를 JSON으로 받거나, Claude 사이트에서 내보낸 JSON을 가져와요. 가져오면 같은 녹음은 덮어써요.</div>
       <button id="exportb">⬇ JSON으로 내보내기</button>
@@ -1149,7 +1228,7 @@ function castHTML(sc){
 function daysHTML(days){
   return days.map((d,i)=>`<div class="day">
     <div class="day-h"><span class="nth">${i+1}회차</span><span>${esc(fmtDay(d.day))}</span></div>
-    <div class="parts">${d.parts.map(p=>`<span class="partw"><a class="part" href="#s-${esc(p.id)}"><b>${p.part}부</b><span>${p.n?p.n+"개 대사":""}</span></a>${S.canWrite&&S.db?`<button class="pset" data-edit="${esc(p.id)}" title="시나리오·날짜·순서·녹음 링크 고치기">⚙</button>`:""}</span>`).join("")}</div>
+    <div class="parts">${d.parts.map(p=>`<span class="partw"><a class="part" href="#s-${esc(p.id)}"><b>${p.part}부</b><span>${p.n?p.n+"개 대사":""}</span></a>${S.canAdmin&&S.db?`<button class="pset" data-edit="${esc(p.id)}" title="시나리오·날짜·순서·녹음 링크 고치기">⚙</button>`:""}</span>`).join("")}</div>
   </div>`).join("");
 }
 async function gotoScen(name,edit){
@@ -1179,10 +1258,6 @@ function bindHome(){
     if(data.format!=="trpg-log"){pr.textContent="이 사이트에서 내보낸 파일이 아니에요";return;}
     confirmBox(`시나리오 ${data.scenarios.length}개, 녹음 ${data.sessions.length}개를 가져올까요? 같은 녹음이 이미 있으면 덮어써요.`,"가져오기",()=>importAll(data,t=>pr.textContent=t));
   };
-  const nb2=$("#neditb");if(nb2){const ni=$("#nedit");const go=async()=>{const v=ni.value.trim().toLowerCase();if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){toast("이메일 형식을 확인해 주세요");return;}
-      const list=[...new Set([...S.editors,v])];try{await S.db.doc("meta/editors").set({emails:list});toast("편집자로 추가했어요");}catch(e){toast("추가하지 못했어요: "+(e.code||e.message));}};
-    nb2.onclick=go;ni.onkeydown=ev=>{if(ev.key==="Enter")go();};}
-  document.querySelectorAll("[data-rmed]").forEach(b=>b.onclick=()=>confirmBox(`${b.dataset.rmed}을(를) 편집자에서 뺄까요?`,"빼기",async()=>{try{await S.db.doc("meta/editors").set({emails:S.editors.filter(x=>x!==b.dataset.rmed)});}catch(e){toast("바꾸지 못했어요");}}));
   document.querySelectorAll("[data-sys]").forEach(b=>b.onclick=()=>{S.sysFilter=b.dataset.sys||null;try{localStorage.setItem("trpg-sys",S.sysFilter||"");}catch(e){}render();});
   document.querySelectorAll("[data-scen]").forEach(a=>a.onclick=ev=>{ev.preventDefault();gotoScen(a.dataset.scen);});
   const nb=$("#nscenb");if(nb){const ni=$("#nscen");const go=()=>{const v=ni.value.trim();if(!v)return;if(scenByName(v)){gotoScen(v);return;}gotoScen(v,true);};nb.onclick=go;ni.onkeydown=ev=>{if(ev.key==="Enter")go();};}
@@ -1221,7 +1296,19 @@ function buildSession(r,inf){
 // ---------- scenario page ----------
 function scenHTML(){
   const sc=scenById(S.cid);
-  if(!sc)return `<div class="sc-page"><button class="ghost" id="scback">← 목록</button><div class="notice">${S.scensLoaded?"이 시나리오를 찾을 수 없어요.":"불러오는 중…"}</div></div>`;
+  if(!sc){
+    if(!S.loaded||!S.authUser)return `<div class="sc-page"><div class="notice">불러오는 중…</div></div>`;
+    return `<div class="sc-page lockpage">
+      <div class="lockbox">
+        <div class="lockicon">🔒</div>
+        <h2>잠긴 시나리오예요</h2>
+        <div class="tip" style="margin:6px 0 14px">같이 플레이한 친구에게 받은 비밀번호를 넣어 주세요.</div>
+        <form id="unlockf"><input type="text" id="unlockpw" placeholder="열람 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form>
+        <div class="tip" id="unlockmsg" style="margin-top:8px"></div>
+        <div class="tip" style="margin-top:18px">비밀번호로 열면 보기와 고치기 모두 할 수 있어요.</div>
+        <div style="margin-top:10px"><button class="ghost" id="scback">← 목록</button></div>
+      </div></div>`;
+  }
   const days=(groups().find(g=>g.scen===sc.name)||{days:[]}).days;
   const txt=(v,ph)=>v?`<div class="sc-text">${esc(v)}</div>`:`<div class="sc-text empty">${ph}</div>`;
   if(S.scEdit){
@@ -1244,7 +1331,7 @@ function scenHTML(){
         <div style="margin-top:6px"><label class="chk"><input type="radio" name="gm" data-gm="" ${d.gm?"":"checked"}>GM 없음</label></div>
         <div class="tip" style="margin-top:8px">GM은 맨 앞(숫자키 1번)에 오고, 나머지는 이 순서가 숫자키 순서예요. 화자를 지우거나 합치는 건 로그 화면의 ⋯ 메뉴에서 해요.</div>
       </div>
-      ${S.scens.length>1?`<div class="sc-sec"><h4>다른 시나리오와 합치기</h4>
+      ${S.canAdmin&&S.scens.length>1?`<div class="sc-sec"><h4>다른 시나리오와 합치기</h4>
         <div class="tip" style="margin-bottom:8px">실수로 두 개가 된 시나리오를 하나로 합쳐요. 이 시나리오의 녹음이 모두 고른 시나리오로 옮겨가고, 화자 목록은 이름이 같은 사람끼리 합쳐져요. 개요와 룰 시스템은 고른 쪽이 비어 있을 때만 옮겨와요.</div>
         <div style="display:flex;gap:8px"><select id="mto" style="flex:1"><option value="">합칠 시나리오 고르기</option>${S.scens.filter(x=>x.id!==sc.id).map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join("")}</select><button id="mgo">합치기</button></div>
       </div>`:""}
@@ -1252,15 +1339,27 @@ function scenHTML(){
     </div>`;
   }
   return `<div class="sc-page">
-    <div class="sc-top"><button class="ghost" id="scback">← 목록</button></div>
+    <div class="sc-top"><button class="ghost" id="scback">← 목록</button><span class="sp" style="flex:1"></span><span class="authbox"></span></div>
     <div class="sc-top"><h2>${esc(sc.name)}</h2>${sc.system?`<span class="sys">${esc(sc.system)}</span>`:""}${S.canWrite?`<button id="scedit">✎ 수정</button>`:""}</div>
     <div class="sc-sec"><h4>개요</h4>${txt(sc.summary,"아직 개요가 없어요."+(S.canWrite?" ✎ 수정을 눌러 써 주세요.":""))}</div>
     <div class="sc-sec"><h4>발언자 · 등장인물</h4>${sc.sp.length?`<div class="roster" style="grid-template-columns:16px 1fr 1fr"><span></span><span class="h">발언자</span><span class="h">등장인물</span>${gmFirst(sc.sp.filter(p=>!isAnon(p)),gmKey(sc)).map(p=>`<span class="dot" style="--c:${fixC(p.c)}"></span><span>${p.k===gmKey(sc)?gmTag+" ":""}<b>${esc(p.name)}</b></span><span style="color:var(--dim);font-size:13.5px">${esc(p.ch||(p.k===gmKey(sc)?"게임 마스터":""))}</span>`).join("")}</div>`:`<div class="sc-text empty">녹음을 올리면 화자가 여기 모여요.</div>`}</div>
     <div class="sc-sec"><h4>녹음</h4>${days.length?daysHTML(days):`<div class="sc-text empty">아직 녹음이 없어요. 목록 화면에서 txt를 올릴 때 시나리오를 '${esc(sc.name)}'(으)로 고르면 여기 묶여요.</div>`}</div>
+    ${S.canAdmin?`    <div class="sc-sec"><h4>시나리오 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
+      <div class="tip" style="margin-bottom:10px">링크와 비밀번호를 같이 받은 사람만 이 시나리오를 보고 고칠 수 있어요. 비밀번호를 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
+      ${S.secrets&&S.secrets[sc.id]?`<div class="pwrow"><code class="pw">${esc(S.secrets[sc.id])}</code>
+        <button id="copyshare" class="pri">링크+비밀번호 복사</button><button id="regenpw" class="ghost">새로 만들기</button></div>
+        <div class="tip" style="margin-top:8px;word-break:break-all">${esc(shareUrl(sc.id))}</div>`:`<div class="tip">비밀번호를 만드는 중…</div>`}
+    </div>`:""}
   </div>`;
 }
+function shareUrl(id){return location.origin+location.pathname+"#c-"+id;}
 function bindScen(){
-  bindPartEdit();
+  bindPartEdit();renderAuth();
+  const uf=$("#unlockf");if(uf){const inp=$("#unlockpw");setTimeout(()=>inp.focus(),0);uf.onsubmit=async ev=>{ev.preventDefault();const pw=inp.value.trim();if(!pw)return;const msg=$("#unlockmsg");msg.textContent="확인하는 중…";
+    try{await unlockScen(S.cid,pw);msg.textContent="열렸어요!";}catch(e){msg.textContent=e&&e.code==="permission-denied"?"비밀번호가 틀렸어요.":"열지 못했어요: "+(e.code||e.message);}};}
+  const scx=scenById(S.cid);
+  const cs=$("#copyshare");if(cs)cs.onclick=async()=>{const t=`[${scx.name}] TRPG 로그\n${shareUrl(scx.id)}\n비밀번호: ${S.secrets[scx.id]}`;try{await navigator.clipboard.writeText(t);toast("복사했어요. 친구들에게 붙여넣어 보내면 돼요");}catch(e){toast("복사가 막혔어요");}};
+  const rg=$("#regenpw");if(rg)rg.onclick=()=>confirmBox("비밀번호를 새로 만들까요? 예전 비밀번호로 연 사람은 모두 다시 잠겨요.","새로 만들기",async()=>{try{await S.db.doc("secrets/"+scx.id).set({pw:genPw()});toast("새 비밀번호를 만들었어요");}catch(e){toast("바꾸지 못했어요");}});
   const b=$("#scback");if(b)b.onclick=()=>{location.hash="";};
   const e=$("#scedit");if(e)e.onclick=()=>{S.scEdit=true;render();};
   if(!S.scEdit)return;
@@ -1308,7 +1407,7 @@ async function mergeScen(from,to){
     await saveScen(to);
     for(const s of mine){
       const sp=JSON.parse(JSON.stringify([...(from.sp||[]),...((s.sp||[]).filter(o=>!(from.sp||[]).some(x=>x.k===o.k)))]));
-      await retry(()=>S.db.doc("sessions/"+s.id).update({scen:to.name,sp}));await sleep(120);
+      await retry(()=>S.db.doc("sessions/"+s.id).update({scen:to.name,sp,scid:to.id}));await sleep(120);
     }
     await retry(()=>S.db.doc("scenarios/"+from.id).delete());
     S.scens=S.scens.filter(x=>x.id!==from.id);render();t("합쳤어요");
@@ -1327,7 +1426,7 @@ function attachToScen(meta,chunks){
 }
 async function importSession(r,inf,pre=""){
   const {meta,chunks}=buildSession(r,inf);
-  const sc=attachToScen(meta,chunks);
+  const sc=attachToScen(meta,chunks);meta.scid=sc.id;
   const sid="s"+Date.now().toString(36)+rid().slice(0,3);
   const prog=$("#iprog"),btn=$("#igo");btn.disabled=true;
   try{
