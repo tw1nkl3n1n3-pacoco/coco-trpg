@@ -670,14 +670,14 @@ const OUT={success:"Success",failure:"Failure",critical:"Critical",fumble:"Fumbl
 // 룰에 맞춘 표기: 인세인은 크리티컬 대신 스페셜
 const outLabel=(o,sc)=>o==="critical"&&themeOf(sc===undefined?curScen():sc)==="wa"?"Special":OUT[o];
 const RULE_PH={
-  wa:{sec:["예: 메인 페이즈","예: 1사이클","예: 스즈키 나나의 씬"],judge:"판정 (선택) 예: 〈추적〉",res:"결과 예: 2D6 → 8 (목표 5)"},
-  deco:{sec:["예: 1장 · 특급열차 출발","예: 식당칸 조사","예: 전투 1라운드"],judge:"판정 (선택) 예: 지각(WIS)",res:"결과 예: 1d20+5 → 18 (DC 15)"},
+  wa:{sec:["예: 메인 페이즈","예: 1사이클","예: ○○의 씬"],judge:"판정 (선택) 예: 〈추적〉",res:"결과 예: 2D6 → 8 (목표 5)"},
+  deco:{sec:["예: 1장 · 모험의 시작","예: 마을 조사","예: 전투 1라운드"],judge:"판정 (선택) 예: 지각(WIS)",res:"결과 예: 1d20+5 → 18 (DC 15)"},
   "":{sec:["예: 메인 페이즈","예: 1사이클","예: 씬 1"],judge:"판정 (선택) 예: 지각",res:"결과 예: 1d20+3 → 17"}};
 const rulePH=()=>RULE_PH[themeOf(curScen())]||RULE_PH[""];
-// 핸드아웃의 '사명:', '비밀:'로 시작하는 줄은 라벨로 (원문 글자는 그대로 둬요)
-const HSEC=/^(\s*[【\[]?(사명|비밀|使命|秘密)[】\]]?\s*[:：]?\s*)/;
-function handLine(l){const m=l.match(HSEC);if(!m)return hl(l);const sec=/비밀|秘密/.test(m[2]);
-  return `<span class="hsecw${sec?" secret":""}" data-l="${sec?"비밀":"사명"}"><span class="mk">${esc(m[1])}</span></span>${hl(l.slice(m[1].length))}`;}
+// 핸드아웃의 '[정보]', '[비밀]'로 시작하는 줄은 라벨로 (원문 글자는 그대로 둬요)
+const HSEC=/^(\s*[【\[]?(정보|비밀)[】\]]?\s*[:：]?\s*)/;
+function handLine(l){const m=l.match(HSEC);if(!m)return hl(l);const sec=m[2]==="비밀";
+  return `<span class="hsecw${sec?" secret":""}" data-l="${sec?"비밀":"정보"}"><span class="mk">${esc(m[1])}</span></span>${hl(l.slice(m[1].length))}`;}
 function diceInner(b){
   const p=b.w?spBy(b.w):null;
   if(!p&&!b.r&&!b.o&&!b.x&&!b.sec)return '<span class="ph">🎲 주사위 — ✎를 눌러 입력</span>';
@@ -696,7 +696,7 @@ function rowHTML(e,prev){
   if(e.b.s===HAND){const b=e.b;
     return `<div class="row hand${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
-    <div class="body"><div class="hlab">📜 ${b.ti?`<b class="hti">${esc(b.ti)}</b>`:"핸드아웃"}</div><div class="tx">${b.x?`<span>${b.x.split("\n").map(l=>`<span class="ln">${handLine(l)}</span>`).join("<br>")}</span>`:'<span class="ph">핸드아웃 내용 · 사명: / 비밀: 로 시작하는 줄은 라벨이 붙어요</span>'}</div></div>
+    <div class="body"><div class="hlab">📜 ${b.ti?`<b class="hti">${esc(b.ti)}</b>`:"핸드아웃"}</div><div class="tx">${b.x?`<span>${b.x.split("\n").map(l=>`<span class="ln">${handLine(l)}</span>`).join("<br>")}</span>`:'<span class="ph">핸드아웃 내용 · [정보] / [비밀]로 시작하는 줄은 라벨이 붙어요</span>'}</div></div>
     <div class="act">
       <button class="w" data-act="edit" title="글 수정 (Enter)">✎</button>
       <button class="w" data-act="up" title="위 줄과 합치기">⤒</button>
@@ -1026,9 +1026,9 @@ function nounEdit(anchor,full){
   const g=full==null?{n:"",a:[]}:nounGroups().find(x=>x.n===full);if(!g)return;
   popAt(anchor,`<div class="nedit">
     <label>풀네임${g.pc?' <span class="pct">PC · 캐릭터 이름에서 자동</span>':""}</label>
-    <input type="text" id="nfull" value="${esc(g.n)}" ${g.pc?"disabled":""} placeholder="예: 세미야 신페이">
+    <input type="text" id="nfull" value="${esc(g.n)}" ${g.pc?"disabled":""} placeholder="예: 등장인물 풀네임">
     <label>유의어 · 쉼표로 구분</label>
-    <input type="text" id="nalt" value="${esc(g.a.join(", "))}" placeholder="예: 신페이, 세미야">
+    <input type="text" id="nalt" value="${esc(g.a.join(", "))}" placeholder="예: 줄여 부르는 이름, 별명">
     <div class="btns">${full!=null&&!g.pc?'<button data-a="del" style="color:var(--bad)">지우기</button>':""}<button class="pri" data-a="ok">저장</button></div></div>`,p=>{
     const f=$("#nfull",p),a=$("#nalt",p);
     const ok=()=>{const n=g.pc?g.n:f.value.trim();if(!n){toast("풀네임을 넣어 주세요");return;}
@@ -1239,7 +1239,7 @@ function scenList(){return [...new Set(S.sessions.map(s=>info(s).scen))].sort((a
 function nextPart(scen,day){const ps=S.sessions.map(info).filter(i=>i.scen===scen&&i.day===day).map(i=>i.part);return ps.length?Math.max(...ps)+1:1;}
 function infoFields(v){
   return `<div class="fields">
-    <label>시나리오<input type="text" id="f-scen" list="scenlist" value="${esc(v.scen)}" placeholder="예: 에버론 특급열차 살인사건"></label>
+    <label>시나리오<input type="text" id="f-scen" list="scenlist" value="${esc(v.scen)}" placeholder="예: 시나리오 이름"></label>
     <datalist id="scenlist">${scenList().map(x=>`<option value="${esc(x)}">`).join("")}</datalist>
     <div class="two"><label>플레이한 날<input type="date" id="f-day" value="${esc(v.day)}"></label>
     <label>몇 번째 녹음<input type="number" id="f-part" min="1" max="20" value="${v.part}"></label></div>
@@ -1346,7 +1346,7 @@ function homeHTML(){
       </section>`).join("")||(S.ready&&S.db&&S.loaded?`<div class="notice">아직 올린 세션이 없어요.${S.canAdmin?" 아래에서 클로바노트 txt를 올려 주세요.":""}</div>`:"")}</div>
     ${can||!S.db?`<div class="card">
       <b>${can?"녹음 추가":"txt 미리보기"}</b>
-      <div class="tip" style="margin:4px 0 10px">클로바노트에서 내보낸 <b>대사 파일(.txt)</b>과 <b>녹음 파일(.m4a 등)</b>을 한꺼번에 골라요. 이름이 같은 txt와 녹음은 알아서 짝지어요. 예: <code>261114 에버론 1.txt</code> + <code>261114 에버론 1.m4a</code><br>
+      <div class="tip" style="margin:4px 0 10px">클로바노트에서 내보낸 <b>대사 파일(.txt)</b>과 <b>녹음 파일(.m4a 등)</b>을 한꺼번에 골라요. 이름이 같은 txt와 녹음은 알아서 짝지어요. 예: <code>261114 세션 1.txt</code> + <code>261114 세션 1.m4a</code><br>
       녹음 파일만 고르면 이미 올린 녹음에 이름으로 짝지어 넣어요(있던 녹음은 새 파일로 바뀌어요). 한 번 플레이가 여러 개로 나뉘었으면 같은 시나리오·같은 날짜로 올리면 1부, 2부로 묶여요.</div>
       <span class="filebtn"><button class="pri">📄🎧 txt · 녹음 파일 고르기</button><input type="file" id="tfile" accept=".txt,text/plain${S.storage&&can?",audio/*,video/*,.m4a,.mp3,.wav,.ogg,.webm":""}" multiple></span>
       <div id="imp"></div>
