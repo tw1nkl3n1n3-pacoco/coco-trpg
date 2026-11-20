@@ -862,6 +862,36 @@ function editRow(id){
     if(S.byId.has(id)){updateRow(id);select(id,false);}};
   ta.onkeydown=ev=>{if(ev.key==="Escape"){ev.preventDefault();finish(false);}if(ev.key==="Enter"&&(ev.ctrlKey||ev.metaKey||(isNote&&!ev.shiftKey))){ev.preventDefault();finish(true);}ev.stopPropagation();};
   const inEd=()=>document.activeElement===ta||(hti&&document.activeElement===hti);
+  // 수정 중에 글자를 드래그하면: 그 부분만 따로 떼어 다른 사람 대사로 만들기
+  if(!isNote&&!isHand){
+    const pick=ev=>{const a=ta.selectionStart,z=ta.selectionEnd;if(z-a<1||!ta.value.slice(a,z).trim()){closePop();return;}
+      const rc=ev&&ev.clientX?{left:ev.clientX,right:ev.clientX,top:ev.clientY,bottom:ev.clientY+6}:ta.getBoundingClientRect();
+      splitMenu(rc,a,z);};
+    ta.addEventListener("mouseup",ev=>setTimeout(()=>pick(ev),0));
+    ta.addEventListener("keyup",ev=>{if(ev.shiftKey&&/Arrow|Home|End/.test(ev.key))pick(null);});
+  }
+  function splitMenu(rc,a,z){
+    const shown=shownSp(),list=[...shown,...spList().filter(x=>!shown.includes(x))];
+    popAt({getBoundingClientRect:()=>rc},`<div class="tip" style="padding:2px 8px 4px">고른 부분을 따로 떼어 대사로 만들기 · 누구 대사?</div>
+      ${list.map(p=>`<button data-k="${p.k}" style="--c:${fixC(p.c)}"><span class="dot"></span>${esc(p.name)}${p.ch?` <small style="color:var(--faint)">${esc(p.ch)}</small>`:""}${p.k===e.b.s?" (지금 화자)":""}</button>`).join("")}
+      <hr><button data-k="${NOTE}">▤ 상황 묘사로</button>`,pp=>{
+      pp.addEventListener("mousedown",ev=>{if(!ev.target.closest("input"))ev.preventDefault();});
+      pp.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{closePop();doSplit(a,z,b.dataset.k);});
+    });
+  }
+  function doSplit(a,z,k){
+    const v=ta.value,parts=[[v.slice(0,a),e.b.s],[v.slice(a,z),k],[v.slice(z),e.b.s]].map(([x,sp])=>[x.replace(/\n{2,}/g,"\n").trim(),sp]).filter(([x])=>x);
+    if(!parts.length)return;
+    done=true;r.classList.remove("editing");
+    const cur=S.byId.get(id);if(!cur)return;
+    const ops=[{ci:cur.ci,op:{t:"set",id,f:{x:parts[0][0],s:parts[0][1]}}}];let prev=id;
+    parts.slice(1).forEach(([x,sp])=>{const nb={id:rid(),s:sp,t:cur.b.t,x};ops.push({ci:cur.ci,op:{t:"ins",after:prev,b:nb}});prev=nb.id;});
+    const selIdx=v.slice(0,a).trim()?1:0;
+    doOps(ops,"대사 나누기");
+    renderAllRows(true);renderSideCounts();
+    const ids=[id,...ops.slice(1).map(o=>o.op.b.id)];select(ids[Math.max(0,selIdx)]||id,false);
+    toast(k===NOTE?"상황 묘사로 떼어냈어요":`'${spBy(k).name}' 대사로 떼어냈어요 · Ctrl+Z로 되돌리기`);
+  }
   const onBlur=()=>{if(S.rerendering)return;setTimeout(()=>{if(!inEd()&&ta.isConnected)finish(true);else if(!ta.isConnected&&!S.byId.has(id))finish(false);},0);};
   ta.onblur=onBlur;
   if(hti){hti.onblur=onBlur;hti.onkeydown=ev=>{ev.stopPropagation();if(ev.key==="Escape"){ev.preventDefault();finish(false);}if(ev.key==="Enter"){ev.preventDefault();if(ev.ctrlKey||ev.metaKey)finish(true);else ta.focus();}};
