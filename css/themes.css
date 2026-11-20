@@ -10,13 +10,13 @@ body:not([data-theme]) #log{background:#fffdf9}
 /* --- 괴담: 공포 · 호러 (key: wa) --- */
 body[data-theme=wa]{--bg:#d4d4d4;--panel:#f6f6f6;--panel2:#ececec;--line:#c4c4c4;--ink:#0d0d0d;--dim:#444;--faint:#808080;--acc:#b0101a;--acc2:#0d0d0d;--sel:#f7e1e2;--play:#f2ecec;--gold:#b0101a;--ok:#5f8a4a;
   background:#dcdcdc}
-body[data-theme=wa] header{background:#0a0a0a;border-bottom:0;box-shadow:0 2px 0 #b0101a,0 6px 18px rgba(0,0,0,.35);--ink:#ece6da;--dim:#bcb3a6;--faint:#8a8178;--line:#2e2828;--panel:#1d1a1a;--panel2:#1d1a1a;--acc:#c23a3a;color:#ece6da}
+body[data-theme=wa] header{background:#0a0a0a;border-bottom:0;box-shadow:0 2px 0 #b0101a;--ink:#ece6da;--dim:#bcb3a6;--faint:#8a8178;--line:#2e2828;--panel:#1d1a1a;--panel2:#1d1a1a;--acc:#c23a3a;color:#ece6da}
 body[data-theme=wa] header h1,body[data-theme=wa] header .scl{font-family:"Noto Serif KR","Gowun Batang",serif;font-weight:700;letter-spacing:.08em;color:#ece6da!important;border-bottom-color:#b0101a}
 body[data-theme=wa] header button.ghost:hover{background:#1d1a1a}
 body[data-theme=wa] header .status.ok{color:#a9c191}
 body[data-theme=wa] .pchip{border-radius:2px!important;background:#1d1a1a!important;color:#bcb3a6!important;border-color:#3a3232!important}
 body[data-theme=wa] .pchip.on{background:#b0101a!important;color:#fff!important;border-color:#b0101a!important}
-body[data-theme=wa] #pbar{background:#0a0a0a;border-top:0;box-shadow:0 -2px 0 #b0101a,0 -6px 18px rgba(0,0,0,.3);--ink:#ece6da;--dim:#bcb3a6;--faint:#8a8178;--line:#2e2828;--panel2:#1d1a1a;color:#ece6da}
+body[data-theme=wa] #pbar{background:#0a0a0a;border-top:0;box-shadow:0 -2px 0 #b0101a;--ink:#ece6da;--dim:#bcb3a6;--faint:#8a8178;--line:#2e2828;--panel2:#1d1a1a;color:#ece6da}
 body[data-theme=wa] #pbar select{background:#1d1a1a;color:#ece6da;border-color:#3a3232}
 body[data-theme=wa] #pbar input[type=range]{accent-color:#c23a3a}
 body[data-theme=wa] aside{border-right:2px solid #0d0d0d}
