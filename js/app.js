@@ -642,9 +642,9 @@ function renderSide(){
   const sp=shownSp();
   const hidden=spList().filter(s=>s.k!==ALL&&!(c[s.k]>0)&&!isGM(s.k)&&!S.fresh.has(s.k)).length;
   side.innerHTML=`
-    <button class="foldh${S.openSp?" open":""}" data-fold="openSp"><span class="car">▸</span>발언자 <span class="fc">${sp.length+1}</span><span class="fsub">클릭하면 그 사람만 보기</span></button>
+    <button class="foldh${S.openSp?" open":""}" data-fold="openSp"><span class="car">▸</span>플레이어 <span class="fc">${sp.length+1}</span><span class="fsub">클릭하면 그 사람만 보기</span></button>
     <div class="fold${S.openSp?" open":""}">
-    ${curScen()?`<div class="tip" style="margin:-4px 0 8px">이 목록은 '${esc(curScen().name)}'의 모든 녹음이 같이 써요. ⋯에서 캐릭터 이름을 넣으면 로그에 발언자와 같이 나와요.</div>`:""}
+    ${curScen()?`<div class="tip" style="margin:-4px 0 8px">이 목록은 '${esc(curScen().name)}'의 모든 녹음이 같이 써요. ⋯에서 캐릭터 이름을 넣으면 로그에 플레이어와 같이 나와요.</div>`:""}
     <div id="splist">${sp.map((s,i)=>`
       <div class="spk ${S.spFilter===s.k?"on":""}" data-k="${s.k}" style="--c:${fixC(s.c)}">
         <span class="key">${i<9?i+1:""}</span><span class="dot"></span>
@@ -1579,18 +1579,18 @@ function scenHTML(){
         <div style="display:flex;gap:6px;margin-top:8px"><button type="button" id="e-ogup">이미지 올리기</button>${d.og?`<button type="button" class="ghost" id="e-ogdel">지우기</button>`:""}<input type="file" id="e-ogfile" accept="image/*" style="display:none"></div>
       </div>
       <div class="sc-sec"><h4>개요</h4><textarea id="e-sum" placeholder="배경, 도입, 목표, 등장 NPC 등">${esc(d.summary||"")}</textarea></div>
-      <div class="sc-sec"><h4>발언자 · 등장인물</h4>
+      <div class="sc-sec"><h4>플레이어 · 등장인물</h4>
         ${(()=>{const c=SCC[sc.id];const zero=c?d.sp.filter(p=>p.k!==d.gm&&!(c[p.k]>0)).length:0;return `
-        <div class="roster ed"><span></span><span class="h">발언자 (로그에 나오는 이름)</span><span class="h">등장인물</span><span class="h">GM</span><span class="h" style="text-align:right">대사</span><span class="h" style="text-align:right">순서 · 지우기</span>
+        <div class="roster ed"><span></span><span class="h">플레이어 (로그에 나오는 이름)</span><span class="h">등장인물</span><span class="h">GM</span><span class="h" style="text-align:right">대사</span><span class="h" style="text-align:right">순서 · 지우기</span>
         ${d.sp.map((p,i)=>{const n=c?(c[p.k]||0):null;return `<button class="swatch" data-sw="${i}" style="--c:${fixC(p.c)}" title="색 바꾸기"></button>
           <input type="text" data-nm="${i}" value="${esc(p.name)}"><input type="text" data-ch="${i}" value="${esc(p.ch||"")}" placeholder="(선택)">
           <input type="radio" name="gm" data-gm="${p.k}" ${d.gm===p.k?"checked":""} title="GM으로 지정">
           <span class="cnum">${n===null?"…":n}</span>
-          <span class="mgb"><button type="button" class="ghost" data-emv="${i}" data-d="-1" title="위로" ${i===0?"disabled":""}>↑</button><button type="button" class="ghost" data-emv="${i}" data-d="1" title="아래로" ${i===d.sp.length-1?"disabled":""}>↓</button><button type="button" class="ghost" data-edel="${i}" title="${n===0?"목록에서 지우기":"대사가 있어서 못 지워요 (로그 화면에서 다른 발언자로 옮긴 뒤 지울 수 있어요)"}" ${n===0?"":"disabled"}>🗑</button></span>`;}).join("")}
+          <span class="mgb"><button type="button" class="ghost" data-emv="${i}" data-d="-1" title="위로" ${i===0?"disabled":""}>↑</button><button type="button" class="ghost" data-emv="${i}" data-d="1" title="아래로" ${i===d.sp.length-1?"disabled":""}>↓</button><button type="button" class="ghost" data-edel="${i}" title="${n===0?"목록에서 지우기":"대사가 있어서 못 지워요 (로그 화면에서 다른 플레이어로 옮긴 뒤 지울 수 있어요)"}" ${n===0?"":"disabled"}>🗑</button></span>`;}).join("")}
         </div>
         <div style="margin-top:6px;display:flex;gap:12px;align-items:center;flex-wrap:wrap"><label class="chk"><input type="radio" name="gm" data-gm="" ${d.gm?"":"checked"}>GM 없음</label>
-          ${zero?`<button type="button" class="ghost" id="ezero">대사 없는 발언자 ${zero}명 한꺼번에 지우기</button>`:""}</div>
-        <div class="tip" style="margin-top:8px">↑↓로 바꾼 순서가 로그 화면의 숫자키 순서예요(GM은 늘 1번). 🗑는 대사가 하나도 없는 발언자만 지울 수 있어요. 바꾼 내용은 <b>저장</b>을 눌러야 반영돼요.</div>`;})()}
+          ${zero?`<button type="button" class="ghost" id="ezero">대사 없는 플레이어 ${zero}명 한꺼번에 지우기</button>`:""}</div>
+        <div class="tip" style="margin-top:8px">↑↓로 바꾼 순서가 로그 화면의 숫자키 순서예요(GM은 늘 1번). 🗑는 대사가 하나도 없는 플레이어만 지울 수 있어요. 바꾼 내용은 <b>저장</b>을 눌러야 반영돼요.</div>`;})()}
       </div>
 
       ${S.canAdmin&&S.scens.length>1?`<div class="sc-sec"><h4>다른 시나리오와 합치기</h4>
@@ -1605,7 +1605,7 @@ function scenHTML(){
     <div class="sc-top"><h2>${esc(sc.name)}</h2>${sc.system?`<span class="sys">${esc(sc.system)}</span>`:""}${S.canWrite?`<button id="scedit">✎ 수정</button>`:""}</div>
     ${sc.og?`<div class="ogcard view"><img src="${sc.og}" alt=""></div>`:""}
     <div class="sc-sec"><h4>개요</h4>${txt(sc.summary,"아직 개요가 없어요."+(S.canWrite?" ✎ 수정을 눌러 써 주세요.":""))}</div>
-    <div class="sc-sec"><h4>발언자 · 등장인물</h4>${sc.sp.length?(`<div class="roster" style="grid-template-columns:16px 1fr 1fr"><span></span><span class="h">발언자</span><span class="h">등장인물</span>${gmFirst(sc.sp.filter(p=>!isAnon(p)),gmKey(sc)).map(p=>`<span class="dot" style="--c:${fixC(p.c)}"></span><span>${p.k===gmKey(sc)?gmTag+" ":""}<b>${esc(p.name)}</b></span><span style="color:var(--dim);font-size:13.5px">${esc(p.ch||(p.k===gmKey(sc)?"게임 마스터":""))}</span>`).join("")}</div>`):`<div class="sc-text empty">녹음을 올리면 화자가 여기 모여요.</div>`}</div>
+    <div class="sc-sec"><h4>플레이어 · 등장인물</h4>${sc.sp.length?(`<div class="roster" style="grid-template-columns:16px 1fr 1fr"><span></span><span class="h">플레이어</span><span class="h">등장인물</span>${gmFirst(sc.sp.filter(p=>!isAnon(p)),gmKey(sc)).map(p=>`<span class="dot" style="--c:${fixC(p.c)}"></span><span>${p.k===gmKey(sc)?gmTag+" ":""}<b>${esc(p.name)}</b></span><span style="color:var(--dim);font-size:13.5px">${esc(p.ch||(p.k===gmKey(sc)?"게임 마스터":""))}</span>`).join("")}</div>`):`<div class="sc-text empty">녹음을 올리면 화자가 여기 모여요.</div>`}</div>
     <div class="sc-sec"><h4>녹음</h4>${days.length?daysHTML(days):`<div class="sc-text empty">아직 녹음이 없어요. 목록 화면에서 txt를 올릴 때 시나리오를 '${esc(sc.name)}'(으)로 고르면 여기 묶여요.</div>`}</div>
     ${S.canAdmin?`    <div class="sc-sec"><h4>시나리오 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
       <div class="tip" style="margin-bottom:10px">링크와 비밀번호를 같이 받은 사람만 이 시나리오를 보고 고칠 수 있어요. 비밀번호를 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
@@ -1615,8 +1615,8 @@ function scenHTML(){
     </div>`:""}
   </div>`;
 }
-// 시나리오 페이지에서 발언자 순서 바꾸기·안 쓰는 발언자 지우기
-// SCC: 시나리오별 발언자 대사 수 (모든 녹음 합계), 맨 위에 선언
+// 시나리오 페이지에서 플레이어 순서 바꾸기·안 쓰는 플레이어 지우기
+// SCC: 시나리오별 플레이어 대사 수 (모든 녹음 합계), 맨 위에 선언
 async function loadScenCounts(sc){
   const m={};
   for(const s of S.sessions.filter(x=>info(x).scen===sc.name)){
@@ -1629,16 +1629,16 @@ function spManageHTML(sc){
   const g=gmKey(sc),c=SCC[sc.id];
   const list=gmFirst(sc.sp,g);
   const zero=c?list.filter(p=>p.k!==g&&!(c[p.k]>0)).length:0;
-  return `<div class="tip" style="margin-bottom:8px">↑↓로 순서를 바꾸면 로그 화면의 숫자키 순서도 바뀌어요. 대사가 하나도 없는 발언자는 🗑로 지울 수 있어요. GM은 늘 맨 앞이에요.</div>
-  <div class="roster mg"><span></span><span class="h">발언자</span><span class="h">등장인물</span><span class="h" style="text-align:right">대사</span><span></span>
+  return `<div class="tip" style="margin-bottom:8px">↑↓로 순서를 바꾸면 로그 화면의 숫자키 순서도 바뀌어요. 대사가 하나도 없는 플레이어는 🗑로 지울 수 있어요. GM은 늘 맨 앞이에요.</div>
+  <div class="roster mg"><span></span><span class="h">플레이어</span><span class="h">등장인물</span><span class="h" style="text-align:right">대사</span><span></span>
   ${list.map((p,i)=>{const n=c?(c[p.k]||0):null;const isG=p.k===g;
     return `<span class="dot" style="--c:${fixC(p.c)}"></span>
     <span>${isG?gmTag+" ":""}<b style="${n===0?"color:var(--faint)":""}">${esc(p.name)}</b></span>
     <span style="color:var(--dim);font-size:13.5px">${esc(p.ch||(isG?"게임 마스터":""))}</span>
     <span class="cnum">${n===null?"…":n}</span>
-    <span class="mgb">${isG?"":`<button class="ghost" data-mv="${p.k}" data-d="-1" title="위로" ${i<=(g?1:0)?"disabled":""}>↑</button><button class="ghost" data-mv="${p.k}" data-d="1" title="아래로" ${i===list.length-1?"disabled":""}>↓</button><button class="ghost" data-spdel="${p.k}" title="${n===0?"지우기":"대사가 있어서 못 지워요 (로그 화면에서 다른 발언자로 옮긴 뒤 지울 수 있어요)"}" ${n===0?"":"disabled"}>🗑</button>`}</span>`;}).join("")}
+    <span class="mgb">${isG?"":`<button class="ghost" data-mv="${p.k}" data-d="-1" title="위로" ${i<=(g?1:0)?"disabled":""}>↑</button><button class="ghost" data-mv="${p.k}" data-d="1" title="아래로" ${i===list.length-1?"disabled":""}>↓</button><button class="ghost" data-spdel="${p.k}" title="${n===0?"지우기":"대사가 있어서 못 지워요 (로그 화면에서 다른 플레이어로 옮긴 뒤 지울 수 있어요)"}" ${n===0?"":"disabled"}>🗑</button>`}</span>`;}).join("")}
   </div>
-  ${zero?`<button class="ghost" id="spzero" style="margin-top:8px">대사 없는 발언자 ${zero}명 한꺼번에 지우기</button>`:""}`;
+  ${zero?`<button class="ghost" id="spzero" style="margin-top:8px">대사 없는 플레이어 ${zero}명 한꺼번에 지우기</button>`:""}`;
 }
 function bindSpManage(sc){
   if(!S.canWrite||!sc)return;
@@ -1651,8 +1651,8 @@ function bindSpManage(sc){
     mutateScen(sc.id,L=>{const pos=new Map(order.map((k,i)=>[k,i]));L.sp=[...L.sp.filter(p=>pos.has(p.k)).sort((a,b)=>pos.get(a.k)-pos.get(b.k)),...L.sp.filter(p=>!pos.has(p.k))];});render();
   });
   const del=ks=>{mutateScen(sc.id,L=>{L.sp=L.sp.filter(x=>!ks.includes(x.k));});render();toast(ks.length>1?`${ks.length}명 지웠어요`:"지웠어요");};
-  document.querySelectorAll("[data-spdel]").forEach(b=>b.onclick=()=>{const p=sc.sp.find(x=>x.k===b.dataset.spdel);if(p)confirmBox(`'${p.name}'을(를) 발언자 목록에서 지울까요?`,"지우기",()=>del([p.k]));});
-  const z=$("#spzero");if(z)z.onclick=()=>{const c=SCC[sc.id]||{},g=gmKey(sc);const ks=sc.sp.filter(p=>p.k!==g&&!(c[p.k]>0)).map(p=>p.k);confirmBox(`대사가 하나도 없는 발언자 ${ks.length}명을 지울까요?`,"지우기",()=>del(ks));};
+  document.querySelectorAll("[data-spdel]").forEach(b=>b.onclick=()=>{const p=sc.sp.find(x=>x.k===b.dataset.spdel);if(p)confirmBox(`'${p.name}'을(를) 플레이어 목록에서 지울까요?`,"지우기",()=>del([p.k]));});
+  const z=$("#spzero");if(z)z.onclick=()=>{const c=SCC[sc.id]||{},g=gmKey(sc);const ks=sc.sp.filter(p=>p.k!==g&&!(c[p.k]>0)).map(p=>p.k);confirmBox(`대사가 하나도 없는 플레이어 ${ks.length}명을 지울까요?`,"지우기",()=>del(ks));};
 }
 // 녹음 목록을 다 받아온 뒤에만 대사 수를 세요 (빈 목록으로 세면 모두 0이 돼요)
 function sessionsReady(id){return S.canAdmin?!!SUB.sessData.all:!!SUB.sessData[id];}
