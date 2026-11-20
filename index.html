@@ -111,6 +111,9 @@ mark{background:#f2c970;color:inherit;border-radius:3px}
 .ro .act .w{display:none}
 .tx textarea{width:100%;min-height:60px;resize:vertical;line-height:1.6}
 .edhint{font-size:11.5px;color:var(--faint);margin-top:3px}
+.nouns{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 8px}
+.noun{display:inline-flex;align-items:center;gap:2px;background:#fffdf8;border:1px solid var(--line);border-radius:999px;padding:1px 4px 1px 10px;font-size:13px}
+.noun button{padding:0 5px;font-size:13px;line-height:1.3;color:#9a8a78}
 .row.dice{margin:6px 0}
 .row.dice .body{box-shadow:none}
 .row.dice .tx{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;background:#f7f3ec;border:1px solid #e8dcc8;border-left:3px solid var(--c);border-radius:8px;padding:6px 12px;max-width:none;font-size:14px}
@@ -947,6 +950,9 @@ function renderSide(){
       </div></div>
     ${hidden?`<button class="ghost zt" id="zerot">${S.showZero?"대사 없는 화자 숨기기":`이 녹음에 대사 없는 화자 ${hidden}명 보기`}</button>`:""}
     ${S.canWrite?`<div class="addsp"><input type="text" id="newsp" placeholder="새 화자 이름 (예: 코코)"><button id="addsp">추가</button></div>`:""}
+    ${curScen()?`<h3>고유명사 · 로그에서 글자를 드래그해서 바꿔요</h3>
+    <div class="nouns">${nouns().map(n=>`<span class="noun">${esc(n)}${S.canWrite?`<button class="ghost" data-ndel="${esc(n)}" title="목록에서 빼기">×</button>`:""}</span>`).join("")||'<span class="tip">아직 없어요</span>'}</div>
+    ${S.canWrite?`<div class="addsp"><input type="text" id="newnoun" placeholder="예: 카엘렌, 에버론"><button id="addnoun">추가</button></div>`:""}`:""}
     <h3 class="tip usage">사용법</h3>
     <div class="tip usage">
       대사를 클릭해 고르고 숫자키 <kbd>1</kbd>~<kbd>9</kbd>로 화자를 바꿔요. 이름을 클릭해도 바꿀 수 있어요.<br>
@@ -984,7 +990,7 @@ function rowHTML(e,prev){
   if(e.b.s===NOTE){const b=e.b;
     return `<div class="row note${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
-    <div class="body"><div class="tx">${b.x?hl(b.x).replace(/\n/g,"<br>"):'<span class="ph">상황 묘사</span>'}</div></div>
+    <div class="body"><div class="tx">${b.x?`<span>${b.x.split("\n").map(l=>`<span class="ln">${hl(l)}</span>`).join("<br>")}</span>`:'<span class="ph">상황 묘사</span>'}</div></div>
     <div class="act">
       <button class="w" data-act="note" title="아래에 상황 묘사 추가 (N)">＋상황</button>
       <button class="w" data-act="dice" title="아래에 주사위 추가 (D)">＋🎲</button>
@@ -1172,6 +1178,51 @@ function editDice(r,e){
   (b.w?f("r"):f("w")).focus();
 }
 
+// ---------- 고유명사: 드래그한 글자를 등록된 이름으로 바꾸기 ----------
+const nouns=()=>(curScen()?.nouns||[]);
+function addNoun(...ns){ns=ns.map(n=>n.trim()).filter(n=>n&&!nouns().includes(n));const sc=curScen();if(!ns.length||!sc)return;
+  mutateScen(sc.id,d=>{d.nouns=d.nouns||[];ns.forEach(n=>{if(!d.nouns.includes(n))d.nouns.push(n);});});renderSide();}
+function delNoun(n){const sc=curScen();if(!sc)return;mutateScen(sc.id,d=>{d.nouns=(d.nouns||[]).filter(x=>x!==n);});renderSide();}
+function selInfo(){
+  const sel=getSelection();if(!sel||sel.isCollapsed||!sel.rangeCount)return null;
+  const r=sel.getRangeAt(0);
+  const ln=n=>(n.nodeType===1?n:n.parentElement)?.closest(".ln");
+  const a=ln(r.startContainer),z=ln(r.endContainer);
+  if(!a||a!==z)return null;
+  const row=a.closest(".row");if(!row||row.classList.contains("editing"))return null;
+  const e=S.byId.get(row.dataset.id);if(!e||e.b.s===DICE)return null;
+  const li=[...row.querySelectorAll(".ln")].indexOf(a);
+  const pre=document.createRange();pre.selectNodeContents(a);pre.setEnd(r.startContainer,r.startOffset);
+  let st=pre.toString().length,en=st+r.toString().length;
+  const line=(e.b.x.split("\n")[li])||"";
+  while(st<en&&/\s/.test(line[st]))st++;while(en>st&&/\s/.test(line[en-1]))en--;
+  if(en<=st)return null;
+  return {id:e.b.id,li,st,en,word:line.slice(st,en),rect:r.getBoundingClientRect()};
+}
+function replaceAt(si,to){
+  const e=S.byId.get(si.id);if(!e)return;
+  const lines=e.b.x.split("\n");const l=lines[si.li];
+  if(l==null||l.slice(si.st,si.en)!==si.word){toast("그 사이에 글이 바뀌었어요. 다시 골라 주세요");return;}
+  lines[si.li]=l.slice(0,si.st)+to+l.slice(si.en);
+  doOps([{ci:e.ci,op:{t:"set",id:si.id,f:{x:lines.join("\n")}}}],"고유명사 바꾸기");
+  updateRow(si.id);toast(`'${si.word}' → '${to}'`);
+}
+function nounMenu(si){
+  const list=nouns();
+  popAt({getBoundingClientRect:()=>si.rect},`<div class="tip" style="padding:2px 8px 4px">'${esc(si.word)}'을(를) 바꾸기</div>
+    ${list.length?list.map(n=>`<button data-n="${esc(n)}">${esc(n)}</button>`).join(""):'<div class="tip" style="padding:2px 8px">아직 등록된 고유명사가 없어요</div>'}
+    <hr><input type="text" id="nnew" placeholder="새 이름 입력 후 Enter (목록에도 추가)">
+    ${list.includes(si.word)?"":`<button data-reg title="고른 글자를 그대로 고유명사로 등록">＋ '${esc(si.word)}' 를 목록에 등록</button>`}`,p=>{
+    p.querySelectorAll("[data-n]").forEach(b=>b.onclick=()=>{closePop();getSelection().removeAllRanges();replaceAt(si,b.dataset.n);});
+    const inp=$("#nnew",p);inp.onkeydown=ev=>{ev.stopPropagation();if(ev.key==="Enter"){const v=inp.value.trim();if(!v)return;closePop();addNoun(v);replaceAt(si,v);}if(ev.key==="Escape")closePop();};
+    const rg=p.querySelector("[data-reg]");if(rg)rg.onclick=()=>{closePop();addNoun(si.word);toast("등록했어요");};
+  });
+}
+document.addEventListener("mouseup",ev=>{
+  if(!S.canWrite||!curScen()||!ev.target.closest||!ev.target.closest("#log"))return;
+  setTimeout(()=>{const si=selInfo();if(si)nounMenu(si);},0);
+});
+
 // ---------- audio ----------
 function bindAudio(a){
   a.addEventListener("timeupdate",onTime);
@@ -1232,6 +1283,8 @@ function bindSide(){
     el.querySelector('[data-act=filter]').onclick=()=>{S.spFilter=S.spFilter===k?null:k;renderSide();renderAllRows();window.scrollTo(0,0);};
     const m=el.querySelector('[data-act=menu]');if(m)m.onclick=()=>spMenu(m,k);
   });
+  document.querySelectorAll("[data-ndel]").forEach(b=>b.onclick=()=>delNoun(b.dataset.ndel));
+  const an=$("#addnoun");if(an){const inp=$("#newnoun");const go=()=>{addNoun(...inp.value.split(/[,，]/));};an.onclick=go;inp.onkeydown=ev=>{if(ev.key==="Enter")go();ev.stopPropagation();};}
   const add=$("#addsp");if(add){const inp=$("#newsp");const go=()=>{if(addSpeaker(inp.value)){toast("추가했어요. 숫자키로 바로 지정할 수 있어요");}};add.onclick=go;inp.onkeydown=ev=>{if(ev.key==="Enter")go();ev.stopPropagation();};}
 }
 let qTimer;
