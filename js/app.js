@@ -562,7 +562,8 @@ function themeOf(sc){
 }
 function applyTheme(){
   const sc=S.cid?(S.scEdit&&S.scDraft?S.scDraft:scenById(S.cid)):(S.sid&&S.meta?curScen():null);
-  const t=!S.cid&&!S.sid&&!S.local?"plain":themeOf(sc);
+  // 시나리오 정보가 아직 안 왔으면 양피지 대신 메인 화면 색으로 기다려요
+  const t=!S.cid&&!S.sid&&!S.local?"plain":!sc&&!S.local?"plain":themeOf(sc);
   if((document.body.dataset.theme||"")!==t){if(t)document.body.dataset.theme=t;else delete document.body.dataset.theme;}
   document.body.dataset.page=S.cid?"scen":S.sid?"log":"home";
 }
