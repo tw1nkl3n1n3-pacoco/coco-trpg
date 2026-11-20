@@ -179,7 +179,7 @@ h1,h2,.scen-h h3{color:#4a2c17}
 .scen-h .d{font-size:12.5px;color:var(--faint)}
 .day{display:flex;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--line);flex-wrap:wrap}
 .day-h{display:flex;gap:10px;align-items:baseline;min-width:190px}
-.dexp{font-size:11px;padding:1px 7px;border-radius:6px;opacity:.75}.dexp:hover{opacity:1}
+.dexp{font-size:12px;font-weight:600;padding:2px 10px;border-radius:7px;border:1px solid var(--acc2)!important;color:var(--acc2)!important;background:#fffaf0!important;white-space:nowrap;align-self:center}.dexp:hover{background:var(--acc2)!important;color:#fff8ec!important}
 .day-h .nth{font-size:12px;color:#fff8ec;background:var(--acc2);border-radius:6px;padding:1px 7px}
 .parts{display:flex;gap:6px;flex-wrap:wrap}
 .part{display:flex;gap:6px;align-items:baseline;text-decoration:none;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:4px 11px}
@@ -1569,7 +1569,7 @@ function homeHTML(){
         <div class="scen-h"><h3><a href="#" data-scen="${esc(g.scen)}" title="개요 보기">${esc(g.scen)} ›</a></h3>${g.sc?.system?`<span class="sys">${esc(g.sc.system)}</span>`:""}<span class="d">${g.sc&&!isOpen(g.sc.id)?(g.sc.lastDay?`${g.sc.nDays||1}회차 · 마지막 ${esc(fmtDay(g.sc.lastDay))} 🔒`:"🔒"):g.days.length?`${g.days.length}회차 · 마지막 ${esc(fmtDay(g.last))}`:"아직 녹음 없음"}</span></div>
         ${g.sc?.summary?`<div class="sum">${esc(g.sc.summary)}</div>`:""}
         ${castHTML(g.sc)}
-        ${g.sc&&!isOpen(g.sc.id)?"":daysHTML(g.days)}
+        ${g.sc&&!isOpen(g.sc.id)?"":daysHTML(g.days,false)}
       </section>`).join("")||(S.ready&&S.db&&S.loaded?`<div class="notice">아직 올린 세션이 없어요.${S.canAdmin?" 아래에서 클로바노트 txt를 올려 주세요.":""}</div>`:"")}</div>
     ${can?`<div class="addscen"><input type="text" id="nscen" placeholder="새 시나리오 이름 (녹음 전에 개요부터 써둘 때)"><button id="nscenb">+ 시나리오</button></div>`:""}
     ${can||!S.db?`<div class="card">
@@ -1626,10 +1626,10 @@ function castHTML(sc){
   if(!cast.length)return "";
   return `<div class="cast">${cast.map(p=>`<span class="castc${p.k===g?" gm":""}" style="--c:${fixC(p.c)}">${p.k===g?gmTag:'<span class="dot"></span>'}<b>${esc(p.name)}</b>${p.ch?`<span>${esc(p.ch)}</span>`:""}</span>`).join("")}</div>`;
 }
-function daysHTML(days){
+function daysHTML(days,gear=true){
   return days.map((d,i)=>`<div class="day">
-    <div class="day-h"><span class="nth">${i+1}회차</span><span>${esc(fmtDay(d.day))}</span>${S.db&&d.parts.length?`<button class="ghost dexp" data-exps="${esc(d.parts[0].scen)}" data-expd="${esc(d.day)}" title="이 회차 로그를 HTML 파일로 받기">HTML</button>`:""}</div>
-    <div class="parts">${d.parts.map(p=>`<span class="partw"><a class="part" href="#s-${esc(p.id)}"><b>${p.part}부</b><span>${p.n?p.n+"개 대사":""}</span></a>${S.canAdmin&&S.db?`<button class="pset" data-edit="${esc(p.id)}" title="시나리오·날짜·순서·녹음 링크 고치기">⚙</button>`:""}</span>`).join("")}</div>
+    <div class="day-h"><span class="nth">${i+1}회차</span><span>${esc(fmtDay(d.day))}</span>${S.db&&d.parts.length?`<button class="ghost dexp" data-exps="${esc(d.parts[0].scen)}" data-expd="${esc(d.day)}" title="이 회차 로그를 HTML 파일로 받기">⬇ HTML 받기</button>`:""}</div>
+    <div class="parts">${d.parts.map(p=>`<span class="partw"><a class="part" href="#s-${esc(p.id)}"><b>${p.part}부</b><span>${p.n?p.n+"개 대사":""}</span></a>${gear&&S.canAdmin&&S.db?`<button class="pset" data-edit="${esc(p.id)}" title="시나리오·날짜·순서·녹음 링크 고치기">⚙</button>`:""}</span>`).join("")}</div>
   </div>`).join("");
 }
 async function gotoScen(name,edit){
