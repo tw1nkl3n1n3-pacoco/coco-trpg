@@ -10,7 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script src="firebase-config.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Gowun+Batang:wght@400;700&family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#efe3cc; --panel:#fbf6ec; --panel2:#f3e8d4; --line:#d9c4a3; --ink:#3b2a1a; --dim:#6b5440; --faint:#9a8469;
@@ -323,32 +323,160 @@ a.scl:hover{color:var(--acc2)}
 }
 
 /* ===== 시나리오 테마 (data-theme) ===== */
-body[data-theme=wa]{--bg:#ecebe6;--panel:#f8f7f3;--panel2:#efede7;--line:#d6d3cb;--ink:#1f1f1f;--dim:#55534d;--faint:#8a8780;--acc:#b8352a;--acc2:#3d3a35;--sel:#ebe6da;--play:#f4e5d9;--gold:#b8352a;background:#ecebe6}
-body[data-theme=wa] header,body[data-theme=wa] #pbar{background:rgba(248,247,243,.96);box-shadow:none}
-body[data-theme=wa] #log{background:#fdfcf8;box-shadow:none;border-color:#dcd8ce}
-body[data-theme=wa] .row:hover{background:#f6f4ee}body[data-theme=wa] .row.sel{border-color:#c9c2b2}
-body[data-theme=wa] button.pri{background:#b8352a;border-color:#8f2a20;box-shadow:none}
-body[data-theme=wa] .row.sec .tx{color:#1f1f1f;border-bottom:1px solid #1f1f1f}
-body[data-theme=wa] .row.sec.l2 .tx{border-bottom:0;border-left:3px solid #b8352a;color:#2a2a2a}
-body[data-theme=wa] .row.sec.l3 .tx{color:#55534d;border-bottom:1px dashed #cfcac0}
-body[data-theme=wa] .row.hand .body{background:#f7f5ee;border-color:#d6d0c2;box-shadow:none}
-body[data-theme=wa] .nb{background:#ece8de;box-shadow:inset 0 -1px 0 #cfc8b8}
-body[data-theme=wa] .sc-sec,body[data-theme=wa] .card{box-shadow:none}
-body[data-theme=deco]{--bg:#e9e4d6;--panel:#f8f4ea;--panel2:#efe9da;--line:#d3c8aa;--ink:#1e2b26;--dim:#45554d;--faint:#868672;--acc:#1f4a3d;--acc2:#7a5a1e;--sel:#e5dfc6;--play:#efe3bf;--gold:#b08a3e;background:#e9e4d6}
-body[data-theme=deco] header{background:#1f4a3d;border-bottom:3px solid #b08a3e;box-shadow:none;--ink:#f3ead2;--dim:#d8ceb2;--faint:#b9ae90;--line:#3d6b5c;--panel:#285646;--panel2:#285646;--acc:#b08a3e;--acc2:#e3c98a;color:#f3ead2}
-body[data-theme=deco] header button.ghost:hover{background:#285646}body[data-theme=deco] header .status.ok{color:#cfe3b0}
-body[data-theme=deco] header h1,body[data-theme=deco] header h2{color:#f3ead2}
-body[data-theme=deco] #pbar{background:rgba(248,244,234,.97);border-top:2px solid #b08a3e}
-body[data-theme=deco] #log{background:#fbf8f0;border-color:#d3c8aa;box-shadow:0 0 0 4px #f1ead6,0 0 0 5px #d3c8aa}
-body[data-theme=deco] .row:hover{background:#f3eee0}
-body[data-theme=deco] button.pri{background:#1f4a3d;border-color:#143229;box-shadow:0 1px 0 #b08a3e}
-body[data-theme=deco] h1,body[data-theme=deco] h2{color:#1f4a3d;letter-spacing:.03em}
-body[data-theme=deco] .row.sec .tx{color:#1f4a3d;border-bottom:3px double #b08a3e;letter-spacing:.06em}
-body[data-theme=deco] .row.sec.l2 .tx{border-bottom:0;border-left:4px solid #b08a3e;color:#2a4a3e;letter-spacing:.03em}
-body[data-theme=deco] .row.sec.l3 .tx{color:#5a6a5e;border-bottom:1px dotted #c9b88a;letter-spacing:0}
-body[data-theme=deco] .row.hand .body{background:#f6f0dc;border:1px solid #b08a3e;box-shadow:inset 0 0 0 3px #fbf8f0,inset 0 0 0 4px #e0d2a6}
-body[data-theme=deco] .nb{background:#e8e1c8;box-shadow:inset 0 -1px 0 #c9b88a}
-body[data-theme=deco] .sc-sec{border-color:#cdbf98}
+/* --- 양피지: 판타지 서적 --- */
+body:not([data-theme]) .row.sec.l1 .tx{text-align:center;border-bottom:0;display:flex;align-items:center;gap:14px;justify-content:center;font-size:20px;letter-spacing:.04em}
+body:not([data-theme]) .row.sec.l1 .tx::before,body:not([data-theme]) .row.sec.l1 .tx::after{content:"";flex:1;max-width:200px;height:1px;background:linear-gradient(90deg,transparent,#b8935a)}
+body:not([data-theme]) .row.sec.l1 .tx::after{background:linear-gradient(90deg,#b8935a,transparent)}
+body:not([data-theme]) .row.sec.l1 .tx .ln::before{content:"❧ ";color:#b8935a;font-weight:400}
+body:not([data-theme]) .row.sec.l1 .tx .ln::after{content:" ☙";color:#b8935a;font-weight:400}
+body:not([data-theme]) #log{background:#fffdf9}
+
+/* --- 괴담: 공포 · 호러 (key: wa) --- */
+body[data-theme=wa]{--bg:#d4d4d4;--panel:#f6f6f6;--panel2:#ececec;--line:#c4c4c4;--ink:#0d0d0d;--dim:#444;--faint:#808080;--acc:#b0101a;--acc2:#0d0d0d;--sel:#f7e1e2;--play:#f2ecec;--gold:#b0101a;--ok:#5f8a4a;
+  background:radial-gradient(ellipse at 50% 30%,#e6e6e6 0%,#cfcfcf 60%,#a9a9a9 100%) fixed}
+body[data-theme=wa] header{background:#0a0a0a;border-bottom:0;box-shadow:0 2px 0 #b0101a,0 6px 18px rgba(0,0,0,.35);--ink:#ece6da;--dim:#bcb3a6;--faint:#8a8178;--line:#2e2828;--panel:#1d1a1a;--panel2:#1d1a1a;--acc:#c23a3a;color:#ece6da}
+body[data-theme=wa] header h1,body[data-theme=wa] header .scl{font-family:"Noto Serif KR","Gowun Batang",serif;font-weight:700;letter-spacing:.08em;color:#ece6da!important;border-bottom-color:#b0101a}
+body[data-theme=wa] header button.ghost:hover{background:#1d1a1a}
+body[data-theme=wa] header .status.ok{color:#a9c191}
+body[data-theme=wa] .pchip{border-radius:2px!important;background:#1d1a1a!important;color:#bcb3a6!important;border-color:#3a3232!important}
+body[data-theme=wa] .pchip.on{background:#b0101a!important;color:#fff!important;border-color:#b0101a!important}
+body[data-theme=wa] #pbar{background:#0a0a0a;border-top:0;box-shadow:0 -2px 0 #b0101a,0 -6px 18px rgba(0,0,0,.3);--ink:#ece6da;--dim:#bcb3a6;--faint:#8a8178;--line:#2e2828;--panel2:#1d1a1a;color:#ece6da}
+body[data-theme=wa] #pbar select{background:#1d1a1a;color:#ece6da;border-color:#3a3232}
+body[data-theme=wa] #pbar input[type=range]{accent-color:#c23a3a}
+body[data-theme=wa] aside{border-right:2px solid #0d0d0d}
+body[data-theme=wa] .foldh{border-bottom:1px solid #2a2222;font-family:"Noto Serif KR",serif;white-space:nowrap}body[data-theme=wa] .foldh .fsub{overflow:hidden;text-overflow:ellipsis}
+body[data-theme=wa] .foldh .car,body[data-theme=wa] .foldh .fc{color:#b0101a}
+body[data-theme=wa] .spk{border-radius:2px}
+body[data-theme=wa] .secadd,body[data-theme=wa] .secb .sp,body[data-theme=wa] .sectog,body[data-theme=wa] .foldh .fsub,body[data-theme=wa] .who small{color:#808080}
+body[data-theme=wa] input[type=text],body[data-theme=wa] input[type=search],body[data-theme=wa] select,body[data-theme=wa] textarea{background:#fff;border-radius:0}
+body[data-theme=wa] button{border-radius:0}
+body[data-theme=wa] #log{border:2px solid #0d0d0d;border-radius:0;box-shadow:6px 6px 0 #b0101a;
+  background:#fcfcfb}
+body[data-theme=wa] .row{border-radius:1px}
+body[data-theme=wa] .row:hover{background:rgba(142,27,27,.04)}
+body[data-theme=wa] .row.sel{background:#f7e1e2;border-color:#d98a8e}
+body[data-theme=wa] .row.gm{background:transparent}
+body[data-theme=wa] .row.gm .tx{color:#141111}
+body[data-theme=wa] .row.gm .body{box-shadow:inset 2px 0 0 #141111}
+body[data-theme=wa] .body{box-shadow:inset 1px 0 0 color-mix(in srgb,var(--c) 70%,#141111)}
+body[data-theme=wa] .row.playing .body{box-shadow:inset 3px 0 0 #b0101a}
+body[data-theme=wa] .who{font-family:"Noto Serif KR",serif;font-weight:700;letter-spacing:.03em;filter:saturate(.6) brightness(.75)}
+body[data-theme=wa] .tx{font-family:"Noto Serif KR","Gowun Batang",serif;color:#111;font-size:15px;line-height:1.95}
+body[data-theme=wa] .gmtag{background:#141111;color:#e04848;border-radius:1px;font-family:"Noto Serif KR",serif;letter-spacing:.1em}
+body[data-theme=wa] button.pri{background:#141111;border-color:#141111;color:#ece6da;box-shadow:inset 0 -2px 0 #b0101a;border-radius:2px}
+body[data-theme=wa] button.pri:hover{background:#b0101a;border-color:#b0101a}
+body[data-theme=wa] .row.sec .tx{font-family:"Noto Serif KR",serif}
+body[data-theme=wa] .row.sec.l1 .tx{font-size:21px;color:#141111;text-align:center;letter-spacing:.35em;border-bottom:0;padding:6px 0 14px;
+  background:linear-gradient(90deg,transparent 8%,#b0101a 30%,#6a0a10 50%,#b0101a 70%,transparent 92%) bottom center/70% 3px no-repeat}
+body[data-theme=wa] .row.sec.l2 .tx{color:#141111;border-left:0;border-bottom:0;padding-left:0;letter-spacing:.12em}
+body[data-theme=wa] .row.sec.l2 .tx .ln::before{content:"";display:inline-block;width:4px;height:16px;background:#b0101a;margin-right:10px;vertical-align:-2px}
+body[data-theme=wa] .row.sec.l3 .tx{color:#4a4340;border-bottom:0;letter-spacing:.06em}
+body[data-theme=wa] .row.sec.l3 .tx .ln::before{content:"‥ ";color:#b0101a}
+body[data-theme=wa] .row.note .tx{font-family:"Noto Serif KR",serif;color:#333;font-style:italic;letter-spacing:.04em}
+body[data-theme=wa] .row.note .tx::before,body[data-theme=wa] .row.note .tx::after{border-top:1px solid #0d0d0d;max-width:50px}
+body[data-theme=wa] .row.dice .tx{background:#fff;border:1px solid #0d0d0d;border-left:3px solid #b0101a;border-radius:1px}
+body[data-theme=wa] .row.hand .body{background:#fff;border:1px solid #0d0d0d;border-radius:0;box-shadow:4px 4px 0 #0d0d0d;transform:rotate(-.3deg)}
+body[data-theme=wa] .row.hand .tx{font-family:"Noto Serif KR",serif;color:#111}
+body[data-theme=wa] .row.hand .hlab{color:#b0101a;letter-spacing:.2em}
+body[data-theme=wa] .nb{background:transparent;box-shadow:none;border-bottom:1.5px solid #b0101a;border-radius:0;padding:0 1px}
+body[data-theme=wa] .dres.fumble{background:#6a0a10;box-shadow:0 0 0 1px #c23a3a}
+body[data-theme=wa] .sc-sec,body[data-theme=wa] .card{border-radius:1px;box-shadow:4px 4px 0 #0d0d0d;border:1.5px solid #0d0d0d;background:#fcfcfb}
+body[data-theme=wa] .sc-top h2{font-family:"Noto Serif KR",serif;letter-spacing:.1em;color:#141111}
+body[data-theme=wa] .sc-sec h4{color:#b0101a;letter-spacing:.1em}
+
+/* --- 아르데코: 1920년대 특급열차 --- */
+body[data-theme=deco]{--bg:#e8e2d1;--panel:#f8f4e8;--panel2:#efe8d6;--line:#cfc19b;--ink:#1c2a25;--dim:#43544c;--faint:#857f68;--acc:#1f4a3d;--acc2:#8a6420;--sel:#efe3bf;--play:#e3eee6;--gold:#b08a3e;
+  background:#e8e2d1 repeating-linear-gradient(45deg,rgba(176,138,62,.05) 0 1px,transparent 1px 14px),repeating-linear-gradient(-45deg,rgba(176,138,62,.05) 0 1px,transparent 1px 14px)}
+body[data-theme=deco] header{background:#1f4a3d;border-bottom:0;box-shadow:0 3px 0 #b08a3e,0 5px 0 #1f4a3d,0 6px 0 #b08a3e;--ink:#f3ead2;--dim:#d8ceb2;--faint:#b9ae90;--line:#3d6b5c;--panel:#285646;--panel2:#285646;--acc:#c9a24f;--acc2:#e3c98a;color:#f3ead2}
+body[data-theme=deco] header h1{letter-spacing:.12em;color:#f3ead2}
+body[data-theme=deco] header .scl{color:#f3ead2;border-bottom-color:#b08a3e}
+body[data-theme=deco] header button.ghost:hover{background:#285646}
+body[data-theme=deco] header .status.ok{color:#cfe3b0}
+body[data-theme=deco] .pchip.on{background:#b08a3e!important;color:#1f2a24!important;border-color:#b08a3e!important}
+body[data-theme=deco] #pbar{background:#1f4a3d;border-top:0;box-shadow:0 -3px 0 #b08a3e;--ink:#f3ead2;--dim:#d8ceb2;--faint:#b9ae90;--line:#3d6b5c;--panel2:#285646;color:#f3ead2}
+body[data-theme=deco] #pbar select{background:#285646;color:#f3ead2;border-color:#3d6b5c}
+body[data-theme=deco] aside{background:rgba(31,74,61,.05);border-right:1px solid #b08a3e}
+body[data-theme=deco] .foldh{border-bottom:1px solid #b08a3e;letter-spacing:.08em;color:#1f4a3d}
+body[data-theme=deco] .foldh .car{color:#b08a3e}
+body[data-theme=deco] #log{background:#fbf8ef;border:1px solid #b08a3e;border-radius:3px;box-shadow:0 0 0 5px #f3edda,0 0 0 6px #b08a3e,0 8px 18px rgba(31,74,61,.12);margin-top:6px}
+body[data-theme=deco] .row:hover{background:#f4efe1}
+body[data-theme=deco] .row.sel{background:#f1e6c6;border-color:#c9a24f}
+body[data-theme=deco] .row.gm{background:transparent}
+body[data-theme=deco] .row.gm .body{box-shadow:inset 3px 0 0 #b08a3e}
+body[data-theme=deco] .row.playing .body{box-shadow:inset 3px 0 0 #1f4a3d}
+body[data-theme=deco] .who{letter-spacing:.04em}
+body[data-theme=deco] .tx{color:#22302a}
+body[data-theme=deco] .gmtag{background:#1f4a3d;color:#e3c98a;border-radius:0;letter-spacing:.12em;box-shadow:0 0 0 1px #b08a3e}
+body[data-theme=deco] button.pri{background:#1f4a3d;border-color:#b08a3e;color:#f3ead2;box-shadow:none;border-radius:3px;letter-spacing:.05em}
+body[data-theme=deco] button.pri:hover{background:#285646}
+body[data-theme=deco] .row.sec.l1 .tx{text-align:center;color:#1f4a3d;border-bottom:0;letter-spacing:.3em;font-size:18px;display:flex;align-items:center;gap:12px;justify-content:center}
+body[data-theme=deco] .row.sec.l1 .tx::before,body[data-theme=deco] .row.sec.l1 .tx::after{content:"";flex:1;max-width:180px;border-top:1px solid #b08a3e;border-bottom:1px solid #b08a3e;height:3px}
+body[data-theme=deco] .row.sec.l1 .tx .ln::before{content:"◆ ";color:#b08a3e;letter-spacing:0}
+body[data-theme=deco] .row.sec.l1 .tx .ln::after{content:" ◆";color:#b08a3e;letter-spacing:0}
+body[data-theme=deco] .row.sec.l2 .tx{color:#1f4a3d;border-left:0;border-bottom:0;letter-spacing:.14em;padding-left:0}
+body[data-theme=deco] .row.sec.l2 .tx .ln::before{content:"▸ ";color:#b08a3e}
+body[data-theme=deco] .row.sec.l3 .tx{color:#5a6a5e;border-bottom:1px dotted #c9b88a;letter-spacing:.06em}
+body[data-theme=deco] .row.note .tx{color:#5a5a48;letter-spacing:.04em}
+body[data-theme=deco] .row.note .tx::before,body[data-theme=deco] .row.note .tx::after{border-top:1px solid #b08a3e;max-width:90px}
+body[data-theme=deco] .row.note .tx .ln:first-child::before{content:"◇ ";color:#b08a3e}
+body[data-theme=deco] .row.note .tx .ln:last-child::after{content:" ◇";color:#b08a3e}
+body[data-theme=deco] .row.dice .tx{background:#f6f0de;border:1px solid #b08a3e;border-left:3px solid #1f4a3d;border-radius:3px}
+body[data-theme=deco] .row.hand .body{background:#f6f0dc;border:1px solid #b08a3e;border-radius:2px;box-shadow:inset 0 0 0 4px #fbf8f0,inset 0 0 0 5px #b08a3e}
+body[data-theme=deco] .row.hand .hlab{color:#1f4a3d;letter-spacing:.2em}
+body[data-theme=deco] .nb{background:#e7efe9;box-shadow:inset 0 -1px 0 #1f4a3d;color:#1f4a3d}
+body[data-theme=deco] .sc-sec,body[data-theme=deco] .card{border-radius:3px;border-color:#cfc19b;box-shadow:0 0 0 3px #f3edda,0 0 0 4px #d8c99f}
+body[data-theme=deco] .sc-top h2{color:#1f4a3d;letter-spacing:.1em}
+body[data-theme=deco] .sc-sec h4{letter-spacing:.12em;color:#8a6420}
+
+/* --- 블루 모던: 깔끔한 앱 느낌 --- */
+body[data-theme=blue]{--bg:#eef3f9;--panel:#ffffff;--panel2:#f3f7fc;--line:#d7e1ee;--ink:#142033;--dim:#4a5a72;--faint:#8494ab;--acc:#2563eb;--acc2:#1d4ed8;--sel:#e6efff;--play:#e8f6ff;--gold:#2563eb;--ok:#0f9f6e;
+  background:linear-gradient(180deg,#f4f8fd 0,#e9f0f8 100%) fixed}
+body[data-theme=blue] header{background:rgba(255,255,255,.9);border-bottom:1px solid #d7e1ee;box-shadow:0 1px 0 rgba(37,99,235,.08),0 6px 20px rgba(20,32,51,.05)}
+body[data-theme=blue] header h1{font-family:"Noto Sans KR",sans-serif;font-weight:700;letter-spacing:-.01em}
+body[data-theme=blue] header .scl{border-bottom:2px solid #93b4f5}
+body[data-theme=blue] header h1,body[data-theme=blue] header .scl{color:#0f1b2d!important}
+body[data-theme=blue] .secadd,body[data-theme=blue] .secb .sp,body[data-theme=blue] .sectog,body[data-theme=blue] .foldh .fsub{color:#8494ab}
+body[data-theme=blue] .who small{color:#8494ab}
+body[data-theme=blue] .pchip{border-radius:999px!important}
+body[data-theme=blue] .pchip.on{background:#2563eb!important;border-color:#2563eb!important;color:#fff!important}
+body[data-theme=blue] #pbar{background:rgba(255,255,255,.92);border-top:1px solid #d7e1ee;box-shadow:0 -6px 20px rgba(20,32,51,.05)}
+body[data-theme=blue] aside{border-right:1px solid #d7e1ee}
+body[data-theme=blue] .foldh{border-bottom:1px solid #d7e1ee;color:#142033}
+body[data-theme=blue] .foldh .car,body[data-theme=blue] .foldh .fc{color:#2563eb}
+body[data-theme=blue] .spk{border-radius:10px}
+body[data-theme=blue] button{border-radius:10px}
+body[data-theme=blue] input[type=text],body[data-theme=blue] input[type=search],body[data-theme=blue] select,body[data-theme=blue] textarea{background:#fff;border-radius:10px}
+body[data-theme=blue] #log{background:#fff;border:1px solid #dfe7f2;border-radius:18px;box-shadow:0 10px 30px rgba(20,32,51,.06)}
+body[data-theme=blue] .row{border-radius:12px}
+body[data-theme=blue] .row:hover{background:#f6f9fe}
+body[data-theme=blue] .row.sel{background:#e9f1ff;border-color:#b9cff8}
+body[data-theme=blue] .row.playing{background:#e8f6ff}
+body[data-theme=blue] .row.gm{background:#f7f9fd}
+body[data-theme=blue] .body{box-shadow:inset 3px 0 0 color-mix(in srgb,var(--c) 45%,transparent);border-radius:0}
+body[data-theme=blue] .row.playing .body{box-shadow:inset 3px 0 0 #2563eb}
+body[data-theme=blue] .tx{color:#1b2638;font-size:15.5px}
+body[data-theme=blue] .gmtag{background:#2563eb;color:#fff;border-radius:999px;padding:0 7px}
+body[data-theme=blue] button.pri{background:#2563eb;border-color:#2563eb;color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.25)}
+body[data-theme=blue] button.pri:hover{background:#1d4ed8;border-color:#1d4ed8}
+body[data-theme=blue] .row.sec .tx{font-family:"Noto Sans KR",sans-serif}
+body[data-theme=blue] .row.sec.l1 .tx{font-size:20px;font-weight:800;color:#0f1b2d;border-bottom:0;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+body[data-theme=blue] .row.sec.l1 .tx::before{content:"";width:6px;height:22px;border-radius:3px;background:linear-gradient(180deg,#2563eb,#38bdf8)}
+body[data-theme=blue] .row.sec.l1 .tx::after{content:"";flex:1;height:1px;background:#e2e9f3;margin-left:6px}
+body[data-theme=blue] .row.sec.l2 .tx{font-size:15px;font-weight:700;color:#1d4ed8;border-left:0;padding:0}
+body[data-theme=blue] .row.sec.l2 .tx .ln{background:#e8f0ff;border-radius:999px;padding:3px 12px}
+body[data-theme=blue] .row.sec.l3 .tx{font-size:13.5px;font-weight:600;color:#4a5a72;border-bottom:0;padding-left:16px}
+body[data-theme=blue] .row.sec.l3 .tx .ln::before{content:"• ";color:#38bdf8}
+body[data-theme=blue] .row.note .tx{color:#4a5a72;font-size:13.5px}
+body[data-theme=blue] .row.note .tx::before,body[data-theme=blue] .row.note .tx::after{display:none}
+body[data-theme=blue] .row.note .tx>span{background:#f1f5fb;border:1px solid #e2e9f3;border-radius:999px;padding:4px 14px}
+body[data-theme=blue] .row.dice .tx{background:#f4f8ff;border:1px solid #d6e3fb;border-left:3px solid #2563eb;border-radius:12px}
+body[data-theme=blue] .row.hand .body{background:#fff;border:1px solid #d6e3fb;border-radius:14px;box-shadow:0 4px 14px rgba(37,99,235,.08)}
+body[data-theme=blue] .row.hand .tx{font-family:"Noto Sans KR",sans-serif;color:#142033}
+body[data-theme=blue] .row.hand .hlab{color:#2563eb;font-weight:700}
+body[data-theme=blue] .nb{background:#e6f0ff;box-shadow:none;color:#1d4ed8;border-radius:6px}
+body[data-theme=blue] .sc-sec,body[data-theme=blue] .card{border-radius:16px;border-color:#dfe7f2;box-shadow:0 6px 20px rgba(20,32,51,.05)}
+body[data-theme=blue] .sc-top h2{font-family:"Noto Sans KR",sans-serif;font-weight:800;color:#0f1b2d}
+body[data-theme=blue] .sc-sec h4{color:#2563eb}
 .thopts{display:flex;gap:10px;flex-wrap:wrap}
 .thopt{display:flex;flex-direction:column;gap:6px;align-items:flex-start;padding:8px;border-radius:10px;border:2px solid var(--line);background:var(--panel2);min-width:140px;text-align:left}
 .thopt.on{border-color:var(--acc)}.thopt .sw{display:flex;gap:4px}.thopt .sw i{width:22px;height:22px;border-radius:5px;display:block;border:1px solid rgba(0,0,0,.12)}
@@ -945,9 +1073,9 @@ async function exportDay(scen,day){
 document.addEventListener("click",ev=>{const b=ev.target.closest("[data-exps]");if(!b)return;ev.preventDefault();ev.stopPropagation();exportDay(b.dataset.exps,b.dataset.expd);},true);
 
 // ---------- rendering ----------
-const THEMES={"":{n:"양피지",d:"지금 기본 · 판타지",sw:["#efe3cc","#fff","#9c3d22","#c9a46a"]},wa:{n:"화지와 먹",d:"일본 호러 · 인세인",sw:["#ecebe6","#fdfcf8","#1f1f1f","#b8352a"]},deco:{n:"아르데코",d:"미스터리 · 열차",sw:["#e9e4d6","#fbf8f0","#1f4a3d","#b08a3e"]}};
+const THEMES={"":{n:"양피지",d:"지금 기본 · 판타지",sw:["#efe3cc","#fff","#9c3d22","#c9a46a"]},wa:{n:"괴담",d:"공포 · 호러 · 인세인",sw:["#0a0a0a","#fcfcfb","#b0101a","#d4d4d4"]},deco:{n:"아르데코",d:"미스터리 · 열차",sw:["#e9e4d6","#fbf8f0","#1f4a3d","#b08a3e"]},blue:{n:"블루 모던",d:"현대 · SF · 현대 수사",sw:["#eef3f9","#ffffff","#2563eb","#38bdf8"]}};
 function applyTheme(){
-  const sc=S.cid?scenById(S.cid):(S.sid&&S.meta?curScen():null);
+  const sc=S.cid?(S.scEdit&&S.scDraft?S.scDraft:scenById(S.cid)):(S.sid&&S.meta?curScen():null);
   const t=sc&&THEMES[sc.theme]?sc.theme:"";
   if((document.body.dataset.theme||"")!==t){if(t)document.body.dataset.theme=t;else delete document.body.dataset.theme;}
 }
@@ -1908,6 +2036,9 @@ function scenHTML(){
           ${zero?`<button type="button" class="ghost" id="ezero">대사 없는 발언자 ${zero}명 한꺼번에 지우기</button>`:""}</div>
         <div class="tip" style="margin-top:8px">↑↓로 바꾼 순서가 로그 화면의 숫자키 순서예요(GM은 늘 1번). 🗑는 대사가 하나도 없는 발언자만 지울 수 있어요. 바꾼 내용은 <b>저장</b>을 눌러야 반영돼요.</div>`;})()}
       </div>
+      ${S.canAdmin?`<div class="sc-sec"><h4>테마 <span class="tip" style="letter-spacing:0">· 주인만 보여요 · 누르면 미리 보이고, 저장하면 적용돼요</span></h4>
+        <div class="thopts">${Object.entries(THEMES).map(([k,t])=>`<button type="button" class="thopt${(d.theme||"")===k?" on":""}" data-theme-set="${k}"><span class="sw">${t.sw.map(c=>`<i style="background:${c}"></i>`).join("")}</span><b>${t.n}</b><span>${t.d}</span></button>`).join("")}</div>
+      </div>`:""}
       ${S.canAdmin&&S.scens.length>1?`<div class="sc-sec"><h4>다른 시나리오와 합치기</h4>
         <div class="tip" style="margin-bottom:8px">실수로 두 개가 된 시나리오를 하나로 합쳐요. 이 시나리오의 녹음이 모두 고른 시나리오로 옮겨가고, 화자 목록은 이름이 같은 사람끼리 합쳐져요. 개요와 룰 시스템은 고른 쪽이 비어 있을 때만 옮겨와요.</div>
         <div style="display:flex;gap:8px"><select id="mto" style="flex:1"><option value="">합칠 시나리오 고르기</option>${S.scens.filter(x=>x.id!==sc.id).map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join("")}</select><button id="mgo">합치기</button></div>
@@ -1926,9 +2057,6 @@ function scenHTML(){
       ${S.secrets&&S.secrets[sc.id]?`<div class="pwrow"><code class="pw">${esc(S.secrets[sc.id])}</code>
         <button id="copyshare" class="pri">링크+비밀번호 복사</button><button id="regenpw" class="ghost">새로 만들기</button></div>
         <div class="tip" style="margin-top:8px;word-break:break-all">${esc(shareUrl(sc.id))}</div>`:`<div class="tip">비밀번호를 만드는 중…</div>`}
-    </div>
-    <div class="sc-sec"><h4>테마 <span class="tip" style="letter-spacing:0">· 주인만 보여요 · 이 시나리오의 시나리오 페이지와 로그 화면에 적용돼요</span></h4>
-      <div class="thopts">${Object.entries(THEMES).map(([k,t])=>`<button class="thopt${(sc.theme||"")===k?" on":""}" data-theme-set="${k}"><span class="sw">${t.sw.map(c=>`<i style="background:${c}"></i>`).join("")}</span><b>${t.n}</b><span>${t.d}</span></button>`).join("")}</div>
     </div>`:""}
   </div>`;
 }
@@ -1976,6 +2104,7 @@ function sessionsReady(id){return S.canAdmin?!!SUB.sessData.all:!!SUB.sessData[i
 // 수정 창에서 바꾼 부분만 최신 시나리오에 적용 (다른 사람이 그 사이에 바꾼 건 그대로 둬요)
 function mergeScenEdit(L,base,d){
   ["name","system","summary"].forEach(f=>{if((d[f]||"")!==(base[f]||""))L[f]=d[f];});
+  if((d.theme||"")!==(base.theme||"")){if(d.theme)L.theme=d.theme;else delete L.theme;}
   if(JSON.stringify(d.aliases||[])!==JSON.stringify(base.aliases||[]))L.aliases=d.aliases;
   if((d.gm||null)!==(base.gm||null)){if(d.gm)L.gm=d.gm;else delete L.gm;}
   const bk=new Map((base.sp||[]).map(p=>[p.k,p])),dk=new Map((d.sp||[]).map(p=>[p.k,p]));
@@ -1990,8 +2119,10 @@ function mergeScenEdit(L,base,d){
 function shareUrl(id){return location.origin+location.pathname+"#c-"+id;}
 function bindScen(){
   bindPartEdit();renderAuth();
-  document.querySelectorAll("[data-theme-set]").forEach(b=>b.onclick=async()=>{const sc=scenById(S.cid);if(!sc)return;const k=b.dataset.themeSet;
-    await mutateScen(sc.id,d=>{if(k)d.theme=k;else delete d.theme;});render();toast(`테마: ${THEMES[k].n}`);});
+  document.querySelectorAll("[data-theme-set]").forEach(b=>b.onclick=()=>{if(!S.scDraft)return;const k=b.dataset.themeSet;
+    if(k)S.scDraft.theme=k;else delete S.scDraft.theme;
+    document.querySelectorAll("[data-theme-set]").forEach(x=>x.classList.toggle("on",x===b));
+    if(k)document.body.dataset.theme=k;else delete document.body.dataset.theme;});
   {const sc0=scenById(S.cid);if(sc0&&S.canWrite&&sessionsReady(sc0.id)&&!SCC[sc0.id]&&!SCC["_l"+sc0.id]){SCC["_l"+sc0.id]=1;loadScenCounts(sc0).then(()=>{delete SCC["_l"+sc0.id];if(S.cid===sc0.id){if(S.scEdit){const pl=window.__scPull;pl&&pl();}render();}}).catch(()=>{delete SCC["_l"+sc0.id];});}}
   const uf=$("#unlockf");if(uf){const inp=$("#unlockpw");setTimeout(()=>inp.focus(),0);uf.onsubmit=async ev=>{ev.preventDefault();const pw=inp.value.trim();if(!pw)return;const msg=$("#unlockmsg");msg.textContent="확인하는 중…";
     try{await unlockScen(S.cid,pw);msg.textContent="열렸어요!";}catch(e){msg.textContent=e&&e.code==="permission-denied"?"비밀번호가 틀렸어요.":"열지 못했어요: "+(e.code||e.message);}};}
