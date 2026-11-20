@@ -64,11 +64,11 @@ p{margin:0;padding:6px 2px;border-bottom:1px solid #ece7df;word-break:keep-all;o
 .res.secret{background:#3a2e4a}.res.success{background:#3f7a3a}.res.failure{background:#8a8178}.res.critical{background:#c08a14}.res.fumble{background:#a83a2a}
 body{font-family:"Noto Sans KR","Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif}
 main{box-sizing:border-box}
-${EXPORT_CSS[sc&&EXPORT_CSS[sc.theme]?sc.theme:""]}
+${EXPORT_CSS[themeOf(sc)]||EXPORT_CSS[""]}
 /* 바깥 배경 없이, 로그가 페이지 폭을 꽉 채우게 (글에 복사해 붙이기 좋게) */
 html,body{background:transparent!important}
 main{max-width:none!important;margin:0!important;border:0!important;box-shadow:none!important;border-radius:0!important;background:transparent!important;padding:20px 20px 40px!important}
-</style></head><body class="t-${esc(sc&&sc.theme||"base")}"><main>
+</style></head><body class="t-${themeOf(sc)||"base"}"><main>
 <header><h1>${esc(title)}</h1><div>${esc(fmtDay(day))}${sc?.system?" · "+esc(sc.system):""}</div></header>
 ${body}
 </main></body></html>`;
