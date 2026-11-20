@@ -1059,7 +1059,7 @@ async function buildDayHTML(scen,day){
   const body=parts.map(p=>(parts.length>1?`<h2>${p.part}부</h2>`:"")+lines(p.bl,p.sp)).join("\n");
   return `<!DOCTYPE html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;700&family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet">
 <title>${esc(title)}</title>
 <style>
 body{margin:0;background:#fff;color:#222;font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-size:15px;line-height:1.7}
@@ -1083,11 +1083,65 @@ p{margin:0;padding:6px 2px;border-bottom:1px solid #ece7df;word-break:keep-all;o
 .dice .tx{color:#3a2e22}.dice .dr{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700}
 .res{display:inline-block;font-size:11px;font-weight:800;color:#fff;border-radius:4px;padding:0 7px;margin-left:4px;line-height:18px;vertical-align:1px}
 .res.secret{background:#3a2e4a}.res.success{background:#3f7a3a}.res.failure{background:#8a8178}.res.critical{background:#c08a14}.res.fumble{background:#a83a2a}
-</style></head><body><main>
+body{font-family:"Noto Sans KR","Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif}
+main{box-sizing:border-box}
+${EXPORT_CSS[sc&&EXPORT_CSS[sc.theme]?sc.theme:""]}
+</style></head><body class="t-${esc(sc&&sc.theme||"base")}"><main>
 <header><h1>${esc(title)}</h1><div>${esc(fmtDay(day))}${sc?.system?" · "+esc(sc.system):""}</div></header>
 ${body}
 </main></body></html>`;
 }
+// HTML로 받을 때도 시나리오 테마를 입혀요 (사람 대사는 늘 고딕)
+const EXPORT_CSS={
+"":`body{background:#efe3cc}
+main{background:#fffdf9;border:1px solid #d9c4a3;border-radius:14px;margin:28px auto;box-shadow:0 2px 12px rgba(80,50,20,.08)}
+header{border-bottom:2px solid #c9a46a}header h1{font-family:"Gowun Batang",serif;color:#5a3a1a;font-size:22px}
+.sec{text-align:center;font-size:20px;border-bottom:1px solid #d9c4a3}
+.sec:before{content:"❧ ";color:#b8935a;font-weight:400}.sec:after{content:" ☙";color:#b8935a;font-weight:400}
+.gm{background:#fbf3e3}p{border-bottom-color:#f0e8da}`,
+wa:`body{background:#dcdcdc;color:#111}
+main{background:#fcfcfb;border:2px solid #0d0d0d;margin:28px auto;box-shadow:6px 6px 0 #b0101a;padding-top:0}
+header{background:#0a0a0a;color:#ece6da;margin:0 -20px 20px;padding:16px 20px;border-bottom:2px solid #b0101a}
+header h1{font-family:"Noto Serif KR",serif;letter-spacing:.08em;color:#ece6da}header div{color:#bcb3a6}
+h2{color:#0d0d0d}h2:before,h2:after{border-top-color:#0d0d0d}
+p{border-bottom-color:#e6e6e3}
+.nm b{font-family:"Noto Serif KR",serif}
+.gm{background:#efefed;border-left:4px solid #0d0d0d}.gm .tx{color:#0d0d0d}
+.gmt{background:#d0141f!important;color:#fff;border-radius:1px}
+.note{font-family:"Noto Serif KR",serif;color:#333}
+.sec{font-family:"Noto Serif KR",serif;color:#0d0d0d;text-align:center;letter-spacing:.35em;border-bottom:0;padding-bottom:14px;background:linear-gradient(#b0101a,#b0101a) bottom center/70% 3px no-repeat}
+.sub{font-family:"Noto Serif KR",serif;color:#0d0d0d;border-left:4px solid #b0101a}
+.sub3{font-family:"Noto Serif KR",serif;color:#444;border-bottom:0}.sub3:before{content:"‥ ";color:#b0101a}
+.dice{background:#fff;border:1px solid #0d0d0d;border-left:3px solid #b0101a}
+.hand{font-family:"Noto Serif KR",serif;background:#fff;border:1px solid #0d0d0d;border-radius:0;box-shadow:4px 4px 0 #0d0d0d;color:#111}.hand .hlab{color:#b0101a}`,
+deco:`body{background:repeating-linear-gradient(45deg,rgba(176,138,62,.08) 0 1px,transparent 1px 16px),repeating-linear-gradient(-45deg,rgba(176,138,62,.08) 0 1px,transparent 1px 16px),#1f4a3d;color:#1c2a25}
+main{background:#fbf8ef;border:1px solid #b08a3e;border-radius:3px;margin:34px auto;box-shadow:0 0 0 5px #f3edda,0 0 0 6px #b08a3e;padding-top:0}
+header{background:#1f4a3d;color:#f3ead2;margin:0 -20px 20px;padding:16px 20px;border-bottom:3px double #b08a3e}
+header h1{letter-spacing:.12em;color:#f3ead2}header div{color:#d8ceb2}
+h2{color:#8a6420}h2:before,h2:after{border-top-color:#b08a3e}
+p{border-bottom-color:#ece4cf}
+.gm{background:#f2ebd6;border-left:4px solid #b08a3e}
+.gmt{background:#1f4a3d!important;color:#e3c98a;border-radius:0;letter-spacing:.12em}
+.note{color:#5a5a48;font-style:normal;letter-spacing:.04em}.note:before{content:"◇ ";color:#b08a3e}.note:after{content:" ◇";color:#b08a3e}
+.sec{font-family:"Noto Sans KR",sans-serif;font-weight:700;color:#1f4a3d;text-align:center;letter-spacing:.3em;border-bottom:3px double #b08a3e}
+.sec:before{content:"◆ ";color:#b08a3e;letter-spacing:0}.sec:after{content:" ◆";color:#b08a3e;letter-spacing:0}
+.sub{font-family:"Noto Sans KR",sans-serif;color:#1f4a3d;border-left:0;padding-left:0;letter-spacing:.14em}.sub:before{content:"▸ ";color:#b08a3e}
+.sub3{font-family:"Noto Sans KR",sans-serif;color:#5a6a5e;border-bottom:1px dotted #c9b88a}
+.dice{background:#f6f0de;border:1px solid #b08a3e;border-left:3px solid #1f4a3d}
+.hand{background:#f6f0dc;border:1px solid #b08a3e;border-radius:2px;box-shadow:inset 0 0 0 4px #fbf8f0,inset 0 0 0 5px #b08a3e}.hand .hlab{color:#1f4a3d;letter-spacing:.2em}`,
+blue:`body{background:#eef3f9;color:#142033}
+main{background:#fff;border:1px solid #dfe7f2;border-radius:18px;margin:28px auto;box-shadow:0 10px 30px rgba(20,32,51,.06)}
+header{border-bottom:1px solid #e2e9f3}header h1{font-weight:800;color:#0f1b2d}header div{color:#8494ab}
+h2{color:#2563eb}h2:before,h2:after{border-top-color:#dbe6f6}
+p{border-bottom-color:#eef2f8}
+.gm{background:#eef4ff;border-left:4px solid #2563eb}
+.gmt{background:#2563eb!important;color:#fff;border-radius:999px;padding:0 7px}
+.note{color:#4a5a72;font-style:normal}
+.sec{font-family:"Noto Sans KR",sans-serif;font-weight:800;color:#0f1b2d;border-bottom:0;border-left:6px solid #2563eb;padding:0 0 0 10px}
+.sub{font-family:"Noto Sans KR",sans-serif;font-weight:700;color:#1d4ed8;border-left:0;padding:3px 12px;background:#e8f0ff;border-radius:999px;display:inline-block}
+.sub3{font-family:"Noto Sans KR",sans-serif;color:#4a5a72;border-bottom:0}.sub3:before{content:"• ";color:#38bdf8}
+.dice{background:#f4f8ff;border:1px solid #d6e3fb;border-left:3px solid #2563eb;border-radius:10px}
+.hand{font-family:"Noto Sans KR",sans-serif;background:#fff;border:1px solid #d6e3fb;border-radius:14px;color:#142033}.hand .hlab{color:#2563eb;font-weight:700}`};
 async function exportDay(scen,day){
   toast("HTML 만드는 중…");
   try{
