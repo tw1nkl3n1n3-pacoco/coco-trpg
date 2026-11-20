@@ -112,8 +112,14 @@ mark{background:#f2c970;color:inherit;border-radius:3px}
 .tx textarea{width:100%;min-height:60px;resize:vertical;line-height:1.6}
 .edhint{font-size:11.5px;color:var(--faint);margin-top:3px}
 .nouns{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 8px}
-.noun{display:inline-flex;align-items:center;gap:2px;background:#fffdf8;border:1px solid var(--line);border-radius:999px;padding:1px 4px 1px 10px;font-size:13px}
-.noun button{padding:0 5px;font-size:13px;line-height:1.3;color:#9a8a78}
+.noun{display:inline-flex;flex-wrap:wrap;align-items:baseline;gap:4px;background:#fffdf8;border:1px solid var(--line);border-radius:10px;padding:3px 9px;font-size:13px;text-align:left;cursor:pointer;max-width:100%}
+.noun b{font-weight:600}.noun small{color:#9a8a78;font-size:11.5px}
+.pct{font-size:10px;font-weight:700;color:var(--acc);border:1px solid currentColor;border-radius:4px;padding:0 3px;line-height:14px}
+.nedit{display:flex;flex-direction:column;gap:5px;padding:6px;min-width:250px}.nedit label{font-size:12px;color:#8a7a68}
+.nedit .btns{display:flex;gap:6px;justify-content:flex-end;margin-top:4px}
+.ngrp{display:flex;flex-wrap:wrap;align-items:center;gap:2px;padding:1px 2px}
+.ngrp button{width:auto!important;padding:3px 8px!important}.ngrp button.alt{color:#8a7a68;font-size:12.5px}
+.nreg{display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:4px;font-size:12.5px}.nreg select{font-size:12.5px;padding:2px 4px}.nreg button{width:auto!important;padding:2px 10px!important}
 .row.dice{margin:6px 0}
 .row.dice .body{box-shadow:none}
 .row.dice .tx{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;background:#f7f3ec;border:1px solid #e8dcc8;border-left:3px solid var(--c);border-radius:8px;padding:6px 12px;max-width:none;font-size:14px}
@@ -951,8 +957,8 @@ function renderSide(){
     ${hidden?`<button class="ghost zt" id="zerot">${S.showZero?"대사 없는 화자 숨기기":`이 녹음에 대사 없는 화자 ${hidden}명 보기`}</button>`:""}
     ${S.canWrite?`<div class="addsp"><input type="text" id="newsp" placeholder="새 화자 이름 (예: 코코)"><button id="addsp">추가</button></div>`:""}
     ${curScen()?`<h3>고유명사 · 로그에서 글자를 드래그해서 바꿔요</h3>
-    <div class="nouns">${nouns().map(n=>`<span class="noun">${esc(n)}${S.canWrite?`<button class="ghost" data-ndel="${esc(n)}" title="목록에서 빼기">×</button>`:""}</span>`).join("")||'<span class="tip">아직 없어요</span>'}</div>
-    ${S.canWrite?`<div class="addsp"><input type="text" id="newnoun" placeholder="예: 카엘렌, 에버론"><button id="addnoun">추가</button></div>`:""}`:""}
+    <div class="nouns">${nounGroups().map(g=>`<button class="noun${g.pc?" pc":""}" data-nedit="${esc(g.n)}" title="${S.canWrite?"눌러서 유의어 고치기":""}"><b>${esc(g.n)}</b>${g.a.length?`<small>${g.a.map(esc).join(" · ")}</small>`:""}${g.pc?'<span class="pct">PC</span>':""}</button>`).join("")||'<span class="tip">아직 없어요</span>'}</div>
+    ${S.canWrite?`<button class="ghost zt" id="addnoun">＋ 고유명사 묶음 추가</button>`:""}`:""}
     <h3 class="tip usage">사용법</h3>
     <div class="tip usage">
       대사를 클릭해 고르고 숫자키 <kbd>1</kbd>~<kbd>9</kbd>로 화자를 바꿔요. 이름을 클릭해도 바꿀 수 있어요.<br>
@@ -1179,10 +1185,49 @@ function editDice(r,e){
 }
 
 // ---------- 고유명사: 드래그한 글자를 등록된 이름으로 바꾸기 ----------
-const nouns=()=>(curScen()?.nouns||[]);
-function addNoun(...ns){ns=ns.map(n=>n.trim()).filter(n=>n&&!nouns().includes(n));const sc=curScen();if(!ns.length||!sc)return;
-  mutateScen(sc.id,d=>{d.nouns=d.nouns||[];ns.forEach(n=>{if(!d.nouns.includes(n))d.nouns.push(n);});});renderSide();}
-function delNoun(n){const sc=curScen();if(!sc)return;mutateScen(sc.id,d=>{d.nouns=(d.nouns||[]).filter(x=>x!==n);});renderSide();}
+// 고유명사 묶음: {n:풀네임, a:[유의어...]} · PC 캐릭터 이름은 자동으로 들어가요
+const normNoun=x=>typeof x==="string"?{n:x,a:[]}:{n:x.n,a:x.a||[]};
+function nounGroups(){
+  const sc=curScen();if(!sc)return [];
+  const st=(sc.nouns||[]).map(normNoun);
+  const pcs=[...new Set((sc.sp||[]).filter(p=>p.ch&&p.k!==ALL).map(p=>p.ch.trim()).filter(Boolean))];
+  return [...pcs.map(n=>({...(st.find(g=>g.n===n)||{n,a:[]}),pc:true})),...st.filter(g=>!pcs.includes(g.n))];
+}
+const nouns=()=>nounGroups().flatMap(g=>[g.n,...g.a]);
+// oldN의 묶음을 g로 바꾸기 (g=null이면 지우기, oldN=null이면 새로 추가)
+function saveNoun(oldN,g){
+  const sc=curScen();if(!sc)return;
+  if(g){g={n:g.n.trim(),a:[...new Set(g.a.map(x=>x.trim()).filter(x=>x&&x!==g.n.trim()))]};if(!g.n)return;}
+  mutateScen(sc.id,d=>{
+    const arr=(d.nouns||[]).map(normNoun);const i=oldN==null?-1:arr.findIndex(x=>x.n===oldN);
+    if(!g){if(i>=0)arr.splice(i,1);}
+    else{const j=arr.findIndex(x=>x.n===g.n);
+      if(i>=0){arr[i]=g;if(j>=0&&j!==i)arr.splice(j,1);}
+      else if(j>=0)arr[j]={n:g.n,a:[...new Set([...arr[j].a,...g.a])]};
+      else arr.push(g);}
+    d.nouns=arr.filter(x=>x.a.length||!(d.sp||[]).some(p=>p.ch&&p.ch.trim()===x.n));
+  });
+  renderSide();
+}
+function addAlias(full,word){const g=nounGroups().find(x=>x.n===full);if(!g)return;saveNoun(g.n,{n:g.n,a:[...g.a,word]});}
+function nounEdit(anchor,full){
+  const g=full==null?{n:"",a:[]}:nounGroups().find(x=>x.n===full);if(!g)return;
+  popAt(anchor,`<div class="nedit">
+    <label>풀네임${g.pc?' <span class="pct">PC · 캐릭터 이름에서 자동</span>':""}</label>
+    <input type="text" id="nfull" value="${esc(g.n)}" ${g.pc?"disabled":""} placeholder="예: 세미야 신페이">
+    <label>유의어 · 쉼표로 구분</label>
+    <input type="text" id="nalt" value="${esc(g.a.join(", "))}" placeholder="예: 신페이, 세미야">
+    <div class="btns">${full!=null&&!g.pc?'<button data-a="del" style="color:var(--bad)">지우기</button>':""}<button class="pri" data-a="ok">저장</button></div></div>`,p=>{
+    const f=$("#nfull",p),a=$("#nalt",p);
+    const ok=()=>{const n=g.pc?g.n:f.value.trim();if(!n){toast("풀네임을 넣어 주세요");return;}
+      if(full==null&&nounGroups().some(x=>x.n===n)){toast("이미 있는 고유명사예요");return;}
+      saveNoun(full,{n,a:a.value.split(/[,，]/)});closePop();};
+    [f,a].forEach(i=>i.onkeydown=ev=>{ev.stopPropagation();if(ev.key==="Enter")ok();if(ev.key==="Escape")closePop();});
+    p.querySelector("[data-a=ok]").onclick=ok;
+    const d=p.querySelector("[data-a=del]");if(d)d.onclick=()=>{closePop();confirmBox(`'${g.n}' 묶음을 지울까요?`,"지우기",()=>saveNoun(g.n,null));};
+    setTimeout(()=>(g.pc?a:f).focus(),0);
+  });
+}
 function selInfo(){
   const sel=getSelection();if(!sel||sel.isCollapsed||!sel.rangeCount)return null;
   const r=sel.getRangeAt(0);
@@ -1208,14 +1253,15 @@ function replaceAt(si,to){
   updateRow(si.id);toast(`'${si.word}' → '${to}'`);
 }
 function nounMenu(si){
-  const list=nouns();
+  const gs=nounGroups(),known=nouns().includes(si.word);
   popAt({getBoundingClientRect:()=>si.rect},`<div class="tip" style="padding:2px 8px 4px">'${esc(si.word)}'을(를) 바꾸기</div>
-    ${list.length?list.map(n=>`<button data-n="${esc(n)}">${esc(n)}</button>`).join(""):'<div class="tip" style="padding:2px 8px">아직 등록된 고유명사가 없어요</div>'}
-    <hr><input type="text" id="nnew" placeholder="새 이름 입력 후 Enter (목록에도 추가)">
-    ${list.includes(si.word)?"":`<button data-reg title="고른 글자를 그대로 고유명사로 등록">＋ '${esc(si.word)}' 를 목록에 등록</button>`}`,p=>{
+    ${gs.length?gs.map(g=>`<div class="ngrp">${[g.n,...g.a].map((w,i)=>`<button data-n="${esc(w)}" class="${i?"alt":"full"}">${esc(w)}</button>`).join("")}${g.pc?'<span class="pct">PC</span>':""}</div>`).join(""):'<div class="tip" style="padding:2px 8px">아직 등록된 고유명사가 없어요</div>'}
+    <hr><input type="text" id="nnew" placeholder="새 풀네임 입력 후 Enter (목록에도 추가)">
+    ${known?"":`<div class="nreg"><span>'${esc(si.word)}' 등록:</span><select id="nto"><option value="">새 고유명사(풀네임)로</option>${gs.map(g=>`<option value="${esc(g.n)}">${esc(g.n)}의 유의어로</option>`).join("")}</select><button data-reg>등록</button></div>`}`,p=>{
     p.querySelectorAll("[data-n]").forEach(b=>b.onclick=()=>{closePop();getSelection().removeAllRanges();replaceAt(si,b.dataset.n);});
-    const inp=$("#nnew",p);inp.onkeydown=ev=>{ev.stopPropagation();if(ev.key==="Enter"){const v=inp.value.trim();if(!v)return;closePop();addNoun(v);replaceAt(si,v);}if(ev.key==="Escape")closePop();};
-    const rg=p.querySelector("[data-reg]");if(rg)rg.onclick=()=>{closePop();addNoun(si.word);toast("등록했어요");};
+    const inp=$("#nnew",p);inp.onkeydown=ev=>{ev.stopPropagation();if(ev.key==="Enter"){const v=inp.value.trim();if(!v)return;closePop();if(!nounGroups().some(x=>x.n===v))saveNoun(null,{n:v,a:[]});replaceAt(si,v);}if(ev.key==="Escape")closePop();};
+    const rg=p.querySelector("[data-reg]");if(rg)rg.onclick=()=>{const to=$("#nto",p).value;closePop();if(to)addAlias(to,si.word);else saveNoun(null,{n:si.word,a:[]});toast("등록했어요");};
+    const sl=$("#nto",p);if(sl)sl.onkeydown=ev=>ev.stopPropagation();
   });
 }
 document.addEventListener("mouseup",ev=>{
@@ -1283,8 +1329,8 @@ function bindSide(){
     el.querySelector('[data-act=filter]').onclick=()=>{S.spFilter=S.spFilter===k?null:k;renderSide();renderAllRows();window.scrollTo(0,0);};
     const m=el.querySelector('[data-act=menu]');if(m)m.onclick=()=>spMenu(m,k);
   });
-  document.querySelectorAll("[data-ndel]").forEach(b=>b.onclick=()=>delNoun(b.dataset.ndel));
-  const an=$("#addnoun");if(an){const inp=$("#newnoun");const go=()=>{addNoun(...inp.value.split(/[,，]/));};an.onclick=go;inp.onkeydown=ev=>{if(ev.key==="Enter")go();ev.stopPropagation();};}
+  document.querySelectorAll("[data-nedit]").forEach(b=>b.onclick=()=>{if(S.canWrite)nounEdit(b,b.dataset.nedit);});
+  const an=$("#addnoun");if(an)an.onclick=()=>nounEdit(an,null);
   const add=$("#addsp");if(add){const inp=$("#newsp");const go=()=>{if(addSpeaker(inp.value)){toast("추가했어요. 숫자키로 바로 지정할 수 있어요");}};add.onclick=go;inp.onkeydown=ev=>{if(ev.key==="Enter")go();ev.stopPropagation();};}
 }
 let qTimer;
