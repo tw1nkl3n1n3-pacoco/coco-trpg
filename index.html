@@ -321,6 +321,38 @@ a.scl:hover{color:var(--acc2)}
   #splist{max-height:200px;overflow:auto}
   .tip.usage{display:none}
 }
+
+/* ===== 시나리오 테마 (data-theme) ===== */
+body[data-theme=wa]{--bg:#ecebe6;--panel:#f8f7f3;--panel2:#efede7;--line:#d6d3cb;--ink:#1f1f1f;--dim:#55534d;--faint:#8a8780;--acc:#b8352a;--acc2:#3d3a35;--sel:#ebe6da;--play:#f4e5d9;--gold:#b8352a;background:#ecebe6}
+body[data-theme=wa] header,body[data-theme=wa] #pbar{background:rgba(248,247,243,.96);box-shadow:none}
+body[data-theme=wa] #log{background:#fdfcf8;box-shadow:none;border-color:#dcd8ce}
+body[data-theme=wa] .row:hover{background:#f6f4ee}body[data-theme=wa] .row.sel{border-color:#c9c2b2}
+body[data-theme=wa] button.pri{background:#b8352a;border-color:#8f2a20;box-shadow:none}
+body[data-theme=wa] .row.sec .tx{color:#1f1f1f;border-bottom:1px solid #1f1f1f}
+body[data-theme=wa] .row.sec.l2 .tx{border-bottom:0;border-left:3px solid #b8352a;color:#2a2a2a}
+body[data-theme=wa] .row.sec.l3 .tx{color:#55534d;border-bottom:1px dashed #cfcac0}
+body[data-theme=wa] .row.hand .body{background:#f7f5ee;border-color:#d6d0c2;box-shadow:none}
+body[data-theme=wa] .nb{background:#ece8de;box-shadow:inset 0 -1px 0 #cfc8b8}
+body[data-theme=wa] .sc-sec,body[data-theme=wa] .card{box-shadow:none}
+body[data-theme=deco]{--bg:#e9e4d6;--panel:#f8f4ea;--panel2:#efe9da;--line:#d3c8aa;--ink:#1e2b26;--dim:#45554d;--faint:#868672;--acc:#1f4a3d;--acc2:#7a5a1e;--sel:#e5dfc6;--play:#efe3bf;--gold:#b08a3e;background:#e9e4d6}
+body[data-theme=deco] header{background:#1f4a3d;border-bottom:3px solid #b08a3e;box-shadow:none;--ink:#f3ead2;--dim:#d8ceb2;--faint:#b9ae90;--line:#3d6b5c;--panel:#285646;--panel2:#285646;--acc:#b08a3e;--acc2:#e3c98a;color:#f3ead2}
+body[data-theme=deco] header button.ghost:hover{background:#285646}body[data-theme=deco] header .status.ok{color:#cfe3b0}
+body[data-theme=deco] header h1,body[data-theme=deco] header h2{color:#f3ead2}
+body[data-theme=deco] #pbar{background:rgba(248,244,234,.97);border-top:2px solid #b08a3e}
+body[data-theme=deco] #log{background:#fbf8f0;border-color:#d3c8aa;box-shadow:0 0 0 4px #f1ead6,0 0 0 5px #d3c8aa}
+body[data-theme=deco] .row:hover{background:#f3eee0}
+body[data-theme=deco] button.pri{background:#1f4a3d;border-color:#143229;box-shadow:0 1px 0 #b08a3e}
+body[data-theme=deco] h1,body[data-theme=deco] h2{color:#1f4a3d;letter-spacing:.03em}
+body[data-theme=deco] .row.sec .tx{color:#1f4a3d;border-bottom:3px double #b08a3e;letter-spacing:.06em}
+body[data-theme=deco] .row.sec.l2 .tx{border-bottom:0;border-left:4px solid #b08a3e;color:#2a4a3e;letter-spacing:.03em}
+body[data-theme=deco] .row.sec.l3 .tx{color:#5a6a5e;border-bottom:1px dotted #c9b88a;letter-spacing:0}
+body[data-theme=deco] .row.hand .body{background:#f6f0dc;border:1px solid #b08a3e;box-shadow:inset 0 0 0 3px #fbf8f0,inset 0 0 0 4px #e0d2a6}
+body[data-theme=deco] .nb{background:#e8e1c8;box-shadow:inset 0 -1px 0 #c9b88a}
+body[data-theme=deco] .sc-sec{border-color:#cdbf98}
+.thopts{display:flex;gap:10px;flex-wrap:wrap}
+.thopt{display:flex;flex-direction:column;gap:6px;align-items:flex-start;padding:8px;border-radius:10px;border:2px solid var(--line);background:var(--panel2);min-width:140px;text-align:left}
+.thopt.on{border-color:var(--acc)}.thopt .sw{display:flex;gap:4px}.thopt .sw i{width:22px;height:22px;border-radius:5px;display:block;border:1px solid rgba(0,0,0,.12)}
+.thopt b{font-size:13.5px}.thopt span{font-size:11.5px;color:var(--dim)}
 </style>
 </head>
 <body>
@@ -913,9 +945,15 @@ async function exportDay(scen,day){
 document.addEventListener("click",ev=>{const b=ev.target.closest("[data-exps]");if(!b)return;ev.preventDefault();ev.stopPropagation();exportDay(b.dataset.exps,b.dataset.expd);},true);
 
 // ---------- rendering ----------
+const THEMES={"":{n:"양피지",d:"지금 기본 · 판타지",sw:["#efe3cc","#fff","#9c3d22","#c9a46a"]},wa:{n:"화지와 먹",d:"일본 호러 · 인세인",sw:["#ecebe6","#fdfcf8","#1f1f1f","#b8352a"]},deco:{n:"아르데코",d:"미스터리 · 열차",sw:["#e9e4d6","#fbf8f0","#1f4a3d","#b08a3e"]}};
+function applyTheme(){
+  const sc=S.cid?scenById(S.cid):(S.sid&&S.meta?curScen():null);
+  const t=sc&&THEMES[sc.theme]?sc.theme:"";
+  if((document.body.dataset.theme||"")!==t){if(t)document.body.dataset.theme=t;else delete document.body.dataset.theme;}
+}
 function render(){
   const app=$("#app");
-  refreshCanWrite();
+  refreshCanWrite();applyTheme();
   if(S.cid){app.innerHTML=scenHTML();bindScen();return;}
   if(!S.sid){app.innerHTML=homeHTML();bindHome();return;}
   app.innerHTML=`
@@ -1888,6 +1926,9 @@ function scenHTML(){
       ${S.secrets&&S.secrets[sc.id]?`<div class="pwrow"><code class="pw">${esc(S.secrets[sc.id])}</code>
         <button id="copyshare" class="pri">링크+비밀번호 복사</button><button id="regenpw" class="ghost">새로 만들기</button></div>
         <div class="tip" style="margin-top:8px;word-break:break-all">${esc(shareUrl(sc.id))}</div>`:`<div class="tip">비밀번호를 만드는 중…</div>`}
+    </div>
+    <div class="sc-sec"><h4>테마 <span class="tip" style="letter-spacing:0">· 주인만 보여요 · 이 시나리오의 시나리오 페이지와 로그 화면에 적용돼요</span></h4>
+      <div class="thopts">${Object.entries(THEMES).map(([k,t])=>`<button class="thopt${(sc.theme||"")===k?" on":""}" data-theme-set="${k}"><span class="sw">${t.sw.map(c=>`<i style="background:${c}"></i>`).join("")}</span><b>${t.n}</b><span>${t.d}</span></button>`).join("")}</div>
     </div>`:""}
   </div>`;
 }
@@ -1949,6 +1990,8 @@ function mergeScenEdit(L,base,d){
 function shareUrl(id){return location.origin+location.pathname+"#c-"+id;}
 function bindScen(){
   bindPartEdit();renderAuth();
+  document.querySelectorAll("[data-theme-set]").forEach(b=>b.onclick=async()=>{const sc=scenById(S.cid);if(!sc)return;const k=b.dataset.themeSet;
+    await mutateScen(sc.id,d=>{if(k)d.theme=k;else delete d.theme;});render();toast(`테마: ${THEMES[k].n}`);});
   {const sc0=scenById(S.cid);if(sc0&&S.canWrite&&sessionsReady(sc0.id)&&!SCC[sc0.id]&&!SCC["_l"+sc0.id]){SCC["_l"+sc0.id]=1;loadScenCounts(sc0).then(()=>{delete SCC["_l"+sc0.id];if(S.cid===sc0.id){if(S.scEdit){const pl=window.__scPull;pl&&pl();}render();}}).catch(()=>{delete SCC["_l"+sc0.id];});}}
   const uf=$("#unlockf");if(uf){const inp=$("#unlockpw");setTimeout(()=>inp.focus(),0);uf.onsubmit=async ev=>{ev.preventDefault();const pw=inp.value.trim();if(!pw)return;const msg=$("#unlockmsg");msg.textContent="확인하는 중…";
     try{await unlockScen(S.cid,pw);msg.textContent="열렸어요!";}catch(e){msg.textContent=e&&e.code==="permission-denied"?"비밀번호가 틀렸어요.":"열지 못했어요: "+(e.code||e.message);}};}
