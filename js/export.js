@@ -21,10 +21,10 @@ async function buildDayHTML(scen,day){
       const b=bl[i];
       if(b.s===NOTE){out.push(`<p class="note">${xEm(b.x)}</p>`);i++;continue;}
       if(b.s===SEC){const l=secLv(b);out.push(l===1?`<h3 class="sec">${esc(b.x)}</h3>`:l===2?`<h4 class="sub">${esc(b.x)}</h4>`:`<h5 class="sub3">${esc(b.x)}</h5>`);i++;continue;}
-      if(b.s===HAND){out.push(`<div class="hand"><div class="hlab">핸드아웃${b.ti?" · "+esc(b.ti):""}</div>${xEm(b.x)}</div>`);i++;continue;}
+      if(b.s===HAND){out.push(`<div class="hand"><div class="hlab">핸드아웃${b.ti?" · "+esc(b.ti):""}</div>${b.x.split("\n").map(l=>{const m=l.match(HSEC);return m?`<span class="hsec${/비밀|秘密/.test(m[2])?" secret":""}">${/비밀|秘密/.test(m[2])?"비밀":"사명"}</span>${xEm(l.slice(m[1].length))}`:xEm(l);}).join("<br>")}</div>`);i++;continue;}
       if(b.s===DICE){
         const p=b.w?(sp.find(z=>z.k===b.w)||{name:"?",c:"#888"}):null,c=p?fixC(p.c):"#8a8178";
-        out.push(`<p class="dice" style="color:${c};--c:${c}">🎲 ${p?`<span class="nm"><b>${esc(p.ch||p.name)}</b></span> : `:""}<span class="tx">${b.x?esc(b.x)+" ":""}${b.r?`<span class="dr">${esc(b.r)}</span>`:""}</span>${b.sec?` <span class="res secret">Secret Dice</span>`:""}${b.o&&OUT[b.o]?` <span class="res ${b.o}">${OUT[b.o]}</span>`:""}</p>`);
+        out.push(`<p class="dice" style="color:${c};--c:${c}">🎲 ${p?`<span class="nm"><b>${esc(p.ch||p.name)}</b></span> : `:""}<span class="tx">${b.x?esc(b.x)+" ":""}${b.r?`<span class="dr">${esc(b.r)}</span>`:""}</span>${b.sec?` <span class="res secret">Secret Dice</span>`:""}${b.o&&OUT[b.o]?` <span class="res ${b.o}">${outLabel(b.o,sc)}</span>`:""}</p>`);
         i++;continue;}
       const run=[];while(i<bl.length&&bl[i].s===b.s){run.push(bl[i].x);i++;}
       const p=sp.find(z=>z.k===b.s)||{name:"?",c:"#888"};
@@ -61,6 +61,7 @@ p{margin:0;padding:6px 2px;border-bottom:1px solid #ece7df;word-break:keep-all;o
 .dice{background:#f7f5f0;border-left:3px solid var(--c);padding:6px 8px}
 .dice .tx{color:#3a2e22}.dice .dr{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700}
 .res{display:inline-block;font-size:11px;font-weight:800;color:#fff;border-radius:4px;padding:0 7px;margin-left:4px;line-height:18px;vertical-align:1px}
+.hsec{display:inline-block;font-family:sans-serif;font-size:11px;font-weight:800;letter-spacing:.12em;padding:0 6px;margin-right:6px;border:1px solid currentColor;border-radius:2px;vertical-align:1px}
 .res.secret{background:#3a2e4a}.res.success{background:#3f7a3a}.res.failure{background:#8a8178}.res.critical{background:#c08a14}.res.fumble{background:#a83a2a}
 body{font-family:"Noto Sans KR","Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif}
 main{box-sizing:border-box}
@@ -95,22 +96,25 @@ p{border-bottom-color:#e6e6e3}
 .sub{font-family:"Noto Serif KR",serif;color:#0d0d0d;border-left:4px solid #b0101a}
 .sub3{font-family:"Noto Serif KR",serif;color:#444;border-bottom:0}.sub3:before{content:"‥ ";color:#b0101a}
 .dice{background:#fff;border:1px solid #0d0d0d;border-left:3px solid #b0101a}
-.hand{font-family:"Noto Serif KR",serif;background:#fff;border:1px solid #0d0d0d;border-radius:0;box-shadow:4px 4px 0 #0d0d0d;color:#111}.hand .hlab{color:#b0101a}`,
-deco:`body{background:repeating-linear-gradient(45deg,rgba(176,138,62,.08) 0 1px,transparent 1px 16px),repeating-linear-gradient(-45deg,rgba(176,138,62,.08) 0 1px,transparent 1px 16px),#1f4a3d;color:#1c2a25}
-main{background:#fbf8ef;border:1px solid #b08a3e;border-radius:3px;margin:34px auto;box-shadow:0 0 0 5px #f3edda,0 0 0 6px #b08a3e;padding-top:0}
-header{background:#1f4a3d;color:#f3ead2;margin:0 -20px 20px;padding:16px 20px;border-bottom:3px double #b08a3e}
-header h1{letter-spacing:.12em;color:#f3ead2}header div{color:#d8ceb2}
-h2{color:#8a6420}h2:before,h2:after{border-top-color:#b08a3e}
-p{border-bottom-color:#ece4cf}
-.gm{background:#f2ebd6;border-left:4px solid #b08a3e}
-.gmt{background:#1f4a3d!important;color:#e3c98a;border-radius:0;letter-spacing:.12em}
-.note{color:#5a5a48;font-style:normal;letter-spacing:.04em}.note:before{content:"◇ ";color:#b08a3e}.note:after{content:" ◇";color:#b08a3e}
-.sec{font-family:"Noto Sans KR",sans-serif;font-weight:700;color:#1f4a3d;text-align:center;letter-spacing:.3em;border-bottom:3px double #b08a3e}
-.sec:before{content:"◆ ";color:#b08a3e;letter-spacing:0}.sec:after{content:" ◆";color:#b08a3e;letter-spacing:0}
-.sub{font-family:"Noto Sans KR",sans-serif;color:#1f4a3d;border-left:0;padding-left:0;letter-spacing:.14em}.sub:before{content:"▸ ";color:#b08a3e}
-.sub3{font-family:"Noto Sans KR",sans-serif;color:#5a6a5e;border-bottom:1px dotted #c9b88a}
-.dice{background:#f6f0de;border:1px solid #b08a3e;border-left:3px solid #1f4a3d}
-.hand{background:#f6f0dc;border:1px solid #b08a3e;border-radius:2px;box-shadow:inset 0 0 0 4px #fbf8f0,inset 0 0 0 5px #b08a3e}.hand .hlab{color:#1f4a3d;letter-spacing:.2em}`,
+.hand{font-family:"Noto Serif KR",serif;background:#fff;border:1px solid #0d0d0d;border-radius:0;box-shadow:4px 4px 0 #0d0d0d;color:#111;padding-top:0}.hand .hlab{background:#0a0a0a;color:#fff;margin:0 -18px 10px;padding:6px 18px;letter-spacing:.18em}
+.hsec{color:#b0101a}.hsec.secret{background:#b0101a;color:#fff;border-color:#b0101a}`,
+deco:`body{color:#2b1d14}
+main{background:#fdf1dc}
+header{background:#4a0d0d;color:#f6e7c8;margin:0 -20px 20px;padding:16px 20px;border-bottom:3px solid #c9962e}
+header h1{font-family:"Gowun Batang",serif;color:#f6e7c8}header div{color:#e2cfa8}
+h2{color:#7a200d}h2:before,h2:after{border-top-color:#c9ad6a}
+p{border-bottom-color:#efdfbf}
+.nm b{font-weight:700}
+.gm{background:#f3e4c3;border-left:4px solid #7a200d}
+.gmt{background:#7a200d!important;color:#f6d98a;font-family:"Gowun Batang",serif}
+.note{font-family:"Gowun Batang",serif;font-style:normal;text-align:left;color:#2b1d14;background:#e6e4c8;border:1px solid #c2bf96;box-shadow:3px 3px 0 #c9c59c;padding:10px 14px;margin:10px 0}
+.sec{font-family:"Gowun Batang",serif;color:#7a200d;font-size:23px;border-bottom:0;padding-bottom:4px}
+.sec:after{content:"";display:block;height:4px;margin-top:6px;background:#9c2a1a;clip-path:polygon(0 0,100% 50%,0 100%)}
+.sub{font-family:"Gowun Batang",serif;color:#7a200d;border-left:0;padding-left:0;border-bottom:1px solid #c9ad6a;font-variant:small-caps}
+.sub3{font-family:"Gowun Batang",serif;color:#5b4636;font-style:italic;border-bottom:0}.sub3:before{content:"✦ ";color:#c9962e;font-style:normal}
+.dice{background:#fdf1dc;border:0;border-top:3px solid #e69a28;border-bottom:3px solid #e69a28;padding:6px 8px}
+.hand{font-family:"Gowun Batang",serif;background:#f6e3b8;border:1px solid #b88a3a;border-radius:3px;box-shadow:inset 0 0 0 3px #fbefd4,inset 0 0 0 4px #c9962e;color:#2b1d14}.hand .hlab{color:#7a200d;font-family:"Gowun Batang",serif}
+.hsec{color:#7a200d}`,
 blue:`body{background:#eef3f9;color:#142033}
 main{background:#fff;border:1px solid #dfe7f2;border-radius:18px;margin:28px auto;box-shadow:0 10px 30px rgba(20,32,51,.06)}
 header{border-bottom:1px solid #e2e9f3}header h1{font-weight:800;color:#0f1b2d}header div{color:#8494ab}

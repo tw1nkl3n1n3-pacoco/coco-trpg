@@ -62,58 +62,60 @@ body[data-theme=wa] .sc-sec,body[data-theme=wa] .card{border-radius:1px;box-shad
 body[data-theme=wa] .sc-top h2{font-family:"Noto Serif KR",serif;letter-spacing:.1em;color:#141111}
 body[data-theme=wa] .sc-sec h4{color:#b0101a;letter-spacing:.1em}
 
-/* --- 아르데코: 1920년대 특급열차 --- */
-body[data-theme=deco]{--bg:#e8e2d1;--panel:#f8f4e8;--panel2:#efe8d6;--line:#cfc19b;--ink:#1c2a25;--dim:#43544c;--faint:#857f68;--acc:#1f4a3d;--acc2:#8a6420;--sel:#efe3bf;--play:#e3eee6;--gold:#b08a3e;
-  background:repeating-linear-gradient(45deg,rgba(176,138,62,.05) 0 1px,transparent 1px 14px),repeating-linear-gradient(-45deg,rgba(176,138,62,.05) 0 1px,transparent 1px 14px),#e8e2d1}
-body[data-theme=deco] header{background:#1f4a3d;border-bottom:0;box-shadow:0 3px 0 #b08a3e,0 5px 0 #1f4a3d,0 6px 0 #b08a3e;--ink:#f3ead2;--dim:#d8ceb2;--faint:#b9ae90;--line:#3d6b5c;--panel:#285646;--panel2:#285646;--acc:#c9a24f;--acc2:#e3c98a;color:#f3ead2}
-body[data-theme=deco] header h1{letter-spacing:.12em;color:#f3ead2}
-body[data-theme=deco] header .scl{color:#f3ead2;border-bottom-color:#b08a3e}
-body[data-theme=deco] header button.ghost:hover{background:#285646}
-body[data-theme=deco] header .status.ok{color:#cfe3b0}
-body[data-theme=deco] .pchip.on{background:#b08a3e!important;color:#1f2a24!important;border-color:#b08a3e!important}
-body[data-theme=deco] #pbar{background:#1f4a3d;border-top:0;box-shadow:0 -3px 0 #b08a3e;--ink:#f3ead2;--dim:#d8ceb2;--faint:#b9ae90;--line:#3d6b5c;--panel2:#285646;color:#f3ead2}
-body[data-theme=deco] #pbar select{background:#285646;color:#f3ead2;border-color:#3d6b5c}
-body[data-theme=deco] aside{background:rgba(31,74,61,.05);border-right:1px solid #b08a3e}
-body[data-theme=deco] .foldh{border-bottom:1px solid #b08a3e;letter-spacing:.08em;color:#1f4a3d}
-body[data-theme=deco] .foldh .car{color:#b08a3e}
-body[data-theme=deco] #log{background:#fbf8ef;border:1px solid #b08a3e;border-radius:3px;box-shadow:0 0 0 5px #f3edda,0 0 0 6px #b08a3e,0 8px 18px rgba(31,74,61,.12);margin-top:6px}
-body[data-theme=deco] .row:hover{background:#f4efe1}
-body[data-theme=deco] .row.sel{background:#f1e6c6;border-color:#c9a24f}
-body[data-theme=deco] .row.gm{background:#f2ebd6}
-body[data-theme=deco] .row.gm:hover{background:#ece3c9}
+body[data-theme=wa] .row.hand .hlab{background:#0a0a0a;color:#fff;margin:-12px -18px 10px;padding:6px 18px;letter-spacing:.18em;font-size:11px}
+body[data-theme=wa] .row.hand .hlab .hti{color:#fff}
+.hsecw::before{content:attr(data-l);display:inline-block;font-size:11px;font-weight:800;letter-spacing:.12em;padding:0 6px;margin-right:6px;border:1px solid currentColor;border-radius:2px;vertical-align:1px;font-family:"Noto Sans KR",sans-serif}
+body[data-theme=wa] .hsecw::before{color:#b0101a}body[data-theme=wa] .hsecw.secret::before{background:#b0101a;color:#fff;border-color:#b0101a}
+body[data-theme=deco] .hsecw::before{color:#7a200d}
+/* --- D&D: 모험서·스탯블록 (key: deco) --- */
+body[data-theme=deco]{--bg:#e9dcc3;--panel:#fbf4e4;--panel2:#f3e7cc;--line:#d6c39c;--ink:#2b1d14;--dim:#5b4636;--faint:#8e7a62;--acc:#7a200d;--acc2:#7a200d;--sel:#f5e1c0;--play:#f7e8c4;--gold:#c9962e;background:#e9dcc3}
+body[data-theme=deco] header{background:#4a0d0d;border-bottom:0;box-shadow:0 3px 0 #c9962e;--ink:#f6e7c8;--dim:#e2cfa8;--faint:#c4ad86;--line:#6e2020;--panel:#5c1414;--panel2:#5c1414;--acc:#e8b84a;--acc2:#f0cf7a;color:#f6e7c8}
+body[data-theme=deco] header h1,body[data-theme=deco] header .scl{font-family:"Gowun Batang",serif;color:#f6e7c8!important;letter-spacing:.04em}
+body[data-theme=deco] header button.ghost:hover{background:#5c1414}
+body[data-theme=deco] header .status.ok{color:#d9e6b0}
+body[data-theme=deco] .pchip.on{background:#c9962e!important;color:#3a0b0b!important;border-color:#c9962e!important}
+body[data-theme=deco] #pbar{background:#4a0d0d;border-top:0;box-shadow:0 -3px 0 #c9962e;--ink:#f6e7c8;--dim:#e2cfa8;--faint:#c4ad86;--line:#6e2020;--panel2:#5c1414;color:#f6e7c8}
+body[data-theme=deco] #pbar select{background:#5c1414;color:#f6e7c8;border-color:#7a2a2a}
+body[data-theme=deco] #pbar input[type=range]{accent-color:#c9962e}
+body[data-theme=deco] aside{border-right:1px solid #c9ad6a}
+body[data-theme=deco] .foldh{border-bottom:1px solid #9c2a1a;color:#7a200d;font-family:"Gowun Batang",serif}
+body[data-theme=deco] .foldh .car,body[data-theme=deco] .foldh .fc{color:#9c2a1a}
+body[data-theme=deco] #log{background:#fdf1dc;border:1px solid #c9ad6a;border-radius:4px;box-shadow:0 0 0 4px #f3e2bd,0 0 0 5px #c9962e,0 6px 18px rgba(74,13,13,.15)}
+body[data-theme=deco] .row:hover{background:#f8e8c9}
+body[data-theme=deco] .row.sel{background:#f5dcb2;border-color:#c9962e}
+body[data-theme=deco] .row.gm{background:#f3e4c3}
+body[data-theme=deco] .row.gm:hover{background:#efdcb6}
 body[data-theme=deco] .row.gm.sel{background:var(--sel)}
-body[data-theme=deco] .row.gm .body{box-shadow:inset 4px 0 0 #b08a3e}
-body[data-theme=deco] .row.playing .body{box-shadow:inset 3px 0 0 #1f4a3d}
-body[data-theme=deco] .who{letter-spacing:.04em}
-body[data-theme=deco] .tx{color:#22302a}
-body[data-theme=deco] .gmtag{background:#1f4a3d;color:#e3c98a;border-radius:0;letter-spacing:.12em;box-shadow:0 0 0 1px #b08a3e}
-body[data-theme=deco] button.pri{background:#1f4a3d;border-color:#b08a3e;color:#f3ead2;box-shadow:none;border-radius:3px;letter-spacing:.05em}
-body[data-theme=deco] button.pri:hover{background:#285646}
-body[data-theme=deco] .row.sec.l1 .tx{text-align:center;color:#1f4a3d;border-bottom:0;letter-spacing:.3em;font-size:18px;display:flex;align-items:center;gap:12px;justify-content:center}
-body[data-theme=deco] .row.sec.l1 .tx::before,body[data-theme=deco] .row.sec.l1 .tx::after{content:"";flex:1;max-width:180px;border-top:1px solid #b08a3e;border-bottom:1px solid #b08a3e;height:3px}
-body[data-theme=deco] .row.sec.l1 .tx .ln::before{content:"◆ ";color:#b08a3e;letter-spacing:0}
-body[data-theme=deco] .row.sec.l1 .tx .ln::after{content:" ◆";color:#b08a3e;letter-spacing:0}
-body[data-theme=deco] .row.sec.l2 .tx{color:#1f4a3d;border-left:0;border-bottom:0;letter-spacing:.14em;padding-left:0}
-body[data-theme=deco] .row.sec.l2 .tx .ln::before{content:"▸ ";color:#b08a3e}
-body[data-theme=deco] .row.sec.l3 .tx{color:#5a6a5e;border-bottom:1px dotted #c9b88a;letter-spacing:.06em}
-body[data-theme=deco] .row.note .tx{color:#5a5a48;letter-spacing:.04em}
-body[data-theme=deco] .row.note .tx::before,body[data-theme=deco] .row.note .tx::after{border-top:1px solid #b08a3e;max-width:90px}
-body[data-theme=deco] .row.note .tx .ln:first-child::before{content:"◇ ";color:#b08a3e}
-body[data-theme=deco] .row.note .tx .ln:last-child::after{content:" ◇";color:#b08a3e}
-body[data-theme=deco] .row.dice .tx{background:#f6f0de;border:1px solid #b08a3e;border-left:3px solid #1f4a3d;border-radius:3px}
-body[data-theme=deco] .row.hand .body{background:#f6f0dc;border:1px solid #b08a3e;border-radius:2px;box-shadow:inset 0 0 0 4px #fbf8f0,inset 0 0 0 5px #b08a3e}
-body[data-theme=deco] .row.hand .hlab{color:#1f4a3d;letter-spacing:.2em}
-body[data-theme=deco] .nb{background:#e7efe9;box-shadow:inset 0 -1px 0 #1f4a3d;color:#1f4a3d}
-body[data-theme=deco] .sc-sec,body[data-theme=deco] .card{border-radius:3px;border-color:#cfc19b;box-shadow:0 0 0 3px #f3edda,0 0 0 4px #d8c99f}
-body[data-theme=deco] .sc-top h2{color:#1f4a3d;letter-spacing:.1em}
-body[data-theme=deco][data-page=scen]{background:repeating-linear-gradient(45deg,rgba(176,138,62,.08) 0 1px,transparent 1px 16px),repeating-linear-gradient(-45deg,rgba(176,138,62,.08) 0 1px,transparent 1px 16px),#1f4a3d}
-body[data-theme=deco][data-page=scen] .sc-top{--ink:#f3ead2;--dim:#d8ceb2;--faint:#b9ae90;--line:#3d6b5c;--panel2:#285646;color:#f3ead2}
-body[data-theme=deco][data-page=scen] .sc-top h2{color:#f3ead2;border-bottom:2px solid #b08a3e;padding-bottom:4px}
-body[data-theme=deco][data-page=scen] .sc-top button:not(.pri){background:#285646;border-color:#b08a3e;color:#f3ead2}
-body[data-theme=deco][data-page=scen] .sc-top .sys{background:#b08a3e;border-color:#b08a3e;color:#1f2a24}
-body[data-theme=deco][data-page=scen] .sc-top .authbox,body[data-theme=deco][data-page=scen] .sc-top .authbox *{color:#d8ceb2}
-body[data-theme=deco][data-page=scen] .sc-sec{box-shadow:0 0 0 3px #1f4a3d,0 0 0 4px #b08a3e}
-body[data-theme=deco] .sc-sec h4{letter-spacing:.12em;color:#8a6420}
+body[data-theme=deco] .row.gm .body{box-shadow:inset 4px 0 0 #7a200d}
+body[data-theme=deco] .row.playing .body{box-shadow:inset 3px 0 0 #c9962e}
+body[data-theme=deco] .tx{color:#2b1d14}
+body[data-theme=deco] .gmtag{background:#7a200d;color:#f6d98a;border-radius:3px;font-family:"Gowun Batang",serif}
+body[data-theme=deco] button.pri{background:#7a200d;border-color:#5a1608;color:#fbeed2;box-shadow:0 1px 0 #c9962e}
+body[data-theme=deco] button.pri:hover{background:#922610}
+body[data-theme=deco] .row.sec .tx{font-family:"Gowun Batang",serif}
+body[data-theme=deco] .row.sec.l1 .tx{font-size:23px;color:#7a200d;border-bottom:0;padding-bottom:4px;letter-spacing:.04em}
+body[data-theme=deco] .row.sec.l1 .tx::after{content:"";display:block;height:4px;margin-top:6px;background:#9c2a1a;clip-path:polygon(0 0,100% 50%,0 100%)}
+body[data-theme=deco] .row.sec.l2 .tx{font-size:17px;color:#7a200d;border-left:0;border-bottom:1px solid #c9ad6a;padding:0 2px 3px;font-variant:small-caps}
+body[data-theme=deco] .row.sec.l3 .tx{font-size:14.5px;color:#5b4636;font-style:italic;border-bottom:0}
+body[data-theme=deco] .row.sec.l3 .tx .ln::before{content:"✦ ";color:#c9962e;font-style:normal}
+body[data-theme=deco] .row.note .tx{display:block;text-align:left;font-family:"Gowun Batang",serif;font-style:normal;color:#2b1d14;background:#e6e4c8;border:1px solid #c2bf96;box-shadow:3px 3px 0 #c9c59c;padding:10px 14px;max-width:44em;margin:0 auto}
+body[data-theme=deco] .row.note .tx::before,body[data-theme=deco] .row.note .tx::after{display:none}
+body[data-theme=deco] .row.dice .tx{background:#fdf1dc;border:0;border-top:3px solid #e69a28;border-bottom:3px solid #e69a28;border-radius:0;box-shadow:0 1px 4px rgba(74,13,13,.15)}
+body[data-theme=deco] .row.dice .dw{color:#7a200d}
+body[data-theme=deco] .row.dice .dl{color:#7a200d;font-style:italic;font-weight:600}
+body[data-theme=deco] .row.hand .body{background:#f6e3b8;border:1px solid #b88a3a;border-radius:3px;box-shadow:inset 0 0 0 3px #fbefd4,inset 0 0 0 4px #c9962e,2px 3px 8px rgba(74,13,13,.18)}
+body[data-theme=deco] .row.hand .hlab{color:#7a200d;font-family:"Gowun Batang",serif;letter-spacing:.06em}
+body[data-theme=deco] .nb{background:#f3dfb4;box-shadow:inset 0 -1px 0 #c9962e;color:#5a1608}
+body[data-theme=deco] .sc-sec,body[data-theme=deco] .card{border-radius:4px;border-color:#d6c39c;box-shadow:0 2px 8px rgba(74,13,13,.08)}
+body[data-theme=deco] .sc-top h2{font-family:"Gowun Batang",serif;color:#7a200d}
+body[data-theme=deco] .sc-sec h4{color:#7a200d;font-family:"Gowun Batang",serif;letter-spacing:.04em}
+body[data-theme=deco][data-page=scen]{background:#4a0d0d}
+body[data-theme=deco][data-page=scen] .sc-top{--ink:#f6e7c8;--dim:#e2cfa8;--faint:#c4ad86;--line:#6e2020;--panel2:#5c1414;color:#f6e7c8}
+body[data-theme=deco][data-page=scen] .sc-top h2{color:#f6e7c8;border-bottom:2px solid #c9962e;padding-bottom:4px}
+body[data-theme=deco][data-page=scen] .sc-top button:not(.pri){background:#5c1414;border-color:#c9962e;color:#f6e7c8}
+body[data-theme=deco][data-page=scen] .sc-top .sys{background:#c9962e;border-color:#c9962e;color:#3a0b0b}
+body[data-theme=deco][data-page=scen] .sc-top .authbox,body[data-theme=deco][data-page=scen] .sc-top .authbox *{color:#e2cfa8}
+body[data-theme=deco][data-page=scen] .sc-sec{box-shadow:0 0 0 3px #4a0d0d,0 0 0 4px #c9962e}
 
 /* --- 블루 모던: 깔끔한 앱 느낌 --- */
 body[data-theme=blue]{--bg:#eef3f9;--panel:#ffffff;--panel2:#f3f7fc;--line:#d7e1ee;--ink:#142033;--dim:#4a5a72;--faint:#8494ab;--acc:#2563eb;--acc2:#1d4ed8;--sel:#e6efff;--play:#e8f6ff;--gold:#2563eb;--ok:#0f9f6e;
