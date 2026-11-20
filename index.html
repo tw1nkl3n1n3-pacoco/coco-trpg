@@ -118,6 +118,7 @@ mark{background:#f2c970;color:inherit;border-radius:3px}
 .row.sec.sub{margin:16px 0 6px}
 .row.sec.sub .tx{font-size:16px;color:#7a5a32;border-bottom:0;border-left:3px solid #d9bf8f;padding:1px 10px}
 .secb.sub{padding-left:26px;font-size:13.5px}
+.secday{font-size:11.5px;font-weight:700;color:#8a6a3a;padding:8px 6px 2px;border-top:1px dashed var(--line);margin-top:4px}.secday:first-child{border-top:0;margin-top:0;padding-top:2px}
 .secadd{display:flex;flex-wrap:wrap;align-items:center;gap:4px;font-size:12px;color:#a08660;padding:2px 4px}
 .secadd button{font-size:12.5px;padding:3px 8px}.secadd span{width:100%}
 .row.sec.editing .tx textarea{font-family:"Gowun Batang",serif;font-size:17px;min-height:40px}
@@ -997,9 +998,10 @@ function renderSide(){
     ${hidden?`<button class="ghost zt" id="zerot">${S.showZero?"대사 없는 화자 숨기기":`이 녹음에 대사 없는 화자 ${hidden}명 보기`}</button>`:""}
     ${S.canWrite?`<div class="addsp"><input type="text" id="newsp" placeholder="새 화자 이름 (예: 코코)"><button id="addsp">추가</button></div>`:""}
     </div>
-    ${(()=>{const ss=allSecs();return `<button class="foldh${S.openSec?" open":""}" data-fold="openSec"><span class="car">▸</span>단락 <span class="fc">${ss.length}</span><span class="fsub">누르면 그 지점으로 이동</span></button>
+    ${(()=>{const ss=allSecs();return `<button class="foldh${S.openSec?" open":""}" data-fold="openSec"><span class="car">▸</span>단락 <span class="fc">${ss.length}</span><span class="fsub">시나리오 전체 · 누르면 이동</span></button>
     <div class="fold${S.openSec?" open":""}">
-      <div class="secs">${ss.map(x=>`<button class="secb${x.lv===2?" sub":""}${x.sid===S.sid?"":" other"}" data-sec="${x.sid}|${x.id}"><span class="sp">${x.part}부</span>${esc(x.x||"(이름 없음)")}</button>`).join("")||'<div class="tip" style="padding:2px 4px 6px">아직 나눈 단락이 없어요</div>'}</div>
+      <div class="secs">${(()=>{const days=[...new Set(S.sessions.map(info).filter(i=>S.meta&&i.scen===info(S.meta).scen).map(i=>i.day))].sort();const multi=new Set(ss.map(x=>x.day)).size>1||(ss.length&&ss[0].day!==(S.meta&&info(S.meta).day));let last=null;
+        return ss.map(x=>{const h=multi&&x.day!==last?`<div class="secday">${days.indexOf(x.day)+1}회차 · ${esc(fmtDay(x.day))}</div>`:"";last=x.day;return h+`<button class="secb${x.lv===2?" sub":""}${x.sid===S.sid?"":" other"}" data-sec="${x.sid}|${x.id}"><span class="sp">${x.part}부</span>${esc(x.x||"(이름 없음)")}</button>`;}).join("")})()||'<div class="tip" style="padding:2px 4px 6px">아직 나눈 단락이 없어요</div>'}</div>
       ${S.canWrite?`<div class="secadd"><span>고른 대사부터 새</span><button class="ghost" id="addsec" title="고른 대사 바로 위에 상위 단락을 넣어요 (예: 메인 페이즈)">＋ 상위 단락</button><button class="ghost" id="addsec2" title="고른 대사 바로 위에 하위 단락을 넣어요 (예: 1사이클)">＋ 하위 단락</button></div>`:""}
     </div>`;})()}
     ${curScen()?`<button class="foldh${S.openNoun?" open":""}" data-fold="openNoun"><span class="car">▸</span>고유명사 <span class="fc">${nounGroups().length}</span><span class="fsub">글자를 드래그해서 바꿔요</span></button>
@@ -1273,17 +1275,19 @@ function editDice(r,e){
 // S.secOther: 같은 회차의 다른 녹음에 있는 단락 {sid,part,id,x}
 async function loadSecs(force){
   if(!S.db||!S.meta)return;
-  const sib=siblings().filter(x=>x.id!==S.sid),key=S.sid+"|"+sib.map(x=>x.id).join();
+  const me=info(S.meta);
+  const sib=S.sessions.map(x=>({...x,...info(x)})).filter(x=>x.scen===me.scen&&x.id!==S.sid),key=S.sid+"|"+sib.map(x=>x.id).join();
   if(!force&&S.secKey===key)return;S.secKey=key;
   const out=[];
   for(const x of sib){try{const snap=await S.db.collection(`sessions/${x.id}/chunks`).get();
-    snap.docs.map(d=>d.data()).sort((a,b)=>a.i-b.i).forEach(c=>(c.b||[]).forEach(b=>{if(b.s===SEC)out.push({sid:x.id,part:x.part,id:b.id,x:b.x,lv:b.lv===2?2:1});}));}catch(e){}}
+    snap.docs.map(d=>d.data()).sort((a,b)=>a.i-b.i).forEach(c=>(c.b||[]).forEach(b=>{if(b.s===SEC)out.push({sid:x.id,day:x.day,part:x.part,id:b.id,x:b.x,lv:b.lv===2?2:1});}));}catch(e){}}
   if(S.secKey===key){S.secOther=out;renderSide();}
 }
 function allSecs(){
-  const me=S.meta?info(S.meta).part:1;
-  const here=S.flat.filter(e=>e.b.s===SEC).map(e=>({sid:S.sid,part:me,id:e.b.id,x:e.b.x,lv:e.b.lv===2?2:1}));
-  return [...(S.secOther||[]),...here].sort((a,b)=>a.part-b.part);
+  const me=S.meta?info(S.meta):{day:"",part:1};
+  const here=S.flat.filter(e=>e.b.s===SEC).map(e=>({sid:S.sid,day:me.day,part:me.part,id:e.b.id,x:e.b.x,lv:e.b.lv===2?2:1}));
+  // 안정 정렬: 같은 녹음 안에서는 로그 순서 그대로
+  return [...(S.secOther||[]),...here].map((x,i)=>({...x,i})).sort((a,b)=>String(a.day).localeCompare(String(b.day))||a.part-b.part||a.i-b.i);
 }
 function gotoSec(sec){
   if(sec.sid===S.sid){const r=document.querySelector(`.row[data-id="${sec.id}"]`);if(r){setFollow(false);r.scrollIntoView({block:"start",behavior:"smooth"});select(sec.id,false);}return;}
