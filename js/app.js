@@ -141,7 +141,7 @@ function publish(){
   const all=[];Object.values(SUB.sessData).forEach(m=>Object.values(m).forEach(x=>all.push(x)));
   S.sessions=all.sort((a,b)=>String(a.title).localeCompare(String(b.title),"ko",{numeric:true}));
   const cwChanged=refreshCanWrite();
-  if(S.sid){if(cwChanged)render();else{renderSide();renderAllRows(true);renderHeader();}maybeEnsure();}
+  if(S.sid){if(cwChanged)render();else{renderSide();renderAllRows(true);renderHeader();}maybeEnsure();if(S.chunksLoaded)loadSecs();}
   else if(!S.importing&&!S.scEdit)render();
   if(S.canAdmin)ownerMaintain();
 }
