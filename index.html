@@ -10,7 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script src="firebase-config.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Gowun+Batang:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#efe3cc; --panel:#fbf6ec; --panel2:#f3e8d4; --line:#d9c4a3; --ink:#3b2a1a; --dim:#6b5440; --faint:#9a8469;
@@ -121,6 +121,12 @@ mark{background:#f2c970;color:inherit;border-radius:3px}
 .ngrp{display:flex;flex-wrap:wrap;align-items:center;gap:2px;padding:1px 2px}
 .ngrp button{width:auto!important;padding:3px 8px!important}.ngrp button.alt{color:#8a7a68;font-size:12.5px}
 .nreg{display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:4px;font-size:12.5px}.nreg select{font-size:12.5px;padding:2px 4px}.nreg button{width:auto!important;padding:2px 10px!important}
+.row.hand{margin:12px 0}
+.row.hand .body{box-shadow:none;background:#fbf5e6;border:1px solid #e2d3b0;border-radius:6px;padding:12px 18px 14px;position:relative;box-shadow:inset 0 0 24px rgba(180,140,70,.08)}
+.row.hand .hlab{font-size:11px;color:#a08660;letter-spacing:1px;margin-bottom:4px}
+.row.hand .tx{font-family:"Gowun Batang",serif;font-size:15.5px;line-height:1.85;color:#3a2e22;max-width:none}
+.row.hand .tx textarea{font-family:"Gowun Batang",serif;min-height:120px}
+.row.hand .ph{color:#c4b49c}
 .row.dice{margin:6px 0}
 .row.dice .body{box-shadow:none}
 .row.dice .tx{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;background:#f7f3ec;border:1px solid #e8dcc8;border-left:3px solid var(--c);border-radius:8px;padding:6px 12px;max-width:none;font-size:14px}
@@ -710,12 +716,19 @@ const gmTag='<span class="gmtag">GM</span>';
 const spBy=k=>spList().find(s=>s.k===k)||{k,name:"(목록에 없는 화자)",c:"#888"};
 function spTarget(){const sc=curScen();return sc?sc.sp:S.meta.sp;}
 function saveSp(){saveMeta();}
-function counts(){const c={};S.flat.forEach(e=>{if(e.b.s!==NOTE&&e.b.s!==DICE)c[e.b.s]=(c[e.b.s]||0)+1;});return c;}
+function counts(){const c={};S.flat.forEach(e=>{if(e.b.s!==NOTE&&e.b.s!==DICE&&e.b.s!==HAND)c[e.b.s]=(c[e.b.s]||0)+1;});return c;}
 function addNote(afterId){
   if(!S.canWrite)return;
   const e=S.byId.get(afterId);if(!e)return;
   const nb={id:rid(),s:NOTE,t:e.b.t,x:""};
   doOps([{ci:e.ci,op:{t:"ins",after:e.b.id,b:nb}}],"상황 묘사 추가");
+  renderAllRows(true);select(nb.id,false);editRow(nb.id);
+}
+function addHand(afterId){
+  if(!S.canWrite)return;
+  const e=S.byId.get(afterId);if(!e)return;
+  const nb={id:rid(),s:HAND,t:e.b.t,x:""};
+  doOps([{ci:e.ci,op:{t:"ins",after:e.b.id,b:nb}}],"핸드아웃 추가");
   renderAllRows(true);select(nb.id,false);editRow(nb.id);
 }
 function addDice(afterId){
@@ -813,6 +826,7 @@ async function buildDayHTML(scen,day){
     while(i<bl.length){
       const b=bl[i];
       if(b.s===NOTE){out.push(`<p class="note">${esc(b.x).replace(/\n/g,"<br>")}</p>`);i++;continue;}
+      if(b.s===HAND){out.push(`<div class="hand"><div class="hlab">핸드아웃</div>${esc(b.x).replace(/\n/g,"<br>")}</div>`);i++;continue;}
       if(b.s===DICE){
         const p=b.w?(sp.find(z=>z.k===b.w)||{name:"?",c:"#888"}):null,c=p?fixC(p.c):"#8a8178";
         out.push(`<p class="dice" style="color:${c};--c:${c}">🎲 ${p?`<span class="nm"><b>${esc(p.ch||p.name)}</b></span> : `:""}<span class="tx">${b.x?esc(b.x)+" ":""}${b.r?`<span class="dr">${esc(b.r)}</span>`:""}</span>${b.sec?` <span class="res secret">Secret Dice</span>`:""}${b.o&&OUT[b.o]?` <span class="res ${b.o}">${OUT[b.o]}</span>`:""}</p>`);
@@ -829,6 +843,7 @@ async function buildDayHTML(scen,day){
   const body=parts.map(p=>(parts.length>1?`<h2>${p.part}부</h2>`:"")+lines(p.bl,p.sp)).join("\n");
   return `<!DOCTYPE html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang&display=swap" rel="stylesheet">
 <title>${esc(title)}</title>
 <style>
 body{margin:0;background:#fff;color:#222;font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-size:15px;line-height:1.7}
@@ -843,6 +858,8 @@ p{margin:0;padding:6px 2px;border-bottom:1px solid #ece7df;word-break:keep-all;o
 .gm .tx{color:#3a2e22}
 .gmt{display:inline-block;font-size:10px;font-weight:800;color:#fff;background:var(--c);border-radius:3px;padding:0 4px;margin-right:5px;vertical-align:2px;line-height:15px}
 .note{color:#8a8178;font-style:italic;text-align:center;padding:10px 2px}
+.hand{font-family:"Gowun Batang",serif;background:#fbf5e6;border:1px solid #e2d3b0;border-radius:6px;padding:12px 18px 14px;margin:12px 0;color:#3a2e22;font-size:15.5px;line-height:1.85}
+.hand .hlab{font-family:sans-serif;font-size:10.5px;letter-spacing:1.5px;color:#a08660;margin-bottom:4px}
 .dice{background:#f7f5f0;border-left:3px solid var(--c);padding:6px 8px}
 .dice .tx{color:#3a2e22}.dice .dr{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700}
 .res{display:inline-block;font-size:11px;font-weight:800;color:#fff;border-radius:4px;padding:0 7px;margin-left:4px;line-height:18px;vertical-align:1px}
@@ -964,7 +981,7 @@ function renderSide(){
     <div class="tip usage">
       대사를 클릭해 고르고 숫자키 <kbd>1</kbd>~<kbd>9</kbd>로 화자를 바꿔요. 이름을 클릭해도 바꿀 수 있어요.<br>
       한 칸에 두 사람 말이 섞였으면 대사를 클릭해서 고른 뒤 문장 사이의 <b>✂</b>를 눌러 나눠요.<br>
-      <kbd>N</kbd> 고른 대사 아래에 상황 묘사 넣기 · <kbd>D</kbd> 주사위 넣기<br>
+      <kbd>N</kbd> 고른 대사 아래에 상황 묘사 넣기 · <kbd>D</kbd> 주사위 · <kbd>H</kbd> 핸드아웃 넣기<br>
       <kbd>↑</kbd><kbd>↓</kbd> 이동 · <kbd>Enter</kbd> 글 수정 · <kbd>P</kbd> 여기서 재생 · <kbd>Space</kbd> 재생/정지 · <kbd>Ctrl</kbd>+<kbd>Z</kbd> 되돌리기
     </div>`;
   bindSide();
@@ -992,7 +1009,7 @@ function hl(text){
   if(S.q){const q=esc(S.q).replace(/[.*+?^${}()|[\]\\]/g,"\\$&");h=h.replace(new RegExp(q,"gi"),m=>`<mark>${m}</mark>`);}
   return h;
 }
-const NOTE="__note",DICE="__dice";
+const NOTE="__note",DICE="__dice",HAND="__hand";
 const OUT={success:"Success",failure:"Failure",critical:"Critical",fumble:"Fumble"};
 function diceInner(b){
   const p=b.w?spBy(b.w):null;
@@ -1000,6 +1017,17 @@ function diceInner(b){
   return `<span class="dd">🎲</span>${p?`<b class="dw">${esc(p.ch||p.name)}</b>`:""}${b.x?`<span class="dl">${hl(b.x)}</span>`:""}${b.r?`<span class="dr">${hl(b.r)}</span>`:""}${b.sec?`<span class="dres secret">Secret Dice</span>`:""}${b.o&&OUT[b.o]?`<span class="dres ${b.o}">${OUT[b.o]}</span>`:""}`;
 }
 function rowHTML(e,prev){
+  if(e.b.s===HAND){const b=e.b;
+    return `<div class="row hand${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}">
+    <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
+    <div class="body"><div class="hlab">📜 핸드아웃</div><div class="tx">${b.x?`<span>${b.x.split("\n").map(l=>`<span class="ln">${hl(l)}</span>`).join("<br>")}</span>`:'<span class="ph">핸드아웃 내용</span>'}</div></div>
+    <div class="act">
+      <button class="w" data-act="edit" title="글 수정 (Enter)">✎</button>
+      <button class="w" data-act="up" title="위 줄과 합치기">⤒</button>
+      <button class="w" data-act="who" title="대사로 바꾸기">👤</button>
+      <button class="w" data-act="note" title="아래에 상황 묘사 추가 (N)">＋상황</button>
+      <button class="w" data-act="del" title="삭제">🗑</button>
+    </div></div>`;}
   if(e.b.s===DICE){const b=e.b,p=b.w?spBy(b.w):null;
     return `<div class="row dice${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}" style="--c:${p?fixC(p.c):"#8a8178"}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
@@ -1101,7 +1129,7 @@ function whoMenu(anchor,id){
   const cur=S.byId.get(id)?.b.s;
   const shown=shownSp(),rest=spList().filter(x=>x.k!==ALL&&!shown.includes(x));
   popAt(anchor,`<button data-k="${ALL}" style="--c:${ALLSP.c}"><span class="k">0</span><span class="dot"></span>${ALLSP.name}${cur===ALL?" ✓":""}</button>`+shown.concat(rest).map((s,i)=>`${i===shown.length&&rest.length?'<hr><div class="tip" style="padding:0 8px">이 녹음에 대사 없는 화자</div>':""}<button data-k="${s.k}" style="--c:${fixC(s.c)}"><span class="k">${i<9&&i<shown.length?i+1:""}</span><span class="dot"></span>${esc(s.name)}${s.k===cur?" ✓":""}</button>`).join("")+
-    `<hr>${cur===NOTE?"":`<button data-k="${NOTE}"><span class="k"></span>▤ 상황 묘사로 바꾸기</button>`}<input type="text" placeholder="새 화자 입력 후 Enter" id="pnew">`,p=>{
+    `<hr>${cur===NOTE?"":`<button data-k="${NOTE}"><span class="k"></span>▤ 상황 묘사로 바꾸기</button>`}${cur===HAND?"":`<button data-k="${HAND}"><span class="k"></span>📜 핸드아웃으로 바꾸기</button>`}<input type="text" placeholder="새 화자 입력 후 Enter" id="pnew">`,p=>{
     p.querySelectorAll("button[data-k]").forEach(b=>b.onclick=()=>{assign(id,b.dataset.k);closePop();});
     const inp=$("#pnew",p);inp.onkeydown=ev=>{if(ev.key==="Enter"){const k=addSpeaker(inp.value);if(k)assign(id,k);closePop();}if(ev.key==="Escape")closePop();};
   });
@@ -1146,7 +1174,7 @@ function helpBox(){
   <kbd>Enter</kbd> 글 수정 · 수정 중 <kbd>Ctrl</kbd>+<kbd>Enter</kbd> 저장, <kbd>Esc</kbd> 취소<br>
   <kbd>P</kbd> 고른 대사부터 재생 · <kbd>Space</kbd> 재생/정지<br>
   <kbd>[</kbd> <kbd>]</kbd> 5초 뒤로/앞으로<br>
-  <kbd>N</kbd> 고른 대사 아래에 상황 묘사 넣기 · <kbd>D</kbd> 주사위 넣기<br>
+  <kbd>N</kbd> 고른 대사 아래에 상황 묘사 넣기 · <kbd>D</kbd> 주사위 · <kbd>H</kbd> 핸드아웃 넣기<br>
   <kbd>Ctrl</kbd>+<kbd>Z</kbd> 되돌리기 (이 창에서 한 작업만)</div>
   <div class="btns"><button class="pri" data-x>닫기</button></div></div>`;
   document.body.appendChild(m);m.querySelector("[data-x]").onclick=()=>m.remove();m.onclick=ev=>{if(ev.target===m)m.remove();};
@@ -1160,14 +1188,14 @@ function editRow(id){
   select(id,false);
   const tx=r.querySelector(".tx");
   if(e.b.s===DICE){editDice(r,e);return;}
-  const isNote=e.b.s===NOTE;
+  const isNote=e.b.s===NOTE,isHand=e.b.s===HAND;
   r.classList.add("editing");
-  tx.innerHTML=`<textarea placeholder="${isNote?"예: 아래층에서 소음이 들린다":""}">${esc(e.b.x)}</textarea><div class="edhint">${isNote?"Enter 저장 · Esc 취소":"줄바꿈으로 나눌 곳을 만든 뒤 ✂로 나눌 수 있어요 · Ctrl+Enter 저장 · Esc 취소"}</div>`;
+  tx.innerHTML=`<textarea placeholder="${isNote?"예: 아래층에서 소음이 들린다":isHand?"핸드아웃 내용":""}">${esc(e.b.x)}</textarea><div class="edhint">${isNote?"Enter 저장 · Esc 취소":isHand?"Ctrl+Enter 저장 · Esc 취소":"줄바꿈으로 나눌 곳을 만든 뒤 ✂로 나눌 수 있어요 · Ctrl+Enter 저장 · Esc 취소"}</div>`;
   const ta=tx.querySelector("textarea");ta.style.height=Math.max(isNote?44:60,ta.scrollHeight+4)+"px";ta.focus();
   let done=false;
   const finish=save=>{if(done)return;done=true;
     if(save)setText(id,ta.value);
-    else if(isNote&&!e.b.x){const x=S.byId.get(id);if(x){S.undo.pop();doOps([{ci:x.ci,op:{t:"del",id}}],null);renderAllRows(true);}return;}
+    else if((isNote||isHand)&&!e.b.x){const x=S.byId.get(id);if(x){S.undo.pop();doOps([{ci:x.ci,op:{t:"del",id}}],null);renderAllRows(true);}return;}
     if(S.byId.has(id)){updateRow(id);select(id,false);}};
   ta.onkeydown=ev=>{if(ev.key==="Escape"){ev.preventDefault();finish(false);}if(ev.key==="Enter"&&(ev.ctrlKey||ev.metaKey||(isNote&&!ev.shiftKey))){ev.preventDefault();finish(true);}ev.stopPropagation();};
   ta.onblur=()=>{if(S.rerendering)return;setTimeout(()=>{if(document.activeElement!==ta&&ta.isConnected)finish(true);else if(!ta.isConnected&&!S.byId.has(id))finish(false);},0);};
@@ -1355,7 +1383,7 @@ function bindSession(){
   const q=$("#q");q.oninput=()=>{clearTimeout(qTimer);qTimer=setTimeout(()=>{S.q=q.value.trim();renderAllRows();},200);};
   q.onkeydown=ev=>{ev.stopPropagation();if(ev.key==="Escape"){q.value="";S.q="";renderAllRows();q.blur();}};
   $("#copyAll").onclick=async()=>{
-    const txt=S.flat.filter(visible).map(e=>e.b.s===DICE?`🎲 ${e.b.w?(spBy(e.b.w).ch||spBy(e.b.w).name):""} ${e.b.x||""} ${e.b.r||""} ${e.b.sec?"Secret Dice":""} ${OUT[e.b.o]||""}`.replace(/\s+/g," ").trim():e.b.s===NOTE?`\n— ${e.b.x.replace(/\n/g," ")} —\n`:`[${fmt(e.b.t)}] ${spBy(e.b.s).name}: ${e.b.x.replace(/\n/g," ")}`).join("\n");
+    const txt=S.flat.filter(visible).map(e=>e.b.s===HAND?`\n[핸드아웃]\n${e.b.x}\n`:e.b.s===DICE?`🎲 ${e.b.w?(spBy(e.b.w).ch||spBy(e.b.w).name):""} ${e.b.x||""} ${e.b.r||""} ${e.b.sec?"Secret Dice":""} ${OUT[e.b.o]||""}`.replace(/\s+/g," ").trim():e.b.s===NOTE?`\n— ${e.b.x.replace(/\n/g," ")} —\n`:`[${fmt(e.b.t)}] ${spBy(e.b.s).name}: ${e.b.x.replace(/\n/g," ")}`).join("\n");
     try{await navigator.clipboard.writeText((S.meta?.title?S.meta.title+"\n\n":"")+txt);toast("복사했어요");}catch(e){toast("복사가 막혔어요. 브라우저 권한을 확인해 주세요");}
   };
   $("#log").onclick=ev=>{
@@ -1391,6 +1419,7 @@ document.addEventListener("keydown",ev=>{
   else if(k==="Enter"){ev.preventDefault();editRow(S.sel);}
   else if((k==="n"||k==="N"||k==="ㅜ")&&S.canWrite){ev.preventDefault();addNote(S.sel);}
   else if((k==="d"||k==="D"||k==="ㅇ")&&S.canWrite){ev.preventDefault();addDice(S.sel);}
+  else if((k==="h"||k==="H"||k==="ㅗ")&&S.canWrite){ev.preventDefault();addHand(S.sel);}
   else if(k==="p"||k==="P"){const e=S.byId.get(S.sel);e&&playAt(e.b.t);}
 });
 
