@@ -111,6 +111,7 @@ mark{background:#f2c970;color:inherit;border-radius:3px}
 .ro .act .w{display:none}
 .tx textarea{width:100%;min-height:60px;resize:vertical;line-height:1.6}
 .edhint{font-size:11.5px;color:var(--faint);margin-top:3px}
+.nb{background:#efe4cf;border-radius:4px;padding:0 3px;box-shadow:inset 0 -1px 0 #d8c39c}
 .nouns{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 8px}
 .noun{display:inline-flex;flex-wrap:wrap;align-items:baseline;gap:4px;background:#fffdf8;border:1px solid var(--line);border-radius:10px;padding:3px 9px;font-size:13px;text-align:left;cursor:pointer;max-width:100%}
 .noun b{font-weight:600}.noun small{color:#9a8a78;font-size:11.5px}
@@ -970,7 +971,23 @@ function renderSide(){
 }
 function renderSideCounts(){const c=counts();document.querySelectorAll("[data-cnt]").forEach(el=>el.textContent=c[el.dataset.cnt]||0);}
 
+// 등록된 고유명사는 로그 화면에서만 블럭으로 표시 (HTML로 받을 땐 안 보여요)
+let _nre={k:null,re:null};
+function nounRe(){
+  const list=S.meta?[...new Set(nouns())].filter(Boolean).sort((a,b)=>b.length-a.length):[];
+  const k=list.join("\u0001");
+  if(_nre.k!==k)_nre={k,re:list.length?new RegExp(list.map(w=>w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|"),"g"):null};
+  return _nre.re;
+}
+function hlq(h){
+  if(S.q){const q=esc(S.q).replace(/[.*+?^${}()|[\]\\]/g,"\\$&");h=h.replace(new RegExp(q,"gi"),m=>`<mark>${m}</mark>`);}
+  return h;
+}
 function hl(text){
+  const re=nounRe();
+  if(re){let out="",last=0;text=String(text);re.lastIndex=0;let m;
+    while((m=re.exec(text))){out+=hlq(esc(text.slice(last,m.index)))+`<span class="nb">${hlq(esc(m[0]))}</span>`;last=m.index+m[0].length;}
+    return out+hlq(esc(text.slice(last)));}
   let h=esc(text);
   if(S.q){const q=esc(S.q).replace(/[.*+?^${}()|[\]\\]/g,"\\$&");h=h.replace(new RegExp(q,"gi"),m=>`<mark>${m}</mark>`);}
   return h;
@@ -1207,7 +1224,7 @@ function saveNoun(oldN,g){
       else arr.push(g);}
     d.nouns=arr.filter(x=>x.a.length||!(d.sp||[]).some(p=>p.ch&&p.ch.trim()===x.n));
   });
-  renderSide();
+  renderSide();renderAllRows(true);
 }
 function addAlias(full,word){const g=nounGroups().find(x=>x.n===full);if(!g)return;saveNoun(g.n,{n:g.n,a:[...g.a,word]});}
 function nounEdit(anchor,full){
