@@ -1,4 +1,5 @@
 // ---------- HTML로 내보내기 (회차 단위, 코코포리아 로그 형식) ----------
+const xEm=t=>esc(t).replace(/\*\*([^*\n]+?)\*\*/g,"<strong>$1</strong>").replace(/\n/g,"<br>");
 async function buildDayHTML(scen,day){
   const sc=findScen(scen);
   const ss=S.sessions.filter(s=>{const i=info(s);return i.scen===scen&&i.day===day;}).map(s=>({...s,...info(s)})).sort((a,b)=>a.part-b.part);
@@ -18,9 +19,9 @@ async function buildDayHTML(scen,day){
     const out=[];let i=0;
     while(i<bl.length){
       const b=bl[i];
-      if(b.s===NOTE){out.push(`<p class="note">${esc(b.x).replace(/\n/g,"<br>")}</p>`);i++;continue;}
+      if(b.s===NOTE){out.push(`<p class="note">${xEm(b.x)}</p>`);i++;continue;}
       if(b.s===SEC){const l=secLv(b);out.push(l===1?`<h3 class="sec">${esc(b.x)}</h3>`:l===2?`<h4 class="sub">${esc(b.x)}</h4>`:`<h5 class="sub3">${esc(b.x)}</h5>`);i++;continue;}
-      if(b.s===HAND){out.push(`<div class="hand"><div class="hlab">핸드아웃${b.ti?" · "+esc(b.ti):""}</div>${esc(b.x).replace(/\n/g,"<br>")}</div>`);i++;continue;}
+      if(b.s===HAND){out.push(`<div class="hand"><div class="hlab">핸드아웃${b.ti?" · "+esc(b.ti):""}</div>${xEm(b.x)}</div>`);i++;continue;}
       if(b.s===DICE){
         const p=b.w?(sp.find(z=>z.k===b.w)||{name:"?",c:"#888"}):null,c=p?fixC(p.c):"#8a8178";
         out.push(`<p class="dice" style="color:${c};--c:${c}">🎲 ${p?`<span class="nm"><b>${esc(p.ch||p.name)}</b></span> : `:""}<span class="tx">${b.x?esc(b.x)+" ":""}${b.r?`<span class="dr">${esc(b.r)}</span>`:""}</span>${b.sec?` <span class="res secret">Secret Dice</span>`:""}${b.o&&OUT[b.o]?` <span class="res ${b.o}">${OUT[b.o]}</span>`:""}</p>`);
@@ -29,7 +30,7 @@ async function buildDayHTML(scen,day){
       const p=sp.find(z=>z.k===b.s)||{name:"?",c:"#888"};
       const c=fixC(p.c),gm=b.s===g;
       const nm=`<b>${esc(p.name)}</b>${p.ch?`<small> ${esc(p.ch)}</small>`:""}`;
-      const x=run.map(t=>esc(t).replace(/\n/g,"<br>")).join("<br>");
+      const x=run.map(t=>xEm(t)).join("<br>");
       out.push(`<p${gm?' class="gm"':""} style="color:${c};--c:${c}"><span class="nm">${gm?'<span class="gmt">GM</span>':""}${nm}</span> : <span class="tx">${x}</span></p>`);
     }
     return out.join("\n");

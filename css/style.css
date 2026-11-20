@@ -312,3 +312,6 @@ a.scl:hover{color:var(--acc2)}
   .tip.usage{display:none}
 }
 
+
+strong.em{font-weight:800;color:inherit}.mk{display:none}
+.tx textarea{font-family:inherit}
