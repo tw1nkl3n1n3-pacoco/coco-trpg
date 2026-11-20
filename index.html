@@ -111,6 +111,18 @@ mark{background:#f2c970;color:inherit;border-radius:3px}
 .ro .act .w{display:none}
 .tx textarea{width:100%;min-height:60px;resize:vertical;line-height:1.6}
 .edhint{font-size:11.5px;color:var(--faint);margin-top:3px}
+.row.sec{margin:26px 0 8px;scroll-margin-top:84px}
+.row.sec .body{box-shadow:none;padding-left:0}
+.row.sec .tx{font-family:"Gowun Batang",serif;font-size:19px;font-weight:700;color:#5a3a1a;border-bottom:2px solid #c9a46a;padding:2px 2px 6px;max-width:none}
+.row.sec .ph{color:#c4b49c;font-weight:400}
+.row.sec.editing .tx textarea{font-family:"Gowun Batang",serif;font-size:17px;min-height:40px}
+.secs{display:flex;flex-direction:column;gap:2px;margin:2px 0 6px}
+.secb{display:flex;align-items:baseline;gap:8px;text-align:left;background:none;border:0;border-radius:7px;padding:5px 8px;font-size:14px;color:var(--ink);cursor:pointer;width:100%}
+.secb:hover{background:#fffaf0}.secb .sp{font-size:11px;color:#a08660;min-width:24px}.secb.other{color:#7a6a58}
+.foldh{display:flex;align-items:baseline;gap:6px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:9px 2px 7px;margin:4px 0 6px;font-weight:700;font-size:14px;color:var(--ink);cursor:pointer;border-radius:0}
+.foldh .car{display:inline-block;width:12px;color:#a08660;transition:transform .15s}.foldh.open .car{transform:rotate(90deg)}
+.foldh .fc{font-size:12px;font-weight:500;color:#a08660}.foldh .fsub{margin-left:auto;font-size:11.5px;font-weight:400;color:#a8987f}
+.fold{display:none}.fold.open{display:block}
 .nb{background:#efe4cf;border-radius:4px;padding:0 3px;box-shadow:inset 0 -1px 0 #d8c39c}
 .nouns{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 8px}
 .noun{display:inline-flex;flex-wrap:wrap;align-items:baseline;gap:4px;background:#fffdf8;border:1px solid var(--line);border-radius:10px;padding:3px 9px;font-size:13px;text-align:left;cursor:pointer;max-width:100%}
@@ -500,7 +512,7 @@ function route(){
 }
 
 // ---------- session load ----------
-function closeSession(){flushAll();S.ops={};S.dirty.clear();const a=document.getElementById("aud");if(a&&S.audioUrl){a.pause();a.removeAttribute("src");a.load();if(!S.audioCloud)URL.revokeObjectURL(S.audioUrl);S.audioUrl=null;S.playingId=null;}S.audioCloud=false;S.audioLoading=false;S.unsub.forEach(u=>{try{u()}catch(e){}});S.unsub=[];S.meta=null;S.chunks={};S.flat=[];S.chunksLoaded=false;S.ensured=false;S.byId.clear();S.sel=null;S.undo=[];S.spFilter=null;S.q="";}
+function closeSession(){S.secOther=[];S.secKey=null;flushAll();S.ops={};S.dirty.clear();const a=document.getElementById("aud");if(a&&S.audioUrl){a.pause();a.removeAttribute("src");a.load();if(!S.audioCloud)URL.revokeObjectURL(S.audioUrl);S.audioUrl=null;S.playingId=null;}S.audioCloud=false;S.audioLoading=false;S.unsub.forEach(u=>{try{u()}catch(e){}});S.unsub=[];S.meta=null;S.chunks={};S.flat=[];S.chunksLoaded=false;S.ensured=false;S.byId.clear();S.sel=null;S.undo=[];S.spFilter=null;S.q="";}
 function openSession(sid){
   if(S.local&&sid===null){/* leaving local view */S.local=false;}
   closeSession();S.sid=sid;
@@ -524,6 +536,7 @@ function openSession(sid){
     });
     if(!snap.metadata.fromCache)S.chunksLoaded=true;
     if(changed){rebuild();renderAllRows(true);renderSide();}
+    if(S.chunksLoaded){tryGotoSec();loadSecs();}
     maybeEnsure();
   },e=>{if(!(S.err||"").includes("잠겨"))S.err="로그를 불러오지 못했어요.";render();});
   S.unsub.push(u1,u2);
@@ -716,7 +729,7 @@ const gmTag='<span class="gmtag">GM</span>';
 const spBy=k=>spList().find(s=>s.k===k)||{k,name:"(목록에 없는 화자)",c:"#888"};
 function spTarget(){const sc=curScen();return sc?sc.sp:S.meta.sp;}
 function saveSp(){saveMeta();}
-function counts(){const c={};S.flat.forEach(e=>{if(e.b.s!==NOTE&&e.b.s!==DICE&&e.b.s!==HAND)c[e.b.s]=(c[e.b.s]||0)+1;});return c;}
+function counts(){const c={};S.flat.forEach(e=>{if(e.b.s!==NOTE&&e.b.s!==DICE&&e.b.s!==HAND&&e.b.s!==SEC)c[e.b.s]=(c[e.b.s]||0)+1;});return c;}
 function addNote(afterId){
   if(!S.canWrite)return;
   const e=S.byId.get(afterId);if(!e)return;
@@ -826,6 +839,7 @@ async function buildDayHTML(scen,day){
     while(i<bl.length){
       const b=bl[i];
       if(b.s===NOTE){out.push(`<p class="note">${esc(b.x).replace(/\n/g,"<br>")}</p>`);i++;continue;}
+      if(b.s===SEC){out.push(`<h3 class="sec">${esc(b.x)}</h3>`);i++;continue;}
       if(b.s===HAND){out.push(`<div class="hand"><div class="hlab">핸드아웃</div>${esc(b.x).replace(/\n/g,"<br>")}</div>`);i++;continue;}
       if(b.s===DICE){
         const p=b.w?(sp.find(z=>z.k===b.w)||{name:"?",c:"#888"}):null,c=p?fixC(p.c):"#8a8178";
@@ -858,6 +872,7 @@ p{margin:0;padding:6px 2px;border-bottom:1px solid #ece7df;word-break:keep-all;o
 .gm .tx{color:#3a2e22}
 .gmt{display:inline-block;font-size:10px;font-weight:800;color:#fff;background:var(--c);border-radius:3px;padding:0 4px;margin-right:5px;vertical-align:2px;line-height:15px}
 .note{color:#8a8178;font-style:italic;text-align:center;padding:10px 2px}
+.sec{font-family:"Gowun Batang",serif;font-size:18px;color:#5a3a1a;margin:34px 0 10px;padding-bottom:6px;border-bottom:2px solid #c9a46a}
 .hand{font-family:"Gowun Batang",serif;background:#fbf5e6;border:1px solid #e2d3b0;border-radius:6px;padding:12px 18px 14px;margin:12px 0;color:#3a2e22;font-size:15.5px;line-height:1.85}
 .hand .hlab{font-family:sans-serif;font-size:10.5px;letter-spacing:1.5px;color:#a08660;margin-bottom:4px}
 .dice{background:#f7f5f0;border-left:3px solid var(--c);padding:6px 8px}
@@ -958,7 +973,8 @@ function renderSide(){
   const sp=shownSp();
   const hidden=spList().filter(s=>s.k!==ALL&&!(c[s.k]>0)&&!isGM(s.k)&&!S.fresh.has(s.k)).length;
   side.innerHTML=`
-    <h3>발언자 · 클릭하면 그 사람만 보기</h3>
+    <button class="foldh${S.openSp?" open":""}" data-fold="openSp"><span class="car">▸</span>발언자 <span class="fc">${sp.length+1}</span><span class="fsub">클릭하면 그 사람만 보기</span></button>
+    <div class="fold${S.openSp?" open":""}">
     ${curScen()?`<div class="tip" style="margin:-4px 0 8px">이 목록은 '${esc(curScen().name)}'의 모든 녹음이 같이 써요. ⋯에서 캐릭터 이름을 넣으면 로그에 발언자와 같이 나와요.</div>`:""}
     <div id="splist">${sp.map((s,i)=>`
       <div class="spk ${S.spFilter===s.k?"on":""}" data-k="${s.k}" style="--c:${fixC(s.c)}">
@@ -974,9 +990,17 @@ function renderSide(){
       </div></div>
     ${hidden?`<button class="ghost zt" id="zerot">${S.showZero?"대사 없는 화자 숨기기":`이 녹음에 대사 없는 화자 ${hidden}명 보기`}</button>`:""}
     ${S.canWrite?`<div class="addsp"><input type="text" id="newsp" placeholder="새 화자 이름 (예: 코코)"><button id="addsp">추가</button></div>`:""}
-    ${curScen()?`<h3>고유명사 · 로그에서 글자를 드래그해서 바꿔요</h3>
+    </div>
+    ${(()=>{const ss=allSecs();return `<button class="foldh${S.openSec?" open":""}" data-fold="openSec"><span class="car">▸</span>단락 <span class="fc">${ss.length}</span><span class="fsub">누르면 그 지점으로 이동</span></button>
+    <div class="fold${S.openSec?" open":""}">
+      <div class="secs">${ss.map(x=>`<button class="secb${x.sid===S.sid?"":" other"}" data-sec="${x.sid}|${x.id}"><span class="sp">${x.part}부</span>${esc(x.x||"(이름 없음)")}</button>`).join("")||'<div class="tip" style="padding:2px 4px 6px">아직 나눈 단락이 없어요</div>'}</div>
+      ${S.canWrite?`<button class="ghost zt" id="addsec" title="고른 대사 바로 위에 단락 나누기를 넣어요">＋ 고른 대사부터 새 단락</button>`:""}
+    </div>`;})()}
+    ${curScen()?`<button class="foldh${S.openNoun?" open":""}" data-fold="openNoun"><span class="car">▸</span>고유명사 <span class="fc">${nounGroups().length}</span><span class="fsub">글자를 드래그해서 바꿔요</span></button>
+    <div class="fold${S.openNoun?" open":""}">
     <div class="nouns">${nounGroups().map(g=>`<button class="noun${g.pc?" pc":""}" data-nedit="${esc(g.n)}" title="${S.canWrite?"눌러서 유의어 고치기":""}"><b>${esc(g.n)}</b>${g.a.length?`<small>${g.a.map(esc).join(" · ")}</small>`:""}${g.pc?'<span class="pct">PC</span>':""}</button>`).join("")||'<span class="tip">아직 없어요</span>'}</div>
-    ${S.canWrite?`<button class="ghost zt" id="addnoun">＋ 고유명사 묶음 추가</button>`:""}`:""}
+    ${S.canWrite?`<button class="ghost zt" id="addnoun">＋ 고유명사 묶음 추가</button>`:""}
+    </div>`:""}
     <h3 class="tip usage">사용법</h3>
     <div class="tip usage">
       대사를 클릭해 고르고 숫자키 <kbd>1</kbd>~<kbd>9</kbd>로 화자를 바꿔요. 이름을 클릭해도 바꿀 수 있어요.<br>
@@ -1009,7 +1033,7 @@ function hl(text){
   if(S.q){const q=esc(S.q).replace(/[.*+?^${}()|[\]\\]/g,"\\$&");h=h.replace(new RegExp(q,"gi"),m=>`<mark>${m}</mark>`);}
   return h;
 }
-const NOTE="__note",DICE="__dice",HAND="__hand";
+const NOTE="__note",DICE="__dice",HAND="__hand",SEC="__sec";
 const OUT={success:"Success",failure:"Failure",critical:"Critical",fumble:"Fumble"};
 function diceInner(b){
   const p=b.w?spBy(b.w):null;
@@ -1017,6 +1041,14 @@ function diceInner(b){
   return `<span class="dd">🎲</span>${p?`<b class="dw">${esc(p.ch||p.name)}</b>`:""}${b.x?`<span class="dl">${hl(b.x)}</span>`:""}${b.r?`<span class="dr">${hl(b.r)}</span>`:""}${b.sec?`<span class="dres secret">Secret Dice</span>`:""}${b.o&&OUT[b.o]?`<span class="dres ${b.o}">${OUT[b.o]}</span>`:""}`;
 }
 function rowHTML(e,prev){
+  if(e.b.s===SEC){const b=e.b;
+    return `<div class="row sec${S.sel===b.id?" sel":""}" data-id="${b.id}">
+    <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
+    <div class="body"><div class="tx"><span class="ln">${b.x?hl(b.x):'<span class="ph">단락 이름</span>'}</span></div></div>
+    <div class="act">
+      <button class="w" data-act="edit" title="이름 고치기 (Enter)">✎</button>
+      <button class="w" data-act="del" title="단락 나누기 지우기">🗑</button>
+    </div></div>`;}
   if(e.b.s===HAND){const b=e.b;
     return `<div class="row hand${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
@@ -1069,6 +1101,7 @@ function rowHTML(e,prev){
     </div></div>`;
 }
 function visible(e){
+  if(e.b.s===SEC)return true;
   if(S.spFilter&&e.b.s!==S.spFilter&&!(e.b.s===DICE&&e.b.w===S.spFilter))return false;
   if(S.q&&!(e.b.x+" "+(e.b.r||"")).toLowerCase().includes(S.q.toLowerCase()))return false;
   return true;
@@ -1188,13 +1221,13 @@ function editRow(id){
   select(id,false);
   const tx=r.querySelector(".tx");
   if(e.b.s===DICE){editDice(r,e);return;}
-  const isNote=e.b.s===NOTE,isHand=e.b.s===HAND;
+  const isSec=e.b.s===SEC,isNote=e.b.s===NOTE||isSec,isHand=e.b.s===HAND;
   r.classList.add("editing");
-  tx.innerHTML=`<textarea placeholder="${isNote?"예: 아래층에서 소음이 들린다":isHand?"핸드아웃 내용":""}">${esc(e.b.x)}</textarea><div class="edhint">${isNote?"Enter 저장 · Esc 취소":isHand?"Ctrl+Enter 저장 · Esc 취소":"줄바꿈으로 나눌 곳을 만든 뒤 ✂로 나눌 수 있어요 · Ctrl+Enter 저장 · Esc 취소"}</div>`;
+  tx.innerHTML=`<textarea placeholder="${isSec?"예: 1사이클":isNote?"예: 아래층에서 소음이 들린다":isHand?"핸드아웃 내용":""}">${esc(e.b.x)}</textarea><div class="edhint">${isNote?"Enter 저장 · Esc 취소":isHand?"Ctrl+Enter 저장 · Esc 취소":"줄바꿈으로 나눌 곳을 만든 뒤 ✂로 나눌 수 있어요 · Ctrl+Enter 저장 · Esc 취소"}</div>`;
   const ta=tx.querySelector("textarea");ta.style.height=Math.max(isNote?44:60,ta.scrollHeight+4)+"px";ta.focus();
   let done=false;
   const finish=save=>{if(done)return;done=true;
-    if(save)setText(id,ta.value);
+    if(save){setText(id,isSec?ta.value.replace(/\n/g," "):ta.value);if(isSec)loadSecs(true);}
     else if((isNote||isHand)&&!e.b.x){const x=S.byId.get(id);if(x){S.undo.pop();doOps([{ci:x.ci,op:{t:"del",id}}],null);renderAllRows(true);}return;}
     if(S.byId.has(id)){updateRow(id);select(id,false);}};
   ta.onkeydown=ev=>{if(ev.key==="Escape"){ev.preventDefault();finish(false);}if(ev.key==="Enter"&&(ev.ctrlKey||ev.metaKey||(isNote&&!ev.shiftKey))){ev.preventDefault();finish(true);}ev.stopPropagation();};
@@ -1227,6 +1260,46 @@ function editDice(r,e){
   tx.onkeydown=ev=>{if(ev.key==="Escape"){ev.preventDefault();finish(false);}else if(ev.key==="Enter"&&!ev.target.matches("button")){ev.preventDefault();finish(true);}ev.stopPropagation();};
   tx.onclick=ev=>ev.stopPropagation();
   (b.w?f("r"):f("w")).focus();
+}
+
+// ---------- 단락: 회차(1부·2부 전체) 안에서 이야기를 나누고 바로 이동 ----------
+// S.secOther: 같은 회차의 다른 녹음에 있는 단락 {sid,part,id,x}
+async function loadSecs(force){
+  if(!S.db||!S.meta)return;
+  const sib=siblings().filter(x=>x.id!==S.sid),key=S.sid+"|"+sib.map(x=>x.id).join();
+  if(!force&&S.secKey===key)return;S.secKey=key;
+  const out=[];
+  for(const x of sib){try{const snap=await S.db.collection(`sessions/${x.id}/chunks`).get();
+    snap.docs.map(d=>d.data()).sort((a,b)=>a.i-b.i).forEach(c=>(c.b||[]).forEach(b=>{if(b.s===SEC)out.push({sid:x.id,part:x.part,id:b.id,x:b.x});}));}catch(e){}}
+  if(S.secKey===key){S.secOther=out;renderSide();}
+}
+function allSecs(){
+  const me=S.meta?info(S.meta).part:1;
+  const here=S.flat.filter(e=>e.b.s===SEC).map(e=>({sid:S.sid,part:me,id:e.b.id,x:e.b.x}));
+  return [...(S.secOther||[]),...here].sort((a,b)=>a.part-b.part);
+}
+function gotoSec(sec){
+  if(sec.sid===S.sid){const r=document.querySelector(`.row[data-id="${sec.id}"]`);if(r){setFollow(false);r.scrollIntoView({block:"start",behavior:"smooth"});select(sec.id,false);}return;}
+  S.gotoSec=sec.id;location.hash="s-"+sec.sid;
+}
+function tryGotoSec(){
+  if(!S.gotoSec)return;const r=document.querySelector(`.row[data-id="${S.gotoSec}"]`);if(!r)return;
+  const id=S.gotoSec;S.gotoSec=null;setFollow(false);
+  [50,400,1000].forEach(ms=>setTimeout(()=>{const r2=document.querySelector(`.row[data-id="${id}"]`);if(r2){r2.scrollIntoView({block:"start"});if(ms===50)select(id,false);}},ms));
+}
+function nextSecName(){
+  const list=allSecs();const last=list[list.length-1];
+  const m=last&&last.x.match(/^(\D*)(\d+)(.*)$/);
+  return m?m[1]+(+m[2]+1)+m[3]:"1사이클";
+}
+function addSec(){
+  if(!S.canWrite)return;
+  const e=S.byId.get(S.sel);if(!e){toast("먼저 단락이 시작될 대사를 클릭해서 골라 주세요",3000);return;}
+  const idx=S.flat.indexOf(e),prev=S.flat[idx-1];
+  const nb={id:rid(),s:SEC,t:e.b.t,x:nextSecName()};
+  doOps([{ci:e.ci,op:{t:"ins",after:prev&&prev.ci===e.ci?prev.b.id:null,b:nb}}],"단락 나누기");
+  renderAllRows(true);renderSide();select(nb.id,false);editRow(nb.id);
+  const ta=document.querySelector(`.row[data-id="${nb.id}"] textarea`);if(ta)ta.select();
 }
 
 // ---------- 고유명사: 드래그한 글자를 등록된 이름으로 바꾸기 ----------
@@ -1368,6 +1441,7 @@ function bindHeader(){
   $("#jump").onclick=()=>{setFollow(true);const r=S.playingId&&document.querySelector(`.row[data-id="${S.playingId}"]`);r&&r.scrollIntoView({block:"center",behavior:"smooth"});};
 }
 function bindSide(){
+  document.querySelectorAll("[data-fold]").forEach(b=>b.onclick=()=>{const k=b.dataset.fold;S[k]=!S[k];b.classList.toggle("open",S[k]);b.nextElementSibling.classList.toggle("open",S[k]);});
   const zt=$("#zerot");if(zt)zt.onclick=()=>{S.showZero=!S.showZero;renderSide();};
   document.querySelectorAll("#splist .spk").forEach(el=>{
     const k=el.dataset.k;
@@ -1376,6 +1450,8 @@ function bindSide(){
   });
   document.querySelectorAll("[data-nedit]").forEach(b=>b.onclick=()=>{if(S.canWrite)nounEdit(b,b.dataset.nedit);});
   const an=$("#addnoun");if(an)an.onclick=()=>nounEdit(an,null);
+  document.querySelectorAll("[data-sec]").forEach(b=>b.onclick=()=>{const [sid,id]=b.dataset.sec.split("|");gotoSec({sid,id});});
+  const as=$("#addsec");if(as)as.onclick=addSec;
   const add=$("#addsp");if(add){const inp=$("#newsp");const go=()=>{if(addSpeaker(inp.value)){toast("추가했어요. 숫자키로 바로 지정할 수 있어요");}};add.onclick=go;inp.onkeydown=ev=>{if(ev.key==="Enter")go();ev.stopPropagation();};}
 }
 let qTimer;
@@ -1383,7 +1459,7 @@ function bindSession(){
   const q=$("#q");q.oninput=()=>{clearTimeout(qTimer);qTimer=setTimeout(()=>{S.q=q.value.trim();renderAllRows();},200);};
   q.onkeydown=ev=>{ev.stopPropagation();if(ev.key==="Escape"){q.value="";S.q="";renderAllRows();q.blur();}};
   $("#copyAll").onclick=async()=>{
-    const txt=S.flat.filter(visible).map(e=>e.b.s===HAND?`\n[핸드아웃]\n${e.b.x}\n`:e.b.s===DICE?`🎲 ${e.b.w?(spBy(e.b.w).ch||spBy(e.b.w).name):""} ${e.b.x||""} ${e.b.r||""} ${e.b.sec?"Secret Dice":""} ${OUT[e.b.o]||""}`.replace(/\s+/g," ").trim():e.b.s===NOTE?`\n— ${e.b.x.replace(/\n/g," ")} —\n`:`[${fmt(e.b.t)}] ${spBy(e.b.s).name}: ${e.b.x.replace(/\n/g," ")}`).join("\n");
+    const txt=S.flat.filter(visible).map(e=>e.b.s===SEC?`\n== ${e.b.x} ==\n`:e.b.s===HAND?`\n[핸드아웃]\n${e.b.x}\n`:e.b.s===DICE?`🎲 ${e.b.w?(spBy(e.b.w).ch||spBy(e.b.w).name):""} ${e.b.x||""} ${e.b.r||""} ${e.b.sec?"Secret Dice":""} ${OUT[e.b.o]||""}`.replace(/\s+/g," ").trim():e.b.s===NOTE?`\n— ${e.b.x.replace(/\n/g," ")} —\n`:`[${fmt(e.b.t)}] ${spBy(e.b.s).name}: ${e.b.x.replace(/\n/g," ")}`).join("\n");
     try{await navigator.clipboard.writeText((S.meta?.title?S.meta.title+"\n\n":"")+txt);toast("복사했어요");}catch(e){toast("복사가 막혔어요. 브라우저 권한을 확인해 주세요");}
   };
   $("#log").onclick=ev=>{
