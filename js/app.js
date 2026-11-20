@@ -84,9 +84,58 @@ function isEditorOf(id){const sc=scenById(id);return !!sc&&!!myEmail()&&(sc.edit
 function isOpen(id){return S.canAdmin||(!!id&&!!SUB.sessData[id]);}
 function canWriteScen(id){return !!id&&isOpen(id);}
 function canReadScen(id){return isOpen(id);}
+const SITE_DEF={title:"코코네 로그방",sub:"슬슬 로그백업의 필요성이 느껴져서 만들었어요... #클로드야고마워",icon:""};
+const site=()=>({...SITE_DEF,...Object.fromEntries(Object.entries(S.site||{}).filter(([k,v])=>v!==undefined&&v!==null))});
+const isImgIcon=v=>/^(data:image\/|https?:\/\/)/.test(v||"");
+function iconHTML(v,cls="sicon"){if(!v)return "";return isImgIcon(v)?`<img class="${cls}" src="${esc(v)}" alt="">`:`<span class="${cls}">${esc(v)}</span>`;}
+function applySite(){
+  const st=site();if(!S.sid&&!S.cid)document.title=st.title;
+  let href;
+  if(isImgIcon(st.icon))href=st.icon;
+  else if(st.icon)href="data:image/svg+xml,"+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">${st.icon.replace(/[<&>]/g,"")}</text></svg>`);
+  let l=document.querySelector("link[rel=icon]");
+  if(!href){if(l)l.remove();return;}
+  if(!l){l=document.createElement("link");l.rel="icon";document.head.appendChild(l);}
+  if(l.href!==href)l.href=href;
+}
+function siteEdit(anchor){
+  const st=site();let icon=st.icon;
+  popAt(anchor,`<div class="nedit" style="min-width:320px">
+    <label>사이트 이름</label><input type="text" id="s-title" value="${esc(st.title)}">
+    <label>설명 문구</label><textarea id="s-sub" rows="2" style="resize:vertical">${esc(st.sub)}</textarea>
+    <label>아이콘 · 이모지 하나를 넣거나 이미지를 올려요 (브라우저 탭에도 보여요)</label>
+    <div style="display:flex;gap:6px;align-items:center"><span id="s-prev" style="font-size:24px;min-width:32px;text-align:center">${iconHTML(icon,"sicon big")}</span>
+      <input type="text" id="s-icon" value="${isImgIcon(icon)?"":esc(icon)}" placeholder="예: 🎲" style="width:80px">
+      <button type="button" id="s-up">이미지 올리기</button><button type="button" class="ghost" id="s-clr">없애기</button>
+      <input type="file" id="s-file" accept="image/*" style="display:none"></div>
+    <div class="btns"><button class="pri" id="s-ok">저장</button></div></div>`,p=>{
+    const prev=()=>{$("#s-prev",p).innerHTML=iconHTML(icon,"sicon big");};
+    p.querySelectorAll("input,textarea").forEach(i=>i.addEventListener("keydown",ev=>ev.stopPropagation()));
+    $("#s-icon",p).oninput=ev=>{icon=ev.target.value.trim();prev();};
+    $("#s-clr",p).onclick=()=>{icon="";$("#s-icon",p).value="";prev();};
+    $("#s-up",p).onclick=()=>$("#s-file",p).click();
+    $("#s-file",p).onchange=async ev=>{const f=ev.target.files[0];if(!f)return;
+      try{icon=await shrinkImage(f,128,"image/png");$("#s-icon",p).value="";prev();}catch(e){toast("이미지를 읽지 못했어요");}};
+    $("#s-ok",p).onclick=async()=>{
+      const v={title:$("#s-title",p).value.trim()||SITE_DEF.title,sub:$("#s-sub",p).value.trim(),icon:icon||""};
+      closePop();S.site={...S.site,...v};applySite();render();
+      try{await S.db.doc("scenarios/_site").set(v,{merge:true});toast("저장했어요");}catch(e){writeFail(e);}
+    };
+  });
+}
+// 이미지 파일을 작게 줄여서 data URL로 (정사각형으로 가운데 자르기)
+function shrinkImage(file,size,type="image/jpeg",w=size,h=size){
+  return new Promise((ok,no)=>{const img=new Image();const u=URL.createObjectURL(file);
+    img.onload=()=>{const c=document.createElement("canvas");c.width=w;c.height=h;const g=c.getContext("2d");
+      const r=Math.max(w/img.width,h/img.height),dw=img.width*r,dh=img.height*r;g.drawImage(img,(w-dw)/2,(h-dh)/2,dw,dh);
+      URL.revokeObjectURL(u);ok(c.toDataURL(type,.85));};
+    img.onerror=()=>{URL.revokeObjectURL(u);no();};img.src=u;});
+}
 function publish(){
   const old=S.scens;
-  const ids=new Set([...Object.keys(SUB.scData)]);
+  // scenarios/_site: 사이트 제목·설명·아이콘 (주인만 고칠 수 있어요)
+  S.site=SUB.scData._site?JSON.parse(JSON.stringify(SUB.scData._site)):(S.site||{});applySite();
+  const ids=new Set([...Object.keys(SUB.scData)].filter(id=>id!=="_site"));
   S.scens=[...ids].map(id=>{const o=old.find(x=>x.id===id);return (S.scBusy[id]&&o)?o:{id,...JSON.parse(JSON.stringify(SUB.scData[id]))};});
   old.forEach(o=>{if(S.scBusy[o.id]&&!S.scens.find(x=>x.id===o.id))S.scens.push(o);});
   const all=[];Object.values(SUB.sessData).forEach(m=>Object.values(m).forEach(x=>all.push(x)));
@@ -1327,8 +1376,8 @@ function homeHTML(){
   if(S.sysFilter&&!systems[S.sysFilter])S.sysFilter=null;
   const gs=S.sysFilter?all.filter(g=>sysOf(g)===S.sysFilter):all;
   return `<div class="home">
-    <div class="hometop"><h2>코코네 로그방</h2><span class="authbox"></span></div>
-    <div class="tip" style="font-size:13.5px">슬슬 로그백업의 필요성이 느껴져서 만들었어요... #클로드야고마워</div>
+    <div class="hometop"><h2>${iconHTML(site().icon)}${esc(site().title)}${S.canAdmin&&S.db?` <button class="ghost siteed" id="siteed" title="사이트 이름·설명·아이콘 고치기">✎</button>`:""}</h2><span class="authbox"></span></div>
+    <div class="tip" style="font-size:13.5px">${esc(site().sub).replace(/\n/g,"<br>")}</div>
     ${S.err?`<div class="notice bad">${esc(S.err)}</div>`:""}
     ${!S.ready?`<div class="notice">불러오는 중…</div>`:""}
     ${S.ready&&S.setupNeeded?`<div class="notice bad">아직 Firebase 설정이 비어 있어요. <b>firebase-config.js</b>에 내 Firebase 프로젝트 값을 넣어 주세요. (지금은 txt 미리보기만 돼요)</div>`:""}
@@ -1413,6 +1462,7 @@ async function gotoScen(name,edit){
   if(edit)S.pendingEdit=sc.id;location.hash="c-"+sc.id;
 }
 function bindHome(){
+  const se=$("#siteed");if(se)se.onclick=()=>siteEdit(se);
   bindPartEdit();renderAuth();
   const eb=$("#exportb");if(eb)eb.onclick=async()=>{
     const pr=$("#exprog");eb.disabled=true;
