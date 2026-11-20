@@ -24,16 +24,15 @@ async function buildDayHTML(scen,day){
       if(b.s===HAND){out.push(`<div class="hand"><div class="hlab">핸드아웃${b.ti?" · "+esc(b.ti):""}</div>${b.x.split("\n").map(l=>{const m=l.match(HSEC);return m?`<span class="hsec${m[2]==="비밀"?" secret":""}">${m[2]==="비밀"?"비밀":"정보"}</span>${xEm(l.slice(m[1].length))}`:xEm(l);}).join("<br>")}</div>`);i++;continue;}
       if(b.s===DICE){
         const p=b.w?(sp.find(z=>z.k===b.w)||{name:"?",c:"#888"}):null,c=p?fixC(p.c):"#8a8178";
-        const dg=b.w&&b.w===g;
-        out.push(`<p class="dice" style="${dg?`color:${c};`:"color:#111;"}--c:${c}">🎲 ${p?`<span class="nm"><b>${esc(p.ch||p.name)}</b></span> : `:""}<span class="tx">${b.x?esc(b.x)+" ":""}${b.r?`<span class="dr">${esc(b.r)}</span>`:""}</span>${b.sec?` <span class="res secret">Secret Dice</span>`:""}${b.o&&OUT[b.o]?` <span class="res ${b.o}">${outLabel(b.o,sc)}</span>`:""}</p>`);
+        out.push(`<p class="dice" style="color:#111;--c:${c}">🎲 ${p?`<span class="nm"><b>${esc(p.ch||p.name)}</b></span> : `:""}<span class="tx">${b.x?esc(b.x)+" ":""}${b.r?`<span class="dr">${esc(b.r)}</span>`:""}</span>${b.sec?` <span class="res secret">Secret Dice</span>`:""}${b.o&&OUT[b.o]?` <span class="res ${b.o}">${outLabel(b.o,sc)}</span>`:""}</p>`);
         i++;continue;}
       const run=[];while(i<bl.length&&bl[i].s===b.s){run.push(bl[i].x);i++;}
       const p=sp.find(z=>z.k===b.s)||{name:"?",c:"#888"};
       const c=fixC(p.c),gm=b.s===g;
       const nm=`<b>${esc(p.name)}</b>${p.ch?`<small> ${esc(p.ch)}</small>`:""}`;
       const x=run.map(t=>xEm(t)).join("<br>");
-      // GM만 색을 쓰고, 플레이어 이름·대사는 검은색으로
-      out.push(`<p${gm?' class="gm"':' class="pl"'} style="${gm?`color:${c};`:""}--c:${c}"><span class="nm">${gm?'<span class="gmt">GM</span>':""}${nm}</span> : <span class="tx">${x}</span></p>`);
+      // 이름·대사는 모두 검은색 (GM은 배경·GM 표시로만 구분)
+      out.push(`<p class="pl${gm?" gm":""}" style="--c:${c}"><span class="nm">${gm?'<span class="gmt">GM</span>':""}${nm}</span> : <span class="tx">${x}</span></p>`);
     }
     return out.join("\n");
   };
@@ -51,7 +50,7 @@ h2{font-size:14px;color:#999;font-weight:600;text-align:center;margin:28px 0 12p
 h2:before,h2:after{content:"";flex:1;border-top:1px solid #e3e3e3}
 p{margin:0;padding:6px 2px;border-bottom:1px solid #ece7df;word-break:keep-all;overflow-wrap:anywhere}
 .nm b{font-weight:700}.nm small{font-size:12px;font-weight:400;opacity:.85}
-.gm{background:#faf6ee;border-left:3px solid currentColor;padding:6px 8px}
+.gm{background:#faf6ee;border-left:3px solid var(--c);padding:6px 8px}
 .gm .tx{color:#3a2e22}
 .gmt{display:inline-block;font-size:10px;font-weight:800;color:#fff;background:var(--c);border-radius:3px;padding:0 4px;margin-right:5px;vertical-align:2px;line-height:15px}
 .note{color:#8a8178;font-style:italic;text-align:center;padding:10px 2px}
