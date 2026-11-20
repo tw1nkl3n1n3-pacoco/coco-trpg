@@ -1725,13 +1725,13 @@ async function deleteSession(sid){
     await retry(()=>S.db.doc("sessions/"+sid).delete());toast("지웠어요");
   }catch(e){toast("지우지 못했어요");}
 }
-// 글 수정 칸에서 "->"를 치면 바로 "→"로 바꿔 줘요 (커서 위치는 그대로)
+// 글 수정 칸에서 "->"는 "→", "..."는 "…"로 바로 바꿔 줘요 (커서 위치는 그대로)
+const AUTO_REP=[[/->/g,"→",1],[/\.\.\./g,"…",2]];
 document.addEventListener("input",ev=>{
   const t=ev.target;if(!t||!t.matches||!t.matches("textarea,input[type=text]"))return;
   if(!t.closest(".row,.dform,.pop,.sc-page"))return;
-  if(!t.value.includes("->"))return;
-  const pos=t.selectionStart,before=t.value.slice(0,pos);
-  const shift=(before.match(/->/g)||[]).length;
-  t.value=t.value.replace(/->/g,"→");
-  try{t.setSelectionRange(pos-shift,pos-shift);}catch(e){}
+  if(!AUTO_REP.some(([re])=>{re.lastIndex=0;return re.test(t.value);}))return;
+  let pos=t.selectionStart,v=t.value;
+  AUTO_REP.forEach(([re,to,cut])=>{re.lastIndex=0;const n=(v.slice(0,pos).match(re)||[]).length;v=v.replace(re,to);pos-=n*cut;});
+  t.value=v;try{t.setSelectionRange(pos,pos);}catch(e){}
 });
