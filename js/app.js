@@ -503,10 +503,17 @@ function setText(id,x){
 
 
 // ---------- rendering ----------
-const THEMES={"":{n:"양피지",d:"지금 기본 · 판타지",sw:["#efe3cc","#fff","#9c3d22","#c9a46a"]},wa:{n:"괴담",d:"공포 · 호러 · 인세인",sw:["#0a0a0a","#fcfcfb","#b0101a","#d4d4d4"]},deco:{n:"아르데코",d:"미스터리 · 열차",sw:["#e9e4d6","#fbf8f0","#1f4a3d","#b08a3e"]},blue:{n:"블루 모던",d:"현대 · SF · 현대 수사",sw:["#eef3f9","#ffffff","#2563eb","#38bdf8"]}};
+const THEMES={"":{n:"양피지",d:"지금 기본 · 판타지",sw:["#efe3cc","#fff","#9c3d22","#c9a46a"]},wa:{n:"인세인",d:"인세인 룰에 자동 적용",sw:["#0a0a0a","#fcfcfb","#b0101a","#d4d4d4"]},deco:{n:"D&D",d:"D&D 룰에 자동 적용",sw:["#e9e4d6","#fbf8f0","#1f4a3d","#b08a3e"]},blue:{n:"블루 모던",d:"현대 · SF · 현대 수사",sw:["#eef3f9","#ffffff","#2563eb","#38bdf8"]}};
+// 테마는 룰 시스템에 따라 자동으로 정해져요
+function themeOf(sc){
+  const r=String(sc&&sc.system||"").toLowerCase().replace(/\s+/g,"");
+  if(/인세인|insane/.test(r))return "wa";
+  if(/d&d|dnd|d＆d|디앤디|던전앤드래곤|던전&드래곤|dungeons/.test(r))return "deco";
+  return "";
+}
 function applyTheme(){
   const sc=S.cid?(S.scEdit&&S.scDraft?S.scDraft:scenById(S.cid)):(S.sid&&S.meta?curScen():null);
-  const t=!S.cid&&!S.sid&&!S.local?"plain":sc&&THEMES[sc.theme]?sc.theme:"";
+  const t=!S.cid&&!S.sid&&!S.local?"plain":themeOf(sc);
   if((document.body.dataset.theme||"")!==t){if(t)document.body.dataset.theme=t;else delete document.body.dataset.theme;}
   document.body.dataset.page=S.cid?"scen":S.sid?"log":"home";
 }
@@ -1519,9 +1526,7 @@ function scenHTML(){
           ${zero?`<button type="button" class="ghost" id="ezero">대사 없는 발언자 ${zero}명 한꺼번에 지우기</button>`:""}</div>
         <div class="tip" style="margin-top:8px">↑↓로 바꾼 순서가 로그 화면의 숫자키 순서예요(GM은 늘 1번). 🗑는 대사가 하나도 없는 발언자만 지울 수 있어요. 바꾼 내용은 <b>저장</b>을 눌러야 반영돼요.</div>`;})()}
       </div>
-      ${S.canAdmin?`<div class="sc-sec"><h4>테마 <span class="tip" style="letter-spacing:0">· 주인만 보여요 · 누르면 미리 보이고, 저장하면 적용돼요</span></h4>
-        <div class="thopts">${Object.entries(THEMES).map(([k,t])=>`<button type="button" class="thopt${(d.theme||"")===k?" on":""}" data-theme-set="${k}"><span class="sw">${t.sw.map(c=>`<i style="background:${c}"></i>`).join("")}</span><b>${t.n}</b><span>${t.d}</span></button>`).join("")}</div>
-      </div>`:""}
+      <div class="sc-sec"><h4>테마</h4><div class="tip">테마는 룰 시스템에 따라 자동으로 정해져요. 인세인 → 인세인 테마, D&D → D&D 테마, 그 밖의 룰 → 기본(양피지).</div></div>
       ${S.canAdmin&&S.scens.length>1?`<div class="sc-sec"><h4>다른 시나리오와 합치기</h4>
         <div class="tip" style="margin-bottom:8px">실수로 두 개가 된 시나리오를 하나로 합쳐요. 이 시나리오의 녹음이 모두 고른 시나리오로 옮겨가고, 화자 목록은 이름이 같은 사람끼리 합쳐져요. 개요와 룰 시스템은 고른 쪽이 비어 있을 때만 옮겨와요.</div>
         <div style="display:flex;gap:8px"><select id="mto" style="flex:1"><option value="">합칠 시나리오 고르기</option>${S.scens.filter(x=>x.id!==sc.id).map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join("")}</select><button id="mgo">합치기</button></div>
