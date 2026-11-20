@@ -1725,3 +1725,13 @@ async function deleteSession(sid){
     await retry(()=>S.db.doc("sessions/"+sid).delete());toast("지웠어요");
   }catch(e){toast("지우지 못했어요");}
 }
+// 글 수정 칸에서 "->"를 치면 바로 "→"로 바꿔 줘요 (커서 위치는 그대로)
+document.addEventListener("input",ev=>{
+  const t=ev.target;if(!t||!t.matches||!t.matches("textarea,input[type=text]"))return;
+  if(!t.closest(".row,.dform,.pop,.sc-page"))return;
+  if(!t.value.includes("->"))return;
+  const pos=t.selectionStart,before=t.value.slice(0,pos);
+  const shift=(before.match(/->/g)||[]).length;
+  t.value=t.value.replace(/->/g,"→");
+  try{t.setSelectionRange(pos-shift,pos-shift);}catch(e){}
+});
