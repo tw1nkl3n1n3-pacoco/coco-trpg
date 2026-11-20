@@ -1309,7 +1309,8 @@ function homeHTML(){
   const can=S.db&&S.canWrite;
   const all=groups();
   const NOSYS="룰 미정";
-  const sysOf=g=>(g.sc?.system||"").trim()||NOSYS;
+  // 룰 탭은 판본을 합쳐서 보여요 (D&D 5e, 5.5e → D&D)
+  const sysOf=g=>{const sc=g.sc;if(themeOf(sc)==="deco")return "D&D";if(themeOf(sc)==="wa")return "인세인";return (sc?.system||"").trim()||NOSYS;};
   const systems={};all.forEach(g=>{const k=sysOf(g);systems[k]=(systems[k]||0)+1;});
   const sysKeys=Object.keys(systems).sort((a,b)=>(a===NOSYS)-(b===NOSYS)||systems[b]-systems[a]||a.localeCompare(b,"ko"));
   if(S.sysFilter&&!systems[S.sysFilter])S.sysFilter=null;
