@@ -1332,7 +1332,6 @@ function homeHTML(){
         ${castHTML(g.sc)}
         ${g.sc&&!isOpen(g.sc.id)?"":daysHTML(g.days,false)}
       </section>`).join("")||(S.ready&&S.db&&S.loaded?`<div class="notice">아직 올린 세션이 없어요.${S.canAdmin?" 아래에서 클로바노트 txt를 올려 주세요.":""}</div>`:"")}</div>
-    ${can?`<div class="addscen"><input type="text" id="nscen" placeholder="새 시나리오 이름 (녹음 전에 개요부터 써둘 때)"><button id="nscenb">+ 시나리오</button></div>`:""}
     ${can||!S.db?`<div class="card">
       <b>${can?"녹음 추가":"txt 미리보기"}</b>
       <div class="tip" style="margin:4px 0 10px">클로바노트에서 내보낸 <b>대사 파일(.txt)</b>과 <b>녹음 파일(.m4a 등)</b>을 한꺼번에 골라요. 이름이 같은 txt와 녹음은 알아서 짝지어요. 예: <code>261114 에버론 1.txt</code> + <code>261114 에버론 1.m4a</code><br>
@@ -1526,7 +1525,7 @@ function scenHTML(){
           ${zero?`<button type="button" class="ghost" id="ezero">대사 없는 발언자 ${zero}명 한꺼번에 지우기</button>`:""}</div>
         <div class="tip" style="margin-top:8px">↑↓로 바꾼 순서가 로그 화면의 숫자키 순서예요(GM은 늘 1번). 🗑는 대사가 하나도 없는 발언자만 지울 수 있어요. 바꾼 내용은 <b>저장</b>을 눌러야 반영돼요.</div>`;})()}
       </div>
-      <div class="sc-sec"><h4>테마</h4><div class="tip">테마는 룰 시스템에 따라 자동으로 정해져요. 인세인 → 인세인 테마, D&D → D&D 테마, 그 밖의 룰 → 기본(양피지).</div></div>
+
       ${S.canAdmin&&S.scens.length>1?`<div class="sc-sec"><h4>다른 시나리오와 합치기</h4>
         <div class="tip" style="margin-bottom:8px">실수로 두 개가 된 시나리오를 하나로 합쳐요. 이 시나리오의 녹음이 모두 고른 시나리오로 옮겨가고, 화자 목록은 이름이 같은 사람끼리 합쳐져요. 개요와 룰 시스템은 고른 쪽이 비어 있을 때만 옮겨와요.</div>
         <div style="display:flex;gap:8px"><select id="mto" style="flex:1"><option value="">합칠 시나리오 고르기</option>${S.scens.filter(x=>x.id!==sc.id).map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join("")}</select><button id="mgo">합치기</button></div>
