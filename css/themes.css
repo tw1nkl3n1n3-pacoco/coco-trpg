@@ -187,8 +187,8 @@ body[data-theme=wa] .row:not(.sec):not(.note):not(.hand):not(.dice) .tx{font-siz
 /* 공유 이미지 카드: 테마별 액자 */
 body:not([data-theme]) .ogcard{border:1px solid #d9c4a3;border-radius:14px;box-shadow:0 2px 12px rgba(80,50,20,.1)}
 body:not([data-theme]) .ogcard.view{box-shadow:0 0 0 4px #fbf6ec,0 0 0 5px #c9a46a,0 4px 14px rgba(80,50,20,.12)}
-body[data-theme=wa] .ogcard{border:2px solid #0d0d0d;border-radius:0;box-shadow:none;background:#fcfcfb}
-body[data-theme=wa] .ogcard.view{box-shadow:6px 6px 0 #b0101a;filter:contrast(1.05)}
+body[data-theme=wa] .ogcard{border:1.5px solid #0d0d0d;border-radius:0;box-shadow:none;background:#fcfcfb}
+body[data-theme=wa] .ogcard.view{box-shadow:4px 4px 0 #0d0d0d}
 body[data-theme=deco] .ogcard{border:1px solid #c9962e;border-radius:3px;background:#fdf1dc}
 body[data-theme=deco] .ogcard.view{box-shadow:0 0 0 4px #4a0d0d,0 0 0 5px #c9962e,0 8px 20px rgba(0,0,0,.35)}
 body[data-theme=blue] .ogcard{border:1px solid #dfe7f2;border-radius:18px;box-shadow:0 10px 30px rgba(20,32,51,.08)}
