@@ -122,6 +122,9 @@ mark{background:#f2c970;color:inherit;border-radius:3px}
 .secb.l2{padding-left:24px;font-size:13.5px}.secb.l3{padding-left:40px;font-size:13px;color:#7a6a58}
 .secb .lvt,.row.sec .lvt{font-size:10px;font-weight:700;color:#a08660;border:1px solid #d9c6a2;border-radius:4px;padding:0 4px;line-height:15px;font-family:sans-serif}
 .lvb{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}.lvb button{border:0!important;border-radius:0!important;padding:2px 7px!important;font-size:12px}.lvb button.on{background:var(--acc2)!important;color:#fff8ec!important}
+.secr{display:flex;align-items:center}.secr .secb{flex:1;min-width:0}
+.sectog{display:inline-flex;align-items:center;gap:3px;background:none;border:0;font-size:11.5px;color:#a08660;padding:3px 6px;border-radius:6px;white-space:nowrap}
+.sectog:hover{background:#fffaf0}.sectog .car{display:inline-block;transition:transform .15s}.sectog.open .car{transform:rotate(90deg)}
 .secday{font-size:11.5px;font-weight:700;color:#8a6a3a;padding:8px 6px 2px;border-top:1px dashed var(--line);margin-top:4px}.secday:first-child{border-top:0;margin-top:0;padding-top:2px}
 .secadd{display:flex;flex-wrap:wrap;align-items:center;gap:4px;font-size:12px;color:#a08660;padding:2px 4px}
 .secadd button{font-size:12.5px;padding:3px 8px}.secadd span{width:100%}
@@ -1006,7 +1009,13 @@ function renderSide(){
     ${(()=>{const ss=allSecs();return `<button class="foldh${S.openSec?" open":""}" data-fold="openSec"><span class="car">▸</span>단락 <span class="fc">${ss.length}</span><span class="fsub">시나리오 전체 · 누르면 이동</span></button>
     <div class="fold${S.openSec?" open":""}">
       <div class="secs">${(()=>{const days=[...new Set(S.sessions.map(info).filter(i=>S.meta&&i.scen===info(S.meta).scen).map(i=>i.day))].sort();const multi=new Set(ss.map(x=>x.day)).size>1||(ss.length&&ss[0].day!==(S.meta&&info(S.meta).day));let last=null;
-        return ss.map(x=>{const h=multi&&x.day!==last?`<div class="secday">${days.indexOf(x.day)+1}회차 · ${esc(fmtDay(x.day))}</div>`:"";last=x.day;return h+`<button class="secb l${x.lv}${x.sid===S.sid?"":" other"}" data-sec="${x.sid}|${x.id}"><span class="sp">${x.part}부</span>${esc(x.x||"(이름 없음)")}</button>`;}).join("")})()||'<div class="tip" style="padding:2px 4px 6px">아직 나눈 단락이 없어요</div>'}</div>
+        // '하' 단락은 바로 위 상·중 단락 아래에 접어 둬요
+        let par=null;const kids={};ss.forEach(x=>{if(x.lv<3)par=x.id;else if(par){x.par=par;kids[par]=(kids[par]||0)+1;}});
+        S.secOpen=S.secOpen||new Set();
+        return ss.map(x=>{const h=multi&&x.day!==last?`<div class="secday">${days.indexOf(x.day)+1}회차 · ${esc(fmtDay(x.day))}</div>`:"";last=x.day;
+          if(x.par&&!S.secOpen.has(x.par))return h;
+          const k=kids[x.id],open=S.secOpen.has(x.id);
+          return h+`<div class="secr"><button class="secb l${x.lv}${x.sid===S.sid?"":" other"}" data-sec="${x.sid}|${x.id}"><span class="sp">${x.part}부</span>${esc(x.x||"(이름 없음)")}</button>${k?`<button class="sectog${open?" open":""}" data-sectog="${x.id}" title="'하' 단락 ${k}개 ${open?"접기":"펼치기"}"><span class="car">▸</span>${k}</button>`:""}</div>`;}).join("")})()||'<div class="tip" style="padding:2px 4px 6px">아직 나눈 단락이 없어요</div>'}</div>
       ${S.canWrite?`<div class="secadd"><span>대사를 골라 두고 누르면, 그 대사 위에 단락이 생겨요</span><button class="ghost" id="addsec" data-lv="1" title="큰 단락 (예: 메인 페이즈)">＋ 상</button><button class="ghost" data-lv="2" title="중간 단락 (예: 1사이클)">＋ 중</button><button class="ghost" data-lv="3" title="작은 단락 (예: 씬)">＋ 하</button></div>`:""}
     </div>`;})()}
     ${curScen()?`<button class="foldh${S.openNoun?" open":""}" data-fold="openNoun"><span class="car">▸</span>고유명사 <span class="fc">${nounGroups().length}</span><span class="fsub">글자를 드래그해서 바꿔요</span></button>
@@ -1315,6 +1324,7 @@ function addSec(lv=1){
   const idx=S.flat.indexOf(e),prev=S.flat[idx-1];
   const nb={id:rid(),s:SEC,t:e.b.t,x:nextSecName(lv),lv};
   doOps([{ci:e.ci,op:{t:"ins",after:prev&&prev.ci===e.ci?prev.b.id:null,b:nb}}],"단락 나누기");
+  if(lv===3){const list=allSecs();const i=list.findIndex(x=>x.id===nb.id);for(let j=i-1;j>=0;j--)if(list[j].lv<3){(S.secOpen=S.secOpen||new Set()).add(list[j].id);break;}}
   renderAllRows(true);renderSide();select(nb.id,false);editRow(nb.id);
   const ta=document.querySelector(`.row[data-id="${nb.id}"] textarea`);if(ta)ta.select();
 }
@@ -1467,6 +1477,7 @@ function bindSide(){
   });
   document.querySelectorAll("[data-nedit]").forEach(b=>b.onclick=()=>{if(S.canWrite)nounEdit(b,b.dataset.nedit);});
   const an=$("#addnoun");if(an)an.onclick=()=>nounEdit(an,null);
+  document.querySelectorAll("[data-sectog]").forEach(b=>b.onclick=()=>{const id=b.dataset.sectog;S.secOpen.has(id)?S.secOpen.delete(id):S.secOpen.add(id);renderSide();});
   document.querySelectorAll("[data-sec]").forEach(b=>b.onclick=()=>{const [sid,id]=b.dataset.sec.split("|");gotoSec({sid,id});});
   document.querySelectorAll(".secadd [data-lv]").forEach(b=>b.onclick=()=>addSec(+b.dataset.lv));
   const add=$("#addsp");if(add){const inp=$("#newsp");const go=()=>{if(addSpeaker(inp.value)){toast("추가했어요. 숫자키로 바로 지정할 수 있어요");}};add.onclick=go;inp.onkeydown=ev=>{if(ev.key==="Enter")go();ev.stopPropagation();};}
