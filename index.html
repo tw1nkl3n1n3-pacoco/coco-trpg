@@ -146,12 +146,14 @@ mark{background:#f2c970;color:inherit;border-radius:3px}
 .ngrp{display:flex;flex-wrap:wrap;align-items:center;gap:2px;padding:1px 2px}
 .ngrp button{width:auto!important;padding:3px 8px!important}.ngrp button.alt{color:#8a7a68;font-size:12.5px}
 .nreg{display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:4px;font-size:12.5px}.nreg select{font-size:12.5px;padding:2px 4px}.nreg button{width:auto!important;padding:2px 10px!important}
-.row.hand{margin:12px 0}
+.row.hand{margin:12px 0;scroll-margin-top:84px}
 .row.hand .body{box-shadow:none;background:#fbf5e6;border:1px solid #e2d3b0;border-radius:6px;padding:12px 18px 14px;position:relative;box-shadow:inset 0 0 24px rgba(180,140,70,.08)}
 .row.hand .hlab{font-size:11px;color:#a08660;letter-spacing:1px;margin-bottom:4px}
 .row.hand .tx{font-family:"Gowun Batang",serif;font-size:15.5px;line-height:1.85;color:#3a2e22;max-width:none}
 .row.hand .tx textarea{font-family:"Gowun Batang",serif;min-height:120px}
 .row.hand .ph{color:#c4b49c}
+.row.hand .hti{font-weight:700;letter-spacing:.02em}
+.htin{width:min(360px,100%);font-size:13px;padding:3px 8px!important;margin-bottom:4px}
 .row.dice{margin:6px 0}
 .row.dice .body{box-shadow:none}
 .row.dice .tx{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;background:#f7f3ec;border:1px solid #e8dcc8;border-left:3px solid var(--c);border-radius:8px;padding:6px 12px;max-width:none;font-size:14px}
@@ -701,7 +703,7 @@ function route(){
 }
 
 // ---------- session load ----------
-function closeSession(){S.secOther=[];S.secKey=null;flushAll();S.ops={};S.dirty.clear();const a=document.getElementById("aud");if(a&&S.audioUrl){a.pause();a.removeAttribute("src");a.load();if(!S.audioCloud)URL.revokeObjectURL(S.audioUrl);S.audioUrl=null;S.playingId=null;}S.audioCloud=false;S.audioLoading=false;S.unsub.forEach(u=>{try{u()}catch(e){}});S.unsub=[];S.meta=null;S.chunks={};S.flat=[];S.chunksLoaded=false;S.ensured=false;S.byId.clear();S.sel=null;S.undo=[];S.spFilter=null;S.q="";}
+function closeSession(){S.secOther=[];S.handOther=[];S.secKey=null;flushAll();S.ops={};S.dirty.clear();const a=document.getElementById("aud");if(a&&S.audioUrl){a.pause();a.removeAttribute("src");a.load();if(!S.audioCloud)URL.revokeObjectURL(S.audioUrl);S.audioUrl=null;S.playingId=null;}S.audioCloud=false;S.audioLoading=false;S.unsub.forEach(u=>{try{u()}catch(e){}});S.unsub=[];S.meta=null;S.chunks={};S.flat=[];S.chunksLoaded=false;S.ensured=false;S.byId.clear();S.sel=null;S.undo=[];S.spFilter=null;S.q="";}
 function openSession(sid){
   if(S.local&&sid===null){/* leaving local view */S.local=false;}
   closeSession();S.sid=sid;
@@ -1029,7 +1031,7 @@ async function buildDayHTML(scen,day){
       const b=bl[i];
       if(b.s===NOTE){out.push(`<p class="note">${esc(b.x).replace(/\n/g,"<br>")}</p>`);i++;continue;}
       if(b.s===SEC){const l=secLv(b);out.push(l===1?`<h3 class="sec">${esc(b.x)}</h3>`:l===2?`<h4 class="sub">${esc(b.x)}</h4>`:`<h5 class="sub3">${esc(b.x)}</h5>`);i++;continue;}
-      if(b.s===HAND){out.push(`<div class="hand"><div class="hlab">핸드아웃</div>${esc(b.x).replace(/\n/g,"<br>")}</div>`);i++;continue;}
+      if(b.s===HAND){out.push(`<div class="hand"><div class="hlab">핸드아웃${b.ti?" · "+esc(b.ti):""}</div>${esc(b.x).replace(/\n/g,"<br>")}</div>`);i++;continue;}
       if(b.s===DICE){
         const p=b.w?(sp.find(z=>z.k===b.w)||{name:"?",c:"#888"}):null,c=p?fixC(p.c):"#8a8178";
         out.push(`<p class="dice" style="color:${c};--c:${c}">🎲 ${p?`<span class="nm"><b>${esc(p.ch||p.name)}</b></span> : `:""}<span class="tx">${b.x?esc(b.x)+" ":""}${b.r?`<span class="dr">${esc(b.r)}</span>`:""}</span>${b.sec?` <span class="res secret">Secret Dice</span>`:""}${b.o&&OUT[b.o]?` <span class="res ${b.o}">${OUT[b.o]}</span>`:""}</p>`);
@@ -1205,6 +1207,9 @@ function renderSide(){
     <div class="nouns">${nounGroups().map(g=>`<button class="noun${g.pc?" pc":""}" data-nedit="${esc(g.n)}" title="${S.canWrite?"눌러서 유의어 고치기":""}"><b>${esc(g.n)}</b>${g.a.length?`<small>${g.a.map(esc).join(" · ")}</small>`:""}${g.pc?'<span class="pct">PC</span>':""}</button>`).join("")||'<span class="tip">아직 없어요</span>'}</div>
     ${S.canWrite?`<button class="ghost zt" id="addnoun">＋ 고유명사 묶음 추가</button>`:""}
     </div>`:""}
+    ${(()=>{const hs=allHands();const days=[...new Set(S.sessions.map(info).filter(i=>S.meta&&i.scen===info(S.meta).scen).map(i=>i.day))].sort();const multi=new Set(hs.map(x=>x.day)).size>1;
+      return `<button class="foldh${S.openHand?" open":""}" data-fold="openHand"><span class="car">▸</span>핸드아웃 <span class="fc">${hs.length}</span><span class="fsub">시나리오 전체 · 누르면 이동</span></button>
+    <div class="fold${S.openHand?" open":""}"><div class="secs">${hs.map(h=>`<button class="secb${h.sid===S.sid?"":" other"}" data-sec="${h.sid}|${h.id}" title="${esc((h.x||"").slice(0,80))}"><span class="sp">${multi?(days.indexOf(h.day)+1)+"회 ":""}${h.part}부</span>📜 ${esc(h.ti||(h.x||"").split("\n")[0].slice(0,24)||"(제목 없음)")}</button>`).join("")||'<div class="tip" style="padding:2px 4px 6px">아직 핸드아웃이 없어요. 대사를 고르고 <kbd>H</kbd>를 눌러 넣어요.</div>'}</div></div>`;})()}
     <h3 class="tip usage">사용법</h3>
     <div class="tip usage">
       대사를 클릭해 고르고 숫자키 <kbd>1</kbd>~<kbd>9</kbd>로 화자를 바꿔요. 이름을 클릭해도 바꿀 수 있어요.<br>
@@ -1257,7 +1262,7 @@ function rowHTML(e,prev){
   if(e.b.s===HAND){const b=e.b;
     return `<div class="row hand${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
-    <div class="body"><div class="hlab">📜 핸드아웃</div><div class="tx">${b.x?`<span>${b.x.split("\n").map(l=>`<span class="ln">${hl(l)}</span>`).join("<br>")}</span>`:'<span class="ph">핸드아웃 내용</span>'}</div></div>
+    <div class="body"><div class="hlab">📜 ${b.ti?`<b class="hti">${esc(b.ti)}</b>`:"핸드아웃"}</div><div class="tx">${b.x?`<span>${b.x.split("\n").map(l=>`<span class="ln">${hl(l)}</span>`).join("<br>")}</span>`:'<span class="ph">핸드아웃 내용</span>'}</div></div>
     <div class="act">
       <button class="w" data-act="edit" title="글 수정 (Enter)">✎</button>
       <button class="w" data-act="up" title="위 줄과 합치기">⤒</button>
@@ -1428,15 +1433,26 @@ function editRow(id){
   if(e.b.s===DICE){editDice(r,e);return;}
   const isSec=e.b.s===SEC,isNote=e.b.s===NOTE||isSec,isHand=e.b.s===HAND;
   r.classList.add("editing");
+  const hlab=isHand&&r.querySelector(".hlab");
+  if(hlab)hlab.innerHTML=`<input type="text" class="htin" placeholder="핸드아웃 제목 (예: 열차 탑승권)" value="${esc(e.b.ti||"")}">`;
+  const hti=hlab&&hlab.querySelector("input");
   tx.innerHTML=`<textarea placeholder="${isSec?["예: 메인 페이즈","예: 1사이클","예: 씬 1"][secLv(e.b)-1]:isNote?"예: 아래층에서 소음이 들린다":isHand?"핸드아웃 내용":""}">${esc(e.b.x)}</textarea><div class="edhint">${isNote?"Enter 저장 · Esc 취소":isHand?"Ctrl+Enter 저장 · Esc 취소":"줄바꿈으로 나눌 곳을 만든 뒤 ✂로 나눌 수 있어요 · Ctrl+Enter 저장 · Esc 취소"}</div>`;
   const ta=tx.querySelector("textarea");ta.style.height=Math.max(isNote?44:60,ta.scrollHeight+4)+"px";ta.focus();
   let done=false;
   const finish=save=>{if(done)return;done=true;
-    if(save){setText(id,isSec?ta.value.replace(/\n/g," "):ta.value);if(isSec)loadSecs(true);}
-    else if((isNote||isHand)&&!e.b.x){const x=S.byId.get(id);if(x){S.undo.pop();doOps([{ci:x.ci,op:{t:"del",id}}],null);renderAllRows(true);}return;}
+    if(save&&isHand){const x=ta.value.replace(/\n{3,}/g,"\n\n").trim(),ti=hti.value.trim();
+      if(!x&&!ti){delBlock(id);loadSecs(true);return;}
+      if(x!==e.b.x||ti!==(e.b.ti||""))doOps([{ci:e.ci,op:{t:"set",id,f:{x,ti}}}],"핸드아웃 수정");
+      loadSecs(true);renderSide();}
+    else if(save){setText(id,isSec?ta.value.replace(/\n/g," "):ta.value);if(isSec)loadSecs(true);}
+    else if((isNote||isHand)&&!e.b.x&&!e.b.ti){const x=S.byId.get(id);if(x){S.undo.pop();doOps([{ci:x.ci,op:{t:"del",id}}],null);renderAllRows(true);}return;}
     if(S.byId.has(id)){updateRow(id);select(id,false);}};
   ta.onkeydown=ev=>{if(ev.key==="Escape"){ev.preventDefault();finish(false);}if(ev.key==="Enter"&&(ev.ctrlKey||ev.metaKey||(isNote&&!ev.shiftKey))){ev.preventDefault();finish(true);}ev.stopPropagation();};
-  ta.onblur=()=>{if(S.rerendering)return;setTimeout(()=>{if(document.activeElement!==ta&&ta.isConnected)finish(true);else if(!ta.isConnected&&!S.byId.has(id))finish(false);},0);};
+  const inEd=()=>document.activeElement===ta||(hti&&document.activeElement===hti);
+  const onBlur=()=>{if(S.rerendering)return;setTimeout(()=>{if(!inEd()&&ta.isConnected)finish(true);else if(!ta.isConnected&&!S.byId.has(id))finish(false);},0);};
+  ta.onblur=onBlur;
+  if(hti){hti.onblur=onBlur;hti.onkeydown=ev=>{ev.stopPropagation();if(ev.key==="Escape"){ev.preventDefault();finish(false);}if(ev.key==="Enter"){ev.preventDefault();if(ev.ctrlKey||ev.metaKey)finish(true);else ta.focus();}};
+    if(!e.b.ti&&!e.b.x)hti.focus();}
 }
 
 function editDice(r,e){
@@ -1474,16 +1490,21 @@ async function loadSecs(force){
   const me=info(S.meta);
   const sib=S.sessions.map(x=>({...x,...info(x)})).filter(x=>x.scen===me.scen&&x.id!==S.sid),key=S.sid+"|"+sib.map(x=>x.id).join();
   if(!force&&S.secKey===key)return;S.secKey=key;
-  const out=[];
+  const out=[],hands=[];
   for(const x of sib){try{const snap=await S.db.collection(`sessions/${x.id}/chunks`).get();
-    snap.docs.map(d=>d.data()).sort((a,b)=>a.i-b.i).forEach(c=>(c.b||[]).forEach(b=>{if(b.s===SEC)out.push({sid:x.id,day:x.day,part:x.part,id:b.id,x:b.x,lv:secLv(b)});}));}catch(e){}}
-  if(S.secKey===key){S.secOther=out;renderSide();}
+    snap.docs.map(d=>d.data()).sort((a,b)=>a.i-b.i).forEach(c=>(c.b||[]).forEach(b=>{if(b.s===SEC)out.push({sid:x.id,day:x.day,part:x.part,id:b.id,x:b.x,lv:secLv(b)});else if(b.s===HAND)hands.push({sid:x.id,day:x.day,part:x.part,id:b.id,ti:b.ti||"",x:b.x});}));}catch(e){}}
+  if(S.secKey===key){S.secOther=out;S.handOther=hands;renderSide();}
 }
 function allSecs(){
   const me=S.meta?info(S.meta):{day:"",part:1};
   const here=S.flat.filter(e=>e.b.s===SEC).map(e=>({sid:S.sid,day:me.day,part:me.part,id:e.b.id,x:e.b.x,lv:secLv(e.b)}));
   // 안정 정렬: 같은 녹음 안에서는 로그 순서 그대로
   return [...(S.secOther||[]),...here].map((x,i)=>({...x,i})).sort((a,b)=>String(a.day).localeCompare(String(b.day))||a.part-b.part||a.i-b.i);
+}
+function allHands(){
+  const me=S.meta?info(S.meta):{day:"",part:1};
+  const here=S.flat.filter(e=>e.b.s===HAND).map(e=>({sid:S.sid,day:me.day,part:me.part,id:e.b.id,ti:e.b.ti||"",x:e.b.x}));
+  return [...(S.handOther||[]),...here].map((x,i)=>({...x,i})).sort((a,b)=>String(a.day).localeCompare(String(b.day))||a.part-b.part||a.i-b.i);
 }
 function gotoSec(sec){
   if(sec.sid===S.sid){const r=document.querySelector(`.row[data-id="${sec.id}"]`);if(r){setFollow(false);r.scrollIntoView({block:"start",behavior:"smooth"});select(sec.id,false);}return;}
@@ -1669,7 +1690,7 @@ function bindSession(){
   const q=$("#q");q.oninput=()=>{clearTimeout(qTimer);qTimer=setTimeout(()=>{S.q=q.value.trim();renderAllRows();},200);};
   q.onkeydown=ev=>{ev.stopPropagation();if(ev.key==="Escape"){q.value="";S.q="";renderAllRows();q.blur();}};
   $("#copyAll").onclick=async()=>{
-    const txt=S.flat.filter(visible).map(e=>e.b.s===SEC?["\n== "+e.b.x+" ==\n","\n- "+e.b.x+" -\n","\n  · "+e.b.x+"\n"][secLv(e.b)-1]:e.b.s===HAND?`\n[핸드아웃]\n${e.b.x}\n`:e.b.s===DICE?`🎲 ${e.b.w?(spBy(e.b.w).ch||spBy(e.b.w).name):""} ${e.b.x||""} ${e.b.r||""} ${e.b.sec?"Secret Dice":""} ${OUT[e.b.o]||""}`.replace(/\s+/g," ").trim():e.b.s===NOTE?`\n— ${e.b.x.replace(/\n/g," ")} —\n`:`[${fmt(e.b.t)}] ${spBy(e.b.s).name}: ${e.b.x.replace(/\n/g," ")}`).join("\n");
+    const txt=S.flat.filter(visible).map(e=>e.b.s===SEC?["\n== "+e.b.x+" ==\n","\n- "+e.b.x+" -\n","\n  · "+e.b.x+"\n"][secLv(e.b)-1]:e.b.s===HAND?`\n[핸드아웃${e.b.ti?": "+e.b.ti:""}]\n${e.b.x}\n`:e.b.s===DICE?`🎲 ${e.b.w?(spBy(e.b.w).ch||spBy(e.b.w).name):""} ${e.b.x||""} ${e.b.r||""} ${e.b.sec?"Secret Dice":""} ${OUT[e.b.o]||""}`.replace(/\s+/g," ").trim():e.b.s===NOTE?`\n— ${e.b.x.replace(/\n/g," ")} —\n`:`[${fmt(e.b.t)}] ${spBy(e.b.s).name}: ${e.b.x.replace(/\n/g," ")}`).join("\n");
     try{await navigator.clipboard.writeText((S.meta?.title?S.meta.title+"\n\n":"")+txt);toast("복사했어요");}catch(e){toast("복사가 막혔어요. 브라우저 권한을 확인해 주세요");}
   };
   $("#log").onclick=ev=>{
