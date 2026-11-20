@@ -1573,6 +1573,10 @@ function scenHTML(){
         <label>룰 시스템<input type="text" id="e-sys" value="${esc(d.system||"")}" placeholder="예: D&D 5.5e, CoC 7판, 인세인" list="syslist"></label>
         <datalist id="syslist">${[...new Set(S.scens.map(x=>(x.system||"").trim()).filter(Boolean))].map(x=>`<option value="${esc(x)}">`).join("")}</datalist>
       </div></div>
+      <div class="sc-sec"><h4>공유 이미지 <span class="tip" style="letter-spacing:0">· 링크를 보낼 때 카톡·디스코드 미리보기에 뜨는 그림 (가로로 긴 1200×630으로 맞춰져요)</span></h4>
+        <div class="ogcard${d.og?"":" empty"}" id="e-ogprev">${d.og?`<img src="${d.og}" alt="">`:`<span>아직 이미지가 없어요</span>`}</div>
+        <div style="display:flex;gap:6px;margin-top:8px"><button type="button" id="e-ogup">이미지 올리기</button>${d.og?`<button type="button" class="ghost" id="e-ogdel">지우기</button>`:""}<input type="file" id="e-ogfile" accept="image/*" style="display:none"></div>
+      </div>
       <div class="sc-sec"><h4>개요</h4><textarea id="e-sum" placeholder="배경, 도입, 목표, 등장 NPC 등">${esc(d.summary||"")}</textarea></div>
       <div class="sc-sec"><h4>발언자 · 등장인물</h4>
         ${(()=>{const c=SCC[sc.id];const zero=c?d.sp.filter(p=>p.k!==d.gm&&!(c[p.k]>0)).length:0;return `
@@ -1598,6 +1602,7 @@ function scenHTML(){
   return `<div class="sc-page">
     <div class="sc-top"><button class="ghost" id="scback">← 목록</button><span class="sp" style="flex:1"></span><span class="authbox"></span></div>
     <div class="sc-top"><h2>${esc(sc.name)}</h2>${sc.system?`<span class="sys">${esc(sc.system)}</span>`:""}${S.canWrite?`<button id="scedit">✎ 수정</button>`:""}</div>
+    ${sc.og?`<div class="ogcard view"><img src="${sc.og}" alt=""></div>`:""}
     <div class="sc-sec"><h4>개요</h4>${txt(sc.summary,"아직 개요가 없어요."+(S.canWrite?" ✎ 수정을 눌러 써 주세요.":""))}</div>
     <div class="sc-sec"><h4>발언자 · 등장인물</h4>${sc.sp.length?(`<div class="roster" style="grid-template-columns:16px 1fr 1fr"><span></span><span class="h">발언자</span><span class="h">등장인물</span>${gmFirst(sc.sp.filter(p=>!isAnon(p)),gmKey(sc)).map(p=>`<span class="dot" style="--c:${fixC(p.c)}"></span><span>${p.k===gmKey(sc)?gmTag+" ":""}<b>${esc(p.name)}</b></span><span style="color:var(--dim);font-size:13.5px">${esc(p.ch||(p.k===gmKey(sc)?"게임 마스터":""))}</span>`).join("")}</div>`):`<div class="sc-text empty">녹음을 올리면 화자가 여기 모여요.</div>`}</div>
     <div class="sc-sec"><h4>녹음</h4>${days.length?daysHTML(days):`<div class="sc-text empty">아직 녹음이 없어요. 목록 화면에서 txt를 올릴 때 시나리오를 '${esc(sc.name)}'(으)로 고르면 여기 묶여요.</div>`}</div>
@@ -1654,6 +1659,7 @@ function sessionsReady(id){return S.canAdmin?!!SUB.sessData.all:!!SUB.sessData[i
 function mergeScenEdit(L,base,d){
   ["name","system","summary"].forEach(f=>{if((d[f]||"")!==(base[f]||""))L[f]=d[f];});
   if((d.theme||"")!==(base.theme||"")){if(d.theme)L.theme=d.theme;else delete L.theme;}
+  if((d.og||"")!==(base.og||"")){if(d.og)L.og=d.og;else delete L.og;}
   if(JSON.stringify(d.aliases||[])!==JSON.stringify(base.aliases||[]))L.aliases=d.aliases;
   if((d.gm||null)!==(base.gm||null)){if(d.gm)L.gm=d.gm;else delete L.gm;}
   const bk=new Map((base.sp||[]).map(p=>[p.k,p])),dk=new Map((d.sp||[]).map(p=>[p.k,p]));
@@ -1665,9 +1671,15 @@ function mergeScenEdit(L,base,d){
   }
   L.sp=arr;
 }
-function shareUrl(id){return location.origin+location.pathname+"#c-"+id;}
+// 공유 링크는 p/시나리오.html (미리보기 이미지가 들어간 페이지) → 열면 바로 시나리오로 넘어가요
+function shareUrl(id){return location.origin+location.pathname.replace(/index\.html$/,"")+"p/"+id+".html";}
 function bindScen(){
   bindPartEdit();renderAuth();
+  {const up=$("#e-ogup"),fi=$("#e-ogfile");
+    if(up&&fi){up.onclick=()=>fi.click();
+      fi.onchange=async ev=>{const f=ev.target.files[0];if(!f||!S.scDraft)return;
+        try{const pl=window.__scPull;pl&&pl();S.scDraft.og=await shrinkImage(f,1200,"image/jpeg",1200,630);render();toast("저장을 눌러야 적용돼요");}catch(e){toast("이미지를 읽지 못했어요");}};}
+    const del=$("#e-ogdel");if(del)del.onclick=()=>{const pl=window.__scPull;pl&&pl();delete S.scDraft.og;render();};}
   document.querySelectorAll("[data-theme-set]").forEach(b=>b.onclick=()=>{if(!S.scDraft)return;const k=b.dataset.themeSet;
     if(k)S.scDraft.theme=k;else delete S.scDraft.theme;
     document.querySelectorAll("[data-theme-set]").forEach(x=>x.classList.toggle("on",x===b));

@@ -1,0 +1,7 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><title>이동 중…</title>
+<script>
+// 아직 공유 페이지가 만들어지기 전인 p/<id>.html 링크도 시나리오로 보내 줘요
+var m=location.pathname.match(/^(.*\/)p\/([^\/]+)\.html$/);
+location.replace(m?m[1]+"#c-"+m[2]:location.pathname.replace(/[^\/]*$/,""));
+</script></head><body></body></html>
