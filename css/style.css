@@ -315,3 +315,4 @@ a.scl:hover{color:var(--acc2)}
 
 strong.em{font-weight:800;color:inherit}.mk{display:none}
 .tx textarea{font-family:inherit}
+.sicon{display:inline-block;margin-right:8px;vertical-align:-2px}img.sicon{width:30px;height:30px;border-radius:7px;object-fit:cover;vertical-align:-5px}img.sicon.big{width:32px;height:32px}.siteed{font-size:14px;padding:0 6px;vertical-align:4px}
