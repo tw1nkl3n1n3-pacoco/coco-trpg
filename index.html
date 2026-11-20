@@ -337,13 +337,13 @@ body:not([data-theme]) #log{background:#fffdf9}
 /* --- 괴담: 공포 · 호러 (key: wa) --- */
 body[data-theme=wa]{--bg:#d4d4d4;--panel:#f6f6f6;--panel2:#ececec;--line:#c4c4c4;--ink:#0d0d0d;--dim:#444;--faint:#808080;--acc:#b0101a;--acc2:#0d0d0d;--sel:#f7e1e2;--play:#f2ecec;--gold:#b0101a;--ok:#5f8a4a;
   background:#dcdcdc}
-body[data-theme=wa] header{background:#0a0a0a;border-bottom:0;box-shadow:0 2px 0 #b0101a;--ink:#ece6da;--dim:#bcb3a6;--faint:#8a8178;--line:#2e2828;--panel:#1d1a1a;--panel2:#1d1a1a;--acc:#c23a3a;color:#ece6da}
+body[data-theme=wa] header{background:#0a0a0a;border-bottom:0;box-shadow:0 2px 0 #b0101a,0 6px 18px rgba(0,0,0,.35);--ink:#ece6da;--dim:#bcb3a6;--faint:#8a8178;--line:#2e2828;--panel:#1d1a1a;--panel2:#1d1a1a;--acc:#c23a3a;color:#ece6da}
 body[data-theme=wa] header h1,body[data-theme=wa] header .scl{font-family:"Noto Serif KR","Gowun Batang",serif;font-weight:700;letter-spacing:.08em;color:#ece6da!important;border-bottom-color:#b0101a}
 body[data-theme=wa] header button.ghost:hover{background:#1d1a1a}
 body[data-theme=wa] header .status.ok{color:#a9c191}
 body[data-theme=wa] .pchip{border-radius:2px!important;background:#1d1a1a!important;color:#bcb3a6!important;border-color:#3a3232!important}
 body[data-theme=wa] .pchip.on{background:#b0101a!important;color:#fff!important;border-color:#b0101a!important}
-body[data-theme=wa] #pbar{background:#0a0a0a;border-top:0;box-shadow:0 -2px 0 #b0101a;--ink:#ece6da;--dim:#bcb3a6;--faint:#8a8178;--line:#2e2828;--panel2:#1d1a1a;color:#ece6da}
+body[data-theme=wa] #pbar{background:#0a0a0a;border-top:0;box-shadow:0 -2px 0 #b0101a,0 -6px 18px rgba(0,0,0,.3);--ink:#ece6da;--dim:#bcb3a6;--faint:#8a8178;--line:#2e2828;--panel2:#1d1a1a;color:#ece6da}
 body[data-theme=wa] #pbar select{background:#1d1a1a;color:#ece6da;border-color:#3a3232}
 body[data-theme=wa] #pbar input[type=range]{accent-color:#c23a3a}
 body[data-theme=wa] aside{border-right:2px solid #0d0d0d}
@@ -353,7 +353,7 @@ body[data-theme=wa] .spk{border-radius:2px}
 body[data-theme=wa] .secadd,body[data-theme=wa] .secb .sp,body[data-theme=wa] .sectog,body[data-theme=wa] .foldh .fsub,body[data-theme=wa] .who small{color:#808080}
 body[data-theme=wa] input[type=text],body[data-theme=wa] input[type=search],body[data-theme=wa] select,body[data-theme=wa] textarea{background:#fff;border-radius:0}
 body[data-theme=wa] button{border-radius:0}
-body[data-theme=wa] #log{border:2px solid #0d0d0d;border-radius:0;box-shadow:none;
+body[data-theme=wa] #log{border:2px solid #0d0d0d;border-radius:0;box-shadow:6px 6px 0 #b0101a;
   background:#fcfcfb}
 body[data-theme=wa] .row{border-radius:1px}
 body[data-theme=wa] .row:hover{background:rgba(142,27,27,.04)}
@@ -372,7 +372,7 @@ body[data-theme=wa] button.pri{background:#141111;border-color:#141111;color:#ec
 body[data-theme=wa] button.pri:hover{background:#b0101a;border-color:#b0101a}
 body[data-theme=wa] .row.sec .tx{font-family:"Noto Serif KR",serif}
 body[data-theme=wa] .row.sec.l1 .tx{font-size:21px;color:#141111;text-align:center;letter-spacing:.35em;border-bottom:0;padding:6px 0 14px;
-  background:linear-gradient(#b0101a,#b0101a) bottom center/120px 3px no-repeat}
+  background:linear-gradient(#b0101a,#b0101a) bottom center/70% 3px no-repeat}
 body[data-theme=wa] .row.sec.l2 .tx{color:#141111;border-left:0;border-bottom:0;padding-left:0;letter-spacing:.12em}
 body[data-theme=wa] .row.sec.l2 .tx .ln::before{content:"";display:inline-block;width:4px;height:16px;background:#b0101a;margin-right:10px;vertical-align:-2px}
 body[data-theme=wa] .row.sec.l3 .tx{color:#4a4340;border-bottom:0;letter-spacing:.06em}
@@ -380,12 +380,12 @@ body[data-theme=wa] .row.sec.l3 .tx .ln::before{content:"‥ ";color:#b0101a}
 body[data-theme=wa] .row.note .tx{font-family:"Noto Serif KR",serif;color:#333;font-style:italic;letter-spacing:.04em}
 body[data-theme=wa] .row.note .tx::before,body[data-theme=wa] .row.note .tx::after{border-top:1px solid #0d0d0d;max-width:50px;background:none}
 body[data-theme=wa] .row.dice .tx{background:#fff;border:1px solid #0d0d0d;border-left:3px solid #b0101a;border-radius:1px}
-body[data-theme=wa] .row.hand .body{background:#fff;border:1px solid #0d0d0d;border-radius:0;box-shadow:none}
+body[data-theme=wa] .row.hand .body{background:#fff;border:1px solid #0d0d0d;border-radius:0;box-shadow:4px 4px 0 #0d0d0d;transform:rotate(-.3deg)}
 body[data-theme=wa] .row.hand .tx{font-family:"Noto Serif KR",serif;color:#111}
 body[data-theme=wa] .row.hand .hlab{color:#b0101a;letter-spacing:.2em}
 body[data-theme=wa] .nb{background:transparent;box-shadow:none;border-bottom:1.5px solid #b0101a;border-radius:0;padding:0 1px}
-body[data-theme=wa] .dres.fumble{background:#6a0a10}
-body[data-theme=wa] .sc-sec,body[data-theme=wa] .card{border-radius:1px;box-shadow:none;border:1.5px solid #0d0d0d;background:#fcfcfb}
+body[data-theme=wa] .dres.fumble{background:#6a0a10;box-shadow:0 0 0 1px #c23a3a}
+body[data-theme=wa] .sc-sec,body[data-theme=wa] .card{border-radius:1px;box-shadow:4px 4px 0 #0d0d0d;border:1.5px solid #0d0d0d;background:#fcfcfb}
 body[data-theme=wa] .sc-top h2{font-family:"Noto Serif KR",serif;letter-spacing:.1em;color:#141111}
 body[data-theme=wa] .sc-sec h4{color:#b0101a;letter-spacing:.1em}
 
