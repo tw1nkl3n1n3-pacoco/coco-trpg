@@ -316,3 +316,4 @@ a.scl:hover{color:var(--acc2)}
 strong.em{font-weight:800;color:inherit}.mk{display:none}
 .tx textarea{font-family:inherit}
 .sicon{display:inline-block;margin-right:8px;vertical-align:-2px}img.sicon{width:30px;height:30px;border-radius:7px;object-fit:cover;vertical-align:-5px}img.sicon.big{width:32px;height:32px}.siteed{font-size:14px;padding:0 6px;vertical-align:4px}
+.ogcard{aspect-ratio:1200/630;width:100%;max-width:520px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--panel2);display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:13px}.ogcard img{width:100%;height:100%;object-fit:cover;display:block}.ogcard.view{max-width:none;margin:12px 0;box-shadow:0 2px 10px rgba(0,0,0,.08)}
