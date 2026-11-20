@@ -667,10 +667,21 @@ function hl0(text){
 }
 const NOTE="__note",DICE="__dice",HAND="__hand",SEC="__sec";
 const OUT={success:"Success",failure:"Failure",critical:"Critical",fumble:"Fumble"};
+// 룰에 맞춘 표기: 인세인은 크리티컬 대신 스페셜
+const outLabel=(o,sc)=>o==="critical"&&themeOf(sc===undefined?curScen():sc)==="wa"?"Special":OUT[o];
+const RULE_PH={
+  wa:{sec:["예: 메인 페이즈","예: 1사이클","예: 스즈키 나나의 씬"],judge:"판정 (선택) 예: 〈추적〉",res:"결과 예: 2D6 → 8 (목표 5)"},
+  deco:{sec:["예: 1장 · 특급열차 출발","예: 식당칸 조사","예: 전투 1라운드"],judge:"판정 (선택) 예: 지각(WIS)",res:"결과 예: 1d20+5 → 18 (DC 15)"},
+  "":{sec:["예: 메인 페이즈","예: 1사이클","예: 씬 1"],judge:"판정 (선택) 예: 지각",res:"결과 예: 1d20+3 → 17"}};
+const rulePH=()=>RULE_PH[themeOf(curScen())]||RULE_PH[""];
+// 핸드아웃의 '사명:', '비밀:'로 시작하는 줄은 라벨로 (원문 글자는 그대로 둬요)
+const HSEC=/^(\s*[【\[]?(사명|비밀|使命|秘密)[】\]]?\s*[:：]?\s*)/;
+function handLine(l){const m=l.match(HSEC);if(!m)return hl(l);const sec=/비밀|秘密/.test(m[2]);
+  return `<span class="hsecw${sec?" secret":""}" data-l="${sec?"비밀":"사명"}"><span class="mk">${esc(m[1])}</span></span>${hl(l.slice(m[1].length))}`;}
 function diceInner(b){
   const p=b.w?spBy(b.w):null;
   if(!p&&!b.r&&!b.o&&!b.x&&!b.sec)return '<span class="ph">🎲 주사위 — ✎를 눌러 입력</span>';
-  return `<span class="dd">🎲</span>${p?`<b class="dw">${esc(p.ch||p.name)}</b>`:""}${b.x?`<span class="dl">${hl(b.x)}</span>`:""}${b.r?`<span class="dr">${hl(b.r)}</span>`:""}${b.sec?`<span class="dres secret">Secret Dice</span>`:""}${b.o&&OUT[b.o]?`<span class="dres ${b.o}">${OUT[b.o]}</span>`:""}`;
+  return `<span class="dd">🎲</span>${p?`<b class="dw">${esc(p.ch||p.name)}</b>`:""}${b.x?`<span class="dl">${hl(b.x)}</span>`:""}${b.r?`<span class="dr">${hl(b.r)}</span>`:""}${b.sec?`<span class="dres secret">Secret Dice</span>`:""}${b.o&&OUT[b.o]?`<span class="dres ${b.o}">${outLabel(b.o)}</span>`:""}`;
 }
 function rowHTML(e,prev){
   if(e.b.s===SEC){const b=e.b;
@@ -685,7 +696,7 @@ function rowHTML(e,prev){
   if(e.b.s===HAND){const b=e.b;
     return `<div class="row hand${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
-    <div class="body"><div class="hlab">📜 ${b.ti?`<b class="hti">${esc(b.ti)}</b>`:"핸드아웃"}</div><div class="tx">${b.x?`<span>${b.x.split("\n").map(l=>`<span class="ln">${hl(l)}</span>`).join("<br>")}</span>`:'<span class="ph">핸드아웃 내용</span>'}</div></div>
+    <div class="body"><div class="hlab">📜 ${b.ti?`<b class="hti">${esc(b.ti)}</b>`:"핸드아웃"}</div><div class="tx">${b.x?`<span>${b.x.split("\n").map(l=>`<span class="ln">${handLine(l)}</span>`).join("<br>")}</span>`:'<span class="ph">핸드아웃 내용 · 사명: / 비밀: 로 시작하는 줄은 라벨이 붙어요</span>'}</div></div>
     <div class="act">
       <button class="w" data-act="edit" title="글 수정 (Enter)">✎</button>
       <button class="w" data-act="up" title="위 줄과 합치기">⤒</button>
@@ -859,7 +870,7 @@ function editRow(id){
   const hlab=isHand&&r.querySelector(".hlab");
   if(hlab)hlab.innerHTML=`<input type="text" class="htin" placeholder="핸드아웃 제목 (예: 열차 탑승권)" value="${esc(e.b.ti||"")}">`;
   const hti=hlab&&hlab.querySelector("input");
-  tx.innerHTML=`<textarea placeholder="${isSec?["예: 메인 페이즈","예: 1사이클","예: 씬 1"][secLv(e.b)-1]:isNote?"예: 아래층에서 소음이 들린다":isHand?"핸드아웃 내용":""}">${esc(e.b.x)}</textarea><div class="edhint">${isNote?"Enter 저장 · Esc 취소":isHand?"Ctrl+Enter 저장 · Esc 취소":"드래그하면 그 부분만 다른 사람 대사로 떼어내요 · **글자**로 감싸면 굵게 · Ctrl+Enter 저장 · Esc 취소"}</div>`;
+  tx.innerHTML=`<textarea placeholder="${isSec?rulePH().sec[secLv(e.b)-1]:isNote?"예: 아래층에서 소음이 들린다":isHand?"핸드아웃 내용":""}">${esc(e.b.x)}</textarea><div class="edhint">${isNote?"Enter 저장 · Esc 취소":isHand?"Ctrl+Enter 저장 · Esc 취소":"드래그하면 그 부분만 다른 사람 대사로 떼어내요 · **글자**로 감싸면 굵게 · Ctrl+Enter 저장 · Esc 취소"}</div>`;
   const ta=tx.querySelector("textarea");ta.style.height=Math.max(isNote?44:60,ta.scrollHeight+4)+"px";ta.focus();
   let done=false;
   const finish=save=>{if(done)return;done=true;
@@ -915,9 +926,9 @@ function editDice(r,e){
   const opts=spList().map(p=>`<option value="${p.k}"${p.k===b.w?" selected":""}>${p.ch?esc(p.ch)+" ("+esc(p.name)+")":esc(p.name)}</option>`).join("");
   tx.innerHTML=`<div class="dform">
     <select data-f="w"><option value="">인물 고르기</option>${opts}</select>
-    <input data-f="x" type="text" placeholder="판정 (선택) 예: 지각" value="${esc(b.x||"")}">
-    <input data-f="r" type="text" placeholder="결과 예: 1d20+3 → 17" value="${esc(b.r||"")}">
-    <span class="dos"><button type="button" class="dres secret${sec?" on":""}" data-sec title="결과를 몰라도 돼요">Secret Dice</button>${Object.entries(OUT).map(([k,v])=>`<button type="button" class="dres ${k}${o===k?" on":""}" data-o="${k}">${v}</button>`).join("")}</span>
+    <input data-f="x" type="text" placeholder="${rulePH().judge}" value="${esc(b.x||"")}">
+    <input data-f="r" type="text" placeholder="${rulePH().res}" value="${esc(b.r||"")}">
+    <span class="dos"><button type="button" class="dres secret${sec?" on":""}" data-sec title="결과를 몰라도 돼요">Secret Dice</button>${Object.keys(OUT).map(k=>`<button type="button" class="dres ${k}${o===k?" on":""}" data-o="${k}">${outLabel(k)}</button>`).join("")}</span>
     <button type="button" class="pri" data-f="ok">저장</button><button type="button" data-f="no">취소</button>
   </div><div class="edhint">Enter 저장 · Esc 취소 · 성공 여부는 다시 누르면 해제돼요</div>`;
   const f=k=>tx.querySelector(`[data-f="${k}"]`);
@@ -1143,7 +1154,7 @@ function bindSession(){
   const q=$("#q");q.oninput=()=>{clearTimeout(qTimer);qTimer=setTimeout(()=>{S.q=q.value.trim();renderAllRows();},200);};
   q.onkeydown=ev=>{ev.stopPropagation();if(ev.key==="Escape"){q.value="";S.q="";renderAllRows();q.blur();}};
   $("#copyAll").onclick=async()=>{
-    const txt=S.flat.filter(visible).map(e=>e.b.s===SEC?["\n== "+e.b.x+" ==\n","\n- "+e.b.x+" -\n","\n  · "+e.b.x+"\n"][secLv(e.b)-1]:e.b.s===HAND?`\n[핸드아웃${e.b.ti?": "+e.b.ti:""}]\n${e.b.x}\n`:e.b.s===DICE?`🎲 ${e.b.w?(spBy(e.b.w).ch||spBy(e.b.w).name):""} ${e.b.x||""} ${e.b.r||""} ${e.b.sec?"Secret Dice":""} ${OUT[e.b.o]||""}`.replace(/\s+/g," ").trim():e.b.s===NOTE?`\n— ${e.b.x.replace(/\n/g," ")} —\n`:`[${fmt(e.b.t)}] ${spBy(e.b.s).name}: ${e.b.x.replace(/\n/g," ")}`).join("\n");
+    const txt=S.flat.filter(visible).map(e=>e.b.s===SEC?["\n== "+e.b.x+" ==\n","\n- "+e.b.x+" -\n","\n  · "+e.b.x+"\n"][secLv(e.b)-1]:e.b.s===HAND?`\n[핸드아웃${e.b.ti?": "+e.b.ti:""}]\n${e.b.x}\n`:e.b.s===DICE?`🎲 ${e.b.w?(spBy(e.b.w).ch||spBy(e.b.w).name):""} ${e.b.x||""} ${e.b.r||""} ${e.b.sec?"Secret Dice":""} ${e.b.o?outLabel(e.b.o):""}`.replace(/\s+/g," ").trim():e.b.s===NOTE?`\n— ${e.b.x.replace(/\n/g," ")} —\n`:`[${fmt(e.b.t)}] ${spBy(e.b.s).name}: ${e.b.x.replace(/\n/g," ")}`).join("\n");
     try{await navigator.clipboard.writeText((S.meta?.title?S.meta.title+"\n\n":"")+txt);toast("복사했어요");}catch(e){toast("복사가 막혔어요. 브라우저 권한을 확인해 주세요");}
   };
   $("#log").onclick=ev=>{
