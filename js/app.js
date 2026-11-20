@@ -646,7 +646,10 @@ function hlq(h){
   if(S.q){const q=esc(S.q).replace(/[.*+?^${}()|[\]\\]/g,"\\$&");h=h.replace(new RegExp(q,"gi"),m=>`<mark>${m}</mark>`);}
   return h;
 }
-function hl(text){
+// **강조** → 굵게. 별표는 숨겨 두기만 해서(글자 위치 계산이 안 틀어지게) 원문은 그대로예요
+const emph=h=>h.replace(/\*\*([^*\n]+?)\*\*/g,'<strong class="em"><span class="mk">**</span>$1<span class="mk">**</span></strong>');
+function hl(text){return emph(hl0(text));}
+function hl0(text){
   const re=nounRe();
   if(re){let out="",last=0;text=String(text);re.lastIndex=0;let m;
     while((m=re.exec(text))){out+=hlq(esc(text.slice(last,m.index)))+`<span class="nb">${hlq(esc(m[0]))}</span>`;last=m.index+m[0].length;}
@@ -849,7 +852,7 @@ function editRow(id){
   const hlab=isHand&&r.querySelector(".hlab");
   if(hlab)hlab.innerHTML=`<input type="text" class="htin" placeholder="핸드아웃 제목 (예: 열차 탑승권)" value="${esc(e.b.ti||"")}">`;
   const hti=hlab&&hlab.querySelector("input");
-  tx.innerHTML=`<textarea placeholder="${isSec?["예: 메인 페이즈","예: 1사이클","예: 씬 1"][secLv(e.b)-1]:isNote?"예: 아래층에서 소음이 들린다":isHand?"핸드아웃 내용":""}">${esc(e.b.x)}</textarea><div class="edhint">${isNote?"Enter 저장 · Esc 취소":isHand?"Ctrl+Enter 저장 · Esc 취소":"줄바꿈으로 나눌 곳을 만든 뒤 ✂로 나눌 수 있어요 · Ctrl+Enter 저장 · Esc 취소"}</div>`;
+  tx.innerHTML=`<textarea placeholder="${isSec?["예: 메인 페이즈","예: 1사이클","예: 씬 1"][secLv(e.b)-1]:isNote?"예: 아래층에서 소음이 들린다":isHand?"핸드아웃 내용":""}">${esc(e.b.x)}</textarea><div class="edhint">${isNote?"Enter 저장 · Esc 취소":isHand?"Ctrl+Enter 저장 · Esc 취소":"드래그하면 그 부분만 다른 사람 대사로 떼어내요 · **글자**로 감싸면 굵게 · Ctrl+Enter 저장 · Esc 취소"}</div>`;
   const ta=tx.querySelector("textarea");ta.style.height=Math.max(isNote?44:60,ta.scrollHeight+4)+"px";ta.focus();
   let done=false;
   const finish=save=>{if(done)return;done=true;
