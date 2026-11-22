@@ -224,7 +224,7 @@ function adminHTML(){
     <div class="card"><b>보안 규칙 점검</b> <span class="tip">· 규칙 버전 ${RULES_VERSION}</span><div id="rules" style="margin-top:6px">${rulesBlockHTML()}</div></div>
     ${S.db?`    <div class="card">
       <b>백업 · 옮기기</b>
-      <div class="tip" style="margin:4px 0 10px">전체 데이터를 JSON으로 받거나, Claude 사이트에서 내보낸 JSON을 가져와요. 가져오면 같은 녹음은 덮어써요.</div>
+      <div class="tip" style="margin:4px 0 10px">전체 데이터를 JSON 파일로 받아 두거나, 받아 둔 JSON을 다시 가져와요. 가져오면 같은 녹음은 덮어써요.</div>
       <button id="exportb">⬇ JSON으로 내보내기</button>
       <span class="filebtn"><button>⬆ JSON 가져오기</button><input type="file" id="importf" accept=".json,application/json"></span>
       <span class="tip" id="exprog">${esc(S.impMsg||"")}</span>
@@ -412,6 +412,16 @@ function rebuild(){
   Object.keys(S.chunks).map(Number).sort((a,b)=>a-b).forEach(ci=>{
     S.chunks[ci].forEach((b,bi)=>{const e={b,ci,bi};S.flat.push(e);S.byId.set(b.id,e);});
   });
+  syncN();
+}
+// 목록에 보이는 "N개 대사"를 실제 줄 수와 맞춰요 (나누기·추가·삭제 뒤에도)
+function syncN(){
+  clearTimeout(S.nTmr);
+  S.nTmr=setTimeout(()=>{
+    const sid=S.sid,n=S.flat.length;
+    if(!sid||!S.db||S.local||!S.canWrite||!S.chunksLoaded||!S.meta||!n||S.meta.n===n)return;
+    S.meta.n=n;S.db.doc("sessions/"+sid).set({n},{merge:true}).catch(()=>{});
+  },3000);
 }
 
 // ---------- persistence ----------
@@ -1514,8 +1524,8 @@ function homeHTML(){
     <div class="hometop"><h2>${iconHTML(site().icon)}${esc(site().title)}</h2><span class="hright">${S.canAdmin&&S.db?`<a class="ghost adminbtn" href="#admin" title="관리자 페이지">⚙ 관리${adminAlert()?'<i class="dot-alert"></i>':""}</a>`:""}<span class="authbox"></span></span></div>
     <div class="tip" style="font-size:13.5px">${esc(site().sub).replace(/\n/g,"<br>")}</div>
     ${S.err?`<div class="notice bad">${esc(S.err)}</div>`:""}
-    ${!S.ready?`<div class="notice">불러오는 중…</div>`:""}
-    ${S.ready&&S.setupNeeded?`<div class="notice bad">아직 Firebase 설정이 비어 있어요. <b>firebase-config.js</b>에 내 Firebase 프로젝트 값을 넣어 주세요. (지금은 txt 미리보기만 돼요)</div>`:""}
+    ${!S.ready||(S.db&&!S.loaded)?`<div class="notice">불러오는 중…</div>`:""}
+    ${S.ready&&S.setupNeeded?`<div class="notice bad">아직 Firebase 설정이 비어 있어요. 저장소 <b>Settings → Secrets and variables → Actions → Variables</b>에 <b>FIREBASE_CONFIG</b>와 <b>OWNER_EMAIL</b>을 넣고 다시 배포해 주세요. 자세한 방법은 저장소의 README에 있어요. (지금은 txt 미리보기만 돼요)</div>`:""}
     ${S.ready&&S.db&&S.loaded&&!S.canAdmin&&S.scens.some(x=>!isOpen(x.id))?`<div class="notice">🔒 표시된 시나리오는 같이 플레이한 친구에게 받은 비밀번호를 넣어야 로그를 볼 수 있어요.</div>`:""}
     ${sysKeys.length>1||(sysKeys.length===1&&sysKeys[0]!==NOSYS)?`<div class="systabs">
       <button class="systab${S.sysFilter?"":" on"}" data-sys="">전체 <span>${all.length}</span></button>
