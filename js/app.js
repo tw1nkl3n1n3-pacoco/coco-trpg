@@ -701,8 +701,8 @@ const THEMES={"":{n:"양피지",d:"지금 기본 · 판타지",sw:["#efe3cc","#f
 const pcSplit=v=>{const m=String(v||"").match(/^\s*PC\s*(\d{1,2})\s*[.:·\-]?\s*(.+)$/i);return m?{n:m[1],name:m[2]}:{n:"",name:String(v||"")};};
 const spDot=(p,style="")=>{const q=pcSplit(p.name);return `<span class="dot${q.n?" pcn":""}"${style?` style="${style}"`:""}>${q.n}</span>`;};
 const spName=p=>esc(pcSplit(p.name).name);
-// 룰 이름 표기: D&D → DnD
-const sysLabel=v=>String(v||"").replace(/D\s*[&＆]\s*D/gi,"DnD");
+// 룰 이름 표기: DnD·D＆D → D&D
+const sysLabel=v=>String(v||"").replace(/\bD\s*(n|＆)\s*D\b/gi,"D&D");
 // 완주 도장: 시나리오 이름으로 각도·위치·잉크를 정해요 (항상 같은 모양)
 function stampHTML(sc){
   if(!sc||!sc.done)return "";
@@ -1529,8 +1529,8 @@ function homeHTML(){
   const can=S.db&&S.canWrite;
   const all=groups();
   const NOSYS="룰 미정";
-  // 룰 탭은 판본을 합쳐서 보여요 (DnD 5e, 5.5e → DnD · 더블크로스 2nd, 3rd → 더블크로스)
-  const sysOf=g=>{const sc=g.sc;if(themeOf(sc)==="deco")return "DnD";if(themeOf(sc)==="dx")return "더블크로스";if(themeOf(sc)==="wa")return "인세인";return (sc?.system||"").trim()||NOSYS;};
+  // 룰 탭은 판본을 합쳐서 보여요 (D&D 5e, 5.5e → D&D · 더블크로스 2nd, 3rd → 더블크로스)
+  const sysOf=g=>{const sc=g.sc;if(themeOf(sc)==="deco")return "D&D";if(themeOf(sc)==="dx")return "더블크로스";if(themeOf(sc)==="wa")return "인세인";return (sc?.system||"").trim()||NOSYS;};
   const systems={};all.forEach(g=>{const k=sysOf(g);systems[k]=(systems[k]||0)+1;});
   const sysKeys=Object.keys(systems).sort((a,b)=>(a===NOSYS)-(b===NOSYS)||systems[b]-systems[a]||a.localeCompare(b,"ko"));
   if(S.sysFilter&&!systems[S.sysFilter])S.sysFilter=null;
@@ -1736,7 +1736,7 @@ function scenHTML(){
       <div class="sc-sec"><div class="fields" style="margin:0">
         <label>시나리오 이름<input type="text" id="e-name" value="${esc(d.name)}"></label>
         <label>원어 제목 <span class="tip" style="display:inline">· 선택</span><input type="text" id="e-orig" value="${esc(d.orig||"")}" placeholder="해외 시나리오면 원래 제목 (없으면 비워 두세요)"></label>
-        <label>룰 시스템<input type="text" id="e-sys" value="${esc(d.system||"")}" placeholder="예: DnD 5.5e, 더블크로스 3rd, CoC 7판, 인세인" list="syslist"></label>
+        <label>룰 시스템<input type="text" id="e-sys" value="${esc(d.system||"")}" placeholder="예: D&D 5.5e, 더블크로스 3rd, CoC 7판, 인세인" list="syslist"></label>
         <div class="donerow"><label class="chk"><input type="checkbox" id="e-done"${d.done?" checked":""}> 완주했어요</label><label class="donedate">완주한 날 <input type="date" id="e-doneat" value="${esc(d.doneAt||"")}"></label></div>
         <datalist id="syslist">${[...new Set(S.scens.map(x=>(x.system||"").trim()).filter(Boolean))].map(x=>`<option value="${esc(x)}">`).join("")}</datalist>
       </div></div>
