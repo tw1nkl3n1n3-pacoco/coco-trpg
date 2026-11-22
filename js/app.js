@@ -1533,7 +1533,7 @@ function homeHTML(){
     </div>`:""}
     <div id="sesslist">${gs.map(g=>`
       <section class="scen">
-        <div class="scen-h"><h3><a href="#" data-scen="${esc(g.scen)}" title="개요 보기">${esc(g.scen)} ›</a>${g.sc?.orig?`<span class="orig">${esc(g.sc.orig)}</span>`:""}</h3>${g.sc?.system?`<span class="sys">${esc(g.sc.system)}</span>`:""}<span class="d">${g.sc&&!isOpen(g.sc.id)?(g.sc.lastDay?`${g.sc.nDays||1}회차 · 마지막 ${esc(fmtDay(g.sc.lastDay))} 🔒`:"🔒"):g.days.length?`${g.days.length}회차 · 마지막 ${esc(fmtDay(g.last))}`:"아직 녹음 없음"}</span></div>
+        <div class="scen-h"><h3><a href="#" data-scen="${esc(g.scen)}" title="개요 보기">${esc(g.scen)} ›</a>${g.sc?.orig?`<span class="orig">${esc(g.sc.orig)}</span>`:""}</h3>${g.sc?.system?`<span class="sys" data-th="${themeOf(g.sc)||"pa"}">${esc(g.sc.system)}</span>`:""}<span class="d">${g.sc&&!isOpen(g.sc.id)?(g.sc.lastDay?`${g.sc.nDays||1}회차 · 마지막 ${esc(fmtDay(g.sc.lastDay))} 🔒`:"🔒"):g.days.length?`${g.days.length}회차 · 마지막 ${esc(fmtDay(g.last))}`:"아직 녹음 없음"}</span></div>
         ${g.sc?.summary?`<div class="sum">${esc(g.sc.summary)}</div>`:""}
         ${castHTML(g.sc)}
         ${g.sc&&!isOpen(g.sc.id)?"":daysHTML(g.days,false)}
@@ -1741,9 +1741,9 @@ function scenHTML(){
     </div>`;
   }
   return `<div class="sc-page">
-    ${(()=>{const t=`<h2>${esc(sc.name)}${sc.orig?`<span class="orig">${esc(sc.orig)}</span>`:""}</h2>`,m=`${sc.system?`<span class="sys">${esc(sc.system)}</span>`:""}${S.canWrite?`<button id="scedit">✎ 수정</button>`:""}`;
-      return sc.og?`<div class="schero"><img src="${sc.og}" alt=""><div class="schero-t">${t}</div></div><div class="sc-top schero-meta">${m}</div>`
-        :`<div class="sc-top">${t}${m}</div>`;})()}
+    ${(()=>{const t=`<h2>${esc(sc.name)}${sc.orig?`<span class="orig">${esc(sc.orig)}</span>`:""}</h2>`,m=`${sc.system?`<span class="sys" data-th="${themeOf(sc)||"pa"}">${esc(sc.system)}</span>`:""}${S.canWrite?`<button id="scedit">✎ 수정</button>`:""}`;
+      return sc.og?`<div class="schero"><img src="${sc.og}" alt=""><div class="schero-t">${t}<span class="scmeta">${m}</span></div></div>`
+        :`<div class="sc-top">${t}<span class="scmeta">${m}</span></div>`;})()}
     <div class="sc-sec"><h4>개요</h4>${txt(sc.summary,"아직 개요가 없어요."+(S.canWrite?" ✎ 수정을 눌러 써 주세요.":""))}</div>
     <div class="sc-sec"><h4>플레이어 · 등장인물</h4>${sc.sp.length?(`<div class="roster" style="grid-template-columns:16px 1fr 1fr"><span></span><span class="h">플레이어</span><span class="h">등장인물</span>${gmFirst(sc.sp.filter(p=>!isAnon(p)),gmKey(sc)).map(p=>`<span class="dot" style="--c:${fixC(p.c)}"></span><span>${p.k===gmKey(sc)?gmTag+" ":""}<b>${esc(p.name)}</b></span><span style="color:var(--dim);font-size:13.5px">${esc(p.ch||(p.k===gmKey(sc)?"게임 마스터":""))}</span>`).join("")}</div>`):`<div class="sc-text empty">녹음을 올리면 화자가 여기 모여요.</div>`}</div>
     <div class="sc-sec"><h4>녹음</h4>${days.length?daysHTML(days):`<div class="sc-text empty">아직 녹음이 없어요. 목록 화면에서 txt를 올릴 때 시나리오를 '${esc(sc.name)}'(으)로 고르면 여기 묶여요.</div>`}</div>
