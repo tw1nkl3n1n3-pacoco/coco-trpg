@@ -398,4 +398,5 @@ h1,h2,h3,.scen-h h3,.sc-top h2,.hometop h2{word-break:keep-all;overflow-wrap:any
 /* PC 번호 동그라미 (플레이어 이름이 "PC1 …"로 시작할 때) */
 .dot.pcn{width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:10.5px;font-weight:700;line-height:1;font-family:inherit;letter-spacing:0}
 .pcn:not(.dot){display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;background:var(--c);color:#fff;font-size:10.5px;font-weight:700;margin-right:5px;vertical-align:1px;line-height:1}
-.who>.gmtag{margin-right:5px;vertical-align:1px}
+.who>.gmtag,.who>.pcn{margin-right:-4px}
+.who>.gmtag{vertical-align:1px}
