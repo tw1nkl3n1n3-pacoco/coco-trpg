@@ -19,20 +19,21 @@ async function buildDayHTML(scen,day){
     const out=[];let i=0;
     while(i<bl.length){
       const b=bl[i];
-      if(b.s===NOTE){out.push(`<p class="note">${xEm(b.x)}</p>`);i++;continue;}
+      if(b.s===NOTE){out.push(b.st?`<p class="stat">📊 ${esc(b.x)}</p>`:`<p class="note">${xEm(b.x)}</p>`);i++;continue;}
       if(b.s===SEC){const l=secLv(b);out.push(l===1?`<h3 class="sec">${esc(b.x)}</h3>`:l===2?`<h4 class="sub">${esc(b.x)}</h4>`:`<h5 class="sub3">${esc(b.x)}</h5>`);i++;continue;}
       if(b.s===HAND){out.push(`<div class="hand"><div class="hlab">핸드아웃${b.ti?" · "+esc(b.ti):""}</div>${b.x.split("\n").map(l=>{const m=l.match(HSEC);return m?`<span class="hsec${m[2]==="비밀"?" secret":""}">${m[2]==="비밀"?"비밀":"정보"}</span>${xEm(l.slice(m[1].length))}`:xEm(l);}).join("<br>")}</div>`);i++;continue;}
       if(b.s===DICE){
         const p=b.w?(sp.find(z=>z.k===b.w)||{name:"?",c:"#888"}):null,c=p?fixC(p.c):"#8a8178";
-        out.push(`<p class="dice" style="color:#111;--c:${c}">🎲 ${p?`<span class="nm"><b>${esc(p.ch||p.name)}</b></span> : `:""}<span class="tx">${b.x?esc(b.x)+" ":""}${b.r?`<span class="dr">${esc(b.r)}</span>`:""}</span>${b.sec?` <span class="res secret">Secret Dice</span>`:""}${b.o&&OUT[b.o]?` <span class="res ${b.o}">${outLabel(b.o,sc)}</span>`:""}</p>`);
+        out.push(`<p class="dice" style="color:#111;--c:${c}">🎲 ${b.a||p?`<span class="nm"><b>${esc(b.a||p.ch||p.name)}</b></span> : `:""}<span class="tx">${b.x?esc(b.x)+" ":""}${b.r?`<span class="dr">${esc(b.r)}</span>`:""}</span>${b.sec?` <span class="res secret">Secret Dice</span>`:""}${b.o&&OUT[b.o]?` <span class="res ${b.o}">${outLabel(b.o,sc)}</span>`:""}</p>`);
         i++;continue;}
-      const run=[];while(i<bl.length&&bl[i].s===b.s){run.push(bl[i].x);i++;}
+      const run=[];while(i<bl.length&&bl[i].s===b.s&&(bl[i].a||"")===(b.a||"")&&(bl[i].tab||"")===(b.tab||"")){run.push(bl[i].x);i++;}
       const p=sp.find(z=>z.k===b.s)||{name:"?",c:"#888"};
       const c=fixC(p.c),gm=b.s===g;
-      const nm=`<b>${esc(p.name)}</b>${p.ch?`<small> ${esc(p.ch)}</small>`:""}`;
+      const ch=b.a||p.ch;
+      const nm=`<b>${esc(p.name)}</b>${ch?`<small> ${esc(ch)}</small>`:""}${b.tab?`<small class="tab"> ${esc(b.tab)}</small>`:""}`;
       const x=run.map(t=>xEm(t)).join("<br>");
       // 이름·대사는 모두 검은색 (GM은 배경·GM 표시로만 구분)
-      out.push(`<p class="pl${gm?" gm":""}" style="--c:${c}"><span class="nm">${gm?'<span class="gmt">GM</span>':""}${nm}</span> : <span class="tx">${x}</span></p>`);
+      out.push(`<p class="pl${gm?" gm":""}${b.tab?" tabbed":""}" style="--c:${c}"><span class="nm">${gm?'<span class="gmt">GM</span>':""}${nm}</span> : <span class="tx">${x}</span></p>`);
     }
     return out.join("\n");
   };
@@ -64,6 +65,8 @@ p{margin:0;padding:6px 2px;border-bottom:1px solid #ece7df;word-break:keep-all;o
 .res{display:inline-block;font-size:11px;font-weight:800;color:#fff;border-radius:4px;padding:0 7px;margin-left:4px;line-height:18px;vertical-align:1px}
 .hsec{display:inline-block;font-family:sans-serif;font-size:11px;font-weight:800;letter-spacing:.12em;padding:0 6px;margin-right:6px;border:1px solid currentColor;border-radius:2px;vertical-align:1px}
 p.pl,p.pl .nm b,p.pl .tx{color:#111}
+.stat{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:#6f6455;padding:3px 2px}
+p.tabbed{opacity:.72}.nm small.tab{background:#e9e4dc;color:#6b6258;border-radius:3px;padding:0 4px;font-size:11px}
 .res.secret{background:#3a2e4a}.res.success{background:#3f7a3a}.res.failure{background:#8a8178}.res.critical{background:#c08a14}.res.fumble{background:#a83a2a}
 body{font-family:"Noto Sans KR","Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif}
 main{box-sizing:border-box}
@@ -78,6 +81,21 @@ ${body}
 }
 // HTML로 받을 때도 시나리오 테마를 입혀요 (사람 대사는 늘 고딕)
 const EXPORT_CSS={
+dx:`body{background:#e6e9ee;color:#10151f}
+main{background:#fbfcfd;margin:28px auto;padding-top:0}
+header{background:#10151f;color:#eef2f7;margin:0 -20px 20px;padding:16px 20px;border-bottom:3px solid #e3173e}
+header h1{font-weight:800;font-style:italic;color:#fff}header div{color:#aab3c2}
+h2{color:#10151f}h2:before,h2:after{border-top-color:#c9cfd8}
+p{border-bottom-color:#e3e7ec}
+.gm{background:#eef1f5;border-left:3px solid #10151f}.gm .tx{color:#10151f}
+.gmt{background:#10151f!important;color:#fff;border-radius:0;font-style:italic;box-shadow:inset -3px 0 0 #e3173e}
+.note{color:#3b4352}
+.sec{font-style:italic;font-weight:800;color:#10151f;border-bottom:3px solid #10151f}.sec:before{content:"// ";color:#e3173e}
+.sub{color:#10151f;border-left:4px solid #e3173e}.sub3{color:#3b4352;border-bottom:0}.sub3:before{content:"› ";color:#18a4c4}
+.dice{background:#10151f;border-left:3px solid #e3173e}.dice,.dice .tx,.dice .nm b{color:#eef2f7!important}.dice .dr{color:#5fd6ef}
+.res{border-radius:0;font-style:italic}.res.critical{background:#e3173e}
+.hand{font-family:inherit;background:#fff;border:1px solid #10151f;border-radius:0;box-shadow:5px 5px 0 rgba(16,21,31,.14);padding-top:0}.hand .hlab{background:#10151f;color:#fff;margin:0 -18px 10px;padding:6px 18px;letter-spacing:.14em}
+.stat{color:#0e7f99;background:#e8f6fa;border-left:3px solid #18a4c4;padding:3px 10px}`,
 "":`body{background:#efe3cc}
 main{background:#fffdf9;border:1px solid #d9c4a3;border-radius:14px;margin:28px auto;box-shadow:0 2px 12px rgba(80,50,20,.08)}
 header{border-bottom:2px solid #c9a46a}header h1{font-family:"Gowun Batang",serif;color:#5a3a1a;font-size:22px}

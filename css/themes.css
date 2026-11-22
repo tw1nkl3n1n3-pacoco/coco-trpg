@@ -197,3 +197,53 @@ body[data-theme=wa] .schero-t{background:rgba(0,0,0,.74);border-bottom:3px solid
 body[data-theme=deco] .schero-t{background:rgba(40,6,6,.74);border-bottom:2px solid #c9962e}
 body[data-theme=deco] .schero-t .orig{color:#e6cf9c!important}
 body[data-theme=blue] .schero-t{background:rgba(10,20,40,.66)}
+/* ── 더블크로스(dx): 도시 첩보물 · UGN 단말기 느낌. 밝은 회색 바탕, 남색 잉크, 레니게이드 레드 + 시안 */
+body[data-theme=dx]{--bg:#e6e9ee;--panel:#fbfcfd;--panel2:#eef1f5;--line:#c9cfd8;--ink:#10151f;--dim:#3b4352;--faint:#7c8595;--acc:#e3173e;--acc2:#10151f;--sel:#fde4e9;--play:#e8f6fa;--gold:#e3173e;--ok:#1f9d74;
+  background:#e6e9ee;background-image:linear-gradient(135deg,rgba(16,21,31,.035) 25%,transparent 25%,transparent 50%,rgba(16,21,31,.035) 50%,rgba(16,21,31,.035) 75%,transparent 75%);background-size:14px 14px}
+body[data-theme=dx] header{background:#10151f;border-bottom:0;box-shadow:0 3px 0 #e3173e;--ink:#eef2f7;--dim:#aab3c2;--faint:#7c8595;--line:#283142;--panel:#1a2130;--panel2:#1a2130;--acc:#ff4d6a;color:#eef2f7;
+  background-image:linear-gradient(115deg,transparent 0 78%,rgba(227,23,62,.9) 78% 79%,transparent 79% 81%,rgba(24,164,196,.7) 81% 81.6%,transparent 81.6%)}
+body[data-theme=dx] header h1,body[data-theme=dx] header .scl{font-weight:800;letter-spacing:.04em;color:#fff!important;font-style:italic}
+body[data-theme=dx] .pchip{border-radius:0!important;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%);background:#1a2130!important;color:#aab3c2!important;border:0!important;padding:2px 12px!important}
+body[data-theme=dx] .pchip.on{background:#e3173e!important;color:#fff!important}
+body[data-theme=dx] #pbar{background:#10151f;box-shadow:0 -3px 0 #e3173e;color:#eef2f7;--ink:#eef2f7;--line:#283142;--panel2:#1a2130}
+body[data-theme=dx] aside{border-right:1px solid #c9cfd8}
+body[data-theme=dx] .foldh .car,body[data-theme=dx] .foldh .fc{color:#e3173e}
+body[data-theme=dx] button{border-radius:0}
+body[data-theme=dx] button.pri{background:#10151f;border-color:#10151f;color:#fff;box-shadow:inset 0 -3px 0 #e3173e}
+body[data-theme=dx] #log{background:#fbfcfd;border:0;border-radius:0;box-shadow:0 0 0 1px #c9cfd8,0 6px 0 -2px #10151f;clip-path:polygon(0 0,calc(100% - 22px) 0,100% 22px,100% 100%,22px 100%,0 calc(100% - 22px))}
+body[data-theme=dx] .row{border-radius:0}
+body[data-theme=dx] .row:hover{background:rgba(24,164,196,.06)}
+body[data-theme=dx] .row.sel{background:#fde4e9;border-color:#f39aab}
+body[data-theme=dx] .row.gm{background:#eef1f5}
+body[data-theme=dx] .row.gm .body{box-shadow:inset 3px 0 0 #10151f}
+body[data-theme=dx] .body{box-shadow:inset 2px 0 0 var(--c)}
+body[data-theme=dx] .who{font-weight:800;letter-spacing:.01em;color:color-mix(in srgb,var(--c) 75%,#000)}
+body[data-theme=dx] .who small{font-weight:500;color:#7c8595}
+body[data-theme=dx] .tx{color:#10151f}
+body[data-theme=dx] .gmtag{background:#10151f;color:#fff;-webkit-text-fill-color:#fff;border-radius:0;font-weight:800;font-style:italic;clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);padding:0 7px;box-shadow:inset -3px 0 0 #e3173e}
+body[data-theme=dx] .row.sec .tx{font-weight:800;font-style:italic}
+body[data-theme=dx] .row.sec.l1 .tx{font-size:21px;letter-spacing:.06em;text-align:left;border-bottom:3px solid #10151f;padding:8px 0 6px;position:relative}
+body[data-theme=dx] .row.sec.l1 .tx .ln::before{content:"//";color:#e3173e;margin-right:10px}
+body[data-theme=dx] .row.sec.l2 .tx{border-left:0;padding-left:0}
+body[data-theme=dx] .row.sec.l2 .tx .ln::before{content:"";display:inline-block;width:14px;height:14px;background:#e3173e;clip-path:polygon(0 0,100% 50%,0 100%);margin-right:8px;vertical-align:-1px}
+body[data-theme=dx] .row.sec.l3 .tx .ln::before{content:"› ";color:#18a4c4}
+body[data-theme=dx] .row.note .tx{color:#3b4352;font-style:italic}
+body[data-theme=dx] .row.dice .tx{background:#10151f;color:#eef2f7;border:0;border-radius:0;clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,0 100%);box-shadow:inset 3px 0 0 #e3173e}
+body[data-theme=dx] .row.dice .dw{color:#fff}
+body[data-theme=dx] .row.dice .dl{color:#aab3c2}
+body[data-theme=dx] .row.dice .dr{color:#5fd6ef;font-family:ui-monospace,"SFMono-Regular",Menlo,monospace}
+body[data-theme=dx] .dres{border-radius:0;font-style:italic;font-weight:800}
+body[data-theme=dx] .dres.critical{background:#e3173e;color:#fff}
+body[data-theme=dx] .row.hand .body{background:#fff;border:1px solid #10151f;border-radius:0;box-shadow:5px 5px 0 rgba(16,21,31,.14);clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,0 100%)}
+body[data-theme=dx] .row.hand .hlab{background:#10151f;color:#fff;margin:-12px -18px 10px;padding:6px 18px;font-size:11px;letter-spacing:.16em;font-weight:700;box-shadow:inset 4px 0 0 #e3173e}
+body[data-theme=dx] .row.hand .hlab .hti{color:#fff}
+body[data-theme=dx] .row.hand .hlab::after{content:"TOP SECRET";float:right;color:#ff4d6a;border:1px solid #ff4d6a;padding:0 6px;margin-top:-1px;letter-spacing:.14em;font-size:10.5px;font-weight:800}
+body[data-theme=dx] .row.hand .tx{color:#10151f}
+/* 침식률 같은 상태 변화: 단말기 표시줄 */
+body[data-theme=dx] .row.note.stat .tx{font-family:ui-monospace,"SFMono-Regular",Menlo,monospace;font-size:12.5px;color:#0e7f99;background:#e8f6fa;border-left:3px solid #18a4c4;padding:2px 10px;display:inline-flex;font-style:normal}
+body[data-theme=dx] .nb{background:transparent;box-shadow:none;border-bottom:2px solid #18a4c4;border-radius:0}
+body[data-theme=dx] .sc-sec,body[data-theme=dx] .card{border-radius:0;border:1px solid #c9cfd8;background:#fbfcfd;box-shadow:0 4px 0 -1px #10151f;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%)}
+body[data-theme=dx] .sc-sec h4{color:#e3173e;letter-spacing:.12em;font-style:italic}
+body[data-theme=dx] .sc-top h2{font-weight:800;font-style:italic}
+body[data-theme=dx] .schero-t{background:rgba(16,21,31,.78);border-bottom:3px solid #e3173e}
+body[data-theme=dx] .sys[data-th=dx],.sys[data-th=dx]{background:#10151f!important;color:#fff!important;border:0!important;border-radius:0;font-style:italic;clip-path:polygon(5px 0,100% 0,calc(100% - 5px) 100%,0 100%);padding:1px 10px!important;box-shadow:inset -3px 0 0 #e3173e}

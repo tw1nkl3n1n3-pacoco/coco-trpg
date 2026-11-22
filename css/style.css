@@ -371,3 +371,20 @@ h1,h2,h3,.scen-h h3,.sc-top h2,.hometop h2{word-break:keep-all;overflow-wrap:any
 .sys[data-th=wa]{background:#111!important;color:#fff!important;border:0!important;border-left:3px solid #c4141c!important;border-radius:0;font-family:"Noto Serif KR",serif}
 .schero-t .sys[data-th=deco]{background:#c9962e!important;color:#3a0b0b!important}
 .schero-t .sys[data-th=wa]{background:#c4141c!important;border-left:0!important}
+/* 녹음 없는 코코포리아 세션: 재생 막대 숨김 */
+#pbar.noaud{display:none}
+/* 잡담 탭 대사 */
+.row.tabbed{opacity:.72}
+.tabchip{font-size:11px;background:#e9e4dc;color:#6b6258;border-radius:4px;padding:0 5px;margin-left:6px;font-weight:500}
+/* 상태 변화 (침식률·HP 등) — 상황 묘사보다 작고 왼쪽 정렬 */
+.row.note.stat .tx{justify-content:flex-start;text-align:left;font-style:normal;font-size:12.5px;color:#6f6455;font-family:ui-monospace,"SFMono-Regular",Menlo,monospace;padding:1px 0}
+.row.note.stat .tx::before,.row.note.stat .tx::after{display:none}
+.row.note.stat .tx>span::before{content:"📊 "}
+/* 코코포리아 가져오기 화면 */
+.cc-sec{margin-top:12px}
+.cc-day{display:inline-flex;margin:4px 12px 0 0}
+.cc-roles{display:grid;gap:4px;margin-top:6px;max-height:360px;overflow:auto;padding-right:4px}
+.cc-r{display:grid;grid-template-columns:minmax(0,1fr) 36px 104px minmax(0,1fr);gap:6px;align-items:center;font-size:13.5px}
+.cc-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cc-c{color:var(--faint);font-size:12px;text-align:right}
+.cc-r select,.cc-r input{font-size:13px;padding:3px 6px;min-width:0}
+@media (max-width:640px){.cc-r{grid-template-columns:minmax(0,1fr) 30px 92px;}.cc-r input{grid-column:1/-1}}

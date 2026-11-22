@@ -23,7 +23,7 @@ function parseClova(text){
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const rid=()=>Math.random().toString(36).slice(2,9);
-const fmt=t=>{t=Math.max(0,Math.floor(t||0));const h=Math.floor(t/3600),m=Math.floor(t%3600/60),s=t%60;return (h?h+":":"")+String(m).padStart(h?2:1,"0")+":"+String(s).padStart(2,"0");};
+const fmt=t=>{if(t<0)return "-"+fmt(-t);t=Math.floor(t||0);const h=Math.floor(t/3600),m=Math.floor(t%3600/60),s=t%60;return (h?h+":":"")+String(m).padStart(h?2:1,"0")+":"+String(s).padStart(2,"0");};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const COLORS=["#a8401f","#2f6690","#4f7a2a","#7a4a9e","#b8691c","#1f7f74","#a83a62","#7d6a14","#3f4fa0","#5c4a3a","#c0392b","#2e6b4f"];
 const CHUNK=60;
@@ -642,7 +642,7 @@ function addSpeaker(name){
 function assign(id,k){
   const e=S.byId.get(id);if(!e||e.b.s===k)return;
   const old=e.b.s;
-  doOps([{ci:e.ci,op:{t:"set",id,f:{s:k}}}],"화자 변경");updateRow(id);
+  doOps([{ci:e.ci,op:{t:"set",id,f:e.b.a&&!isGM(k)?{s:k,a:undefined}:{s:k}}}],"화자 변경");updateRow(id);
   const c=counts();
   if((c[k]||0)===1||!(c[old]>0)){renderSide();}else renderSideCounts();
   if(!(c[old]>0)&&!isGM(old)&&!S.fresh.has(old)){clearTimeout(S.zeroTmr);S.zeroTmr=setTimeout(cleanupZero,4000);}
@@ -701,6 +701,7 @@ function themeOf(sc){
   const r=String(sc&&sc.system||"").toLowerCase().replace(/\s+/g,"");
   if(/인세인|insane/.test(r))return "wa";
   if(/d&d|dnd|d＆d|디앤디|던전앤드래곤|던전&드래곤|dungeons/.test(r))return "deco";
+  if(/더블크로스|doublecross|덥크|^dx(\d|$)|^dx3/.test(r))return "dx";
   return "";
 }
 function applyTheme(){
@@ -750,6 +751,7 @@ function renderHeader(){
       <button class="ghost" id="help">단축키</button>
     </div>`;
   const pb=$("#pbar");
+  if(pb)pb.classList.toggle("noaud",S.meta?.src==="ccfolia"&&!S.meta?.audioPath);
   if(pb)pb.innerHTML=`
     <div class="player">
       ${S.meta?.audioPath?`<span class="cloud" title="${esc(S.meta.audioName||"")}">${S.audioLoading?"☁ 녹음 불러오는 중…":S.audioCloud?"☁ 녹음 연결됨":"☁ 녹음 있음"}</span>`:S.canAdmin&&S.meta&&!S.local&&S.storage?`<span class="filebtn"><button class="ghost">⬆ 녹음 올리기</button><input type="file" id="upaudio" accept="audio/*,video/*,.m4a,.mp3,.wav,.ogg,.webm"></span>`:""}
@@ -874,7 +876,7 @@ function handLine(l){const m=l.match(HSEC);if(!m)return hl(l);const sec=m[2]==="
 function diceInner(b){
   const p=b.w?spBy(b.w):null;
   if(!p&&!b.r&&!b.o&&!b.x&&!b.sec)return '<span class="ph">🎲 주사위 — ✎를 눌러 입력</span>';
-  return `<span class="dd">🎲</span>${p?`<b class="dw">${esc(p.ch||p.name)}</b>`:""}${b.x?`<span class="dl">${hl(b.x)}</span>`:""}${b.r?`<span class="dr">${hl(b.r)}</span>`:""}${b.sec?`<span class="dres secret">Secret Dice</span>`:""}${b.o&&OUT[b.o]?`<span class="dres ${b.o}">${outLabel(b.o)}</span>`:""}`;
+  return `<span class="dd">🎲</span>${b.a?`<b class="dw">${esc(b.a)}</b>`:p?`<b class="dw">${esc(p.ch||p.name)}</b>`:""}${b.x?`<span class="dl">${hl(b.x)}</span>`:""}${b.r?`<span class="dr">${hl(b.r)}</span>`:""}${b.sec?`<span class="dres secret">Secret Dice</span>`:""}${b.o&&OUT[b.o]?`<span class="dres ${b.o}">${outLabel(b.o)}</span>`:""}`;
 }
 function rowHTML(e,prev){
   if(e.b.s===SEC){const b=e.b;
@@ -908,7 +910,7 @@ function rowHTML(e,prev){
       <button class="w" data-act="del" title="삭제">🗑</button>
     </div></div>`;}
   if(e.b.s===NOTE){const b=e.b;
-    return `<div class="row note${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}">
+    return `<div class="row note${b.st?" stat":""}${b.tab?" tabbed":""}${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
     <div class="body"><div class="tx">${b.x?`<span>${b.x.split("\n").map(l=>`<span class="ln">${hl(l)}</span>`).join("<br>")}</span>`:'<span class="ph">상황 묘사</span>'}</div></div>
     <div class="act">
@@ -919,10 +921,10 @@ function rowHTML(e,prev){
       <button class="w" data-act="del" title="삭제">🗑</button>
     </div></div>`;}
   const b=e.b,s=spBy(b.s),lines=b.x.split("\n"),gm=isGM(s.k);
-  const first=!prev||prev.b.s!==b.s||b.t-prev.b.t>120;
+  const first=!prev||prev.b.s!==b.s||(prev.b.a||"")!==(b.a||"")||(prev.b.tab||"")!==(b.tab||"")||b.t-prev.b.t>120;
   const tx=lines.map((l,i)=>(i?`<button class="cut" data-act="cut" data-line="${i}" tabindex="-1" title="여기서 나눠서 다른 화자로 지정할 수 있게 해요">✂</button>`:"")+`<span class="ln">${hl(l)}</span>`).join(" ");
-  const label=esc(s.name),sub=(gm?gmTag:"")+(s.ch?esc(s.ch):"");
-  return `<div class="row${first?" first":""}${gm?" gm":""}${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}" style="--c:${fixC(s.c)}">
+  const label=esc(s.name),sub=(gm?gmTag:"")+(b.a?esc(b.a):s.ch?esc(s.ch):"")+(b.tab?`<span class="tabchip">${esc(b.tab)}</span>`:"");
+  return `<div class="row${first?" first":""}${gm?" gm":""}${b.tab?" tabbed":""}${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}" style="--c:${fixC(s.c)}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
     <div class="body">
       ${first?`<button class="who" data-act="who" title="클릭해서 화자 바꾸기">${label}${sub?`<small>${sub}</small>`:""}</button>`:""}
@@ -1541,8 +1543,8 @@ function homeHTML(){
     ${can||!S.db?`<div class="card">
       <b>${can?"녹음 추가":"txt 미리보기"}</b>
       <div class="tip" style="margin:4px 0 10px">클로바노트에서 내보낸 <b>대사 파일(.txt)</b>과 <b>녹음 파일(.m4a 등)</b>을 한꺼번에 골라요. 이름이 같은 txt와 녹음은 알아서 짝지어요. 예: <code>261114 세션 1.txt</code> + <code>261114 세션 1.m4a</code><br>
-      녹음 파일만 고르면 이미 올린 녹음에 이름으로 짝지어 넣어요(있던 녹음은 새 파일로 바뀌어요). 한 번 플레이가 여러 개로 나뉘었으면 같은 시나리오·같은 날짜로 올리면 1부, 2부로 묶여요.</div>
-      <span class="filebtn"><button class="pri">📄🎧 txt · 녹음 파일 고르기</button><input type="file" id="tfile" accept=".txt,text/plain${S.storage&&can?",audio/*,video/*,.m4a,.mp3,.wav,.ogg,.webm":""}" multiple></span>
+      녹음 파일만 고르면 이미 올린 녹음에 이름으로 짝지어 넣어요(있던 녹음은 새 파일로 바뀌어요). 한 번 플레이가 여러 개로 나뉘었으면 같은 시나리오·같은 날짜로 올리면 1부, 2부로 묶여요.<br>녹음 없는 온라인 세션은 코코포리아 방 메뉴의 <b>로그 출력</b>으로 받은 html을 고르면 회차별로 나눠서 올라가요.</div>
+      <span class="filebtn"><button class="pri">📄🎧 txt · 녹음 · 코코포리아 로그 고르기</button><input type="file" id="tfile" accept=".txt,text/plain,.html,text/html${S.storage&&can?",audio/*,video/*,.m4a,.mp3,.wav,.ogg,.webm":""}" multiple></span>
       <div id="imp"></div>
       <div id="bulkres" class="tip" style="margin-top:8px">${S.bulkMsg||""}</div>
     </div>`:""}
@@ -1637,6 +1639,10 @@ function bindHome(){
   const nb=$("#nscenb");if(nb){const ni=$("#nscen");const go=()=>{const v=ni.value.trim();if(!v)return;if(scenByName(v)){gotoScen(v);return;}gotoScen(v,true);};nb.onclick=go;ni.onkeydown=ev=>{if(ev.key==="Enter")go();};}
   if($("#tfile"))$("#tfile").onchange=async ev=>{
     const all=[...ev.target.files];if(!all.length)return;
+    const htm=all.find(f=>/\.html?$/i.test(f.name)||f.type==="text/html");
+    if(htm){const box=$("#imp");S.bulkMsg="";$("#bulkres").innerHTML="";const cc=parseCcfolia(await htm.text());
+      if(!cc||!cc.days.length){box.innerHTML=`<div class="notice bad">코코포리아 로그에서 대사를 찾지 못했어요. 방 메뉴의 로그 출력으로 받은 html이 맞는지 확인해 주세요.</div>`;return;}
+      ccForm(cc,box);return;}
     const isTxt=f=>/\.txt$/i.test(f.name)||f.type==="text/plain";
     const files=all.filter(isTxt),audios=all.filter(f=>!isTxt(f));
     const box=$("#imp");S.bulkMsg="";$("#bulkres").innerHTML="";
@@ -1889,6 +1895,107 @@ async function mergeScen(from,to){
     S.scens=S.scens.filter(x=>x.id!==from.id);render();t("합쳤어요");
   }catch(e){writeFail(e);t("합치다가 멈췄어요. 다시 시도해 주세요");}
 }
+// ---------- 코코포리아 로그(html) 가져오기 ----------
+// 녹음 없는 온라인 세션용. 채널은 메인 + 잡담(정보 탭만 빼요), 3시간 넘게 비면 다른 회차로 나눠요.
+function parseCcfolia(text){
+  const doc=new DOMParser().parseFromString(text,"text/html");
+  const arts=[...doc.querySelectorAll("article.message")];
+  if(!arts.length)return null;
+  let last=null;
+  const msgs=arts.map(a=>{
+    const sp=a.querySelector(".speaker"),tm=a.querySelector("time[datetime]"),tx=a.querySelector(".message-text"),rr=a.querySelector(".roll-result");
+    let x="";if(tx){const c=tx.cloneNode(true);c.querySelectorAll("br").forEach(b=>b.replaceWith("\n"));x=c.textContent.trim();}
+    const t=tm?Date.parse(tm.getAttribute("datetime")):last;last=t;
+    const col=sp&&(sp.getAttribute("style")||"").match(/--speaker-color:\s*([^;"]+)/);
+    const cn=(a.querySelector(".channel-name")?.textContent||"").replace(/[\[\]]/g,"").trim();
+    return {sys:a.classList.contains("system"),ch:a.dataset.channel||"main",cn,sp:sp?sp.textContent.trim():"",c:col?col[1].trim():"",t,x,
+      rc:rr?([...rr.classList].find(c=>c!=="roll-result")||""):null,rr:rr?rr.textContent.trim():null};
+  }).filter(m=>m.t);
+  const use=msgs.filter(m=>m.ch!=="info");
+  const days=[];
+  use.forEach(m=>{if(!days.length||m.t-days[days.length-1].at(-1).t>3*3600e3)days.push([]);days[days.length-1].push(m);});
+  // PC 찾기: HP 말고도 침식률·로이스 같은 상태값을 2가지 이상 기록하는 캐릭터
+  const st={},order=[];
+  msgs.forEach(m=>{if(!m.sys)return;const g=m.x.match(/^\[\s*(.+?)\s*\]\s*(\S+)/);if(g){(st[g[1]]=st[g[1]]||new Set()).add(g[2]);if(!order.includes(g[1]))order.push(g[1]);}});
+  const pcs=order.filter(n=>st[n].size>=2);
+  const cnt={};use.forEach(m=>{if(m.sp&&!m.sys)cnt[m.sp]=(cnt[m.sp]||0)+1;});
+  const gmName=Object.keys(cnt).filter(n=>/(^|\W)GM(\W|$)/i.test(n)).sort((a,b)=>cnt[b]-cnt[a])[0]||"";
+  const isDX=msgs.some(m=>/침식률|侵蝕率/.test(m.x))||msgs.some(m=>m.rr&&/\d+dx/i.test(m.x));
+  const title=(doc.title||"").replace(/\[(すべて|全て|all|전체|ALL)\]/gi,"").replace(/^\s*\[[^\]]*\]\s*/,"").trim()||"코코포리아 로그";
+  return {title,days,pcs,cnt,gmName,system:isDX?"더블크로스 3rd":""};
+}
+const CC_TABLE=/^[◎「『《【◆▶]|\d*D\d+|이벤트표|정보\s*조사|주의사항|트레일러/;
+function ccRole(cc,name){if(name===cc.gmName||/^\W*GM\W*$/i.test(name))return "gm";if(cc.pcs.includes(name))return "pc";if(CC_TABLE.test(name))return "hand";return "npc";}
+function ccResult(r){let p=r.split("＞").map(x=>x.trim());if(p.length>1&&p[0].startsWith("("))p=p.slice(1);return p.filter(x=>x&&!/^(成功|失敗|ファンブル|クリティカル|スペシャル)$/.test(x)).join(" → ");}
+function ccOutcome(m){const r=m.rr||"";if(/ファンブル/.test(r)||m.rc==="fumble")return "fumble";if(/失敗/.test(r))return "failure";if(/成功/.test(r))return m.rc==="critical"?"critical":"success";return "";}
+const kst=t=>{const d=new Date(t+9*3600e3);return d.toISOString().slice(0,10);};
+// 한 회차를 로그방 블록으로
+function ccBuild(day,cfg){
+  const keyOf={},sp=[];
+  const spk=(name,ch)=>{const id=name+"\u0001"+(ch||"");if(!keyOf[id]){const k="k"+rid();keyOf[id]=k;sp.push({k,name,...(ch?{ch}:{}),c:COLORS[sp.length%COLORS.length]});}return keyOf[id];};
+  const gmK=spk(cfg.gmNick||"GM");
+  const who=name=>{const r=cfg.roles[name]||"npc";
+    if(r==="pc")return {k:spk(cfg.players[name]||name,name)};
+    if(r==="gm")return {k:gmK};
+    return {k:gmK,a:name};};
+  const main0=day.find(m=>m.ch==="main"&&!m.sys)||day[0];
+  const t0=main0.t,out=[];
+  for(const m of day){
+    const t=Math.round((m.t-t0)/1000),tab=m.ch==="main"?null:(m.cn||"잡담");
+    const extra=tab?{tab}:{};
+    if(m.sys){out.push({id:rid(),s:NOTE,t,x:m.x,st:1,...extra});continue;}
+    const role=cfg.roles[m.sp]||"npc";
+    if(m.rr!==null){const w=who(m.sp),o=ccOutcome(m);
+      out.push({id:rid(),s:DICE,t,w:w.k,...(w.a?{a:w.a}:{}),x:m.x,r:ccResult(m.rr),...(o?{o}:{}),...extra});continue;}
+    if(role==="hand"){const p=out.at(-1);
+      if(p&&p.s===HAND&&p.ti===m.sp&&t-p.t<120)p.x+="\n"+m.x;else out.push({id:rid(),s:HAND,t,ti:m.sp,x:m.x,...extra});continue;}
+    if(!m.x)continue;
+    const w=who(m.sp);out.push({id:rid(),s:w.k,t,x:m.x,...(w.a?{a:w.a}:{}),...extra});
+  }
+  const chunks=[];for(let i=0;i<out.length;i+=CHUNK)chunks.push(out.slice(i,i+CHUNK));
+  return {meta:{title:`${cfg.scen} ${kst(t0)}`,date:kst(t0),created:Date.now(),n:out.length,sp,src:"ccfolia",scen:cfg.scen,day:kst(t0),part:cfg.part||1},chunks,gmName:cfg.gmNick||"GM"};
+}
+function ccForm(cc,box){
+  const ex=findScen(cc.title);
+  const days=cc.days.map((d,i)=>({i,d,n:d.filter(m=>!m.sys).length,date:kst((d.find(m=>m.ch==="main")||d[0]).t)}));
+  const names=Object.keys(cc.cnt).sort((a,b)=>{const o={gm:0,pc:1,npc:2,hand:3};return o[ccRole(cc,a)]-o[ccRole(cc,b)]||cc.cnt[b]-cc.cnt[a];});
+  const exSp=ex?ex.sp:[];
+  const gmPrev=ex&&gmKey(ex)?(ex.sp.find(x=>x.k===gmKey(ex))||{}).name:"";
+  const roleSel=n=>{const r=ccRole(cc,n);return `<select data-role="${esc(n)}">${[["pc","PC"],["npc","GM 캐릭터"],["gm","GM 본인"],["hand","핸드아웃"]].map(([v,l])=>`<option value="${v}"${v===r?" selected":""}>${l}</option>`).join("")}</select>`;};
+  box.innerHTML=`<div class="notice">코코포리아 로그 · <b>${esc(cc.title)}</b> · 회차 ${days.filter(x=>x.n>=30).length}개</div>
+    <div class="fields">
+      <label>시나리오<input type="text" id="cc-scen" list="scenlist" value="${esc(ex?ex.name:cc.title)}"></label>
+      <datalist id="scenlist">${scenList().map(x=>`<option value="${esc(x)}">`).join("")}</datalist>
+      <div class="two"><label>룰<input type="text" id="cc-sys" value="${esc(ex&&ex.system||cc.system)}" placeholder="예: 더블크로스 3rd"></label>
+      <label>GM 닉네임<input type="text" id="cc-gm" value="${esc(gmPrev||"")}" placeholder="GM 닉네임"></label></div>
+    </div>
+    <div class="cc-sec"><div class="tip">회차 — 3시간 넘게 비는 곳에서 나눴어요. 올릴 회차만 골라 주세요</div>
+      ${days.map(x=>`<label class="chk cc-day"><input type="checkbox" data-day="${x.i}" ${x.n>=30?"checked":""}> ${esc(x.date)} · ${x.n}줄</label>`).join("")}</div>
+    <div class="cc-sec"><div class="tip">캐릭터 — PC는 플레이어 닉네임을 넣어 주세요. GM 캐릭터는 "GM 닉네임 · 캐릭터 이름"으로 보여요</div>
+      <div class="cc-roles">${names.map(n=>{const pc=exSp.find(x=>x.ch===n);return `<div class="cc-r"><span class="cc-n" title="${esc(n)}">${esc(n)}</span><span class="cc-c">${cc.cnt[n]}</span>${roleSel(n)}<input type="text" data-pl="${esc(n)}" value="${esc(pc?pc.name:"")}" placeholder="플레이어 닉네임" list="cc-pls"></div>`;}).join("")}</div>
+      <datalist id="cc-pls">${[...new Set(S.scens.flatMap(s=>(s.sp||[]).map(x=>x.name)))].map(x=>`<option value="${esc(x)}">`).join("")}</datalist></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="pri" id="igo">${S.db&&S.canWrite?"올리기":"미리보기"}</button></div><div id="iprog" class="tip" style="margin-top:6px"></div>`;
+  const sync=()=>box.querySelectorAll(".cc-r").forEach(r=>{r.querySelector("input").style.visibility=r.querySelector("select").value==="pc"?"visible":"hidden";});
+  box.querySelectorAll("[data-role]").forEach(s=>s.onchange=sync);sync();
+  $("#igo").onclick=async()=>{
+    const roles={},players={};
+    box.querySelectorAll("[data-role]").forEach(s=>roles[s.dataset.role]=s.value);
+    box.querySelectorAll("[data-pl]").forEach(i=>{if(i.value.trim())players[i.dataset.pl]=i.value.trim();});
+    const miss=Object.keys(roles).filter(n=>roles[n]==="pc"&&!players[n]);
+    if(miss.length){$("#iprog").innerHTML=`<span style="color:var(--bad)">플레이어 닉네임을 넣어 주세요: ${miss.map(esc).join(", ")}</span>`;return;}
+    const pick=[...box.querySelectorAll("[data-day]:checked")].map(i=>cc.days[+i.dataset.day]);
+    if(!pick.length){$("#iprog").innerHTML=`<span style="color:var(--bad)">올릴 회차를 하나 이상 골라 주세요</span>`;return;}
+    const cfg={scen:resolveScen($("#cc-scen").value.trim()||cc.title),system:$("#cc-sys").value.trim(),gmNick:$("#cc-gm").value.trim()||"GM",roles,players};
+    if(!(S.db&&S.canWrite)){const b=ccBuild(pick[0],cfg);closeSession();S.local=true;S.sid="local";S.meta=b.meta;b.chunks.forEach((c,i)=>S.chunks[i]=c);rebuild();render();return;}
+    let first=null;S.importing=true;
+    try{for(let i=0;i<pick.length;i++){
+      const d=kst((pick[i].find(m=>m.ch==="main")||pick[i][0]).t);
+      const b=ccBuild(pick[i],{...cfg,part:nextPart(cfg.scen,d)});
+      const sid=await importBuilt(b,`(${i+1}/${pick.length}) `,cfg);if(!sid)return;first=first||sid;
+    }}finally{S.importing=false;}
+    location.hash="s-"+first;
+  };
+}
 function previewLocal(r,inf){
   const {meta,chunks}=buildSession(r,inf);
   closeSession();S.local=true;S.sid="local";S.meta=meta;chunks.forEach((c,i)=>S.chunks[i]=c);rebuild();render();
@@ -1900,14 +2007,17 @@ function attachToScen(meta,chunks){
   chunks.forEach(c=>c.forEach(b=>{if(remap[b.s])b.s=remap[b.s];}));
   meta.sp=[];return sc;
 }
-async function importSession(r,inf,pre=""){
-  const {meta,chunks}=buildSession(r,inf);
+async function importSession(r,inf,pre=""){return importBuilt(buildSession(r,inf),pre);}
+async function importBuilt(built,pre="",cfg={}){
+  const {meta,chunks}=built;
   const sc=attachToScen(meta,chunks);meta.scid=sc.id;
+  const gmK=built.gmName?(sc.sp.find(x=>x.name===built.gmName&&!x.ch)||{}).k:null;
   const sid="s"+Date.now().toString(36)+rid().slice(0,3);
   const prog=$("#iprog"),btn=$("#igo");btn.disabled=true;
   try{
     prog.textContent=pre+"세션 만드는 중…";
-    await mutateScen(sc.id,L=>{if(!L.name)Object.assign(L,clone(sc));sc.sp.forEach(e=>{if(!L.sp.some(x=>x.k===e.k))L.sp.push(clone(e));});});
+    await mutateScen(sc.id,L=>{if(!L.name)Object.assign(L,clone(sc));sc.sp.forEach(e=>{if(!L.sp.some(x=>x.k===e.k))L.sp.push(clone(e));});
+      if(gmK&&!(L.gm&&L.sp.some(x=>x.k===L.gm)))L.gm=gmK;if(cfg.system&&!L.system)L.system=cfg.system;});
     await retry(()=>S.db.doc("sessions/"+sid).set(meta));
     for(let i=0;i<chunks.length;i++){
       prog.textContent=`${pre}대사 올리는 중… ${i+1}/${chunks.length}`;
