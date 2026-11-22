@@ -1,0 +1,27 @@
+// 코코 로그 사이트 Storage(녹음 파일) 보안 규칙 · 규칙 버전 2
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isOwner() {
+      return request.auth != null && request.auth.token.email == "__OWNER_EMAIL__";
+    }
+    // 시나리오 비밀번호로 연 사람인가 (Firestore 규칙과 같은 기준)
+    function unlocked(scid) {
+      return request.auth != null
+        && firestore.exists(/databases/(default)/documents/unlocks/$(scid + '_' + request.auth.uid))
+        && firestore.get(/databases/(default)/documents/unlocks/$(scid + '_' + request.auth.uid)).data.pw
+           == firestore.get(/databases/(default)/documents/secrets/$(scid)).data.pw;
+    }
+    // 규칙 버전 확인용 (숫자를 바꾸지 마세요)
+    match /rulesv/{v} {
+      allow read: if v == "2";
+    }
+    match /audio/{scid}/{file} {
+      allow read: if isOwner() || unlocked(scid);
+      allow create, update: if isOwner()
+        && request.resource.size < 500 * 1024 * 1024
+        && request.resource.contentType.matches('(audio|video)/.*');
+      allow delete: if isOwner();
+    }
+  }
+}

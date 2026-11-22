@@ -1,0 +1,58 @@
+name: 사이트 배포
+# 코드가 바뀔 때, 그리고 30분마다(공유 미리보기·사이트 이름 반영) 사이트를 조립해서 배포해요.
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.dep.outputs.page_url }}
+    steps:
+      - name: Pages 배포 방식 확인 (Settings → Pages → Source가 GitHub Actions여야 해요)
+        id: mode
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          t=$(gh api repos/${{ github.repository }}/pages --jq .build_type 2>/dev/null || echo none)
+          echo "type=$t" >> "$GITHUB_OUTPUT"
+          if [ "$t" != "workflow" ]; then echo "::notice::Pages Source가 아직 GitHub Actions가 아니라서 배포를 건너뛰어요 (지금: $t)"; fi
+      - uses: actions/checkout@v4
+        if: steps.mode.outputs.type == 'workflow'
+      - uses: actions/setup-node@v4
+        if: steps.mode.outputs.type == 'workflow'
+        with:
+          node-version: 20
+      - name: 원본 저장소 확인 (포크라면 업데이트 확인에 써요)
+        id: up
+        if: steps.mode.outputs.type == 'workflow'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: echo "upstream=$(gh api repos/${{ github.repository }} --jq '.parent.full_name // ""')" >> "$GITHUB_OUTPUT"
+      - name: 사이트 조립
+        if: steps.mode.outputs.type == 'workflow'
+        env:
+          FIREBASE_CONFIG: ${{ vars.FIREBASE_CONFIG }}
+          OWNER_EMAIL: ${{ vars.OWNER_EMAIL }}
+          UPSTREAM: ${{ steps.up.outputs.upstream }}
+        run: node scripts/build.mjs
+      - uses: actions/configure-pages@v5
+        if: steps.mode.outputs.type == 'workflow'
+      - uses: actions/upload-pages-artifact@v3
+        if: steps.mode.outputs.type == 'workflow'
+        with:
+          path: _site
+      - id: dep
+        uses: actions/deploy-pages@v4
+        if: steps.mode.outputs.type == 'workflow'

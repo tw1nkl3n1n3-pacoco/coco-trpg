@@ -8,4 +8,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: 설정 파일 만들기
+        env:
+          FIREBASE_CONFIG: ${{ vars.FIREBASE_CONFIG }}
+        run: |
+          if [ -n "$FIREBASE_CONFIG" ]; then printf 'window.FIREBASE_CONFIG = %s;\n' "$FIREBASE_CONFIG" > firebase-config.js; fi
       - run: node scripts/sec-check.mjs

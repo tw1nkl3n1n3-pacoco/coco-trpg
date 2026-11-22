@@ -130,6 +130,127 @@ function siteEdit(anchor){
     };
   });
 }
+// ---------- 관리자 페이지 (#admin) ----------
+const RULES_VERSION="2"; // firebase/*.rules 의 rulesv 숫자와 같아야 해요
+S.chk={fs:"?",st:"?",build:null,newer:null,upstream:"",commits:null,err:""};
+const adminAlert=()=>S.chk.fs==="old"||S.chk.st==="old"||(S.chk.newer||0)>0;
+const projId=()=>(window.FIREBASE_CONFIG||{}).projectId||"";
+async function checkRules(){
+  if(!S.db)return;
+  try{await S.db.doc("rulesv/"+RULES_VERSION).get();S.chk.fs="ok";}
+  catch(e){S.chk.fs=e&&e.code==="permission-denied"?"old":"err";}
+  if(S.storage&&(window.FIREBASE_CONFIG||{}).storageBucket){
+    try{await S.storage.ref("rulesv/"+RULES_VERSION).getMetadata();S.chk.st="ok";}
+    catch(e){const c=e&&e.code||"";S.chk.st=c.includes("object-not-found")?"ok":c.includes("unauthorized")||c.includes("unauthenticated")?"old":"err";}
+  }else S.chk.st="none";
+}
+async function checkUpdate(){
+  try{const r=await fetch("build.json?nc="+Date.now());S.chk.build=r.ok?await r.json():null;}catch(e){S.chk.build=null;}
+  const b=S.chk.build;if(!b||!b.repo)return;
+  const src=b.upstream||b.repo;S.chk.upstream=b.upstream||"";
+  try{
+    const r=await fetch(`https://api.github.com/repos/${src}/commits?per_page=40`);
+    if(!r.ok)throw new Error("GitHub "+r.status);
+    const list=(await r.json()).filter(c=>!/공유 미리보기 갱신|파일 버전 갱신/.test(c.commit.message)&&c.commit.author.name!=="og-bot");
+    S.chk.commits=list.map(c=>({sha:c.sha,msg:c.commit.message.split("\n")[0],date:c.commit.author.date}));
+    if(b.upstream){const i=list.findIndex(c=>c.sha===b.sha);S.chk.newer=i<0?list.length:i;}else S.chk.newer=0;
+  }catch(e){S.chk.err=e.message;}
+}
+let _chkRan=false;
+async function runAdminChecks(force){
+  if(!S.canAdmin||!S.db)return;if(_chkRan&&!force)return;_chkRan=true;
+  await Promise.all([checkRules(),checkUpdate()]);
+  if(S.admin||!S.sid)render();
+  if((S.chk.fs==="old"||S.chk.st==="old")&&!S.admin&&!sessionStorage.getItem("rules-nag"))rulesModal();
+}
+async function rulesText(kind){
+  const r=await fetch(`firebase/${kind}.rules?nc=`+Date.now());if(!r.ok)throw new Error("규칙 파일을 찾지 못했어요");
+  return (await r.text()).replace(/__OWNER_EMAIL__/g,S.owner||"");
+}
+function consoleUrl(kind){const pid=projId(),b=(window.FIREBASE_CONFIG||{}).storageBucket||"";
+  return kind==="storage"?`https://console.firebase.google.com/project/${pid}/storage/${b}/rules`:`https://console.firebase.google.com/project/${pid}/firestore/rules`;}
+async function copyRules(kind,btn){
+  try{const t=await rulesText(kind);await navigator.clipboard.writeText(t);const o=btn.textContent;btn.textContent="✓ 복사했어요";setTimeout(()=>btn.textContent=o,1800);}
+  catch(e){toast("복사하지 못했어요: "+e.message,3000);}
+}
+function rulesBlockHTML(){
+  const st=k=>({ok:'<span class="ok">✓ 최신</span>',old:'<span class="bad">⚠ 옛날 버전</span>',none:'<span class="tip">녹음 저장소를 안 써요</span>',err:'<span class="tip">확인하지 못했어요</span>'}[S.chk[k]]||'<span class="tip">확인 중…</span>');
+  const row=(k,kind,label)=>`<div class="rrow"><b>${label}</b> ${st(k)}
+    ${S.chk[k]==="none"?"":`<span class="rbtns"><button data-copy="${kind}">규칙 복사</button><a class="btnlike" href="${consoleUrl(kind)}" target="_blank" rel="noopener">Firebase 규칙 화면 열기 ↗</a></span>`}</div>`;
+  return row("fs","firestore","DB 규칙 (Firestore)")+row("st","storage","녹음 저장소 규칙 (Storage)")+
+    `<div class="tip" style="margin-top:6px">옛날 버전이면 <b>규칙 복사</b> → <b>Firebase 규칙 화면 열기</b> → 원래 내용을 지우고 붙여 넣기 → <b>게시</b>를 눌러 주세요. 관리자 이메일(${esc(S.owner||"")})은 자동으로 채워져요. 게시한 뒤 이 페이지를 새로고침하면 확인돼요.</div>`;
+}
+function rulesModal(){
+  const m=document.createElement("div");m.className="modal";
+  m.innerHTML=`<div class="box" style="max-width:560px"><b>보안 규칙을 새 버전으로 바꿔 주세요</b>
+    <div class="tip" style="margin:6px 0 10px">사이트가 업데이트되면서 Firebase 보안 규칙도 바뀌었어요. 바꾸지 않으면 일부 기능이 안 될 수 있어요.</div>
+    ${rulesBlockHTML()}<div class="btns"><button data-x>나중에</button><a class="btnlike pri" href="#admin" data-go>관리자 페이지로</a></div></div>`;
+  document.body.appendChild(m);
+  m.querySelectorAll("[data-copy]").forEach(b=>b.onclick=()=>copyRules(b.dataset.copy,b));
+  const close=()=>{sessionStorage.setItem("rules-nag","1");m.remove();};
+  m.querySelector("[data-x]").onclick=close;m.querySelector("[data-go]").onclick=close;
+}
+function updateBlockHTML(){
+  const c=S.chk,b=c.build;
+  if(!b)return `<div class="tip">버전 정보가 없어요. (GitHub Actions로 배포된 사이트에서만 확인할 수 있어요)</div>`;
+  const when=b.time?new Date(b.time).toLocaleString("ko-KR"):"";
+  const head=`<div class="tip">지금 버전: <code>${esc((b.sha||"").slice(0,7))}</code> · 배포 ${esc(when)} · 저장소 <a href="https://github.com/${esc(b.repo)}" target="_blank" rel="noopener">${esc(b.repo)}</a></div>`;
+  if(c.err)return head+`<div class="tip bad">업데이트를 확인하지 못했어요 (${esc(c.err)})</div>`;
+  if(!c.commits)return head+`<div class="tip">확인 중…</div>`;
+  const items=list=>`<ul class="chg">${list.map(x=>`<li><span class="tip">${esc(new Date(x.date).toLocaleDateString("ko-KR"))}</span> ${esc(x.msg)}</li>`).join("")}</ul>`;
+  if(!c.upstream)return head+`<div class="ok" style="margin:6px 0">원본 저장소예요. 다른 분들은 이 저장소를 포크해서 업데이트를 받아요.</div><div class="tip">최근 바뀐 내용</div>${items(c.commits.slice(0,8))}`;
+  if(!c.newer)return head+`<div class="ok" style="margin:6px 0">✓ 최신 버전이에요 (원본: ${esc(c.upstream)})</div>`;
+  return head+`<div class="bad" style="margin:6px 0">새 버전이 있어요 · 바뀐 것 ${c.newer>=c.commits.length?c.newer+"개 이상":c.newer+"개"}</div>${items(c.commits.slice(0,Math.min(c.newer,12)))}
+    <a class="btnlike pri" href="https://github.com/${esc(b.repo)}" target="_blank" rel="noopener">업데이트하러 가기 ↗</a>
+    <div class="tip" style="margin-top:6px">열리는 GitHub 페이지에서 <b>Sync fork</b> → <b>Update branch</b>를 누르면 몇 분 뒤 이 사이트에 반영돼요.</div>`;
+}
+function adminHTML(){
+  if(!S.canAdmin)return `<div class="home"><div class="hometop"><h2><a href="#" class="ghost">← 목록</a></h2><span class="authbox"></span></div><div class="notice">관리자만 볼 수 있는 페이지예요.</div></div>`;
+  const st=site();
+  return `<div class="home admin">
+    <div class="hometop"><h2><a href="#" class="back" title="목록으로">←</a> ⚙ 관리</h2><span class="authbox"></span></div>
+    <div class="card"><b>사이트 설정</b>
+      <div class="nedit" style="padding:6px 0 0">
+        <label>사이트 이름</label><input type="text" id="s-title" value="${esc(st.title)}">
+        <label>설명 문구</label><textarea id="s-sub" rows="2" style="resize:vertical">${esc(st.sub)}</textarea>
+        <label>아이콘 · 이모지 하나를 넣거나 이미지를 올려요 (브라우저 탭에도 보여요)</label>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span id="s-prev" style="font-size:24px;min-width:32px;text-align:center">${iconHTML(st.icon,"sicon big")}</span>
+          <input type="text" id="s-icon" value="${isImgIcon(st.icon)?"":esc(st.icon)}" placeholder="예: 🎲" style="width:80px">
+          <button type="button" id="s-up">이미지 올리기</button><button type="button" class="ghost" id="s-clr">없애기</button>
+          <input type="file" id="s-file" accept="image/*" style="display:none"></div>
+        <div class="btns"><button class="pri" id="s-ok">저장</button></div>
+      </div></div>
+    <div class="card"><b>업데이트</b><div id="upd">${updateBlockHTML()}</div></div>
+    <div class="card"><b>보안 규칙 점검</b> <span class="tip">· 규칙 버전 ${RULES_VERSION}</span><div id="rules" style="margin-top:6px">${rulesBlockHTML()}</div></div>
+    ${S.db?`    <div class="card">
+      <b>백업 · 옮기기</b>
+      <div class="tip" style="margin:4px 0 10px">전체 데이터를 JSON으로 받거나, Claude 사이트에서 내보낸 JSON을 가져와요. 가져오면 같은 녹음은 덮어써요.</div>
+      <button id="exportb">⬇ JSON으로 내보내기</button>
+      <span class="filebtn"><button>⬆ JSON 가져오기</button><input type="file" id="importf" accept=".json,application/json"></span>
+      <span class="tip" id="exprog">${esc(S.impMsg||"")}</span>
+    </div>
+    `:""}
+
+  </div>`;
+}
+function bindAdmin(){
+  renderAuth();bindBackup();
+  document.querySelectorAll("[data-copy]").forEach(b=>b.onclick=()=>copyRules(b.dataset.copy,b));
+  const t=$("#s-title");if(!t)return;
+  let icon=site().icon;
+  const prev=()=>{$("#s-prev").innerHTML=iconHTML(icon,"sicon big");};
+  $("#s-icon").oninput=ev=>{icon=ev.target.value.trim();prev();};
+  $("#s-clr").onclick=()=>{icon="";$("#s-icon").value="";prev();};
+  $("#s-up").onclick=()=>$("#s-file").click();
+  $("#s-file").onchange=async ev=>{const f=ev.target.files[0];if(!f)return;try{icon=await shrinkImage(f,128,"image/png");$("#s-icon").value="";prev();}catch(e){toast("이미지를 읽지 못했어요");}};
+  $("#s-ok").onclick=async()=>{
+    const v={title:$("#s-title").value.trim()||SITE_DEF.title,sub:$("#s-sub").value.trim(),icon:icon||""};
+    S.site={...S.site,...v};applySite();
+    try{await S.db.doc("scenarios/_site").set(v,{merge:true});toast("저장했어요");}catch(e){writeFail(e);}
+    render();
+  };
+  if(!_chkRan)runAdminChecks();
+}
 // 이미지 파일을 작게 줄여서 data URL로 (정사각형으로 가운데 자르기)
 function shrinkImage(file,size,type="image/jpeg",w=size,h=size){
   return new Promise((ok,no)=>{const img=new Image();const u=URL.createObjectURL(file);
@@ -224,6 +345,7 @@ function updatePerms(){
   const em=myEmail();
   const before=S.canAdmin;
   S.canAdmin=!!em&&em===S.owner;
+  if(S.canAdmin)setTimeout(()=>runAdminChecks(),800);
   refreshCanWrite();
   if(before!==S.canAdmin){if(S.sid||(!S.importing&&!S.scEdit))render();}
   else renderAuth();
@@ -249,6 +371,8 @@ function route(){
   const h=location.hash.slice(1);
   const sid=h.startsWith("s-")?h.slice(2):null;
   const cid=h.startsWith("c-")?h.slice(2):null;
+  const adm=h==="admin";
+  if(adm!==!!S.admin){S.admin=adm;if(!sid&&!cid&&!S.sid&&!S.cid){render();window.scrollTo(0,0);return;}}
   if(sid!==S.sid||cid!==S.cid){if(cid)delete SCC[cid];S.cid=cid;S.scEdit=!!cid&&S.pendingEdit===cid;S.pendingEdit=null;S.scDraft=null;openSession(sid);window.scrollTo(0,0);}
 }
 
@@ -580,6 +704,7 @@ function render(){
   const app=$("#app");
   refreshCanWrite();applyTheme();if(typeof setTitle==="function")setTitle();
   if(S.cid){app.innerHTML=scenHTML();bindScen();return;}
+  if(!S.sid&&S.admin){app.innerHTML=adminHTML();bindAdmin();return;}
   if(!S.sid){app.innerHTML=homeHTML();bindHome();return;}
   app.innerHTML=`
   <header id="hdr"></header>
@@ -1386,7 +1511,7 @@ function homeHTML(){
   if(S.sysFilter&&!systems[S.sysFilter])S.sysFilter=null;
   const gs=S.sysFilter?all.filter(g=>sysOf(g)===S.sysFilter):all;
   return `<div class="home">
-    <div class="hometop"><h2>${iconHTML(site().icon)}${esc(site().title)}${S.canAdmin&&S.db?` <button class="ghost siteed" id="siteed" title="사이트 이름·설명·아이콘 고치기">✎</button>`:""}</h2><span class="authbox"></span></div>
+    <div class="hometop"><h2>${iconHTML(site().icon)}${esc(site().title)}</h2><span class="hright">${S.canAdmin&&S.db?`<a class="ghost adminbtn" href="#admin" title="관리자 페이지">⚙ 관리${adminAlert()?'<i class="dot-alert"></i>':""}</a>`:""}<span class="authbox"></span></span></div>
     <div class="tip" style="font-size:13.5px">${esc(site().sub).replace(/\n/g,"<br>")}</div>
     ${S.err?`<div class="notice bad">${esc(S.err)}</div>`:""}
     ${!S.ready?`<div class="notice">불러오는 중…</div>`:""}
@@ -1411,14 +1536,6 @@ function homeHTML(){
       <div id="imp"></div>
       <div id="bulkres" class="tip" style="margin-top:8px">${S.bulkMsg||""}</div>
     </div>`:""}
-    ${S.db&&S.canAdmin?`    <div class="card">
-      <b>백업 · 옮기기</b>
-      <div class="tip" style="margin:4px 0 10px">전체 데이터를 JSON으로 받거나, Claude 사이트에서 내보낸 JSON을 가져와요. 가져오면 같은 녹음은 덮어써요.</div>
-      <button id="exportb">⬇ JSON으로 내보내기</button>
-      <span class="filebtn"><button>⬆ JSON 가져오기</button><input type="file" id="importf" accept=".json,application/json"></span>
-      <span class="tip" id="exprog">${esc(S.impMsg||"")}</span>
-    </div>
-    `:""}
   </div>`;
 }
 async function importAll(data,prog){
@@ -1471,9 +1588,7 @@ async function gotoScen(name,edit){
   }
   if(edit)S.pendingEdit=sc.id;location.hash="c-"+sc.id;
 }
-function bindHome(){
-  const se=$("#siteed");if(se)se.onclick=()=>siteEdit(se);
-  bindPartEdit();renderAuth();
+function bindBackup(){
   const eb=$("#exportb");if(eb)eb.onclick=async()=>{
     const pr=$("#exprog");eb.disabled=true;
     try{
@@ -1485,6 +1600,16 @@ function bindHome(){
     }catch(e){pr.textContent="내보내지 못했어요: "+(e&&e.message||e);}
     eb.disabled=false;
   };
+  const imf=$("#importf");if(imf)imf.onchange=async ev=>{
+    const f=ev.target.files[0];if(!f)return;const pr=$("#exprog");
+    let data;try{data=JSON.parse(await f.text());}catch(e){pr.textContent="JSON 파일을 읽지 못했어요";return;}
+    if(data.format!=="trpg-log"){pr.textContent="이 사이트에서 내보낸 파일이 아니에요";return;}
+    confirmBox(`시나리오 ${data.scenarios.length}개, 녹음 ${data.sessions.length}개를 가져올까요? 같은 녹음이 이미 있으면 덮어써요.`,"가져오기",()=>importAll(data,t=>pr.textContent=t));
+  };
+}
+function bindHome(){
+  bindPartEdit();renderAuth();
+  bindBackup();
   async function bulkAudio(files){
     const box=$("#bulkres");
     const pairs=[],miss=[];
@@ -1496,12 +1621,6 @@ function bindHome(){
       catch(e){row.textContent=`✗ ${f.name}: ${e.code||e.message}`;row.style.color="var(--bad)";}}
     S.bulkMsg=box.innerHTML;S.importing=false;render();
   }
-  const imf=$("#importf");if(imf)imf.onchange=async ev=>{
-    const f=ev.target.files[0];if(!f)return;const pr=$("#exprog");
-    let data;try{data=JSON.parse(await f.text());}catch(e){pr.textContent="JSON 파일을 읽지 못했어요";return;}
-    if(data.format!=="trpg-log"){pr.textContent="이 사이트에서 내보낸 파일이 아니에요";return;}
-    confirmBox(`시나리오 ${data.scenarios.length}개, 녹음 ${data.sessions.length}개를 가져올까요? 같은 녹음이 이미 있으면 덮어써요.`,"가져오기",()=>importAll(data,t=>pr.textContent=t));
-  };
   document.querySelectorAll("[data-sys]").forEach(b=>b.onclick=()=>{S.sysFilter=b.dataset.sys||null;try{localStorage.setItem("trpg-sys",S.sysFilter||"");}catch(e){}render();});
   document.querySelectorAll("[data-scen]").forEach(a=>a.onclick=ev=>{ev.preventDefault();gotoScen(a.dataset.scen);});
   const nb=$("#nscenb");if(nb){const ni=$("#nscen");const go=()=>{const v=ni.value.trim();if(!v)return;if(scenByName(v)){gotoScen(v);return;}gotoScen(v,true);};nb.onclick=go;ni.onkeydown=ev=>{if(ev.key==="Enter")go();};}
