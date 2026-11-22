@@ -193,3 +193,7 @@ body[data-theme=deco] .ogcard{border:1px solid #c9962e;border-radius:3px;backgro
 body[data-theme=deco] .ogcard.view{box-shadow:0 0 0 4px #4a0d0d,0 0 0 5px #c9962e,0 8px 20px rgba(0,0,0,.35)}
 body[data-theme=blue] .ogcard{border:1px solid #dfe7f2;border-radius:18px;box-shadow:0 10px 30px rgba(20,32,51,.08)}
 body[data-theme=plain] .ogcard{border:1px solid #e2e2df;border-radius:12px;box-shadow:none}
+body[data-theme=wa] .schero-t{background:rgba(0,0,0,.74);border-bottom:3px solid #b3121b}
+body[data-theme=deco] .schero-t{background:rgba(40,6,6,.74);border-bottom:2px solid #c9962e}
+body[data-theme=deco] .schero-t .orig{color:#e6cf9c!important}
+body[data-theme=blue] .schero-t{background:rgba(10,20,40,.66)}

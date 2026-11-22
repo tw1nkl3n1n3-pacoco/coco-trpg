@@ -342,3 +342,12 @@ h1,h2,h3,.scen-h h3,.sc-top h2,.hometop h2,.sc-sec,.home .sum,.home .tip{word-br
 .homefoot{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:22px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;opacity:.8}
 .homefoot .hright{display:inline-flex;align-items:center;gap:8px}
 .sidefoot{margin-top:16px;padding-top:10px;flex-wrap:wrap}.homefoot .authbox{flex-wrap:wrap}
+/* 시나리오 표지: 대표 이미지를 꽉 채우고 제목을 아래쪽 띠 위에 */
+.schero{position:relative;margin:-20px -18px 0;aspect-ratio:1200/630;max-height:440px;overflow:hidden;background:#222}
+.schero img{width:100%;height:100%;object-fit:cover;display:block}
+.schero-t{position:absolute;left:0;right:0;bottom:0;padding:14px 18px 12px;background:rgba(18,10,6,.66)}
+.schero-t h2{margin:0;color:#fff!important;border:0!important;padding:0!important;font-size:26px;line-height:1.25}
+.schero-t .orig{color:rgba(255,255,255,.78)!important}
+.schero-meta{margin:10px 0 6px}
+.schero-meta #scedit{margin-left:auto}
+@media (max-width:640px){.schero-t h2{font-size:21px}.schero-t{padding:10px 14px}.schero{margin:-20px -18px 0}}
