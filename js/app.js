@@ -936,7 +936,7 @@ function rowHTML(e,prev){
   const b=e.b,s=spBy(b.s),lines=b.x.split("\n"),gm=isGM(s.k);
   const first=!prev||prev.b.s!==b.s||(prev.b.a||"")!==(b.a||"")||(prev.b.tab||"")!==(b.tab||"")||b.t-prev.b.t>120;
   const tx=lines.map((l,i)=>(i?`<button class="cut" data-act="cut" data-line="${i}" tabindex="-1" title="여기서 나눠서 다른 화자로 지정할 수 있게 해요">✂</button>`:"")+`<span class="ln">${hl(l)}</span>`).join(" ");
-  const q=pcSplit(s.name),label=(q.n?`<span class="pcn">${q.n}</span>`:"")+esc(q.name),sub=(gm?gmTag:"")+(b.a?esc(b.a):s.ch?esc(s.ch):"")+(b.tab?`<span class="tabchip">${esc(b.tab)}</span>`:"");
+  const q=pcSplit(s.name),label=(gm?gmTag:q.n?`<span class="pcn">${q.n}</span>`:"")+esc(q.name),sub=(b.a?esc(b.a):s.ch?esc(s.ch):"")+(b.tab?`<span class="tabchip">${esc(b.tab)}</span>`:"");
   return `<div class="row${first?" first":""}${gm?" gm":""}${b.tab?" tabbed":""}${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}" style="--c:${fixC(s.c)}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
     <div class="body">
