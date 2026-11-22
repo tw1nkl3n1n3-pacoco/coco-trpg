@@ -40,7 +40,7 @@ async function retry(fn){
 
 // ---------- state ----------
 let _sys=null;try{_sys=localStorage.getItem("trpg-sys")||null;}catch(e){}
-const S={ops:{},sysFilter:_sys,fresh:new Set(),showZero:false,db:null,user:null,canWrite:false,canAdmin:false,ready:false,auth:null,authUser:null,editors:[],owner:"",setupNeeded:false,
+const S={site:null,ops:{},sysFilter:_sys,fresh:new Set(),showZero:false,db:null,user:null,canWrite:false,canAdmin:false,ready:false,auth:null,authUser:null,editors:[],owner:"",setupNeeded:false,
   sessions:[],sid:null,meta:null,chunks:{},flat:[],byId:new Map(),
   sel:null,q:"",spFilter:null,follow:true,undo:[],
   dirty:new Set(),inflight:new Set(),tmr:{},err:null,
@@ -84,7 +84,11 @@ function isEditorOf(id){const sc=scenById(id);return !!sc&&!!myEmail()&&(sc.edit
 function isOpen(id){return S.canAdmin||(!!id&&!!SUB.sessData[id]);}
 function canWriteScen(id){return !!id&&isOpen(id);}
 function canReadScen(id){return isOpen(id);}
-const SITE_DEF={title:"코코네 로그방",sub:"슬슬 로그백업의 필요성이 느껴져서 만들었어요... #클로드야고마워",icon:""};
+// 처음 열 때 잠깐 기본값이 보이지 않게: 지난번에 본 사이트 정보(브라우저에 저장)나 페이지 제목으로 시작해요
+const _initTitle=document.title||"로그방";
+let _siteCache=null;try{_siteCache=JSON.parse(localStorage.getItem("trpg-site")||"null");}catch(e){}
+const SITE_DEF={title:_initTitle,sub:"",icon:""};
+if(_siteCache&&!S.site)S.site=_siteCache;
 const site=()=>({...SITE_DEF,...Object.fromEntries(Object.entries(S.site||{}).filter(([k,v])=>v!==undefined&&v!==null))});
 const isImgIcon=v=>/^(data:image\/|https?:\/\/)/.test(v||"");
 function iconHTML(v,cls="sicon"){if(!v)return "";return isImgIcon(v)?`<img class="${cls}" src="${esc(v)}" alt="">`:`<span class="${cls}">${esc(v)}</span>`;}
@@ -137,7 +141,9 @@ function shrinkImage(file,size,type="image/jpeg",w=size,h=size){
 function publish(){
   const old=S.scens;
   // scenarios/_site: 사이트 제목·설명·아이콘 (주인만 고칠 수 있어요)
-  S.site=SUB.scData._site?JSON.parse(JSON.stringify(SUB.scData._site)):(S.site||{});applySite();
+  S.site=SUB.scData._site?JSON.parse(JSON.stringify(SUB.scData._site)):(S.site||{});
+  if(SUB.scData._site)try{localStorage.setItem("trpg-site",JSON.stringify(S.site));}catch(e){}
+  applySite();
   const ids=new Set([...Object.keys(SUB.scData)].filter(id=>id!=="_site"));
   S.scens=[...ids].map(id=>{const o=old.find(x=>x.id===id);return (S.scBusy[id]&&o)?o:{id,...JSON.parse(JSON.stringify(SUB.scData[id]))};});
   old.forEach(o=>{if(S.scBusy[o.id]&&!S.scens.find(x=>x.id===o.id))S.scens.push(o);});
