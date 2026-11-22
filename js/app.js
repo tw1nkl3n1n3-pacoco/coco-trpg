@@ -88,8 +88,11 @@ const SITE_DEF={title:"코코네 로그방",sub:"슬슬 로그백업의 필요�
 const site=()=>({...SITE_DEF,...Object.fromEntries(Object.entries(S.site||{}).filter(([k,v])=>v!==undefined&&v!==null))});
 const isImgIcon=v=>/^(data:image\/|https?:\/\/)/.test(v||"");
 function iconHTML(v,cls="sicon"){if(!v)return "";return isImgIcon(v)?`<img class="${cls}" src="${esc(v)}" alt="">`:`<span class="${cls}">${esc(v)}</span>`;}
+// 브라우저 탭 제목: 메인은 사이트 이름, 시나리오·로그는 "시나리오 · 사이트 이름"
+function setTitle(){const st=site();const sc=S.cid?scenById(S.cid):(S.sid&&S.meta?curScen():null);
+  const t=sc&&sc.name?`${sc.name} · ${st.title}`:st.title;if(document.title!==t)document.title=t;}
 function applySite(){
-  const st=site();if(!S.sid&&!S.cid)document.title=st.title;
+  const st=site();setTitle();
   let href;
   if(isImgIcon(st.icon))href=st.icon;
   else if(st.icon)href="data:image/svg+xml,"+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">${st.icon.replace(/[<&>]/g,"")}</text></svg>`);
@@ -569,7 +572,7 @@ function applyTheme(){
 }
 function render(){
   const app=$("#app");
-  refreshCanWrite();applyTheme();
+  refreshCanWrite();applyTheme();if(typeof setTitle==="function")setTitle();
   if(S.cid){app.innerHTML=scenHTML();bindScen();return;}
   if(!S.sid){app.innerHTML=homeHTML();bindHome();return;}
   app.innerHTML=`

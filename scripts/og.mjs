@@ -65,5 +65,10 @@ ${img ? `<meta property="og:image" content="${img}">
   fs.writeFileSync(`p/${id}.html`, html);
   keep.add(`p/${id}.html`);
 }
+// 메인 주소(index.html)의 탭 제목·미리보기 이름도 사이트 이름으로 맞춰요
+{const ih=fs.readFileSync("index.html","utf8");
+ const nh=ih.replace(/<title>[^<]*<\/title>/,`<title>${esc(siteTitle)}</title>`)
+   .replace(/<!--site-meta-->[\s\S]*?<!--\/site-meta-->/,`<!--site-meta--><meta property="og:type" content="website"><meta property="og:title" content="${esc(siteTitle)}"><meta property="og:site_name" content="${esc(siteTitle)}"><!--/site-meta-->`);
+ if(nh!==ih)fs.writeFileSync("index.html",nh);}
 for (const f of fs.readdirSync("p")) if (!keep.has(`p/${f}`)) fs.unlinkSync(`p/${f}`);
 console.log(`공유 페이지 ${[...keep].filter(f => f.endsWith(".html")).length}개 갱신`);
