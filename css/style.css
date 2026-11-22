@@ -400,3 +400,13 @@ h1,h2,h3,.scen-h h3,.sc-top h2,.hometop h2{word-break:keep-all;overflow-wrap:any
 .pcn:not(.dot){display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;background:var(--c);color:#fff;font-size:10.5px;font-weight:700;margin-right:5px;vertical-align:1px;line-height:1}
 .who>.gmtag,.who>.pcn{margin-right:-4px}
 .who>.gmtag{vertical-align:1px}
+/* 온라인(코코포리아) 회차: 한 줄, 줄 전체가 링크 */
+.day.oday{flex-wrap:nowrap;gap:8px;padding:4px 0}
+.oday .oline{display:flex;align-items:center;gap:12px;flex:1;min-width:0;padding:6px 6px;margin-left:-6px;border-radius:8px;color:inherit;text-decoration:none}
+.oday .oline:hover{background:var(--panel2)}
+.oday .oline:hover .ogo{color:var(--acc)}
+.oday .nth{font-size:12px;color:#fff8ec;background:var(--acc2);border-radius:6px;padding:1px 7px;flex:none}
+.oday .odate{font-size:15px;min-width:104px}
+.oday .ocnt{font-size:12.5px;color:var(--faint);white-space:nowrap}
+.oday .ogo{color:var(--faint);font-size:16px}
+@media (max-width:640px){.oday .odate{min-width:0}.oday .ogo{display:none}}
