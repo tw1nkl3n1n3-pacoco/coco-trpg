@@ -168,7 +168,7 @@ async function rulesText(kind){
   return (await r.text()).replace(/__OWNER_EMAIL__/g,S.owner||"");
 }
 function consoleUrl(kind){const pid=projId(),b=(window.FIREBASE_CONFIG||{}).storageBucket||"";
-  return kind==="storage"?`https://console.firebase.google.com/project/${pid}/storage/${b}/rules`:`https://console.firebase.google.com/project/${pid}/firestore/rules`;}
+  return kind==="storage"?`https://console.firebase.google.com/project/${pid}/storage/${b}/rules`:`https://console.firebase.google.com/project/${pid}/firestore/databases/-default-/security/rules`;}
 async function copyRules(kind,btn){
   try{const t=await rulesText(kind);await navigator.clipboard.writeText(t);const o=btn.textContent;btn.textContent="✓ 복사했어요";setTimeout(()=>btn.textContent=o,1800);}
   catch(e){toast("복사하지 못했어요: "+e.message,3000);}
