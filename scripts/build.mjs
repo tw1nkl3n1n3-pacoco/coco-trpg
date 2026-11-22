@@ -24,11 +24,6 @@ if (!ownerEmail) console.log("::warning::OWNER_EMAIL이 비어 있어요.");
 fs.writeFileSync(path.join(OUT, "firebase-config.js"),
   `// 배포할 때 자동으로 만들어지는 파일이에요 (저장소 Variables에서 가져와요)\nwindow.FIREBASE_CONFIG = ${JSON.stringify(cfg || {}, null, 2)};\nwindow.OWNER_EMAIL = ${JSON.stringify(ownerEmail)};\n`);
 
-// 2) 버전 정보 (관리자 페이지의 업데이트 확인에 써요)
-fs.writeFileSync(path.join(OUT, "build.json"), JSON.stringify({
-  sha: env.GITHUB_SHA || "", time: new Date().toISOString(), repo: repoFull, upstream: env.UPSTREAM || ""
-}, null, 2));
-
 // 3) DB에서 시나리오를 읽어 공유 페이지(p/) + 메인 탭 제목
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const val = v => v == null ? undefined : v.stringValue ?? v.integerValue ?? v.doubleValue ?? v.booleanValue;
@@ -44,7 +39,7 @@ async function list() {
   } while (token);
   return out;
 }
-let siteTitle = "로그방";
+let siteTitle = "로그방", dbOk = false;
 if (cfg && cfg.projectId && cfg.apiKey) {
   try {
     const docs = await list();
@@ -82,6 +77,7 @@ ${img ? `<meta property="og:image" content="${img}">
       n++;
     }
     console.log(`공유 페이지 ${n}개 만듦`);
+    dbOk = true;
   } catch (e) { console.log("::warning::공유 페이지를 만들지 못했어요: " + e.message); }
 }
 const ip = path.join(OUT, "index.html");
@@ -89,4 +85,16 @@ const ih = fs.readFileSync(ip, "utf8")
   .replace(/<title>[^<]*<\/title>/, `<title>${esc(siteTitle)}</title>`)
   .replace(/<!--site-meta-->[\s\S]*?<!--\/site-meta-->/, `<!--site-meta--><meta property="og:type" content="website"><meta property="og:title" content="${esc(siteTitle)}"><meta property="og:site_name" content="${esc(siteTitle)}"><!--/site-meta-->`);
 fs.writeFileSync(ip, ih);
-console.log("조립 완료:", OUT, "·", siteTitle);
+// 4) 내용 지문: 바뀐 게 없으면 정기 배포를 건너뛰는 데 써요
+const files = [];
+(function walk(d) { for (const e of fs.readdirSync(d, { withFileTypes: true }).sort((a, b) => a.name < b.name ? -1 : 1)) { const f = path.join(d, e.name); e.isDirectory() ? walk(f) : files.push(f); } })(OUT);
+const h = crypto.createHash("sha256");
+for (const f of files) { h.update(f); h.update(fs.readFileSync(f)); }
+const hash = h.digest("hex").slice(0, 16);
+
+// 5) 버전 정보 (관리자 페이지의 업데이트 확인에 써요)
+fs.writeFileSync(path.join(OUT, "build.json"), JSON.stringify({
+  sha: env.GITHUB_SHA || "", time: new Date().toISOString(), repo: repoFull, upstream: env.UPSTREAM || "", hash
+}, null, 2));
+if (env.GITHUB_OUTPUT) fs.appendFileSync(env.GITHUB_OUTPUT, `hash=${hash}\ndb=${dbOk ? "ok" : "fail"}\n`);
+console.log("조립 완료:", OUT, "·", siteTitle, "·", hash, dbOk ? "" : "(DB 못 읽음)");

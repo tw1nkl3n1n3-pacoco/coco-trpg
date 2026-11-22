@@ -1,5 +1,6 @@
 name: 사이트 배포
 # 코드가 바뀔 때, 그리고 30분마다(공유 미리보기·사이트 이름 반영) 사이트를 조립해서 배포해요.
+# 30분마다 도는 정기 배포는 지금 사이트와 내용이 같거나 DB를 못 읽었으면 건너뛰어요.
 on:
   push:
     branches: [main]
@@ -27,6 +28,7 @@ jobs:
         run: |
           t=$(gh api repos/${{ github.repository }}/pages --jq .build_type 2>/dev/null || echo none)
           echo "type=$t" >> "$GITHUB_OUTPUT"
+          echo "url=$(gh api repos/${{ github.repository }}/pages --jq .html_url 2>/dev/null)" >> "$GITHUB_OUTPUT"
           if [ "$t" != "workflow" ]; then echo "::notice::Pages Source가 아직 GitHub Actions가 아니라서 배포를 건너뛰어요 (지금: $t)"; fi
       - uses: actions/checkout@v4
         if: steps.mode.outputs.type == 'workflow'
@@ -41,18 +43,37 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: echo "upstream=$(gh api repos/${{ github.repository }} --jq '.parent.full_name // ""')" >> "$GITHUB_OUTPUT"
       - name: 사이트 조립
+        id: build
         if: steps.mode.outputs.type == 'workflow'
         env:
           FIREBASE_CONFIG: ${{ vars.FIREBASE_CONFIG }}
           OWNER_EMAIL: ${{ vars.OWNER_EMAIL }}
           UPSTREAM: ${{ steps.up.outputs.upstream }}
         run: node scripts/build.mjs
+      - name: 바뀐 게 있는지 확인 (정기 배포일 때만)
+        id: chg
+        if: steps.mode.outputs.type == 'workflow'
+        env:
+          EV: ${{ github.event_name }}
+          URL: ${{ steps.mode.outputs.url }}
+          NEW: ${{ steps.build.outputs.hash }}
+          DB: ${{ steps.build.outputs.db }}
+        run: |
+          go=yes
+          if [ "$EV" = "schedule" ]; then
+            if [ "$DB" != "ok" ]; then go=no; echo "::notice::DB를 읽지 못해서 이번 정기 배포는 건너뛰어요"
+            else
+              old=$(curl -fsSL "${URL%/}/build.json?t=$(date +%s)" 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).hash||"")}catch(e){console.log("")}})')
+              if [ -n "$old" ] && [ "$old" = "$NEW" ]; then go=no; echo "::notice::바뀐 게 없어서 배포를 건너뛰어요 ($NEW)"; fi
+            fi
+          fi
+          echo "go=$go" >> "$GITHUB_OUTPUT"
       - uses: actions/configure-pages@v5
-        if: steps.mode.outputs.type == 'workflow'
+        if: steps.chg.outputs.go == 'yes'
       - uses: actions/upload-pages-artifact@v3
-        if: steps.mode.outputs.type == 'workflow'
+        if: steps.chg.outputs.go == 'yes'
         with:
           path: _site
       - id: dep
         uses: actions/deploy-pages@v4
-        if: steps.mode.outputs.type == 'workflow'
+        if: steps.chg.outputs.go == 'yes'
