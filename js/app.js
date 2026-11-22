@@ -667,7 +667,7 @@ function renderSide(){
         <span class="cnt" data-cnt="${ALL}">${c[ALL]||0}</span>
       </div></div>
     ${hidden?`<button class="ghost zt" id="zerot">${S.showZero?"대사 없는 화자 숨기기":`이 녹음에 대사 없는 화자 ${hidden}명 보기`}</button>`:""}
-    ${S.canWrite?`<div class="addsp"><input type="text" id="newsp" placeholder="새 화자 이름 (예: 코코)"><button id="addsp">추가</button></div>`:""}
+    ${S.canWrite?`<div class="addsp"><input type="text" id="newsp" placeholder="새 플레이어 이름"><button id="addsp">추가</button></div>`:""}
     </div>
     ${(()=>{const ss=allSecs();return `<button class="foldh${S.openSec?" open":""}" data-fold="openSec"><span class="car">▸</span>단락 <span class="fc">${ss.length}</span><span class="fsub">시나리오 전체 · 누르면 이동</span></button>
     <div class="fold${S.openSec?" open":""}">

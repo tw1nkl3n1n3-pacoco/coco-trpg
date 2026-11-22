@@ -6,7 +6,8 @@ import crypto from "node:crypto";
 const cfg = fs.readFileSync("firebase-config.js", "utf8");
 const apiKey = cfg.match(/apiKey:\s*"([^"]+)"/)[1];
 const projectId = cfg.match(/projectId:\s*"([^"]+)"/)[1];
-const [owner, repo] = (process.env.GITHUB_REPOSITORY || "tw1nkl3n1n3-pacoco/coco-trpg").split("/");
+if (!process.env.GITHUB_REPOSITORY) throw new Error("GitHub Actions에서 실행해 주세요 (GITHUB_REPOSITORY 없음)");
+const [owner, repo] = process.env.GITHUB_REPOSITORY.split("/");
 const BASE = `https://${owner}.github.io/${repo}/`;
 
 const val = v => v == null ? undefined : v.stringValue ?? v.integerValue ?? v.doubleValue ?? v.booleanValue;
@@ -28,7 +29,7 @@ async function list() {
 
 const docs = await list();
 const site = docs.find(d => d.id === "_site");
-const siteTitle = (site && val(site.f.title)) || "코코네 로그방";
+const siteTitle = (site && val(site.f.title)) || "로그방";
 fs.mkdirSync("p", { recursive: true });
 const keep = new Set();
 for (const { id, f } of docs) {
