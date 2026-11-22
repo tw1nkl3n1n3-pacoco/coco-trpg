@@ -740,7 +740,6 @@ function renderHeader(){
   const a=$("#aud");
   h.innerHTML=`
     <div class="bar">
-      <button class="ghost" id="back" title="세션 목록">← 목록</button>
       ${S.meta?(()=>{const i=info(S.meta);const sib=siblings();const n=dayIndex();return `
       <div class="crumb"><h1 title="시나리오 개요 보기"><a class="scl" href="#c-${esc(curScen()?.id||"")}">${esc(i.scen)}</a></h1>
         <span class="status">${n?n+"회차 · ":""}${esc(fmtDay(i.day))}</span></div>
@@ -748,7 +747,6 @@ function renderHeader(){
 `;})():`<h1>${S.local?"미리보기":"불러오는 중…"}</h1>`}
       <span class="sp"></span>
       <span class="status" id="save"></span>
-      <span class="authbox"></span>
       <button class="ghost" id="help">단축키</button>
     </div>`;
   const pb=$("#pbar");
@@ -830,7 +828,8 @@ function renderSide(){
       한 칸에 두 사람 말이 섞였으면 대사를 클릭해서 고른 뒤 문장 사이의 <b>✂</b>를 눌러 나눠요.<br>
       <kbd>N</kbd> 고른 대사 아래에 상황 묘사 넣기 · <kbd>D</kbd> 주사위 · <kbd>H</kbd> 핸드아웃 넣기<br>
       <kbd>↑</kbd><kbd>↓</kbd> 이동 · <kbd>Enter</kbd> 글 수정 · <kbd>P</kbd> 여기서 재생 · <kbd>Space</kbd> 재생/정지 · <kbd>Ctrl</kbd>+<kbd>Z</kbd> 되돌리기
-    </div>`;
+    </div>
+    <div class="homefoot sidefoot"><button class="ghost" id="back" title="세션 목록">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>`;
   bindSide();
 }
 function renderSideCounts(){const c=counts();document.querySelectorAll("[data-cnt]").forEach(el=>el.textContent=c[el.dataset.cnt]||0);}
@@ -1314,7 +1313,6 @@ function togglePlay(){const a=$("#aud");if(!S.audioUrl)return;a.paused?a.play().
 
 // ---------- bindings ----------
 function bindHeader(){
-  $("#back").onclick=()=>{location.hash="";if(S.local){S.local=false;openSession(null);}};
   $("#help").onclick=helpBox;
   const aa=$("#addaudio");if(aa)aa.onclick=audioBox;
   const ua=$("#upaudio");if(ua)ua.onchange=async ev=>{const f=ev.target.files[0];if(!f)return;const s=S.sessions.find(x=>x.id===S.sid)||{id:S.sid,...S.meta};
@@ -1329,6 +1327,8 @@ function bindHeader(){
   $("#jump").onclick=()=>{setFollow(true);const r=S.playingId&&document.querySelector(`.row[data-id="${S.playingId}"]`);r&&r.scrollIntoView({block:"center",behavior:"smooth"});};
 }
 function bindSide(){
+  const bk=$("#back");if(bk)bk.onclick=()=>{location.hash="";if(S.local){S.local=false;openSession(null);}};
+  renderAuth();
   document.querySelectorAll("[data-fold]").forEach(b=>b.onclick=()=>{const k=b.dataset.fold;S[k]=!S[k];b.classList.toggle("open",S[k]);b.nextElementSibling.classList.toggle("open",S[k]);});
   const zt=$("#zerot");if(zt)zt.onclick=()=>{S.showZero=!S.showZero;renderSide();};
   document.querySelectorAll("#splist .spk").forEach(el=>{
@@ -1698,8 +1698,8 @@ function scenHTML(){
       </div>`;
   // 비밀번호를 넣기 전에는 시나리오 페이지 대신 잠금 화면만
   if(!isOpen(sc.id))return `<div class="sc-page lockpage"><div style="width:100%;max-width:380px">
-      <div class="sc-top"><button class="ghost" id="scback">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
       ${lockHTML.replace('lockbox inline','lockbox').replace('<h2>로그는 잠겨 있어요</h2>',`<h2>${esc(sc.name)}</h2><div class="tip">잠긴 시나리오예요</div>`)}
+      <div class="homefoot"><button class="ghost" id="scback">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
     </div></div>`;
   const days=(groups().find(g=>g.scen===sc.name)||{days:[]}).days;
   const txt=(v,ph)=>v?`<div class="sc-text">${esc(v)}</div>`:`<div class="sc-text empty">${ph}</div>`;
@@ -1741,7 +1741,6 @@ function scenHTML(){
     </div>`;
   }
   return `<div class="sc-page">
-    <div class="sc-top"><button class="ghost" id="scback">← 목록</button><span class="sp" style="flex:1"></span><span class="authbox"></span></div>
     <div class="sc-top"><h2>${esc(sc.name)}${sc.orig?`<span class="orig">${esc(sc.orig)}</span>`:""}</h2>${sc.system?`<span class="sys">${esc(sc.system)}</span>`:""}${S.canWrite?`<button id="scedit">✎ 수정</button>`:""}</div>
     ${sc.og?`<div class="ogcard view"><img src="${sc.og}" alt=""></div>`:""}
     <div class="sc-sec"><h4>개요</h4>${txt(sc.summary,"아직 개요가 없어요."+(S.canWrite?" ✎ 수정을 눌러 써 주세요.":""))}</div>
@@ -1753,6 +1752,7 @@ function scenHTML(){
         <button id="copyshare" class="pri">링크+비밀번호 복사</button><button id="regenpw" class="ghost">새로 만들기</button></div>
         <div class="tip" style="margin-top:8px;word-break:break-all">${esc(shareUrl(sc.id))}</div>`:`<div class="tip">비밀번호를 만드는 중…</div>`}
     </div>`:""}
+    <div class="homefoot"><button class="ghost" id="scback">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
   </div>`;
 }
 // 시나리오 페이지에서 플레이어 순서 바꾸기·안 쓰는 플레이어 지우기

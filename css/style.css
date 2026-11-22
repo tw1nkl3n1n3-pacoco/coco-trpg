@@ -341,3 +341,4 @@ h1,h2,h3,.scen-h h3,.sc-top h2,.hometop h2,.sc-sec,.home .sum,.home .tip{word-br
 /* 첫 화면: 관리·로그인은 맨 아래에 작게 */
 .homefoot{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:22px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;opacity:.8}
 .homefoot .hright{display:inline-flex;align-items:center;gap:8px}
+.sidefoot{margin-top:16px;padding-top:10px;flex-wrap:wrap}.homefoot .authbox{flex-wrap:wrap}
