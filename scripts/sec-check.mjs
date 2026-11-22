@@ -1,7 +1,7 @@
 // 보안 점검: 로그인 안 한 사람 / 익명 사용자가 비밀번호 없이 로그를 읽을 수 있는지 확인
 import fs from "node:fs";
 const cfg=fs.readFileSync("firebase-config.js","utf8");
-const key=cfg.match(/apiKey:\s*"([^"]+)"/)[1], pid=cfg.match(/projectId:\s*"([^"]+)"/)[1];
+const key=cfg.match(/"?apiKey"?\s*:\s*"([^"]+)"/)[1], pid=cfg.match(/"?projectId"?\s*:\s*"([^"]+)"/)[1];
 const base=`https://firestore.googleapis.com/v1/projects/${pid}/databases/(default)/documents`;
 async function get(path,tok){const r=await fetch(`${base}/${path}${path.includes("?")?"&":"?"}key=${key}`,{headers:tok?{Authorization:"Bearer "+tok}:{}});return [r.status,(await r.text()).slice(0,120).replace(/\s+/g," ")];}
 async function run(path,body,tok){const r=await fetch(`${base}:runQuery?key=${key}`,{method:"POST",headers:{"Content-Type":"application/json",...(tok?{Authorization:"Bearer "+tok}:{})},body:JSON.stringify(body)});return [r.status,(await r.text()).slice(0,160).replace(/\s+/g," ")];}
