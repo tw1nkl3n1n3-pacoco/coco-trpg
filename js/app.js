@@ -697,6 +697,10 @@ function setText(id,x){
 // ---------- rendering ----------
 const THEMES={"":{n:"양피지",d:"지금 기본 · 판타지",sw:["#efe3cc","#fff","#9c3d22","#c9a46a"]},wa:{n:"인세인",d:"인세인 룰에 자동 적용",sw:["#0a0a0a","#fcfcfb","#b0101a","#d4d4d4"]},deco:{n:"D&D",d:"D&D 룰에 자동 적용",sw:["#e9e4d6","#fbf8f0","#1f4a3d","#b08a3e"]},blue:{n:"블루 모던",d:"현대 · SF · 현대 수사",sw:["#eef3f9","#ffffff","#2563eb","#38bdf8"]}};
 // 테마는 룰 시스템에 따라 자동으로 정해져요
+// PC 번호: 플레이어 이름이 "PC1 코코"처럼 시작하면 번호를 동그라미 안에 넣고 이름에서는 빼요
+const pcSplit=v=>{const m=String(v||"").match(/^\s*PC\s*(\d{1,2})\s*[.:·\-]?\s*(.+)$/i);return m?{n:m[1],name:m[2]}:{n:"",name:String(v||"")};};
+const spDot=(p,style="")=>{const q=pcSplit(p.name);return `<span class="dot${q.n?" pcn":""}"${style?` style="${style}"`:""}>${q.n}</span>`;};
+const spName=p=>esc(pcSplit(p.name).name);
 // 룰 이름 표기: D&D → DnD
 const sysLabel=v=>String(v||"").replace(/D\s*[&＆]\s*D/gi,"DnD");
 // 완주 도장: 시나리오 이름으로 각도·위치·잉크를 정해요 (항상 같은 모양)
@@ -800,8 +804,8 @@ function renderSide(){
     ${curScen()?`<div class="tip" style="margin:-4px 0 8px">이 목록은 '${esc(curScen().name)}'의 모든 녹음이 같이 써요. ⋯에서 캐릭터 이름을 넣으면 로그에 플레이어와 같이 나와요.</div>`:""}
     <div id="splist">${sp.map((s,i)=>`
       <div class="spk ${S.spFilter===s.k?"on":""}" data-k="${s.k}" style="--c:${fixC(s.c)}">
-        <span class="key">${i<9?i+1:""}</span><span class="dot"></span>
-        <span class="nm" data-act="filter" title="${esc(s.name)}">${isGM(s.k)?gmTag+" ":""}${esc(s.name)}${s.ch?` <small>${esc(s.ch)}</small>`:""}</span>
+        <span class="key">${i<9?i+1:""}</span>${spDot(s)}
+        <span class="nm" data-act="filter" title="${esc(s.name)}">${isGM(s.k)?gmTag+" ":""}${spName(s)}${s.ch?` <small>${esc(s.ch)}</small>`:""}</span>
         <span class="cnt" data-cnt="${s.k}">${c[s.k]||0}</span>
         ${S.canWrite?`<button class="ghost more" data-act="menu" title="이름 바꾸기·합치기">⋯</button>`:""}
       </div>`).join("")}
@@ -932,7 +936,7 @@ function rowHTML(e,prev){
   const b=e.b,s=spBy(b.s),lines=b.x.split("\n"),gm=isGM(s.k);
   const first=!prev||prev.b.s!==b.s||(prev.b.a||"")!==(b.a||"")||(prev.b.tab||"")!==(b.tab||"")||b.t-prev.b.t>120;
   const tx=lines.map((l,i)=>(i?`<button class="cut" data-act="cut" data-line="${i}" tabindex="-1" title="여기서 나눠서 다른 화자로 지정할 수 있게 해요">✂</button>`:"")+`<span class="ln">${hl(l)}</span>`).join(" ");
-  const label=esc(s.name),sub=(gm?gmTag:"")+(b.a?esc(b.a):s.ch?esc(s.ch):"")+(b.tab?`<span class="tabchip">${esc(b.tab)}</span>`:"");
+  const q=pcSplit(s.name),label=(q.n?`<span class="pcn">${q.n}</span>`:"")+esc(q.name),sub=(gm?gmTag:"")+(b.a?esc(b.a):s.ch?esc(s.ch):"")+(b.tab?`<span class="tabchip">${esc(b.tab)}</span>`:"");
   return `<div class="row${first?" first":""}${gm?" gm":""}${b.tab?" tabbed":""}${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}" style="--c:${fixC(s.c)}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
     <div class="body">
@@ -1594,7 +1598,7 @@ function castHTML(sc){
   const g=gmKey(sc);
   const cast=gmFirst((sc?.sp||[]).filter(p=>p.k===g||!isAnon(p)&&!/&/.test(p.name)||p.ch),g);
   if(!cast.length)return "";
-  return `<div class="cast">${cast.map(p=>`<span class="castc${p.k===g?" gm":""}" style="--c:${fixC(p.c)}">${p.k===g?gmTag:'<span class="dot"></span>'}<b>${esc(p.name)}</b>${p.ch?`<span>${esc(p.ch)}</span>`:""}</span>`).join("")}</div>`;
+  return `<div class="cast">${cast.map(p=>`<span class="castc${p.k===g?" gm":""}" style="--c:${fixC(p.c)}">${p.k===g?gmTag:spDot(p)}<b>${spName(p)}</b>${p.ch?`<span>${esc(p.ch)}</span>`:""}</span>`).join("")}</div>`;
 }
 function daysHTML(days,gear=true){
   return days.map((d,i)=>`<div class="day">
@@ -1761,7 +1765,7 @@ function scenHTML(){
       return sc.og?`<div class="schero"><img src="${sc.og}" alt=""><div class="schero-t">${t}<span class="scmeta">${m}</span></div></div>`
         :`<div class="sc-top">${t}<span class="scmeta">${m}</span></div>`;})()}
     <div class="sc-sec"><h4>개요</h4>${txt(sc.summary,"아직 개요가 없어요."+(S.canWrite?" ✎ 수정을 눌러 써 주세요.":""))}</div>
-    <div class="sc-sec"><h4>플레이어 · 등장인물</h4>${sc.sp.length?(`<div class="roster" style="grid-template-columns:16px 1fr 1fr"><span></span><span class="h">플레이어</span><span class="h">등장인물</span>${gmFirst(sc.sp.filter(p=>!isAnon(p)),gmKey(sc)).map(p=>`<span class="dot" style="--c:${fixC(p.c)}"></span><span>${p.k===gmKey(sc)?gmTag+" ":""}<b>${esc(p.name)}</b></span><span style="color:var(--dim);font-size:13.5px">${esc(p.ch||(p.k===gmKey(sc)?"게임 마스터":""))}</span>`).join("")}</div>`):`<div class="sc-text empty">녹음을 올리면 화자가 여기 모여요.</div>`}</div>
+    <div class="sc-sec"><h4>플레이어 · 등장인물</h4>${sc.sp.length?(`<div class="roster" style="grid-template-columns:16px 1fr 1fr"><span></span><span class="h">플레이어</span><span class="h">등장인물</span>${gmFirst(sc.sp.filter(p=>!isAnon(p)),gmKey(sc)).map(p=>`${spDot(p,`--c:${fixC(p.c)}`)}<span>${p.k===gmKey(sc)?gmTag+" ":""}<b>${spName(p)}</b></span><span style="color:var(--dim);font-size:13.5px">${esc(p.ch||(p.k===gmKey(sc)?"게임 마스터":""))}</span>`).join("")}</div>`):`<div class="sc-text empty">녹음을 올리면 화자가 여기 모여요.</div>`}</div>
     <div class="sc-sec"><h4>녹음</h4>${days.length?daysHTML(days):`<div class="sc-text empty">아직 녹음이 없어요. 목록 화면에서 txt를 올릴 때 시나리오를 '${esc(sc.name)}'(으)로 고르면 여기 묶여요.</div>`}</div>
     ${S.canAdmin?`    <div class="sc-sec"><h4>시나리오 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
       <div class="tip" style="margin-bottom:10px">링크와 비밀번호를 같이 받은 사람만 이 시나리오를 보고 고칠 수 있어요. 비밀번호를 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>

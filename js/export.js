@@ -30,7 +30,8 @@ async function buildDayHTML(scen,day){
       const p=sp.find(z=>z.k===b.s)||{name:"?",c:"#888"};
       const c=fixC(p.c),gm=b.s===g;
       const ch=b.a||p.ch;
-      const nm=`<b>${esc(p.name)}</b>${ch?`<small> ${esc(ch)}</small>`:""}${b.tab?`<small class="tab"> ${esc(b.tab)}</small>`:""}`;
+      const pm=String(p.name||"").match(/^\s*PC\s*(\d{1,2})\s*[.:·\-]?\s*(.+)$/i);
+      const nm=`${pm?`<span class="pcn">${pm[1]}</span>`:""}<b>${esc(pm?pm[2]:p.name)}</b>${ch?`<small> ${esc(ch)}</small>`:""}${b.tab?`<small class="tab"> ${esc(b.tab)}</small>`:""}`;
       const x=run.map(t=>xEm(t)).join("<br>");
       // 이름·대사는 모두 검은색 (GM은 배경·GM 표시로만 구분)
       out.push(`<p class="pl${gm?" gm":""}${b.tab?" tabbed":""}" style="--c:${c}"><span class="nm">${gm?'<span class="gmt">GM</span>':""}${nm}</span> : <span class="tx">${x}</span></p>`);
@@ -67,6 +68,7 @@ p{margin:0;padding:6px 2px;border-bottom:1px solid #ece7df;word-break:keep-all;o
 p.pl,p.pl .nm b,p.pl .tx{color:#111}
 .stat{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:#6f6455;padding:3px 2px}
 p.tabbed{opacity:.72}.nm small.tab{background:#e9e4dc;color:#6b6258;border-radius:3px;padding:0 4px;font-size:11px}
+.pcn{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;background:var(--c,#888);color:#fff;font-size:11px;font-weight:700;margin-right:5px;vertical-align:1px}
 .res.secret{background:#3a2e4a}.res.success{background:#3f7a3a}.res.failure{background:#8a8178}.res.critical{background:#c08a14}.res.fumble{background:#a83a2a}
 body{font-family:"Noto Sans KR","Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif}
 main{box-sizing:border-box}
