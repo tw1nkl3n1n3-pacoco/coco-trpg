@@ -360,8 +360,9 @@ h1,h2,h3,.scen-h h3,.sc-top h2,.hometop h2{word-break:keep-all;overflow-wrap:any
 @media (max-width:640px){
   .sc-top{flex-wrap:nowrap;align-items:flex-start}
   .sc-top h2{flex:1 1 auto}
-  .scmeta{flex-direction:column;align-items:flex-end;gap:4px}
-  .scmeta #scedit{padding:3px 8px;font-size:12.5px}
+  .scmeta{gap:5px}
+  .scmeta #scedit{padding:2px 7px;font-size:13px;line-height:1.4}
+  .scmeta #scedit .lbl{display:none}
 }
 /* 룰 태그는 그 룰의 테마 색으로 (어느 화면에서든 같게) */
 .sys[data-th]{font-weight:600;letter-spacing:.02em;white-space:nowrap}

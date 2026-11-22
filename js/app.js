@@ -1741,7 +1741,7 @@ function scenHTML(){
     </div>`;
   }
   return `<div class="sc-page">
-    ${(()=>{const t=`<h2>${esc(sc.name)}${sc.orig?`<span class="orig">${esc(sc.orig)}</span>`:""}</h2>`,m=`${sc.system?`<span class="sys" data-th="${themeOf(sc)||"pa"}">${esc(sc.system)}</span>`:""}${S.canWrite?`<button id="scedit">✎ 수정</button>`:""}`;
+    ${(()=>{const t=`<h2>${esc(sc.name)}${sc.orig?`<span class="orig">${esc(sc.orig)}</span>`:""}</h2>`,m=`${sc.system?`<span class="sys" data-th="${themeOf(sc)||"pa"}">${esc(sc.system)}</span>`:""}${S.canWrite?`<button id="scedit" title="시나리오 수정" aria-label="시나리오 수정">✎<span class="lbl"> 수정</span></button>`:""}`;
       return sc.og?`<div class="schero"><img src="${sc.og}" alt=""><div class="schero-t">${t}<span class="scmeta">${m}</span></div></div>`
         :`<div class="sc-top">${t}<span class="scmeta">${m}</span></div>`;})()}
     <div class="sc-sec"><h4>개요</h4>${txt(sc.summary,"아직 개요가 없어요."+(S.canWrite?" ✎ 수정을 눌러 써 주세요.":""))}</div>
