@@ -388,3 +388,10 @@ h1,h2,h3,.scen-h h3,.sc-top h2,.hometop h2{word-break:keep-all;overflow-wrap:any
 .cc-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cc-c{color:var(--faint);font-size:12px;text-align:right}
 .cc-r select,.cc-r input{font-size:13px;padding:3px 6px;min-width:0}
 @media (max-width:640px){.cc-r{grid-template-columns:minmax(0,1fr) 30px 92px;}.cc-r input{grid-column:1/-1}}
+/* 완주 도장 (메인 목록의 날짜 위) */
+.dstamp{position:relative}
+.donestamp{position:absolute;right:2px;top:50%;width:48px;height:48px;margin-top:-33px;border-radius:50%;border:2px solid #c8102e;box-shadow:inset 0 0 0 3px transparent,inset 0 0 0 4px #c8102e;display:flex;align-items:center;justify-content:center;color:#c8102e;font-family:"Noto Serif KR",serif;font-weight:700;font-size:15px;letter-spacing:.02em;white-space:nowrap;mix-blend-mode:multiply;pointer-events:none;z-index:5;transform:translate(var(--sx,0),var(--sy,0)) rotate(var(--sr,-14deg))}
+.donerow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;margin-top:2px}
+.donerow .chk{display:inline-flex;align-items:center;gap:6px}
+.donerow .donedate{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--dim)}
+.donerow .donedate input{width:auto;padding:3px 8px}

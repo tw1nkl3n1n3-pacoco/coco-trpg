@@ -67,7 +67,7 @@ body[data-theme=wa] .row.hand .hlab .hti{color:#fff}
 .hsecw::before{content:attr(data-l);display:inline-block;font-size:11px;font-weight:800;letter-spacing:.12em;padding:0 6px;margin-right:6px;border:1px solid currentColor;border-radius:2px;vertical-align:1px;font-family:"Noto Sans KR",sans-serif}
 body[data-theme=wa] .hsecw::before{color:#b0101a}body[data-theme=wa] .hsecw.secret::before{background:#b0101a;color:#fff;border-color:#b0101a}
 body[data-theme=deco] .hsecw::before{color:#7a200d}
-/* --- D&D: 모험서·스탯블록 (key: deco) --- */
+/* --- DnD: 모험서·스탯블록 (key: deco) --- */
 body[data-theme=deco]{--bg:#e9dcc3;--panel:#fbf4e4;--panel2:#f3e7cc;--line:#d6c39c;--ink:#2b1d14;--dim:#5b4636;--faint:#8e7a62;--acc:#7a200d;--acc2:#7a200d;--sel:#f5e1c0;--play:#f7e8c4;--gold:#c9962e;background:#e9dcc3}
 body[data-theme=deco] header{background:#4a0d0d;border-bottom:0;box-shadow:0 3px 0 #c9962e;--ink:#f6e7c8;--dim:#e2cfa8;--faint:#c4ad86;--line:#6e2020;--panel:#5c1414;--panel2:#5c1414;--acc:#e8b84a;--acc2:#f0cf7a;color:#f6e7c8}
 body[data-theme=deco] header h1,body[data-theme=deco] header .scl{font-family:"Gowun Batang",serif;color:#f6e7c8!important;letter-spacing:.04em}

@@ -697,6 +697,15 @@ function setText(id,x){
 // ---------- rendering ----------
 const THEMES={"":{n:"양피지",d:"지금 기본 · 판타지",sw:["#efe3cc","#fff","#9c3d22","#c9a46a"]},wa:{n:"인세인",d:"인세인 룰에 자동 적용",sw:["#0a0a0a","#fcfcfb","#b0101a","#d4d4d4"]},deco:{n:"D&D",d:"D&D 룰에 자동 적용",sw:["#e9e4d6","#fbf8f0","#1f4a3d","#b08a3e"]},blue:{n:"블루 모던",d:"현대 · SF · 현대 수사",sw:["#eef3f9","#ffffff","#2563eb","#38bdf8"]}};
 // 테마는 룰 시스템에 따라 자동으로 정해져요
+// 룰 이름 표기: D&D → DnD
+const sysLabel=v=>String(v||"").replace(/D\s*[&＆]\s*D/gi,"DnD");
+// 완주 도장: 시나리오 이름으로 각도·위치·잉크를 정해요 (항상 같은 모양)
+function stampHTML(sc){
+  if(!sc||!sc.done)return "";
+  let x=2166136261;for(const c of sc.name||sc.id||"")x=Math.imul(x^c.codePointAt(0),16777619)>>>0;
+  const st=`--sr:${-26+x%23}deg;--sx:${(x>>>5)%13-6}px;--sy:${(x>>>9)%9-4}px;opacity:${(0.74+((x>>>13)%13)/100).toFixed(2)}`;
+  return `<span class="donestamp" style="${st}" title="완주${sc.doneAt?" · "+esc(sc.doneAt):""}">완주</span>`;
+}
 function themeOf(sc){
   const r=String(sc&&sc.system||"").toLowerCase().replace(/\s+/g,"");
   if(/인세인|insane/.test(r))return "wa";
@@ -1516,8 +1525,8 @@ function homeHTML(){
   const can=S.db&&S.canWrite;
   const all=groups();
   const NOSYS="룰 미정";
-  // 룰 탭은 판본을 합쳐서 보여요 (D&D 5e, 5.5e → D&D)
-  const sysOf=g=>{const sc=g.sc;if(themeOf(sc)==="deco")return "D&D";if(themeOf(sc)==="wa")return "인세인";return (sc?.system||"").trim()||NOSYS;};
+  // 룰 탭은 판본을 합쳐서 보여요 (DnD 5e, 5.5e → DnD · 더블크로스 2nd, 3rd → 더블크로스)
+  const sysOf=g=>{const sc=g.sc;if(themeOf(sc)==="deco")return "DnD";if(themeOf(sc)==="dx")return "더블크로스";if(themeOf(sc)==="wa")return "인세인";return (sc?.system||"").trim()||NOSYS;};
   const systems={};all.forEach(g=>{const k=sysOf(g);systems[k]=(systems[k]||0)+1;});
   const sysKeys=Object.keys(systems).sort((a,b)=>(a===NOSYS)-(b===NOSYS)||systems[b]-systems[a]||a.localeCompare(b,"ko"));
   if(S.sysFilter&&!systems[S.sysFilter])S.sysFilter=null;
@@ -1535,7 +1544,7 @@ function homeHTML(){
     </div>`:""}
     <div id="sesslist">${gs.map(g=>`
       <section class="scen">
-        <div class="scen-h"><h3><a href="#" data-scen="${esc(g.scen)}" title="개요 보기">${esc(g.scen)} ›</a>${g.sc?.orig?`<span class="orig">${esc(g.sc.orig)}</span>`:""}</h3>${g.sc?.system?`<span class="sys" data-th="${themeOf(g.sc)||"pa"}">${esc(g.sc.system)}</span>`:""}<span class="d">${g.sc&&!isOpen(g.sc.id)?(g.sc.lastDay?`${g.sc.nDays||1}회차 · 마지막 ${esc(fmtDay(g.sc.lastDay))} 🔒`:"🔒"):g.days.length?`${g.days.length}회차 · 마지막 ${esc(fmtDay(g.last))}`:"아직 녹음 없음"}</span></div>
+        <div class="scen-h"><h3><a href="#" data-scen="${esc(g.scen)}" title="개요 보기">${esc(g.scen)} ›</a>${g.sc?.orig?`<span class="orig">${esc(g.sc.orig)}</span>`:""}</h3>${g.sc?.system?`<span class="sys" data-th="${themeOf(g.sc)||"pa"}">${esc(sysLabel(g.sc.system))}</span>`:""}<span class="d${g.sc?.done?" dstamp":""}">${g.sc&&!isOpen(g.sc.id)?(g.sc.lastDay?`${g.sc.nDays||1}회차 · 마지막 ${esc(fmtDay(g.sc.lastDay))} 🔒`:"🔒"):g.days.length?`${g.days.length}회차 · 마지막 ${esc(fmtDay(g.last))}`:"아직 녹음 없음"}${stampHTML(g.sc)}</span></div>
         ${g.sc?.summary?`<div class="sum">${esc(g.sc.summary)}</div>`:""}
         ${castHTML(g.sc)}
         ${g.sc&&!isOpen(g.sc.id)?"":daysHTML(g.days,false)}
@@ -1717,7 +1726,8 @@ function scenHTML(){
       <div class="sc-sec"><div class="fields" style="margin:0">
         <label>시나리오 이름<input type="text" id="e-name" value="${esc(d.name)}"></label>
         <label>원어 제목 <span class="tip" style="display:inline">· 선택</span><input type="text" id="e-orig" value="${esc(d.orig||"")}" placeholder="해외 시나리오면 원래 제목 (없으면 비워 두세요)"></label>
-        <label>룰 시스템<input type="text" id="e-sys" value="${esc(d.system||"")}" placeholder="예: D&D 5.5e, CoC 7판, 인세인" list="syslist"></label>
+        <label>룰 시스템<input type="text" id="e-sys" value="${esc(d.system||"")}" placeholder="예: DnD 5.5e, 더블크로스 3rd, CoC 7판, 인세인" list="syslist"></label>
+        <div class="donerow"><label class="chk"><input type="checkbox" id="e-done"${d.done?" checked":""}> 완주했어요</label><label class="donedate">완주한 날 <input type="date" id="e-doneat" value="${esc(d.doneAt||"")}"></label></div>
         <datalist id="syslist">${[...new Set(S.scens.map(x=>(x.system||"").trim()).filter(Boolean))].map(x=>`<option value="${esc(x)}">`).join("")}</datalist>
       </div></div>
       <div class="sc-sec"><h4>공유 이미지 <span class="tip" style="letter-spacing:0">· 링크를 보낼 때 카톡·디스코드 미리보기에 뜨는 그림 (가로로 긴 1200×630으로 맞춰져요)</span></h4>
@@ -1747,7 +1757,7 @@ function scenHTML(){
     </div>`;
   }
   return `<div class="sc-page">
-    ${(()=>{const t=`<h2>${esc(sc.name)}${sc.orig?`<span class="orig">${esc(sc.orig)}</span>`:""}</h2>`,m=`${sc.system?`<span class="sys" data-th="${themeOf(sc)||"pa"}">${esc(sc.system)}</span>`:""}${S.canWrite?`<button id="scedit" title="시나리오 수정" aria-label="시나리오 수정">✎<span class="lbl"> 수정</span></button>`:""}`;
+    ${(()=>{const t=`<h2>${esc(sc.name)}${sc.orig?`<span class="orig">${esc(sc.orig)}</span>`:""}</h2>`,m=`${sc.system?`<span class="sys" data-th="${themeOf(sc)||"pa"}">${esc(sysLabel(sc.system))}</span>`:""}${S.canWrite?`<button id="scedit" title="시나리오 수정" aria-label="시나리오 수정">✎<span class="lbl"> 수정</span></button>`:""}`;
       return sc.og?`<div class="schero"><img src="${sc.og}" alt=""><div class="schero-t">${t}<span class="scmeta">${m}</span></div></div>`
         :`<div class="sc-top">${t}<span class="scmeta">${m}</span></div>`;})()}
     <div class="sc-sec"><h4>개요</h4>${txt(sc.summary,"아직 개요가 없어요."+(S.canWrite?" ✎ 수정을 눌러 써 주세요.":""))}</div>
@@ -1805,7 +1815,8 @@ function bindSpManage(sc){
 function sessionsReady(id){return S.canAdmin?!!SUB.sessData.all:!!SUB.sessData[id];}
 // 수정 창에서 바꾼 부분만 최신 시나리오에 적용 (다른 사람이 그 사이에 바꾼 건 그대로 둬요)
 function mergeScenEdit(L,base,d){
-  ["name","system","summary","orig"].forEach(f=>{if((d[f]||"")!==(base[f]||""))L[f]=d[f];});
+  ["name","system","summary","orig","doneAt"].forEach(f=>{if((d[f]||"")!==(base[f]||""))L[f]=d[f];});
+  if(!!d.done!==!!base.done)L.done=!!d.done;
   if((d.theme||"")!==(base.theme||"")){if(d.theme)L.theme=d.theme;else delete L.theme;}
   if((d.og||"")!==(base.og||"")){if(d.og)L.og=d.og;else delete L.og;}
   if(JSON.stringify(d.aliases||[])!==JSON.stringify(base.aliases||[]))L.aliases=d.aliases;
@@ -1843,7 +1854,7 @@ function bindScen(){
   if(!S.scEdit)return;
   const sc=scenById(S.cid);if(!sc){S.scEdit=false;return;}
   const d=S.scDraft;
-  const pull=()=>{d.name=$("#e-name").value.trim()||d.name;d.system=$("#e-sys").value.trim();d.orig=$("#e-orig").value.trim();d.summary=$("#e-sum").value.replace(/\s+$/,"");
+  const pull=()=>{d.name=$("#e-name").value.trim()||d.name;d.system=$("#e-sys").value.trim();d.orig=$("#e-orig").value.trim();d.done=$("#e-done").checked;d.doneAt=d.done?$("#e-doneat").value:"";d.summary=$("#e-sum").value.replace(/\s+$/,"");
     document.querySelectorAll("[data-nm]").forEach(i=>{const v=i.value.trim();if(v)d.sp[+i.dataset.nm].name=v;});
     document.querySelectorAll("[data-ch]").forEach(i=>{d.sp[+i.dataset.ch].ch=i.value.trim();});
     const g=document.querySelector("[data-gm]:checked");if(g){if(g.dataset.gm)d.gm=g.dataset.gm;else delete d.gm;}};
