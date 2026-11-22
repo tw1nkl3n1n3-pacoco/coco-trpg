@@ -1521,7 +1521,7 @@ function homeHTML(){
   if(S.sysFilter&&!systems[S.sysFilter])S.sysFilter=null;
   const gs=S.sysFilter?all.filter(g=>sysOf(g)===S.sysFilter):all;
   return `<div class="home">
-    <div class="hometop"><h2>${iconHTML(site().icon)}${esc(site().title)}</h2><span class="hright">${S.canAdmin&&S.db?`<a class="ghost adminbtn" href="#admin" title="관리자 페이지">⚙ 관리${adminAlert()?'<i class="dot-alert"></i>':""}</a>`:""}<span class="authbox"></span></span></div>
+    <div class="hometop"><h2>${iconHTML(site().icon)}${esc(site().title)}</h2></div>
     <div class="tip" style="font-size:13.5px">${esc(site().sub).replace(/\n/g,"<br>")}</div>
     ${S.err?`<div class="notice bad">${esc(S.err)}</div>`:""}
     ${!S.ready||(S.db&&!S.loaded)?`<div class="notice">불러오는 중…</div>`:""}
@@ -1546,6 +1546,7 @@ function homeHTML(){
       <div id="imp"></div>
       <div id="bulkres" class="tip" style="margin-top:8px">${S.bulkMsg||""}</div>
     </div>`:""}
+    <div class="homefoot"><span class="hright">${S.canAdmin&&S.db?`<a class="ghost adminbtn" href="#admin" title="관리자 페이지">⚙ 관리${adminAlert()?'<i class="dot-alert"></i>':""}</a>`:""}<span class="authbox"></span></span></div>
   </div>`;
 }
 async function importAll(data,prog){
