@@ -1660,8 +1660,8 @@ function bindHome(){
     const all=[...ev.target.files];if(!all.length)return;
     const htm=all.find(f=>/\.html?$/i.test(f.name)||f.type==="text/html");
     if(htm){const box=$("#imp");S.bulkMsg="";$("#bulkres").innerHTML="";const text=await htm.text();const cc=parseCcfolia(text);
-      if(!cc||!cc.days.length){box.innerHTML="";if(!ccRepairBox(text,box,true))box.innerHTML=`<div class="notice bad">코코포리아 로그에서 대사를 찾지 못했어요. 방 메뉴의 로그 출력으로 받은 html이 맞는지 확인해 주세요.</div>`;return;}
-      ccForm(cc,box);ccRepairBox(text,box,false);return;}
+      if(!cc||!cc.days.length){box.innerHTML=`<div class="notice bad">코코포리아 로그에서 대사를 찾지 못했어요. 방 메뉴의 로그 출력으로 받은 html이 맞는지 확인해 주세요.</div>`;return;}
+      ccForm(cc,box);return;}
     const isTxt=f=>/\.txt$/i.test(f.name)||f.type==="text/plain";
     const files=all.filter(isTxt),audios=all.filter(f=>!isTxt(f));
     const box=$("#imp");S.bulkMsg="";$("#bulkres").innerHTML="";
@@ -2016,65 +2016,6 @@ function ccForm(cc,box){
     }}finally{S.importing=false;}
     location.hash="s-"+first;
   };
-}
-// 코코포리아 로그에서 주사위 목록만 뽑기 (자세한 로그·간단 로그 둘 다)
-function ccDiceList(text){
-  const doc=new DOMParser().parseFromString(text,"text/html");
-  const out=[],nm=x=>String(x||"").replace(/\s+/g,"");
-  const arts=[...doc.querySelectorAll("article.message")];
-  if(arts.length){arts.forEach(a=>{if(!a.querySelector(".roll-result")||(a.dataset.channel&&a.dataset.channel!=="main"))return;
-    const tx=a.querySelector(".message-text");out.push({sp:(a.querySelector(".speaker")?.textContent||"").trim(),k:nm(tx?tx.textContent:"")});});return out;}
-  // 간단 로그: <p><span>[main]</span><span>이름</span> : <span>명령 (에코) ＞ 결과</span></p>
-  doc.querySelectorAll("p").forEach(p=>{const sp=p.querySelectorAll(":scope>span");if(sp.length<3)return;
-    if(!/main/.test(sp[0].textContent))return;
-    const t=sp[2].textContent.trim(),i=t.indexOf("＞");if(i<0)return;
-    const pre=t.slice(0,i).trimEnd();let cmd=null;
-    if(pre.endsWith(")")){let d=0;for(let j=pre.length-1;j>=0;j--){if(pre[j]===")")d++;else if(pre[j]==="("){d--;if(!d){cmd=pre.slice(0,j);break;}}}}
-    if(cmd===null||!cmd.trim())cmd=pre;
-    out.push({sp:sp[1].textContent.trim(),k:nm(cmd)});});
-  return out;
-}
-// 이미 올린 온라인 회차에서 '누가 굴렸는지' 끊긴 주사위를 로그와 순서대로 맞춰 채워요
-async function ccRepairDice(scName,dl,prog){
-  const sc=findScen(scName);if(!sc)return 0;
-  const keys=new Set(sc.sp.map(x=>x.k)),g=gmKey(sc);
-  const ss=S.sessions.filter(s=>s.src==="ccfolia"&&info(s).scen===scName).sort((a,b)=>info(a).day<info(b).day?-1:1);
-  const items=[];
-  for(const s of ss){const snap=await S.db.collection(`sessions/${s.id}/chunks`).get();
-    snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>a.i-b.i).forEach(c=>(c.b||[]).forEach(b=>{if(b.s===DICE&&!b.tab)items.push({sid:s.id,cid:c.id,id:b.id,k:String(b.x||"").replace(/\s+/g,""),w:b.w,a:b.a});}));}
-  // 최장 공통 부분열로 순서 맞추기
-  const n=items.length,m=dl.length,L=Array.from({length:n+1},()=>new Uint16Array(m+1));
-  for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)L[i][j]=items[i].k===dl[j].k?L[i+1][j+1]+1:Math.max(L[i+1][j],L[i][j+1]);
-  const pair=new Map();for(let i=0,j=0;i<n&&j<m;){if(items[i].k===dl[j].k){pair.set(i,j);i++;j++;}else if(L[i+1][j]>=L[i][j+1])i++;else j++;}
-  const fix={};let cnt=0;
-  items.forEach((it,i)=>{if(!it.w||keys.has(it.w))return;
-    let f;const j=pair.get(i);
-    if(j!==undefined){const nmv=dl[j].sp,pc=sc.sp.find(x=>x.ch===nmv);
-      f=pc?{w:pc.k}:{w:g,...(!it.a&&!/^\W*GM\W*$/i.test(nmv)?{a:nmv}:{})};}
-    else f={w:g};
-    if(!f.w)return;
-    ((fix[it.sid]=fix[it.sid]||{})[it.cid]=fix[it.sid][it.cid]||{})[it.id]=f;cnt++;});
-  let done=0;
-  for(const sid in fix)for(const cid in fix[sid]){
-    const ref=S.db.doc(`sessions/${sid}/chunks/${cid}`),fx=fix[sid][cid];
-    await S.db.runTransaction(async tx=>{const d=await tx.get(ref);const b=(d.data().b||[]).map(x=>fx[x.id]?{...x,...fx[x.id]}:x);tx.set(ref,{...d.data(),b});});
-    done+=Object.keys(fx).length;const pe=$("#fixprog");if(pe)pe.textContent=`고치는 중… ${done}/${cnt}`;
-  }
-  return cnt;
-}
-function ccRepairBox(text,box,onlyRepair){
-  const scs=[...new Set(S.sessions.filter(s=>s.src==="ccfolia").map(s=>info(s).scen))];
-  if(!scs.length||!(S.db&&S.canWrite))return false;
-  const dl=ccDiceList(text);if(!dl.length)return false;
-  const el=document.createElement("div");el.className="ccfix";
-  el.innerHTML=`<div class="tip">${onlyRepair?"이 파일은 시간 정보가 없는 간단 로그라 새로 올리기는 못 하지만, ":""}이미 올린 회차에서 <b>주사위 굴린 사람 이름이 빠진 것</b>을 이 로그와 대조해서 채울 수 있어요. 고친 대사는 그대로예요.</div>
-    <div style="display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap"><select id="fixsc">${scs.map(x=>`<option>${esc(x)}</option>`).join("")}</select><button class="pri" id="fixgo">주사위 이름 채우기</button><span id="fixprog" class="tip"></span></div>`;
-  box.prepend(el);
-  $("#fixgo").onclick=async()=>{const b=$("#fixgo");b.disabled=true;const pr=$("#fixprog");pr.textContent="대조하는 중…";
-    const say=t=>{const p=$("#fixprog");if(p)p.textContent=t;toast(t,4000);};
-    try{const n=await ccRepairDice($("#fixsc").value,dl,pr);say(n?`주사위 ${n}개의 이름을 채웠어요 ✓`:"고칠 주사위가 없어요 (이미 다 이름이 있어요)");}
-    catch(e){say("실패했어요: "+(e.code||e.message||e));if($("#fixgo"))$("#fixgo").disabled=false;}};
-  return true;
 }
 function previewLocal(r,inf){
   const {meta,chunks}=buildSession(r,inf);
