@@ -231,8 +231,8 @@ function adminHTML(){
           <input type="text" id="s-icon" value="${isImgIcon(st.icon)?"":esc(st.icon)}" placeholder="예: 🎲" style="width:80px">
           <button type="button" id="s-up">이미지 올리기</button><button type="button" class="ghost" id="s-clr">없애기</button>
           <input type="file" id="s-file" accept="image/*" style="display:none"></div>
-        <label>내 닉네임 · 여러 개면 쉼표로 (예: 코코, 코곰) · 시나리오마다 이 이름의 플레이어가 자동으로 '나'가 돼요</label>
-        <input type="text" id="s-nicks" value="${esc((st.nicks||[]).join(", "))}" placeholder="코코, 코곰">
+        <label>내 닉네임 · 여러 개면 쉼표로 (예: AA, BB) · 시나리오마다 이 이름의 플레이어가 자동으로 '나'가 돼요</label>
+        <input type="text" id="s-nicks" value="${esc((st.nicks||[]).join(", "))}" placeholder="AA, BB">
         <div class="btns"><button class="pri" id="s-ok">저장</button></div>
       </div></div>
     ${S.db?`<div class="card emadm"><b>이모티콘</b> <span class="tip">· 사이트 어디서든 :이름: 으로 써요 (후기·댓글) · 주인만 등록</span>
