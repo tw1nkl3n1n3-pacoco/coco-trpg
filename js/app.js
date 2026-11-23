@@ -363,7 +363,7 @@ async function _ownerMaintain(){
   }
   // 시나리오마다 회차 수·마지막 플레이 날짜를 적어둬요 (로그인 안 한 사람의 목록 정렬용)
   for(const sc of S.scens){
-    const days=[...new Set(S.sessions.filter(x=>info(x).scen===sc.name).map(x=>info(x).day).filter(Boolean))].sort();
+    const days=[...new Set([...S.sessions.filter(x=>info(x).scen===sc.name).map(x=>info(x).day),...(sc.plays||[])].filter(Boolean))].sort();
     const lastDay=days.length?days[days.length-1]:"";
     if((sc.lastDay||"")!==lastDay||(sc.nDays||0)!==days.length){try{await S.db.doc("scenarios/"+sc.id).update({lastDay,nDays:days.length});}catch(e){}}
   }
@@ -1479,8 +1479,10 @@ function groups(){
   S.sessions.forEach(s=>{const i=info(s);(by[i.scen]=by[i.scen]||{scen:i.scen,days:{}});(by[i.scen].days[i.day]=by[i.scen].days[i.day]||[]).push({...s,...i});});
   S.scens.forEach(sc=>{if(!by[sc.name])by[sc.name]={scen:sc.name,days:{}};});
   return Object.values(by).map(g=>{
-    const days=Object.keys(g.days).sort().map(d=>({day:d,parts:g.days[d].sort((a,b)=>a.part-b.part)}));
     const sc=scenByName(g.scen);
+    // 녹음 없이 플레이한 날(녹음 금지 세션)도 회차로 셈해요
+    (sc?.plays||[]).forEach(d=>{if(d&&!g.days[d])g.days[d]=[];});
+    const days=Object.keys(g.days).sort().map(d=>({day:d,parts:g.days[d].sort((a,b)=>a.part-b.part),nolog:!g.days[d].length}));
     // 로그가 잠겨 있어도 정렬이 같도록, 주인이 시나리오 문서에 적어둔 마지막 플레이 날짜를 써요
     return {scen:g.scen,sc,days,last:days.length?days[days.length-1].day:(sc?.lastDay||(sc?new Date(sc.created||0).toISOString().slice(0,10):""))};
   }).sort((a,b)=>b.last.localeCompare(a.last)||a.scen.localeCompare(b.scen,"ko"));
@@ -1608,6 +1610,7 @@ function homeHTML(){
       <div class="tip" style="margin:4px 0 10px">클로바노트에서 내보낸 <b>대사 파일(.txt)</b>과 <b>녹음 파일(.m4a 등)</b>을 한꺼번에 골라요. 이름이 같은 txt와 녹음은 알아서 짝지어요. 예: <code>261114 세션 1.txt</code> + <code>261114 세션 1.m4a</code><br>
       녹음 파일만 고르면 이미 올린 녹음에 이름으로 짝지어 넣어요(있던 녹음은 새 파일로 바뀌어요). 한 번 플레이가 여러 개로 나뉘었으면 같은 시나리오·같은 날짜로 올리면 1부, 2부로 묶여요.<br>녹음 없는 온라인 세션은 코코포리아 방 메뉴의 <b>로그 출력</b>으로 받은 html을 고르면 회차별로 나눠서 올라가요.</div>
       <span class="filebtn"><button class="pri">📄🎧 txt · 녹음 · 코코포리아 로그 고르기</button><input type="file" id="tfile" accept=".txt,text/plain,.html,text/html${S.storage&&can?",audio/*,video/*,.m4a,.mp3,.wav,.ogg,.webm":""}" multiple></span>
+      ${can&&S.canAdmin?`<div style="margin-top:10px"><button class="ghost" id="newnolog">＋ 녹음 없이 시나리오 만들기</button> <span class="tip">녹음이 금지된 세션 · 개요·등장인물·후기만 써요</span></div>`:""}
       <div id="imp"></div>
       <div id="bulkres" class="tip" style="margin-top:8px">${S.bulkMsg||""}</div>
     </div>`:""}
@@ -1654,13 +1657,14 @@ function daysHTML(days,gear=true){
   const exp=d=>S.db&&d.parts.length?`<button class="ghost dexp" data-exps="${esc(d.parts[0].scen)}" data-expd="${esc(d.day)}" title="이 회차 로그를 HTML 파일로 받기">⬇ HTML</button>`:"";
   const set=p=>gear&&S.canAdmin&&S.db?`<button class="pset" data-edit="${esc(p.id)}" title="시나리오·날짜·순서·녹음 링크 고치기">⚙</button>`:"";
   return days.map((d,i)=>{
+    if(!d.parts.length)return `<div class="day oday nolog"><span class="oline"><span class="nth">${i+1}회차</span><span class="odate">${esc(fmtDay(d.day))}</span><span class="ocnt">녹음 없음</span></span></div>`;
     // 온라인(코코포리아) 회차는 한 로그뿐이라 '1부' 칩 없이 한 줄로, 줄 전체가 링크
     if(d.parts.length===1&&d.parts[0].src==="ccfolia"){const p=d.parts[0];
       return `<div class="day oday"><a class="oline" href="#s-${esc(p.id)}"><span class="nth">${i+1}회차</span><span class="odate">${esc(fmtDay(d.day))}</span><span class="ocnt">${p.n?p.n+"개 대사":""}</span><span class="ogo">›</span></a>${set(p)}</div>`;}
     return `<div class="day">
     <div class="day-h"><span class="nth">${i+1}회차</span><span>${esc(fmtDay(d.day))}</span></div>
     <div class="parts">${d.parts.map(p=>`<span class="partw"><a class="part" href="#s-${esc(p.id)}"><b>${p.part}부</b><span>${p.n?p.n+"개 대사":""}</span></a>${gear&&S.canAdmin&&S.db?`<button class="pset" data-edit="${esc(p.id)}" title="시나리오·날짜·순서·녹음 링크 고치기">⚙</button>`:""}</span>`).join("")}</div>${S.db&&d.parts.length?`<button class="ghost dexp" data-exps="${esc(d.parts[0].scen)}" data-expd="${esc(d.day)}" title="이 회차 로그를 HTML 파일로 받기">⬇ HTML</button>`:""}
-  </div>`;  }).join("")+(days.length&&days.every(d=>d.parts.length===1&&d.parts[0].src==="ccfolia")&&S.db?`<div class="allexp"><button class="ghost dexp all" data-exps="${esc(days[0].parts[0].scen)}" data-expd="*" title="모든 회차를 HTML 파일 하나로 받기">⬇ 전체 HTML</button></div>`:"");
+  </div>`;  }).join("")+(days.some(d=>d.parts.length)&&days.every(d=>!d.parts.length||d.parts.length===1&&d.parts[0].src==="ccfolia")&&S.db?`<div class="allexp"><button class="ghost dexp all" data-exps="${esc((days.find(d=>d.parts.length)||{parts:[{}]}).parts[0].scen)}" data-expd="*" title="모든 회차를 HTML 파일 하나로 받기">⬇ 전체 HTML</button></div>`:"");
 }
 async function gotoScen(name,edit){
   let sc=findScen(name);
@@ -1692,6 +1696,9 @@ function bindBackup(){
 function bindHome(){
   bindPartEdit();renderAuth();
   bindBackup();
+  {const nb=$("#newnolog");if(nb)nb.onclick=async()=>{const n=(prompt("시나리오 이름")||"").trim();if(!n)return;
+    if(findScen(n)){toast("이미 있는 시나리오예요. 그 시나리오의 ✎ 수정에서 '녹음 없이 플레이한 날'을 넣어 주세요",4500);gotoScen(n,true);return;}
+    const sc=createScen(n,[]);sc.plays=[new Date(Date.now()+9*3600e3).toISOString().slice(0,10)];await saveScen(sc);S.pendingEdit=sc.id;location.hash="c-"+sc.id;};}
   async function bulkAudio(files){
     const box=$("#bulkres");
     const pairs=[],miss=[];
@@ -1806,6 +1813,9 @@ function scenHTML(){
         <div class="ogcard${d.og?"":" empty"}" id="e-ogprev">${d.og?`<img src="${d.og}" alt="">`:`<span>아직 이미지가 없어요</span>`}</div>
         <div style="display:flex;gap:6px;margin-top:8px"><button type="button" id="e-ogup">이미지 올리기</button>${d.og?`<button type="button" class="ghost" id="e-ogdel">지우기</button>`:""}<input type="file" id="e-ogfile" accept="image/*" style="display:none"></div>
       </div>
+      <div class="sc-sec"><h4 data-en="NO-LOG DAYS">녹음 없이 플레이한 날 <span class="tip" style="letter-spacing:0">· 녹음이 금지된 세션 · 로그 없이 회차로만 보여요</span></h4>
+        <div class="plays">${(d.plays||[]).map((v,i)=>`<span class="playd"><input type="date" data-play="${i}" value="${esc(v)}"><button type="button" class="ghost" data-playdel="${i}" title="빼기">✕</button></span>`).join("")}<button type="button" id="e-playadd">＋ 날짜 추가</button></div>
+      </div>
       <div class="sc-sec"><h4 data-en="SUMMARY">개요</h4><textarea id="e-sum" placeholder="배경, 도입, 목표, 등장 NPC 등">${esc(d.summary||"")}</textarea></div>
       <div class="sc-sec"><h4 data-en="CAST">플레이어 · 등장인물</h4>
         ${(()=>{const c=SCC[sc.id];const zero=c?d.sp.filter(p=>p.k!==d.gm&&!(c[p.k]>0)).length:0;return `
@@ -1817,7 +1827,7 @@ function scenHTML(){
           <span class="cnum">${n===null?"…":n}</span>
           <span class="mgb"><button type="button" class="ghost" data-emv="${i}" data-d="-1" title="위로" ${i===0?"disabled":""}>↑</button><button type="button" class="ghost" data-emv="${i}" data-d="1" title="아래로" ${i===d.sp.length-1?"disabled":""}>↓</button><button type="button" class="ghost" data-edel="${i}" title="${n===0?"목록에서 지우기":"대사가 있어서 못 지워요 (로그 화면에서 다른 플레이어로 옮긴 뒤 지울 수 있어요)"}" ${n===0?"":"disabled"}>🗑</button></span>`;}).join("")}
         </div>
-        <div style="margin-top:6px;display:flex;gap:12px;align-items:center;flex-wrap:wrap"><label class="chk"><input type="radio" name="gm" data-gm="" ${d.gm?"":"checked"}>GM 없음</label>
+        <div style="margin-top:6px;display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button type="button" id="e-spadd">＋ 플레이어 추가</button><label class="chk"><input type="radio" name="gm" data-gm="" ${d.gm?"":"checked"}>GM 없음</label>
           ${zero?`<button type="button" class="ghost" id="ezero">대사 없는 플레이어 ${zero}명 한꺼번에 지우기</button>`:""}</div>
         <input type="file" id="e-avfile" accept="image/*" style="display:none">
         <div class="tip" style="margin-top:8px">동그라미를 누르면 인장을 올려요(정사각형으로 잘려요). ×로 지우면 GM은 GM 그림, 나머지는 캐릭터 이름 첫 글자가 나와요. ↑↓로 바꾼 순서가 로그 화면의 숫자키 순서예요(GM은 늘 1번). 🗑는 대사가 하나도 없는 플레이어만 지울 수 있어요. 바꾼 내용은 <b>저장</b>을 눌러야 반영돼요.</div>`;})()}
@@ -1827,7 +1837,7 @@ function scenHTML(){
         <div class="tip" style="margin-bottom:8px">실수로 두 개가 된 시나리오를 하나로 합쳐요. 이 시나리오의 녹음이 모두 고른 시나리오로 옮겨가고, 화자 목록은 이름이 같은 사람끼리 합쳐져요. 개요와 룰 시스템은 고른 쪽이 비어 있을 때만 옮겨와요.</div>
         <div style="display:flex;gap:8px"><select id="mto" style="flex:1"><option value="">합칠 시나리오 고르기</option>${S.scens.filter(x=>x.id!==sc.id).map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join("")}</select><button id="mgo">합치기</button></div>
       </div>`:""}
-      ${S.canAdmin&&!days.length?`<button id="scdel" style="color:var(--bad)">이 시나리오 지우기</button>`:""}
+      ${S.canAdmin&&!days.some(x=>x.parts.length)?`<button id="scdel" style="color:var(--bad)">이 시나리오 지우기</button>`:""}
     </div>`;
   }
   return `<div class="sc-page">
@@ -1836,7 +1846,7 @@ function scenHTML(){
         :`<div class="sc-top">${t}<span class="scmeta">${m}</span></div>`;})()}
     <div class="sc-sec"><h4 data-en="SUMMARY">개요</h4>${txt(sc.summary,"아직 개요가 없어요."+(S.canWrite?" ✎ 수정을 눌러 써 주세요.":""))}</div>
     <div class="sc-sec"><h4 data-en="CAST">플레이어 · 등장인물</h4>${sc.sp.length?`${(()=>{const m=meSp(sc.id),k=myK(sc.id);return k==="ext"&&!S.canAdmin?`<div class="meline">외부인으로 보는 중 · <button class="lnk" id="mepick">바꾸기</button></div>`:m?`<div class="meline" style="--c:${fixC(m.c)}"><span class="me"><i></i>나: ${esc(pcSplit(m.name).name)}</span>${m.ch?` · ${esc(m.ch)}`:""} · <button class="lnk" id="mepick">바꾸기</button></div>`:`<div class="meline"><button class="lnk" id="mepick">나는 누구? 고르기</button></div>`;})()}<div class="castrow">${gmFirst(sc.sp.filter(p=>p.k===gmKey(sc)||!isAnon(p)&&!/&/.test(p.name)||p.ch),gmKey(sc)).map(p=>{const gm=p.k===gmKey(sc),q=pcSplit(p.name);return `<div class="cc${gm?" gm":""}${p.k===myK(sc.id)?" mine":""}" style="--c:${fixC(p.c)}"><div class="av">${avHTML(p,gm)}</div><div class="cn">${esc(gm?(p.ch||gmWord(sc)):(p.ch||q.name))}</div><div class="cp">${gm?gmTag:q.n?`<span class="pcn">${q.n}</span>`:""}${p.ch||gm?esc(q.name):""}</div></div>`;}).join("")}</div>`:`<div class="sc-text empty">녹음을 올리면 화자가 여기 모여요.</div>`}</div>
-    <div class="sc-sec"><h4 data-en="SESSIONS">녹음</h4>${days.length?daysHTML(days):`<div class="sc-text empty">아직 녹음이 없어요. 목록 화면에서 txt를 올릴 때 시나리오를 '${esc(sc.name)}'(으)로 고르면 여기 묶여요.</div>`}</div>
+    <div class="sc-sec"><h4 data-en="SESSIONS">${days.length&&days.every(x=>x.nolog)?"회차":"녹음"}</h4>${days.length?daysHTML(days):`<div class="sc-text empty">아직 녹음이 없어요. 목록 화면에서 txt를 올릴 때 시나리오를 '${esc(sc.name)}'(으)로 고르면 여기 묶여요.</div>`}</div>
     ${S.db?revSectionHTML(sc):""}
     ${S.canAdmin?`    <div class="sc-sec"><h4 data-en="ACCESS">시나리오 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
       <div class="tip" style="margin-bottom:10px">링크와 비밀번호를 같이 받은 사람만 이 시나리오를 보고 고칠 수 있어요. 비밀번호를 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
@@ -1896,8 +1906,11 @@ function mergeScenEdit(L,base,d){
   if((d.og||"")!==(base.og||"")){if(d.og)L.og=d.og;else delete L.og;}
   if(JSON.stringify(d.aliases||[])!==JSON.stringify(base.aliases||[]))L.aliases=d.aliases;
   if((d.gm||null)!==(base.gm||null)){if(d.gm)L.gm=d.gm;else delete L.gm;}
+  {const pl=[...new Set((d.plays||[]).filter(x=>/^\d{4}-\d\d-\d\d$/.test(x)))].sort();if(JSON.stringify(pl)!==JSON.stringify(base.plays||[])){if(pl.length)L.plays=pl;else delete L.plays;}}
+  d.sp=(d.sp||[]).filter(p=>(p.name||"").trim());
   const bk=new Map((base.sp||[]).map(p=>[p.k,p])),dk=new Map((d.sp||[]).map(p=>[p.k,p]));
   let arr=(L.sp||[]).filter(p=>!(bk.has(p.k)&&!dk.has(p.k)));
+  (d.sp||[]).forEach(p=>{if(!bk.has(p.k)&&!arr.some(x=>x.k===p.k))arr.push(JSON.parse(JSON.stringify(p)));});
   (d.sp||[]).forEach(p=>{const b=bk.get(p.k)||{},l=arr.find(x=>x.k===p.k);if(!l)return;["name","ch","c"].forEach(f=>{if((p[f]||"")!==(b[f]||""))l[f]=p[f];});if((p.img||"")!==(b.img||"")){if(p.img)l.img=p.img;else delete l.img;}});
   if((d.sp||[]).map(p=>p.k).join()!==(base.sp||[]).map(p=>p.k).join()){
     const pos=new Map(d.sp.map((p,i)=>[p.k,i]));
@@ -1936,7 +1949,11 @@ function bindScen(){
   const pull=()=>{d.name=$("#e-name").value.trim()||d.name;d.system=$("#e-sys").value.trim();d.orig=$("#e-orig").value.trim();d.done=$("#e-done").checked;d.doneAt=d.done?$("#e-doneat").value:"";d.summary=$("#e-sum").value.replace(/\s+$/,"");
     document.querySelectorAll("[data-nm]").forEach(i=>{const v=i.value.trim();if(v)d.sp[+i.dataset.nm].name=v;});
     document.querySelectorAll("[data-ch]").forEach(i=>{d.sp[+i.dataset.ch].ch=i.value.trim();});
-    const g=document.querySelector("[data-gm]:checked");if(g){if(g.dataset.gm)d.gm=g.dataset.gm;else delete d.gm;}};
+    const g=document.querySelector("[data-gm]:checked");if(g){if(g.dataset.gm)d.gm=g.dataset.gm;else delete d.gm;}
+    if(document.querySelector(".plays"))d.plays=[...document.querySelectorAll("[data-play]")].map(i=>i.value);};
+  {const pa=$("#e-playadd");if(pa)pa.onclick=()=>{pull();d.plays=[...(d.plays||[]),new Date(Date.now()+9*3600e3).toISOString().slice(0,10)];render();};}
+  document.querySelectorAll("[data-playdel]").forEach(b=>b.onclick=()=>{pull();d.plays.splice(+b.dataset.playdel,1);render();});
+  {const sa=$("#e-spadd");if(sa)sa.onclick=()=>{pull();d.sp.push({k:"k"+rid(),name:"",c:COLORS[d.sp.length%COLORS.length]});render();setTimeout(()=>{const i=document.querySelector(`[data-nm="${d.sp.length-1}"]`);i&&i.focus();},0);};}
   document.querySelectorAll("[data-sw]").forEach(btn=>btn.onclick=()=>{pull();const p=d.sp[+btn.dataset.sw];p.c=COLORS[(COLORS.indexOf(p.c)+1)%COLORS.length];render();});
   window.__scPull=pull;
   {const fi=$("#e-avfile");let at=-1;
