@@ -1606,11 +1606,11 @@ function daysHTML(days,gear=true){
   return days.map((d,i)=>{
     // 온라인(코코포리아) 회차는 한 로그뿐이라 '1부' 칩 없이 한 줄로, 줄 전체가 링크
     if(d.parts.length===1&&d.parts[0].src==="ccfolia"){const p=d.parts[0];
-      return `<div class="day oday"><a class="oline" href="#s-${esc(p.id)}"><span class="nth">${i+1}회차</span><span class="odate">${esc(fmtDay(d.day))}</span><span class="ocnt">${p.n?p.n+"개 대사":""}</span><span class="ogo">›</span></a>${set(p)}${exp(d)}</div>`;}
+      return `<div class="day oday"><a class="oline" href="#s-${esc(p.id)}"><span class="nth">${i+1}회차</span><span class="odate">${esc(fmtDay(d.day))}</span><span class="ocnt">${p.n?p.n+"개 대사":""}</span><span class="ogo">›</span></a>${set(p)}</div>`;}
     return `<div class="day">
     <div class="day-h"><span class="nth">${i+1}회차</span><span>${esc(fmtDay(d.day))}</span></div>
     <div class="parts">${d.parts.map(p=>`<span class="partw"><a class="part" href="#s-${esc(p.id)}"><b>${p.part}부</b><span>${p.n?p.n+"개 대사":""}</span></a>${gear&&S.canAdmin&&S.db?`<button class="pset" data-edit="${esc(p.id)}" title="시나리오·날짜·순서·녹음 링크 고치기">⚙</button>`:""}</span>`).join("")}</div>${S.db&&d.parts.length?`<button class="ghost dexp" data-exps="${esc(d.parts[0].scen)}" data-expd="${esc(d.day)}" title="이 회차 로그를 HTML 파일로 받기">⬇ HTML</button>`:""}
-  </div>`;  }).join("");
+  </div>`;  }).join("")+(days.length&&days.every(d=>d.parts.length===1&&d.parts[0].src==="ccfolia")&&S.db?`<div class="allexp"><button class="ghost dexp all" data-exps="${esc(days[0].parts[0].scen)}" data-expd="*" title="모든 회차를 HTML 파일 하나로 받기">⬇ 전체 HTML</button></div>`:"");
 }
 async function gotoScen(name,edit){
   let sc=findScen(name);

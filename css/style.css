@@ -410,4 +410,7 @@ h1,h2,h3,.scen-h h3,.sc-top h2,.hometop h2{word-break:keep-all;overflow-wrap:any
 .oday .ocnt{font-size:12.5px;color:var(--faint);white-space:nowrap}
 .oday .ogo{color:var(--faint);font-size:16px}
 @media (max-width:640px){.oday .odate{min-width:0}.oday .ogo{display:none}}
+/* 온라인 캠페인: 모든 회차를 HTML 하나로 */
+.allexp{display:flex;justify-content:flex-end;padding-top:10px;margin-top:2px;border-top:1px dashed var(--line)}
+.dexp.all{font-weight:700}
 .oday .odate{white-space:nowrap}

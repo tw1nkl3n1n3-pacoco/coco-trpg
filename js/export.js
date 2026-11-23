@@ -1,19 +1,25 @@
 // ---------- HTML로 내보내기 (회차 단위, 코코포리아 로그 형식) ----------
 const xEm=t=>esc(t).replace(/\*\*([^*\n]+?)\*\*/g,"<strong>$1</strong>").replace(/\n/g,"<br>");
+// day가 "*"이면 그 시나리오의 모든 회차를 한 파일로 (온라인 캠페인용)
 async function buildDayHTML(scen,day){
   const sc=findScen(scen);
-  const ss=S.sessions.filter(s=>{const i=info(s);return i.scen===scen&&i.day===day;}).map(s=>({...s,...info(s)})).sort((a,b)=>a.part-b.part);
   const days=[...new Set(S.sessions.map(info).filter(i=>i.scen===scen).map(i=>i.day))].sort();
-  const nth=days.indexOf(day)+1;
+  const pick=day==="*"?days:[day];
   const g=gmKey(sc);
   const base=(sc?.sp||[]).filter(x=>x.k!==ALL).concat(ALLSP);
-  const parts=[];
-  for(const s of ss){
-    const snap=await S.db.collection(`sessions/${s.id}/chunks`).get();
-    const bl=snap.docs.map(d=>d.data()).sort((a,b)=>a.i-b.i).flatMap(c=>c.b||[]);
-    parts.push({part:s.part,bl,sp:base.concat((s.sp||[]).filter(o=>!base.some(x=>x.k===o.k)))});
+  const groups=[];
+  for(const d of pick){
+    const ss=S.sessions.filter(s=>{const i=info(s);return i.scen===scen&&i.day===d;}).map(s=>({...s,...info(s)})).sort((a,b)=>a.part-b.part);
+    const parts=[];
+    for(const s of ss){
+      const snap=await S.db.collection(`sessions/${s.id}/chunks`).get();
+      const bl=snap.docs.map(x=>x.data()).sort((a,b)=>a.i-b.i).flatMap(c=>c.b||[]);
+      parts.push({part:s.part,bl,sp:base.concat((s.sp||[]).filter(o=>!base.some(x=>x.k===o.k)))});
+    }
+    groups.push({day:d,nth:days.indexOf(d)+1,parts});
   }
-  const title=`${scen} ${nth}회차`;
+  const all=pick.length>1;
+  const title=all?`${scen} 전체 로그`:`${scen} ${groups[0].nth}회차`;
   // 같은 사람이 이어서 말하면 이름은 한 번만, 대사는 줄바꿈으로 붙여요
   const lines=(bl,sp)=>{
     const out=[];let i=0;
@@ -38,7 +44,9 @@ async function buildDayHTML(scen,day){
     }
     return out.join("\n");
   };
-  const body=parts.map(p=>(parts.length>1?`<h2>${p.part}부</h2>`:"")+lines(p.bl,p.sp)).join("\n");
+  const partsHTML=parts=>parts.map(p=>(parts.length>1?`<h2>${p.part}부</h2>`:"")+lines(p.bl,p.sp)).join("\n");
+  const body=all?groups.map(G=>`<section class="dayblk"><h2 class="dayh"><span>${G.nth}회차</span>${esc(fmtDay(G.day))}</h2>\n${partsHTML(G.parts)}</section>`).join("\n"):partsHTML(groups[0].parts);
+  const sub=all?`${groups.length}회차 · ${fmtDay(pick[0])} ~ ${fmtDay(pick.at(-1))}`:fmtDay(pick[0]);
   return `<!DOCTYPE html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;700&family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet">
@@ -50,6 +58,10 @@ header{border-bottom:1px solid #ddd;margin-bottom:18px;padding-bottom:10px}
 header h1{font-size:20px;margin:0}header div{color:#888;font-size:13px}
 h2{font-size:14px;color:#999;font-weight:600;text-align:center;margin:28px 0 12px;display:flex;align-items:center;gap:10px}
 h2:before,h2:after{content:"";flex:1;border-top:1px solid #e3e3e3}
+.dayblk+.dayblk{margin-top:44px}
+h2.dayh{font-size:17px;color:#222;font-weight:700;justify-content:flex-start;margin:0 0 14px;padding-bottom:8px;border-bottom:2px solid #222}
+h2.dayh:before,h2.dayh:after{display:none}
+h2.dayh span{font-size:12px;font-weight:700;color:#fff;background:#222;border-radius:5px;padding:1px 8px}
 p{margin:0;padding:6px 2px;border-bottom:1px solid #ece7df;word-break:keep-all;overflow-wrap:anywhere}
 .nm b{font-weight:700}.nm small{font-size:12px;font-weight:400;opacity:.85}
 .gm{background:#faf6ee;border-left:3px solid var(--c);padding:6px 8px}
@@ -77,7 +89,7 @@ ${EXPORT_CSS[themeOf(sc)]||EXPORT_CSS[""]}
 html,body{background:transparent!important}
 main{max-width:none!important;margin:0!important;border:0!important;box-shadow:none!important;border-radius:0!important;background:transparent!important;padding:20px 20px 40px!important}
 </style></head><body class="t-${themeOf(sc)||"base"}"><main>
-<header><h1>${esc(title)}</h1><div>${esc(fmtDay(day))}${sc?.system?" · "+esc(sc.system):""}</div></header>
+<header><h1>${esc(title)}</h1><div>${esc(sub)}${sc?.system?" · "+esc(sysLabel(sc.system)):""}</div></header>
 ${body}
 </main></body></html>`;
 }
@@ -97,7 +109,8 @@ p{border-bottom-color:#e3e7ec}
 .dice{background:#10151f;border-left:3px solid #e3173e}.dice,.dice .tx,.dice .nm b{color:#eef2f7!important}.dice .dr{color:#5fd6ef}
 .res{border-radius:0;font-style:italic}.res.critical{background:#e3173e}
 .hand{font-family:inherit;background:#fff;border:1px solid #10151f;border-radius:0;box-shadow:5px 5px 0 rgba(16,21,31,.14);padding-top:0}.hand .hlab{background:#10151f;color:#fff;margin:0 -18px 10px;padding:6px 18px;letter-spacing:.14em}
-.stat{color:#0e7f99;background:#e8f6fa;border-left:3px solid #18a4c4;padding:3px 10px}`,
+.stat{color:#0e7f99;background:#e8f6fa;border-left:3px solid #18a4c4;padding:3px 10px}
+h2.dayh{font-style:italic;font-weight:800;border-bottom:3px solid #10151f;color:#10151f}h2.dayh span{background:#10151f;border-radius:0;box-shadow:inset -3px 0 0 #e3173e;font-style:italic}`,
 "":`body{background:#efe3cc}
 main{background:#fffdf9;border:1px solid #d9c4a3;border-radius:14px;margin:28px auto;box-shadow:0 2px 12px rgba(80,50,20,.08)}
 header{border-bottom:2px solid #c9a46a}header h1{font-family:"Gowun Batang",serif;color:#5a3a1a;font-size:22px}
@@ -157,7 +170,7 @@ async function exportDay(scen,day){
     const days=[...new Set(S.sessions.map(info).filter(i=>i.scen===scen).map(i=>i.day))].sort();
     const a=document.createElement("a");
     a.href=URL.createObjectURL(new Blob([html],{type:"text/html"}));
-    a.download=`${scen} ${days.indexOf(day)+1}회차.html`.replace(/[\\/:*?"<>|]/g,"_");
+    a.download=(day==="*"?`${scen} 전체 로그.html`:`${scen} ${days.indexOf(day)+1}회차.html`).replace(/[\\/:*?"<>|]/g,"_");
     document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
   }catch(e){toast("내보내기에 실패했어요: "+(e.code||e.message||e),3500);}
 }
