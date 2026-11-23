@@ -1,4 +1,4 @@
-// 코코 로그 사이트 Firestore 보안 규칙 · 규칙 버전 2
+// 코코 로그 사이트 Firestore 보안 규칙 · 규칙 버전 3
 // 관리자 이메일 자리는 사이트 관리자 페이지에서 복사하면 자동으로 채워져요.
 rules_version = '2';
 service cloud.firestore {
@@ -33,7 +33,37 @@ service cloud.firestore {
     }
     // 규칙 버전 확인용 (사이트가 규칙이 최신인지 확인해요 · 숫자를 바꾸지 마세요)
     match /rulesv/{v} {
-      allow get: if v == "2";
+      allow get: if v == "3";
+    }
+    // 세션 후기 — 누구나 읽고, 쓸 때 정한 '후기 비밀번호'로만 고쳐요 (주인은 언제나, 비밀번호 초기화도 주인만)
+    function revOk(rid) {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/revunlocks/$(rid + '_' + request.auth.uid))
+        && get(/databases/$(database)/documents/revunlocks/$(rid + '_' + request.auth.uid)).data.pw
+           == get(/databases/$(database)/documents/revkeys/$(rid)).data.pw;
+    }
+    match /revkeys/{rid} {
+      allow read, update, delete: if isOwner();
+      allow create: if request.auth != null && request.resource.data.pw is string
+        && request.resource.data.pw.size() >= 4 && request.resource.data.pw.size() <= 40;
+    }
+    match /revunlocks/{key} {
+      allow read: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow create, update: if request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && key == request.resource.data.rid + '_' + request.auth.uid
+        && request.resource.data.pw == getAfter(/databases/$(database)/documents/revkeys/$(request.resource.data.rid)).data.pw;
+    }
+    match /reviews/{rid} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && existsAfter(/databases/$(database)/documents/revkeys/$(rid))
+        && exists(/databases/$(database)/documents/scenarios/$(request.resource.data.scid))
+        && request.resource.size() <= 9
+        && (!('text' in request.resource.data) || request.resource.data.text.size() <= 20000);
+      allow update: if (isOwner() || revOk(rid)) && request.resource.data.scid == resource.data.scid
+        && (!('text' in request.resource.data) || request.resource.data.text.size() <= 20000);
+      allow delete: if isOwner() || revOk(rid);
     }
     // 시나리오
     match /scenarios/{id} {

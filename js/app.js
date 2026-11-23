@@ -131,7 +131,8 @@ function siteEdit(anchor){
   });
 }
 // ---------- 관리자 페이지 (#admin) ----------
-const RULES_VERSION="2"; // firebase/*.rules 의 rulesv 숫자와 같아야 해요
+const RULES_VERSION="3"; // firebase/firestore.rules 의 rulesv 숫자와 같아야 해요
+const ST_RULES_VERSION="2"; // firebase/storage.rules 의 rulesv 숫자
 S.chk={fs:"?",st:"?",build:null,newer:null,upstream:"",commits:null,err:""};
 const adminAlert=()=>S.chk.fs==="old"||S.chk.st==="old"||(S.chk.newer||0)>0;
 const projId=()=>(window.FIREBASE_CONFIG||{}).projectId||"";
@@ -140,7 +141,7 @@ async function checkRules(){
   try{await S.db.doc("rulesv/"+RULES_VERSION).get();S.chk.fs="ok";}
   catch(e){S.chk.fs=e&&e.code==="permission-denied"?"old":"err";}
   if(S.storage&&(window.FIREBASE_CONFIG||{}).storageBucket){
-    try{await S.storage.ref("rulesv/"+RULES_VERSION).getMetadata();S.chk.st="ok";}
+    try{await S.storage.ref("rulesv/"+ST_RULES_VERSION).getMetadata();S.chk.st="ok";}
     catch(e){const c=e&&e.code||"";S.chk.st=c.includes("object-not-found")?"ok":c.includes("unauthorized")||c.includes("unauthenticated")?"old":"err";}
   }else S.chk.st="none";
 }
@@ -371,6 +372,9 @@ function route(){
   const h=location.hash.slice(1);
   const sid=h.startsWith("s-")?h.slice(2):null;
   const cid=h.startsWith("c-")?h.slice(2):null;
+  const rid=h.startsWith("r-")?h.slice(2):null;
+  if(rid){if(!S.revPage||S.revPage.rid!==rid){S.cid=null;openSession(null);openRevPage(rid);}return;}
+  if(S.revPage){S.revPage=null;if(!sid&&!cid){render();}}
   const adm=h==="admin";
   if(adm!==!!S.admin){S.admin=adm;if(!sid&&!cid&&!S.sid&&!S.cid){render();window.scrollTo(0,0);return;}}
   if(sid!==S.sid||cid!==S.cid){if(cid)delete SCC[cid];S.cid=cid;S.scEdit=!!cid&&S.pendingEdit===cid;S.pendingEdit=null;S.scDraft=null;openSession(sid);window.scrollTo(0,0);}
@@ -722,15 +726,16 @@ function themeOf(sc){
   return "";
 }
 function applyTheme(){
-  const sc=S.cid?(S.scEdit&&S.scDraft?S.scDraft:scenById(S.cid)):(S.sid&&S.meta?curScen():null);
+  const sc=S.revPage?S.revPage.sc:S.cid?(S.scEdit&&S.scDraft?S.scDraft:scenById(S.cid)):(S.sid&&S.meta?curScen():null);
   // 시나리오 정보가 아직 안 왔으면 양피지 대신 메인 화면 색으로 기다려요
-  const t=!S.cid&&!S.sid&&!S.local?"plain":!sc&&!S.local?"plain":themeOf(sc);
+  const t=S.revPage?(sc?themeOf(sc):"plain"):!S.cid&&!S.sid&&!S.local?"plain":!sc&&!S.local?"plain":themeOf(sc);
   if((document.body.dataset.theme||"")!==t){if(t)document.body.dataset.theme=t;else delete document.body.dataset.theme;}
-  document.body.dataset.page=S.cid?"scen":S.sid?"log":"home";
+  document.body.dataset.page=S.revPage?"scen":S.cid?"scen":S.sid?"log":"home";
 }
 function render(){
   const app=$("#app");
   refreshCanWrite();applyTheme();if(typeof setTitle==="function")setTitle();
+  if(S.revPage){app.innerHTML=revPageHTML();return;}
   if(S.cid){app.innerHTML=scenHTML();bindScen();return;}
   if(!S.sid&&S.admin){app.innerHTML=adminHTML();bindAdmin();return;}
   if(!S.sid){app.innerHTML=homeHTML();bindHome();return;}
@@ -1779,6 +1784,7 @@ function scenHTML(){
     <div class="sc-sec"><h4 data-en="SUMMARY">개요</h4>${txt(sc.summary,"아직 개요가 없어요."+(S.canWrite?" ✎ 수정을 눌러 써 주세요.":""))}</div>
     <div class="sc-sec"><h4 data-en="CAST">플레이어 · 등장인물</h4>${sc.sp.length?`<div class="castrow">${gmFirst(sc.sp.filter(p=>p.k===gmKey(sc)||!isAnon(p)&&!/&/.test(p.name)||p.ch),gmKey(sc)).map(p=>{const gm=p.k===gmKey(sc),q=pcSplit(p.name);return `<div class="cc${gm?" gm":""}" style="--c:${fixC(p.c)}"><div class="av">${avHTML(p,gm)}</div><div class="cn">${esc(gm?(p.ch||gmWord(sc)):(p.ch||q.name))}</div><div class="cp">${gm?gmTag:q.n?`<span class="pcn">${q.n}</span>`:""}${p.ch||gm?esc(q.name):""}</div></div>`;}).join("")}</div>`:`<div class="sc-text empty">녹음을 올리면 화자가 여기 모여요.</div>`}</div>
     <div class="sc-sec"><h4 data-en="SESSIONS">녹음</h4>${days.length?daysHTML(days):`<div class="sc-text empty">아직 녹음이 없어요. 목록 화면에서 txt를 올릴 때 시나리오를 '${esc(sc.name)}'(으)로 고르면 여기 묶여요.</div>`}</div>
+    ${S.db?revSectionHTML(sc):""}
     ${S.canAdmin?`    <div class="sc-sec"><h4 data-en="ACCESS">시나리오 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
       <div class="tip" style="margin-bottom:10px">링크와 비밀번호를 같이 받은 사람만 이 시나리오를 보고 고칠 수 있어요. 비밀번호를 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
       ${S.secrets&&S.secrets[sc.id]?`<div class="pwrow"><code class="pw">${esc(S.secrets[sc.id])}</code>
@@ -1867,6 +1873,7 @@ function bindScen(){
   const rg=$("#regenpw");if(rg)rg.onclick=()=>confirmBox("비밀번호를 새로 만들까요? 예전 비밀번호로 연 사람은 모두 다시 잠겨요.","새로 만들기",async()=>{try{await S.db.doc("secrets/"+scx.id).set({pw:genPw()});toast("새 비밀번호를 만들었어요");}catch(e){toast("바꾸지 못했어요");}});
   const b=$("#scback");if(b)b.onclick=()=>{location.hash="";};
   const e=$("#scedit");if(e)e.onclick=()=>{S.scEdit=true;render();};
+  if(!S.scEdit){const sc0=scenById(S.cid);if(sc0)bindRevs(sc0);}
   if(!S.scEdit)return;
   const sc=scenById(S.cid);if(!sc){S.scEdit=false;return;}
   const d=S.scDraft;
@@ -2025,6 +2032,118 @@ function ccForm(cc,box){
     }}finally{S.importing=false;}
     location.hash="s-"+first;
   };
+}
+// ---------- 세션 후기 ----------
+async function copyText(t,ok){try{await navigator.clipboard.writeText(t);toast(ok||"복사했어요");}catch(e){prompt("이 주소를 복사해 주세요",t);}}
+// reviews/{rid}: 누구나 읽기 · revkeys/{rid}: 후기 비밀번호(주인만 읽기) · revunlocks: 비밀번호를 맞게 넣은 기록
+S.revs={};S.revForm=null;S.revPage=null;
+function watchRevs(scid){
+  if(!S.db||S.revs[scid]!==undefined)return;
+  S.revs[scid]=null;
+  S.db.collection("reviews").where("scid","==",scid).onSnapshot(snap=>{
+    S.revs[scid]=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.created||0)-(b.created||0));
+    // 후기를 쓰는 중이면 다시 그리지 않아요 (쓰던 글이 지워지지 않게)
+    if(S.cid===scid&&!S.scEdit&&!(S.revForm&&S.revForm.scid===scid))render();
+  },()=>{S.revs[scid]=[];});
+}
+const revUrl=rid=>location.href.split("#")[0].replace(/\?.*$/,"")+"#r-"+rid;
+function revWho(sc,r){const p=(sc?.sp||[]).find(x=>x.k===r.k);return {p,name:p?pcSplit(p.name).name:r.name||"?",ch:p?p.ch:r.ch||"",gm:!!p&&p.k===gmKey(sc)};}
+function revCardHTML(sc,r,inPage){
+  const w=revWho(sc,r);
+  return `<div class="rvcard">${inPage?"":`<button class="x" data-rvclose title="닫기">×</button>`}<div class="rv-k">SESSION REVIEW</div>
+    <div class="rv-t">${esc(sc?.name||"")}</div><div class="rv-s">${[sc?.orig,sc?.system?sysLabel(sc.system):""].filter(Boolean).map(esc).join(" · ")}</div>
+    <div class="rv-body">${xEm(r.text||"")}</div>
+    <div class="rv-sign">— ${esc(w.gm?gmWord(sc).replace(/ /g,""):"")}${w.gm?" ":""}${esc(w.name)}${w.ch&&!w.gm?` (${esc(w.ch)})`:""}</div>
+    <div class="rv-foot"><span>${esc(site().title)}</span>${inPage?`<a href="#c-${esc(r.scid)}" class="rv-go">시나리오 보기 ›</a>`:`<button class="pri" data-rvcopy="${esc(r.id)}">🔗 이 후기 링크 복사</button>`}</div></div>`;
+}
+function revSectionHTML(sc){
+  watchRevs(sc.id);
+  const list=S.revs[sc.id]||[];
+  const f=S.revForm&&S.revForm.scid===sc.id?S.revForm:null;
+  const cast=gmFirst(sc.sp.filter(p=>p.k===gmKey(sc)||!isAnon(p)&&!/&/.test(p.name)||p.ch),gmKey(sc));
+  const rows=list.map(r=>{const w=revWho(sc,r);
+    return `<div class="rvr"><span class="av${w.gm?" gm":""}" style="--c:${fixC(w.p?.c||"#888")}">${w.p?avHTML(w.p,w.gm):`<span class="ini">${esc((w.ch||w.name).slice(0,1))}</span>`}</span>
+      <span class="nm"><b>${esc(w.name)}</b>${w.ch||w.gm?`<small>${esc(w.gm?gmWord(sc):w.ch)}</small>`:""}</span>
+      ${r.url?`<a class="ext" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">외부 후기 ↗</a>`:`<button class="go" data-rvopen="${esc(r.id)}">후기 보기</button><button class="cp ghost" data-rvcopy="${esc(r.id)}" title="이 후기 링크 복사">🔗</button>`}
+      <button class="ghost cp" data-rvedit="${esc(r.id)}" title="고치기">✎</button>${S.canAdmin?`<button class="ghost cp" data-rvreset="${esc(r.id)}" title="후기 비밀번호 초기화">🔑</button><button class="ghost cp" data-rvdel="${esc(r.id)}" title="지우기">🗑</button>`:""}</div>`;}).join("");
+  const form=f?`<div class="rvform">
+      ${f.id?`<div class="tip">${esc(revWho(sc,f).name)} 님의 후기를 고쳐요</div>`:`<label>누구의 후기예요?<select id="rv-k">${cast.map(p=>`<option value="${esc(p.k)}"${f.k===p.k?" selected":""}>${esc(pcSplit(p.name).name)} · ${esc(p.k===gmKey(sc)?gmWord(sc):p.ch||"")}</option>`).join("")}</select></label>`}
+      <div class="tabs"><button type="button" data-rvmode="text" class="${f.mode==="text"?"on":""}">여기에 쓰기</button><button type="button" data-rvmode="url" class="${f.mode==="url"?"on":""}">링크 붙이기</button></div>
+      ${f.mode==="text"?`<textarea id="rv-text" placeholder="후기를 적어 주세요. 저장하면 이 후기만 따로 볼 수 있는 링크가 생겨요.">${esc(f.text||"")}</textarea>`:`<input type="url" id="rv-url" value="${esc(f.url||"")}" placeholder="https:// (블로그·X·포스타입 등에 쓴 후기 주소)">`}
+      ${f.id?"":`<label>후기 비밀번호 <span class="tip" style="display:inline">· 나중에 이 후기를 고칠 때 써요${S.canAdmin?" (주인은 비워도 돼요)":""}</span><input type="password" id="rv-pw" autocomplete="new-password" placeholder="4글자 이상"></label>`}
+      <div class="rv-btns" style="margin-top:0"><button class="pri" id="rv-save">저장</button><button class="ghost" id="rv-cancel">취소</button><span id="rv-msg" class="tip"></span></div></div>`:"";
+  if(!list.length&&!f&&!S.db)return "";
+  return `<div class="sc-sec rvsec"><h4 data-en="REVIEWS">세션 후기</h4>${rows?`<div class="rvlist">${rows}</div>`:""}${form}
+    ${f?"":`<div class="rv-btns"><button class="${list.length?"":"pri"}" id="rv-add">＋ 후기 남기기</button></div>`}</div>`;
+}
+function revPopup(sc,r){
+  const ov=document.createElement("div");ov.className="rvov";ov.innerHTML=revCardHTML(sc,r,false);document.body.appendChild(ov);
+  const close=()=>ov.remove();ov.onclick=e=>{if(e.target===ov||e.target.closest("[data-rvclose]"))close();};
+  ov.querySelector("[data-rvcopy]").onclick=()=>copyText(revUrl(r.id),"후기 링크를 복사했어요");
+  document.addEventListener("keydown",function k(e){if(e.key==="Escape"){close();document.removeEventListener("keydown",k);}});
+}
+async function revUnlock(rid,pw){
+  if(!S.authUser)await S.auth.signInAnonymously();
+  const uid=S.auth.currentUser.uid;
+  await S.db.doc(`revunlocks/${rid}_${uid}`).set({rid,uid,pw:String(pw).trim(),at:Date.now()});
+}
+function bindRevs(sc){
+  const list=S.revs[sc.id]||[],byId=id=>list.find(x=>x.id===id);
+  document.querySelectorAll("[data-rvopen]").forEach(b=>b.onclick=()=>revPopup(sc,byId(b.dataset.rvopen)));
+  document.querySelectorAll(".rvsec [data-rvcopy]").forEach(b=>b.onclick=()=>copyText(revUrl(b.dataset.rvcopy),"후기 링크를 복사했어요"));
+  const add=$("#rv-add");if(add)add.onclick=()=>{S.revForm={scid:sc.id,mode:"text",k:(sc.sp.find(p=>p.k!==gmKey(sc))||sc.sp[0]||{}).k};render();};
+  document.querySelectorAll("[data-rvedit]").forEach(b=>b.onclick=async()=>{const r=byId(b.dataset.rvedit);if(!r)return;
+    if(!S.canAdmin){const pw=prompt(`${revWho(sc,r).name} 님의 후기 비밀번호를 넣어 주세요`);if(!pw)return;
+      try{await revUnlock(r.id,pw);}catch(e){toast("비밀번호가 틀렸어요");return;}}
+    S.revForm={scid:sc.id,id:r.id,k:r.k,mode:r.url?"url":"text",text:r.text||"",url:r.url||""};render();});
+  document.querySelectorAll("[data-rvreset]").forEach(b=>b.onclick=async()=>{const r=byId(b.dataset.rvreset);if(!r)return;
+    const pw=prompt(`${revWho(sc,r).name} 님 후기의 새 비밀번호 (4글자 이상)`);if(!pw)return;if(pw.trim().length<4){toast("4글자 이상으로 해 주세요");return;}
+    try{await S.db.doc("revkeys/"+r.id).set({pw:pw.trim()});toast("후기 비밀번호를 바꿨어요. 쓴 분께 새 비밀번호를 알려 주세요",4000);}catch(e){writeFail(e);}});
+  document.querySelectorAll("[data-rvdel]").forEach(b=>b.onclick=async()=>{const r=byId(b.dataset.rvdel);if(!r||!confirm(`${revWho(sc,r).name} 님의 후기를 지울까요? 되돌릴 수 없어요.`))return;
+    try{await S.db.doc("reviews/"+r.id).delete();await S.db.doc("revkeys/"+r.id).delete().catch(()=>{});}catch(e){writeFail(e);}});
+  const f=S.revForm;if(!f||f.scid!==sc.id)return;
+  const pull=()=>{const k=$("#rv-k");if(k)f.k=k.value;const t=$("#rv-text");if(t)f.text=t.value;const u=$("#rv-url");if(u)f.url=u.value.trim();};
+  document.querySelectorAll("[data-rvmode]").forEach(b=>b.onclick=()=>{pull();f.mode=b.dataset.rvmode;render();});
+  $("#rv-cancel").onclick=()=>{S.revForm=null;render();};
+  $("#rv-save").onclick=async()=>{pull();const msg=$("#rv-msg");
+    const body=f.mode==="text"?{text:(f.text||"").replace(/\s+$/,""),url:firebase.firestore.FieldValue.delete()}:{url:f.url,text:firebase.firestore.FieldValue.delete()};
+    if(f.mode==="text"&&!body.text){msg.textContent="후기를 적어 주세요";return;}
+    if(f.mode==="url"&&!/^https?:\/\/\S+\.\S+/.test(f.url||"")){msg.textContent="https://로 시작하는 주소를 넣어 주세요";return;}
+    const p=sc.sp.find(x=>x.k===f.k)||{};
+    try{
+      if(f.id){await S.db.doc("reviews/"+f.id).update({...body,updated:Date.now()});}
+      else{let pw=($("#rv-pw")?.value||"").trim();
+        if(!pw&&S.canAdmin)pw=Math.random().toString(36).slice(2,10);
+        if(pw.length<4){msg.textContent="후기 비밀번호를 4글자 이상 넣어 주세요";return;}
+        if(!S.authUser)await S.auth.signInAnonymously();
+        const uid=S.auth.currentUser.uid,rid="r"+Date.now().toString(36)+rid4();
+        const data={scid:sc.id,k:f.k,name:pcSplit(p.name||"").name,ch:p.ch||"",created:Date.now(),updated:Date.now()};
+        if(f.mode==="text")data.text=body.text;else data.url=f.url;
+        const bt=S.db.batch();
+        bt.set(S.db.doc("revkeys/"+rid),{pw});
+        bt.set(S.db.doc(`revunlocks/${rid}_${uid}`),{rid,uid,pw,at:Date.now()});
+        bt.set(S.db.doc("reviews/"+rid),data);
+        await bt.commit();
+      }
+      S.revForm=null;toast("후기를 저장했어요");render();
+    }catch(e){msg.textContent="저장하지 못했어요: "+(e.code==="permission-denied"?"권한이 없어요 (비밀번호를 다시 확인해 주세요)":e.code||e.message);}
+  };
+}
+const rid4=()=>Math.random().toString(36).slice(2,6);
+// 후기 하나만 보는 페이지 (#r-후기id) — 비밀번호 없이 열려요
+async function openRevPage(rid){
+  S.revPage={rid,loading:true};render();
+  try{const d=await S.db.doc("reviews/"+rid).get();if(!d.exists){S.revPage={rid,err:"후기를 찾을 수 없어요."};render();return;}
+    const r={id:d.id,...d.data()};const s=await S.db.doc("scenarios/"+r.scid).get();
+    S.revPage={rid,r,sc:s.exists?{id:s.id,...s.data()}:null};}
+  catch(e){S.revPage={rid,err:"후기를 불러오지 못했어요."};}
+  render();
+}
+function revPageHTML(){
+  const P=S.revPage||{};
+  if(P.loading)return `<div class="rvpage"><div class="notice">불러오는 중…</div></div>`;
+  if(P.err)return `<div class="rvpage"><div class="notice bad">${esc(P.err)}</div></div>`;
+  return `<div class="rvpage">${revCardHTML(P.sc,P.r,true)}</div>`;
 }
 function previewLocal(r,inf){
   const {meta,chunks}=buildSession(r,inf);
