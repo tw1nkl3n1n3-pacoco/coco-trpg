@@ -1799,8 +1799,8 @@ function scenHTML(){
       ${S.lockPick?`<div class="lkpw"><div class="who">${S.lockPick==="ext"?`외부인은 로그를 <span class="me">읽기만</span> 할 수 있어요`:`<span class="me">${esc(meName(sc,S.lockPick))}</span>(으)로 들어가요`}</div>
         <form id="unlockf"><input type="text" id="unlockpw" placeholder="열람 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form>
         <div class="tip" id="unlockmsg" style="margin-top:8px"></div></div>`:`<div class="guest">같이 플레이한 친구에게 받은 비밀번호가 필요해요</div>`}
-      </div><div class="homefoot"><button class="ghost" id="scback">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
-    </div></div>`;
+      <div class="homefoot"><button class="ghost" id="scback">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
+    </div></div></div>`;
   const days=(groups().find(g=>g.scen===sc.name)||{days:[]}).days;
   const txt=(v,ph)=>v?`<div class="sc-text">${esc(v)}</div>`:`<div class="sc-text empty">${ph}</div>`;
   if(S.scEdit){
