@@ -1793,13 +1793,13 @@ function scenHTML(){
     return `<div class="sc-page"><button class="ghost" id="scback">← 목록</button><div class="notice">이 세션을 찾을 수 없어요.</div></div>`;
   }
   // 비밀번호를 넣기 전에는 시나리오 페이지 대신 잠금 화면만: 누구로 들어갈지 고르고 비밀번호
-  if(!isOpen(sc.id))return `<div class="sc-page lockpage"><div class="lkwrap">
+  if(!isOpen(sc.id))return `<div class="sc-page lockpage"><div class="lkwrap"><div class="lkbox">
       <div class="lockicon">🔒</div><h2>${esc(sc.name)}</h2><div class="tip">잠긴 세션이에요</div>
       ${meChipsHTML(sc,S.lockPick,true)}
       ${S.lockPick?`<div class="lkpw"><div class="who">${S.lockPick==="ext"?`외부인은 로그를 <span class="me">읽기만</span> 할 수 있어요`:`<span class="me">${esc(meName(sc,S.lockPick))}</span>(으)로 들어가요`}</div>
         <form id="unlockf"><input type="text" id="unlockpw" placeholder="열람 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form>
         <div class="tip" id="unlockmsg" style="margin-top:8px"></div></div>`:`<div class="guest">같이 플레이한 친구에게 받은 비밀번호가 필요해요</div>`}
-      <div class="homefoot"><button class="ghost" id="scback">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
+      </div><div class="homefoot"><button class="ghost" id="scback">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
     </div></div>`;
   const days=(groups().find(g=>g.scen===sc.name)||{days:[]}).days;
   const txt=(v,ph)=>v?`<div class="sc-text">${esc(v)}</div>`:`<div class="sc-text empty">${ph}</div>`;
