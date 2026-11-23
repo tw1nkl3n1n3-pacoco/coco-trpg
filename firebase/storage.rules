@@ -1,4 +1,4 @@
-// 코코 로그 사이트 Storage(녹음 파일) 보안 규칙 · 규칙 버전 2
+// 코코 로그 사이트 Storage(녹음 파일·사진·이모티콘) 보안 규칙 · 규칙 버전 3
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
@@ -14,13 +14,30 @@ service firebase.storage {
     }
     // 규칙 버전 확인용 (숫자를 바꾸지 마세요)
     match /rulesv/{v} {
-      allow read: if v == "2";
+      allow read: if v == "3";
     }
     match /audio/{scid}/{file} {
       allow read: if isOwner() || unlocked(scid);
       allow create, update: if isOwner()
         && request.resource.size < 500 * 1024 * 1024
         && request.resource.contentType.matches('(audio|video)/.*');
+      allow delete: if isOwner();
+    }
+    // 후기에 넣은 사진: 시나리오를 연 사람이 자기 칸(uid)에 올려요 · 후기 링크로 누구나 볼 수 있어요
+    match /img/{scid}/{uid}/{file} {
+      allow read: if true;
+      allow create: if request.auth != null && request.auth.uid == uid
+        && (isOwner() || unlocked(scid))
+        && request.resource.size < 4 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow delete: if isOwner() || (request.auth != null && request.auth.uid == uid);
+    }
+    // 사이트 공용 이모티콘: 주인만 올려요
+    match /emoji/{file} {
+      allow read: if true;
+      allow create, update: if isOwner()
+        && request.resource.size < 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
       allow delete: if isOwner();
     }
   }

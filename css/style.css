@@ -540,3 +540,40 @@ body.cmwide .row.hascm .act .cmw{display:none}
 .cmsheet .grab{width:38px;height:4px;border-radius:2px;background:var(--line);margin:4px auto 10px}
 .cmq{font-size:12.5px;color:var(--dim);border-left:3px solid #12a35a;padding:2px 0 2px 9px;margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cmsheet .cmh .n{font-size:13.5px}.cmsheet .cmt{font-size:14px}.cmsheet .cmta{font-size:14px}
+/* 이모티콘 · 블로그식 글쓰기 */
+img.emo{width:1.6em;height:1.6em;vertical-align:-.45em;margin:0 1px;object-fit:contain;display:inline}
+.wed{border:1px solid var(--line);border-radius:10px;background:var(--panel,#fff);position:relative;margin-top:6px}
+.wtb{display:flex;flex-wrap:wrap;gap:1px;align-items:center;padding:5px 6px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--panel,#fff) 94%,#000);border-radius:10px 10px 0 0;position:sticky;top:var(--hdr,0px);z-index:3}
+.wtb button{background:none!important;border:1px solid transparent!important;border-radius:6px!important;min-width:30px;height:30px;padding:0 6px!important;font-size:14px;color:var(--ink)!important;clip-path:none!important;box-shadow:none!important;display:inline-flex;align-items:center;justify-content:center;font-family:inherit}
+.wtb button:hover,.wtb button.on{background:rgba(0,0,0,.07)!important;border-color:var(--line)!important}
+.wtb .sep{width:1px;height:18px;background:var(--line);margin:0 4px}
+.wtb .em{color:#e0a400!important;font-size:17px}
+.wtb .cdot{width:14px;height:14px;border-radius:50%;background:conic-gradient(#e0263d,#e0a400,#12a35a,#2563eb,#7a4a9e,#e0263d)}
+.wbody{min-height:220px;max-height:70vh;overflow:auto;padding:14px 16px;font-size:15px;line-height:1.75;outline:none;word-break:keep-all;overflow-wrap:anywhere;color:var(--ink)}
+.wbody:empty::before{content:attr(data-ph);color:var(--faint)}
+.wbody h3,.rv-body.rich h3{font-size:18px;margin:8px 0 4px;line-height:1.5}
+.wbody blockquote,.rv-body.rich blockquote{border-left:3px solid var(--line);margin:8px 0;padding:2px 12px;color:var(--dim)}
+.wbody img.pic,.rv-body.rich img.pic{max-width:100%;height:auto;border-radius:8px;display:block;margin:10px auto}
+.wbody hr,.rv-body.rich hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+.wbody a,.rv-body.rich a{color:#2563eb;text-decoration:underline}
+.rv-body.rich{white-space:normal}
+.rv-body.rich p{margin:0 0 6px}
+.emopop{position:absolute;right:6px;top:42px;width:min(260px,86vw);background:var(--panel,#fff);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.16);padding:10px;z-index:20}
+.emopop .tt{font-size:12px;color:var(--dim);margin-bottom:6px;display:flex}.emopop .tt span{margin-left:auto}
+.emopop .g{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;max-height:240px;overflow:auto}
+.emopop .g button{background:none!important;border:1px solid transparent!important;padding:4px 2px!important;border-radius:8px!important;display:flex;flex-direction:column;align-items:center;font-size:10px;color:var(--dim)!important;clip-path:none!important;box-shadow:none!important;height:auto;min-width:0}
+.emopop .g button:hover{background:rgba(0,0,0,.05)!important}
+.emopop .g img{width:34px;height:34px;object-fit:contain}
+.emopop .g span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wcolor{position:absolute;left:150px;top:42px;display:flex;gap:6px;padding:8px;background:var(--panel,#fff);border:1px solid var(--line);border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.14);z-index:20}
+.wcolor button{width:22px;height:22px;border-radius:50%!important;border:2px solid #fff!important;box-shadow:0 0 0 1px var(--line)!important;padding:0!important;min-width:0;clip-path:none!important}
+.wcolor .none{background:var(--panel,#fff)!important;color:var(--dim)!important;font-size:11px}
+.emadm .emrow{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0}
+.emadm .it{display:flex;flex-direction:column;align-items:center;font-size:12px;gap:3px;width:64px;position:relative}
+.emadm .it img{width:44px;height:44px;object-fit:contain}
+.emadm .it span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.emadm .it .x{position:absolute;right:0;top:-6px;font-size:11px;color:var(--dim);background:none!important;border:0!important;padding:0 2px!important;min-height:0;clip-path:none!important;box-shadow:none!important}
+.emadm .emadd{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.emadm .up{width:44px;height:44px;border:1px dashed var(--line)!important;border-radius:10px!important;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--dim)!important;background:none!important;padding:0!important;overflow:hidden;clip-path:none!important}
+.emadm .up img{width:100%;height:100%;object-fit:contain}
+@media(max-width:640px){.wcolor{left:10px}}
