@@ -410,3 +410,5 @@ h1,h2,h3,.scen-h h3,.sc-top h2,.hometop h2{word-break:keep-all;overflow-wrap:any
 .oday .ocnt{font-size:12.5px;color:var(--faint);white-space:nowrap}
 .oday .ogo{color:var(--faint);font-size:16px}
 @media (max-width:640px){.oday .odate{min-width:0}.oday .ogo{display:none}}
+.oday .odate{white-space:nowrap}
+.ccfix{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px}.ccfix select{max-width:60vw}
