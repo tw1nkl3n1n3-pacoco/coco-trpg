@@ -584,3 +584,12 @@ img.emo{width:1.6em;height:1.6em;vertical-align:-.45em;margin:0 1px;object-fit:c
 .playd{display:inline-flex;align-items:center;gap:2px}
 .playd input{width:auto}
 .rvr .lpw{font-size:12px!important;padding:2px 8px!important;font-family:ui-monospace,monospace;color:var(--dim)!important;border:1px dashed var(--line)!important;border-radius:8px!important;white-space:nowrap}
+/* 후기 페이지·팝업: 위아래 여백 넉넉하게 */
+.rvov{padding:9vh 14px 12vh}
+.rvpage{margin:10vh auto 14vh}
+.rvcard{padding:40px 34px 28px}
+.rv-s{margin-bottom:22px}
+.rv-body{padding-top:24px;padding-bottom:6px}
+.rv-sign{margin-top:28px}
+.rv-foot{margin-top:24px;padding-top:16px}
+@media(max-width:640px){.rvov{padding:7vh 12px 10vh}.rvpage{margin:7vh auto 10vh}.rvcard{padding:34px 22px 24px}}
