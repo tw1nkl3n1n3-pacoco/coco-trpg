@@ -2025,7 +2025,8 @@ function attachToScen(meta,chunks){
   let sc=findScen(meta.scen);if(sc)meta.scen=sc.name;else sc=createScen(meta.scen,[]);
   const remap={};
   meta.sp.forEach(e=>{const same=sc.sp.find(x=>x.name===e.name);if(same)remap[e.k]=same.k;else sc.sp.push(e);});
-  chunks.forEach(c=>c.forEach(b=>{if(remap[b.s])b.s=remap[b.s];}));
+  // 대사 화자(s)뿐 아니라 주사위 굴린 사람(w)도 같이 바꿔요
+  chunks.forEach(c=>c.forEach(b=>{if(remap[b.s])b.s=remap[b.s];if(b.w&&remap[b.w])b.w=remap[b.w];}));
   meta.sp=[];return sc;
 }
 async function importSession(r,inf,pre=""){return importBuilt(buildSession(r,inf),pre);}
