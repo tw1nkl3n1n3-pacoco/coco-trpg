@@ -28,7 +28,9 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const COLORS=["#a8401f","#2f6690","#4f7a2a","#7a4a9e","#b8691c","#1f7f74","#a83a62","#7d6a14","#3f4fa0","#5c4a3a","#c0392b","#2e6b4f"];
 const CHUNK=60;
 const OLDC=["#f3c97f","#8fc7f2","#f29a9a","#a5dd9b","#d4a5f5","#f5b98a","#7fd8d0","#f2a7d0","#c9c97f","#9fa8f5","#e8e8e8","#b8e07a"];
-const fixC=c=>{const i=OLDC.indexOf(c);return i>=0?COLORS[i]:(c||"#7a6a5a");};
+// 더블크로스 테마에서는 누런 올리브색을 맑은 색으로 바꿔 보여줘요
+const DXC={"#4f7a2a":"#17a25e","#7d6a14":"#d18b00","#5c4a3a":"#6b7280","#b8691c":"#e46a12"};
+const fixC=c=>{const i=OLDC.indexOf(c);const v=i>=0?COLORS[i]:(c||"#7a6a5a");return document.body&&document.body.dataset.theme==="dx"&&DXC[v]||v;};
 const ckey=i=>"c"+String(i).padStart(3,"0");
 function toast(msg,ms=2200){const d=document.createElement("div");d.className="toast";d.textContent=msg;document.body.appendChild(d);setTimeout(()=>d.remove(),ms);}
 async function retry(fn){
