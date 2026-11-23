@@ -82,7 +82,16 @@ function isEditorOf(id){const sc=scenById(id);return !!sc&&!!myEmail()&&(sc.edit
 // 비밀번호로 연 시나리오는 보기·고치기 모두 가능
 // 시나리오 목록·개요는 누구나 보고, 로그는 비밀번호로 연 사람만 (녹음 목록을 받아온 시나리오 = 열린 시나리오)
 function isOpen(id){return S.canAdmin||(!!id&&!!SUB.sessData[id]);}
-function canWriteScen(id){return !!id&&isOpen(id);}
+function canWriteScen(id){return !!id&&isOpen(id)&&!isExt(id);}
+// 이 브라우저에서 고른 '나' (시나리오마다): 화자 key · "ext"(외부인 · 읽기만) · 없음
+let _me={};try{_me=JSON.parse(localStorage.getItem("trpg-me")||"{}")||{};}catch(e){}
+function myK(id){return id&&_me[id]||"";}
+function setMe(id,k){if(k)_me[id]=k;else delete _me[id];try{localStorage.setItem("trpg-me",JSON.stringify(_me));}catch(e){}}
+function isExt(id){return !S.canAdmin&&myK(id)==="ext";}
+function meSp(id){const k=myK(id),sc=scenById(id);return k&&k!=="ext"&&sc?(sc.sp||[]).find(p=>p.k===k)||null:null;}
+// 후기·댓글을 쓸 수 있는 사람: 연 시나리오에서 나를 고른 멤버 (주인은 언제나)
+function canTalk(id){return isOpen(id)&&(S.canAdmin||!!meSp(id));}
+function myUid(){return S.auth&&S.auth.currentUser?S.auth.currentUser.uid:"";}
 function canReadScen(id){return isOpen(id);}
 // 처음 열 때 잠깐 기본값이 보이지 않게: 지난번에 본 사이트 정보(브라우저에 저장)나 페이지 제목으로 시작해요
 const _initTitle=document.title||"로그방";
@@ -131,7 +140,7 @@ function siteEdit(anchor){
   });
 }
 // ---------- 관리자 페이지 (#admin) ----------
-const RULES_VERSION="3"; // firebase/firestore.rules 의 rulesv 숫자와 같아야 해요
+const RULES_VERSION="4"; // firebase/firestore.rules 의 rulesv 숫자와 같아야 해요
 const ST_RULES_VERSION="2"; // firebase/storage.rules 의 rulesv 숫자
 S.chk={fs:"?",st:"?",build:null,newer:null,upstream:"",commits:null,err:""};
 const adminAlert=()=>S.chk.fs==="old"||S.chk.st==="old"||(S.chk.newer||0)>0;
@@ -377,7 +386,7 @@ function route(){
   if(S.revPage){S.revPage=null;if(!sid&&!cid){render();}}
   const adm=h==="admin";
   if(adm!==!!S.admin){S.admin=adm;if(!sid&&!cid&&!S.sid&&!S.cid){render();window.scrollTo(0,0);return;}}
-  if(sid!==S.sid||cid!==S.cid){if(cid)delete SCC[cid];S.cid=cid;S.scEdit=!!cid&&S.pendingEdit===cid;S.pendingEdit=null;S.scDraft=null;openSession(sid);window.scrollTo(0,0);}
+  if(sid!==S.sid||cid!==S.cid){if(cid)delete SCC[cid];S.cid=cid;S.lockPick=null;S.scEdit=!!cid&&S.pendingEdit===cid;S.pendingEdit=null;S.scDraft=null;openSession(sid);window.scrollTo(0,0);}
 }
 
 // ---------- session load ----------
@@ -393,7 +402,7 @@ function openSession(sid){
     if(S.metaBusy)return;
     S.meta=JSON.parse(JSON.stringify(d.data()));
     if(S.meta.audioPath&&!S.audioUrl&&!S.audioLoading)loadCloudAudio();
-    if(refreshCanWrite())render();else{renderSide();renderAllRows();renderHeader();}maybeEnsure();
+    if(refreshCanWrite())render();else{renderSide();renderAllRows();renderHeader();}maybeEnsure();watchCms();
   },e=>{S.err=e&&e.code==="permission-denied"?"이 녹음은 잠겨 있어요. 시나리오 링크로 들어와서 비밀번호를 입력해 주세요.":"세션 정보를 불러오지 못했어요.";render();});
   const u2=S.db.collection("sessions/"+sid+"/chunks").onSnapshot(snap=>{
     let changed=false;
@@ -451,6 +460,7 @@ function invOp(arr,op){
 }
 // list: [{ci,op}] — 화면에 바로 반영하고 저장 대기열에 넣어요
 function doOps(list,label){
+  if(!S.canWrite&&!S.local)return;
   const inv=[];
   list.forEach(({ci,op})=>{const arr=S.chunks[ci];if(!arr)return;inv.unshift({ci,op:invOp(arr,op)});applyOp(arr,op);(S.ops[ci]=S.ops[ci]||[]).push(op);});
   if(label){S.undo.push({label,inv});if(S.undo.length>100)S.undo.shift();}
@@ -751,7 +761,7 @@ function render(){
       </div>
       ${S.err?`<div class="notice bad">${esc(S.err)}</div>`:""}
       ${S.local?`<div class="notice">미리보기 모드예요. 여기서 고친 내용은 저장되지 않아요.</div>`:""}
-      <div id="log"></div>
+      <div class="logbox"><div id="log"></div><div id="cmcol"></div></div>
     </main>
   </div>
   <footer id="pbar"></footer>`;
@@ -914,7 +924,7 @@ function rowHTML(e,prev){
     return `<div class="row hand${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
     <div class="body"><div class="hlab">📜 ${b.ti?`<b class="hti">${esc(b.ti)}</b>`:"핸드아웃"}</div><div class="tx">${b.x?`<span>${b.x.split("\n").map(l=>`<span class="ln">${handLine(l)}</span>`).join("<br>")}</span>`:'<span class="ph">핸드아웃 내용 · [정보] / [비밀]로 시작하는 줄은 라벨이 붙어요</span>'}</div></div>
-    <div class="act">
+    <div class="act">${cmBtn()}
       <button class="w" data-act="edit" title="글 수정 (Enter)">✎</button>
       <button class="w" data-act="up" title="위 줄과 합치기">⤒</button>
       <button class="w" data-act="who" title="대사로 바꾸기">👤</button>
@@ -925,7 +935,7 @@ function rowHTML(e,prev){
     return `<div class="row dice${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}" style="--c:${p?fixC(p.c):"#8a8178"}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
     <div class="body"><div class="tx">${diceInner(b)}</div></div>
-    <div class="act">
+    <div class="act">${cmBtn()}
       <button class="w" data-act="edit" title="주사위 수정 (Enter)">✎</button>
       <button class="w" data-act="note" title="아래에 상황 묘사 추가 (N)">＋상황</button>
       <button class="w" data-act="dice" title="아래에 주사위 추가 (D)">＋🎲</button>
@@ -935,7 +945,7 @@ function rowHTML(e,prev){
     return `<div class="row note${b.st?" stat":""}${b.tab?" tabbed":""}${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
     <div class="body"><div class="tx">${b.x?`<span>${b.x.split("\n").map(l=>`<span class="ln">${hl(l)}</span>`).join("<br>")}</span>`:'<span class="ph">상황 묘사</span>'}</div></div>
-    <div class="act">
+    <div class="act">${cmBtn()}
       <button class="w" data-act="note" title="아래에 상황 묘사 추가 (N)">＋상황</button>
       <button class="w" data-act="dice" title="아래에 주사위 추가 (D)">＋🎲</button>
       <button class="w" data-act="who" title="대사로 바꾸기">👤</button>
@@ -952,7 +962,7 @@ function rowHTML(e,prev){
       ${first?`<button class="who" data-act="who" title="클릭해서 화자 바꾸기">${label}${sub?`<small>${sub}</small>`:""}</button>`:""}
       <div class="tx">${tx}</div>
     </div>
-    <div class="act">
+    <div class="act">${cmBtn()}
       <button class="w" data-act="who" title="화자 바꾸기 (숫자키)">👤</button>
       <button class="w" data-act="edit" title="글 수정 (Enter)">✎</button>
       <button class="w" data-act="up" title="위 대사와 합치기">⤒</button>
@@ -961,6 +971,7 @@ function rowHTML(e,prev){
       <button class="w" data-act="del" title="삭제">🗑</button>
     </div></div>`;
 }
+function cmBtn(){const id=cmScid();return S.db&&!S.local&&id&&isOpen(id)&&!isExt(id)?`<button class="cmw" data-act="cm" title="이 줄에 댓글">💬</button>`:"";}
 function visible(e){
   if(e.b.s===SEC)return true;
   if(S.spFilter&&e.b.s!==S.spFilter&&!(e.b.s===DICE&&e.b.w===S.spFilter))return false;
@@ -985,6 +996,7 @@ function renderAllRows(keepScroll){
   S.rerendering=false;
   const qc=$("#qcount");if(qc)qc.textContent=(S.q||S.spFilter)?`${vis.length}개`:`${S.flat.length}개 대사`;
   if(anchor){const r=log.querySelector(`[data-id="${anchor}"]`);if(r)window.scrollBy(0,r.getBoundingClientRect().top-off);}
+  renderCmMarks();cmLayout();
 }
 function updateRow(id){
   const old=document.querySelector(`.row[data-id="${id}"]`);const e=S.byId.get(id);
@@ -992,6 +1004,7 @@ function updateRow(id){
   if(!visible(e)){renderAllRows(true);return;}
   const t=document.createElement("div");t.innerHTML=rowHTML(e,prevVis(e));const nr=t.firstElementChild;old.replaceWith(nr);
   const nx=nr.nextElementSibling;if(nx&&nx.dataset.id&&!nx.classList.contains("editing")){const ne=S.byId.get(nx.dataset.id);if(ne){t.innerHTML=rowHTML(ne,e);nx.replaceWith(t.firstElementChild);}}
+  renderCmMarks();clearTimeout(S.cmLt);S.cmLt=setTimeout(cmLayout,60);
 }
 function prevVis(e){let i=S.flat.indexOf(e)-1;while(i>=0&&!visible(S.flat[i]))i--;return i>=0?S.flat[i]:null;}
 
@@ -1379,6 +1392,7 @@ function bindSession(){
     const row=ev.target.closest(".row");if(!row)return;const id=row.dataset.id;
     const act=ev.target.closest("[data-act]")?.dataset.act;
     if(act==="seek"){select(id,false);playAt(S.byId.get(id).b.t);return;}
+    if(act==="cm"){S.cmOpen===id?cmClose():cmOpenAt(id);return;}
     if(act==="who"){select(id,false);whoMenu(ev.target.closest("[data-act]"),id);return;}
     if(act==="cut"){if(S.canWrite)splitBlock(id,+ev.target.dataset.line);return;}
     if(act==="edit"){editRow(id);return;}
@@ -1716,23 +1730,35 @@ function buildSession(r,inf){
   return {meta:{title:r.title,date:r.dateLine,created:Date.now(),n:all.length,sp,...(inf||guessInfo(r.title,r.dateLine))},chunks};
 }
 // ---------- scenario page ----------
+// '나' 고르기용 이름칩 (잠금 화면 · 바꾸기 창): 인장 없이 이름만
+function meCast(sc){return gmFirst((sc.sp||[]).filter(p=>p.k===gmKey(sc)||!isAnon(p)&&!/&/.test(p.name)||p.ch),gmKey(sc));}
+function meName(sc,k){const p=(sc.sp||[]).find(x=>x.k===k);return p?pcSplit(p.name).name:"";}
+function meChipsHTML(sc,sel,ext){
+  const cs=meCast(sc);
+  return `<div class="q">누구로 들어갈까요?</div><div class="lklist">${cs.map(p=>{const gm=p.k===gmKey(sc),q=pcSplit(p.name);
+    return `<button type="button" class="lkc${p.k===sel?" mine":""}" data-mek="${esc(p.k)}" style="--c:${fixC(p.c)}">${gm?gmTag:q.n?`<span class="pcn">${q.n}</span>`:"<i></i>"}<span class="nm">${esc(gm?(p.ch||gmWord(sc)):(p.ch||q.name))}</span><span class="pl">${esc(p.ch||gm?q.name:"")}</span></button>`;}).join("")}</div>
+    ${ext?`<button type="button" class="lkout${sel==="ext"?" on":""}" data-mek="ext">외부인으로 보기</button>`:""}`;
+}
+function mePicker(sc){
+  const ov=document.createElement("div");ov.className="rvov";
+  ov.innerHTML=`<div class="mepick">${meChipsHTML(sc,myK(sc.id),!S.canAdmin)}<div class="rv-btns"><button class="ghost" data-x>닫기</button></div></div>`;
+  document.body.appendChild(ov);
+  ov.onclick=e=>{const b=e.target.closest("[data-mek]");if(b){setMe(sc.id,b.dataset.mek);ov.remove();refreshCanWrite();render();return;}
+    if(e.target===ov||e.target.closest("[data-x]"))ov.remove();};
+}
 function scenHTML(){
   const sc=scenById(S.cid);
   if(!sc){
     if(!S.loaded||!S.authUser)return `<div class="sc-page"><div class="notice">불러오는 중…</div></div>`;
     return `<div class="sc-page"><button class="ghost" id="scback">← 목록</button><div class="notice">이 시나리오를 찾을 수 없어요.</div></div>`;
   }
-  const lockHTML=`<div class="lockbox inline">
-        <div class="lockicon">🔒</div>
-        <h2>로그는 잠겨 있어요</h2>
-        <div class="tip" style="margin:6px 0 14px">같이 플레이한 친구에게 받은 비밀번호를 넣어 주세요.</div>
+  // 비밀번호를 넣기 전에는 시나리오 페이지 대신 잠금 화면만: 누구로 들어갈지 고르고 비밀번호
+  if(!isOpen(sc.id))return `<div class="sc-page lockpage"><div class="lkwrap">
+      <div class="lockicon">🔒</div><h2>${esc(sc.name)}</h2><div class="tip">잠긴 시나리오예요</div>
+      ${meChipsHTML(sc,S.lockPick,true)}
+      ${S.lockPick?`<div class="lkpw"><div class="who">${S.lockPick==="ext"?`외부인은 로그를 <span class="me">읽기만</span> 할 수 있어요`:`<span class="me">${esc(meName(sc,S.lockPick))}</span>(으)로 들어가요`}</div>
         <form id="unlockf"><input type="text" id="unlockpw" placeholder="열람 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form>
-        <div class="tip" id="unlockmsg" style="margin-top:8px"></div>
-        <div class="tip" style="margin-top:18px">비밀번호로 열면 로그를 보고 고칠 수 있어요.</div>
-      </div>`;
-  // 비밀번호를 넣기 전에는 시나리오 페이지 대신 잠금 화면만
-  if(!isOpen(sc.id))return `<div class="sc-page lockpage"><div style="width:100%;max-width:380px">
-      ${lockHTML.replace('lockbox inline','lockbox').replace('<h2>로그는 잠겨 있어요</h2>',`<h2>${esc(sc.name)}</h2><div class="tip">잠긴 시나리오예요</div>`)}
+        <div class="tip" id="unlockmsg" style="margin-top:8px"></div></div>`:`<div class="guest">같이 플레이한 친구에게 받은 비밀번호가 필요해요</div>`}
       <div class="homefoot"><button class="ghost" id="scback">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
     </div></div>`;
   const days=(groups().find(g=>g.scen===sc.name)||{days:[]}).days;
@@ -1782,7 +1808,7 @@ function scenHTML(){
       return sc.og?`<div class="schero"><img src="${sc.og}" alt=""><div class="schero-t">${t}<span class="scmeta">${m}</span></div></div>`
         :`<div class="sc-top">${t}<span class="scmeta">${m}</span></div>`;})()}
     <div class="sc-sec"><h4 data-en="SUMMARY">개요</h4>${txt(sc.summary,"아직 개요가 없어요."+(S.canWrite?" ✎ 수정을 눌러 써 주세요.":""))}</div>
-    <div class="sc-sec"><h4 data-en="CAST">플레이어 · 등장인물</h4>${sc.sp.length?`<div class="castrow">${gmFirst(sc.sp.filter(p=>p.k===gmKey(sc)||!isAnon(p)&&!/&/.test(p.name)||p.ch),gmKey(sc)).map(p=>{const gm=p.k===gmKey(sc),q=pcSplit(p.name);return `<div class="cc${gm?" gm":""}" style="--c:${fixC(p.c)}"><div class="av">${avHTML(p,gm)}</div><div class="cn">${esc(gm?(p.ch||gmWord(sc)):(p.ch||q.name))}</div><div class="cp">${gm?gmTag:q.n?`<span class="pcn">${q.n}</span>`:""}${p.ch||gm?esc(q.name):""}</div></div>`;}).join("")}</div>`:`<div class="sc-text empty">녹음을 올리면 화자가 여기 모여요.</div>`}</div>
+    <div class="sc-sec"><h4 data-en="CAST">플레이어 · 등장인물</h4>${sc.sp.length?`${(()=>{const m=meSp(sc.id),k=myK(sc.id);return k==="ext"&&!S.canAdmin?`<div class="meline">외부인으로 보는 중 · <button class="lnk" id="mepick">바꾸기</button></div>`:m?`<div class="meline" style="--c:${fixC(m.c)}"><span class="me"><i></i>나: ${esc(pcSplit(m.name).name)}</span>${m.ch?` · ${esc(m.ch)}`:""} · <button class="lnk" id="mepick">바꾸기</button></div>`:`<div class="meline"><button class="lnk" id="mepick">나는 누구? 고르기</button></div>`;})()}<div class="castrow">${gmFirst(sc.sp.filter(p=>p.k===gmKey(sc)||!isAnon(p)&&!/&/.test(p.name)||p.ch),gmKey(sc)).map(p=>{const gm=p.k===gmKey(sc),q=pcSplit(p.name);return `<div class="cc${gm?" gm":""}${p.k===myK(sc.id)?" mine":""}" style="--c:${fixC(p.c)}"><div class="av">${avHTML(p,gm)}</div><div class="cn">${esc(gm?(p.ch||gmWord(sc)):(p.ch||q.name))}</div><div class="cp">${gm?gmTag:q.n?`<span class="pcn">${q.n}</span>`:""}${p.ch||gm?esc(q.name):""}</div></div>`;}).join("")}</div>`:`<div class="sc-text empty">녹음을 올리면 화자가 여기 모여요.</div>`}</div>
     <div class="sc-sec"><h4 data-en="SESSIONS">녹음</h4>${days.length?daysHTML(days):`<div class="sc-text empty">아직 녹음이 없어요. 목록 화면에서 txt를 올릴 때 시나리오를 '${esc(sc.name)}'(으)로 고르면 여기 묶여요.</div>`}</div>
     ${S.db?revSectionHTML(sc):""}
     ${S.canAdmin?`    <div class="sc-sec"><h4 data-en="ACCESS">시나리오 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
@@ -1866,8 +1892,11 @@ function bindScen(){
     document.querySelectorAll("[data-theme-set]").forEach(x=>x.classList.toggle("on",x===b));
     if(k)document.body.dataset.theme=k;else delete document.body.dataset.theme;});
   {const sc0=scenById(S.cid);if(sc0&&S.canWrite&&sessionsReady(sc0.id)&&!SCC[sc0.id]&&!SCC["_l"+sc0.id]){SCC["_l"+sc0.id]=1;loadScenCounts(sc0).then(()=>{delete SCC["_l"+sc0.id];if(S.cid===sc0.id){if(S.scEdit){const pl=window.__scPull;pl&&pl();}render();}}).catch(()=>{delete SCC["_l"+sc0.id];});}}
+  document.querySelectorAll(".lkwrap [data-mek]").forEach(b=>b.onclick=()=>{S.lockPick=b.dataset.mek;render();});
   const uf=$("#unlockf");if(uf){const inp=$("#unlockpw");setTimeout(()=>inp.focus(),0);uf.onsubmit=async ev=>{ev.preventDefault();const pw=inp.value.trim();if(!pw)return;const msg=$("#unlockmsg");msg.textContent="확인하는 중…";
-    try{await unlockScen(S.cid,pw);msg.textContent="열렸어요!";}catch(e){msg.textContent=e&&e.code==="permission-denied"?"비밀번호가 틀렸어요.":"열지 못했어요: "+(e.code||e.message);}};}
+    const id=S.cid,pick=S.lockPick;
+    try{await unlockScen(id,pw);setMe(id,pick);S.lockPick=null;msg.textContent="열렸어요!";refreshCanWrite();}catch(e){msg.textContent=e&&e.code==="permission-denied"?"비밀번호가 틀렸어요.":"열지 못했어요: "+(e.code||e.message);}};}
+  const mep=$("#mepick");if(mep)mep.onclick=()=>mePicker(scenById(S.cid));
   const scx=scenById(S.cid);
   const cs=$("#copyshare");if(cs)cs.onclick=async()=>{const t=`[${scx.name}] TRPG 로그\n${shareUrl(scx.id)}\n비밀번호: ${S.secrets[scx.id]}`;try{await navigator.clipboard.writeText(t);toast("복사했어요. 친구들에게 붙여넣어 보내면 돼요");}catch(e){toast("복사가 막혔어요");}};
   const rg=$("#regenpw");if(rg)rg.onclick=()=>confirmBox("비밀번호를 새로 만들까요? 예전 비밀번호로 연 사람은 모두 다시 잠겨요.","새로 만들기",async()=>{try{await S.db.doc("secrets/"+scx.id).set({pw:genPw()});toast("새 비밀번호를 만들었어요");}catch(e){toast("바꾸지 못했어요");}});
@@ -2035,7 +2064,8 @@ function ccForm(cc,box){
 }
 // ---------- 세션 후기 ----------
 async function copyText(t,ok){try{await navigator.clipboard.writeText(t);toast(ok||"복사했어요");}catch(e){prompt("이 주소를 복사해 주세요",t);}}
-// reviews/{rid}: 누구나 읽기 · revkeys/{rid}: 후기 비밀번호(주인만 읽기) · revunlocks: 비밀번호를 맞게 넣은 기록
+// reviews/{rid}: 누구나 읽기 · 시나리오를 연 멤버가 쓰고, 쓴 브라우저(uid)와 주인만 고쳐요
+// (예전 후기: revkeys/{rid} 후기 비밀번호 · revunlocks 비밀번호를 맞게 넣은 기록 → 넣으면 uid가 옮겨와요)
 S.revs={};S.revForm=null;S.revPage=null;
 function watchRevs(scid){
   if(!S.db||S.revs[scid]!==undefined)return;
@@ -2048,6 +2078,8 @@ function watchRevs(scid){
 }
 const revUrl=rid=>location.href.split("#")[0].replace(/\?.*$/,"")+"#r-"+rid;
 function revWho(sc,r){const p=(sc?.sp||[]).find(x=>x.k===r.k);return {p,name:p?pcSplit(p.name).name:r.name||"?",ch:p?p.ch:r.ch||"",gm:!!p&&p.k===gmKey(sc)};}
+// 내가 쓴 후기 (쓴 브라우저) · 주인은 모두
+function revMine(r){return S.canAdmin||(!!r.uid&&r.uid===myUid());}
 function revCardHTML(sc,r,inPage){
   const w=revWho(sc,r);
   return `<div class="rvcard">${inPage?"":`<button class="x" data-rvclose title="닫기">×</button>`}<div class="rv-k">SESSION REVIEW</div>
@@ -2065,16 +2097,15 @@ function revSectionHTML(sc){
     return `<div class="rvr"><span class="av${w.gm?" gm":""}" style="--c:${fixC(w.p?.c||"#888")}">${w.p?avHTML(w.p,w.gm):`<span class="ini">${esc((w.ch||w.name).slice(0,1))}</span>`}</span>
       <span class="nm"><b>${esc(w.name)}</b>${w.ch||w.gm?`<small>${esc(w.gm?gmWord(sc):w.ch)}</small>`:""}</span>
       ${r.url?`<a class="ext" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">외부 후기 ↗</a>`:`<button class="go" data-rvopen="${esc(r.id)}">후기 보기</button><button class="cp ghost" data-rvcopy="${esc(r.id)}" title="이 후기 링크 복사">🔗</button>`}
-      <button class="ghost cp" data-rvedit="${esc(r.id)}" title="고치기">✎</button>${S.canAdmin?`<button class="ghost cp" data-rvreset="${esc(r.id)}" title="후기 비밀번호 초기화">🔑</button><button class="ghost cp" data-rvdel="${esc(r.id)}" title="지우기">🗑</button>`:""}</div>`;}).join("");
+      ${revMine(r)||(!r.uid&&canTalk(sc.id))?`<button class="ghost cp" data-rvedit="${esc(r.id)}" title="고치기">✎</button>`:""}${revMine(r)?`<button class="ghost cp" data-rvdel="${esc(r.id)}" title="지우기">🗑</button>`:""}</div>`;}).join("");
   const form=f?`<div class="rvform">
-      ${f.id?`<div class="tip">${esc(revWho(sc,f).name)} 님의 후기를 고쳐요</div>`:`<label>누구의 후기예요?<select id="rv-k">${cast.map(p=>`<option value="${esc(p.k)}"${f.k===p.k?" selected":""}>${esc(pcSplit(p.name).name)} · ${esc(p.k===gmKey(sc)?gmWord(sc):p.ch||"")}</option>`).join("")}</select></label>`}
+      ${f.id||!S.canAdmin?`<div class="tip">${esc(revWho(sc,f).name)} 님의 후기${f.id?"를 고쳐요":"예요"}</div>`:`<label>누구의 후기예요?<select id="rv-k">${cast.map(p=>`<option value="${esc(p.k)}"${f.k===p.k?" selected":""}>${esc(pcSplit(p.name).name)} · ${esc(p.k===gmKey(sc)?gmWord(sc):p.ch||"")}</option>`).join("")}</select></label>`}
       <div class="tabs"><button type="button" data-rvmode="text" class="${f.mode==="text"?"on":""}">여기에 쓰기</button><button type="button" data-rvmode="url" class="${f.mode==="url"?"on":""}">링크 붙이기</button></div>
       ${f.mode==="text"?`<textarea id="rv-text" placeholder="후기를 적어 주세요. 저장하면 이 후기만 따로 볼 수 있는 링크가 생겨요.">${esc(f.text||"")}</textarea>`:`<input type="url" id="rv-url" value="${esc(f.url||"")}" placeholder="https:// (블로그·X·포스타입 등에 쓴 후기 주소)">`}
-      ${f.id?"":`<label>후기 비밀번호 <span class="tip" style="display:inline">· 나중에 이 후기를 고칠 때 써요${S.canAdmin?" (주인은 비워도 돼요)":""}</span><input type="password" id="rv-pw" autocomplete="new-password" placeholder="4글자 이상"></label>`}
       <div class="rv-btns" style="margin-top:0"><button class="pri" id="rv-save">저장</button><button class="ghost" id="rv-cancel">취소</button><span id="rv-msg" class="tip"></span></div></div>`:"";
-  if(!list.length&&!f&&!S.db)return "";
+  if(!list.length&&!f&&(!S.db||!canTalk(sc.id)))return "";
   return `<div class="sc-sec rvsec"><h4 data-en="REVIEWS">세션 후기</h4>${rows?`<div class="rvlist">${rows}</div>`:""}${form}
-    ${f?"":`<div class="rv-btns"><button class="${list.length?"":"pri"}" id="rv-add">＋ 후기 남기기</button></div>`}</div>`;
+    ${f||!canTalk(sc.id)?"":`<div class="rv-btns"><button class="${list.length?"":"pri"}" id="rv-add">＋ 후기 남기기</button></div>`}</div>`;
 }
 function revPopup(sc,r){
   const ov=document.createElement("div");ov.className="rvov";ov.innerHTML=revCardHTML(sc,r,false);document.body.appendChild(ov);
@@ -2091,14 +2122,12 @@ function bindRevs(sc){
   const list=S.revs[sc.id]||[],byId=id=>list.find(x=>x.id===id);
   document.querySelectorAll("[data-rvopen]").forEach(b=>b.onclick=()=>revPopup(sc,byId(b.dataset.rvopen)));
   document.querySelectorAll(".rvsec [data-rvcopy]").forEach(b=>b.onclick=()=>copyText(revUrl(b.dataset.rvcopy),"후기 링크를 복사했어요"));
-  const add=$("#rv-add");if(add)add.onclick=()=>{S.revForm={scid:sc.id,mode:"text",k:(sc.sp.find(p=>p.k!==gmKey(sc))||sc.sp[0]||{}).k};render();};
+  const add=$("#rv-add");if(add)add.onclick=()=>{const m=meSp(sc.id);S.revForm={scid:sc.id,mode:"text",k:(m||sc.sp.find(p=>p.k!==gmKey(sc))||sc.sp[0]||{}).k};render();};
   document.querySelectorAll("[data-rvedit]").forEach(b=>b.onclick=async()=>{const r=byId(b.dataset.rvedit);if(!r)return;
-    if(!S.canAdmin){const pw=prompt(`${revWho(sc,r).name} 님의 후기 비밀번호를 넣어 주세요`);if(!pw)return;
-      try{await revUnlock(r.id,pw);}catch(e){toast("비밀번호가 틀렸어요");return;}}
+    // 예전 방식(후기 비밀번호)으로 쓴 후기: 비밀번호로 한 번 열면 이 브라우저 것이 돼요
+    if(!revMine(r)){const pw=prompt(`예전에 정한 ${revWho(sc,r).name} 님의 후기 비밀번호를 넣어 주세요.\n한 번 넣으면 다음부터는 이 브라우저에서 바로 고칠 수 있어요.`);if(!pw)return;
+      try{await revUnlock(r.id,pw);await S.db.doc("reviews/"+r.id).update({uid:myUid()});r.uid=myUid();}catch(e){toast("비밀번호가 틀렸어요");return;}}
     S.revForm={scid:sc.id,id:r.id,k:r.k,mode:r.url?"url":"text",text:r.text||"",url:r.url||""};render();});
-  document.querySelectorAll("[data-rvreset]").forEach(b=>b.onclick=async()=>{const r=byId(b.dataset.rvreset);if(!r)return;
-    const pw=prompt(`${revWho(sc,r).name} 님 후기의 새 비밀번호 (4글자 이상)`);if(!pw)return;if(pw.trim().length<4){toast("4글자 이상으로 해 주세요");return;}
-    try{await S.db.doc("revkeys/"+r.id).set({pw:pw.trim()});toast("후기 비밀번호를 바꿨어요. 쓴 분께 새 비밀번호를 알려 주세요",4000);}catch(e){writeFail(e);}});
   document.querySelectorAll("[data-rvdel]").forEach(b=>b.onclick=async()=>{const r=byId(b.dataset.rvdel);if(!r||!confirm(`${revWho(sc,r).name} 님의 후기를 지울까요? 되돌릴 수 없어요.`))return;
     try{await S.db.doc("reviews/"+r.id).delete();await S.db.doc("revkeys/"+r.id).delete().catch(()=>{});}catch(e){writeFail(e);}});
   const f=S.revForm;if(!f||f.scid!==sc.id)return;
@@ -2112,21 +2141,14 @@ function bindRevs(sc){
     const p=sc.sp.find(x=>x.k===f.k)||{};
     try{
       if(f.id){await S.db.doc("reviews/"+f.id).update({...body,updated:Date.now()});}
-      else{let pw=($("#rv-pw")?.value||"").trim();
-        if(!pw&&S.canAdmin)pw=Math.random().toString(36).slice(2,10);
-        if(pw.length<4){msg.textContent="후기 비밀번호를 4글자 이상 넣어 주세요";return;}
-        if(!S.authUser)await S.auth.signInAnonymously();
+      else{if(!S.authUser)await S.auth.signInAnonymously();
         const uid=S.auth.currentUser.uid,rid="r"+Date.now().toString(36)+rid4();
-        const data={scid:sc.id,k:f.k,name:pcSplit(p.name||"").name,ch:p.ch||"",created:Date.now(),updated:Date.now()};
+        const data={scid:sc.id,k:f.k,name:pcSplit(p.name||"").name,ch:p.ch||"",uid,created:Date.now(),updated:Date.now()};
         if(f.mode==="text")data.text=body.text;else data.url=f.url;
-        const bt=S.db.batch();
-        bt.set(S.db.doc("revkeys/"+rid),{pw});
-        bt.set(S.db.doc(`revunlocks/${rid}_${uid}`),{rid,uid,pw,at:Date.now()});
-        bt.set(S.db.doc("reviews/"+rid),data);
-        await bt.commit();
+        await S.db.doc("reviews/"+rid).set(data);
       }
       S.revForm=null;toast("후기를 저장했어요");render();
-    }catch(e){msg.textContent="저장하지 못했어요: "+(e.code==="permission-denied"?"권한이 없어요 (비밀번호를 다시 확인해 주세요)":e.code||e.message);}
+    }catch(e){msg.textContent="저장하지 못했어요: "+(e.code==="permission-denied"?"권한이 없어요":e.code||e.message);}
   };
 }
 const rid4=()=>Math.random().toString(36).slice(2,6);
@@ -2199,3 +2221,107 @@ document.addEventListener("input",ev=>{
   AUTO_REP.forEach(([re,to,cut])=>{re.lastIndex=0;const n=(v.slice(0,pos).match(re)||[]).length;v=v.replace(re,to);pos-=n*cut;});
   t.value=v;try{t.setSelectionRange(pos,pos);}catch(e){}
 });
+
+// ---------- 로그 댓글 ----------
+// comments/{cid}: {scid, sid, bid(대사 id), k(누구), name, uid, text, created, updated}
+// 한 대사에 달린 댓글은 한 줄기(첫 댓글 + 답글)로 보여요. 컴퓨터(넓은 화면)는 로그 오른쪽에 늘 보이고, 좁은 화면은 💬 숫자 → 아래 시트.
+S.cms=[];S.cmSid=null;S.cmOpen=null;S.cmEdit=null;S.cmDraft={};
+function cmScid(){return (S.meta&&S.meta.scid)||curScen()?.id||null;}
+function watchCms(){
+  const sid=S.sid,scid=cmScid();
+  if(!S.db||S.local||!sid||!scid||S.cmSid===sid||!isOpen(scid))return;
+  S.cmSid=sid;S.cms=[];
+  const u=S.db.collection("comments").where("scid","==",scid).where("sid","==",sid).onSnapshot(snap=>{
+    S.cms=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.created||0)-(b.created||0));
+    cmRefresh();
+  },()=>{S.cms=[];});
+  S.unsub.push(()=>{u();S.cmSid=null;S.cms=[];S.cmOpen=null;S.cmEdit=null;});
+}
+const cmOf=bid=>S.cms.filter(c=>c.bid===bid);
+function cmWide(){return innerWidth>=1240;}
+function cmWho(c){const sc=scenById(c.scid)||curScen();const p=(sc?.sp||[]).find(x=>x.k===c.k);const gm=!!p&&!!sc&&p.k===gmKey(sc);return {p,gm,name:p?pcSplit(p.name).name:c.name||"?"};}
+function cmTime(t){const d=new Date(t||0),n=new Date();const hm=`${d.getHours()}:${String(d.getMinutes()).padStart(2,"0")}`;return d.toDateString()===n.toDateString()?hm:`${d.getMonth()+1}/${d.getDate()} ${hm}`;}
+function cmMine(c){return S.canAdmin||(!!c.uid&&c.uid===myUid());}
+function cmOneHTML(c,full){const w=cmWho(c),gm=w.gm;
+  return `<div class="cmh"><span class="av${gm?" gm":""}" style="--c:${fixC(w.p?.c||"#888")}">${w.p?avHTML(w.p,gm):`<span class="ini">${esc(w.name.slice(0,1))}</span>`}</span><span class="n">${esc(w.name)}</span><span class="tm">${cmTime(c.created)}${c.updated&&c.updated-c.created>60000?" · 수정됨":""}</span>
+    ${full&&cmMine(c)&&S.cmEdit!==c.id?`<span class="cmx"><button data-cmed="${esc(c.id)}" title="고치기">✎</button><button data-cmdel="${esc(c.id)}" title="지우기">🗑</button></span>`:""}</div>
+    ${full&&S.cmEdit===c.id?`<textarea class="cmta" data-cmedta="${esc(c.id)}">${esc(c.text)}</textarea><div class="cmbtn"><button class="ghost" data-cmedx>취소</button><button class="pri" data-cmeds="${esc(c.id)}">저장</button></div>`:`<div class="cmt">${esc(c.text).replace(/\n/g,"<br>")}</div>`}`;}
+function cmThreadHTML(bid,open){
+  const list=cmOf(bid),scid=cmScid(),me=meSp(scid),talk=canTalk(scid)&&!!me;
+  if(!open)return list.length?`${cmOneHTML(list[0],false)}${list.length>1?`<div class="cmmore">답글 ${list.length-1}개</div>`:""}`:"";
+  return list.map((c,i)=>`<div class="cmone${i?" rp":""}">${cmOneHTML(c,true)}</div>`).join("")+
+    (talk?`<textarea class="cmta" id="cmnew" placeholder="${list.length?"답글 달기":"댓글 달기"}${me?` (나: ${esc(pcSplit(me.name).name)})`:""}">${esc(S.cmDraft[bid]||"")}</textarea><div class="cmbtn"><button class="ghost" data-cmclose>${list.length?"닫기":"취소"}</button><button class="pri" data-cmsend="${esc(bid)}">등록</button></div>`
+      :`<div class="cmro">${isOpen(scid)&&!isExt(scid)?`<button class="lnk" data-cmme>내가 누구인지 고르면</button> 댓글을 달 수 있어요`:"외부인은 읽기만 할 수 있어요"}</div><div class="cmbtn"><button class="ghost" data-cmclose>닫기</button></div>`);}
+// 넓은 화면: 로그 오른쪽 칸에 대사 높이에 맞춰 카드 놓기
+function cmLayout(){
+  const col=$("#cmcol"),box=$(".logbox");if(!col||!box)return;
+  const wide=cmWide()&&!!cmScid()&&isOpen(cmScid());document.body.classList.toggle("cmwide",wide);
+  if(!wide){col.innerHTML="";return;}
+  if(col.contains(document.activeElement)&&document.activeElement.matches("textarea"))return; // 쓰는 중이면 그대로
+  const bt=box.getBoundingClientRect().top;
+  const bids=[...new Set(S.cms.map(c=>c.bid))];if(S.cmOpen&&!bids.includes(S.cmOpen))bids.push(S.cmOpen);
+  const items=[];
+  bids.forEach(bid=>{const r=document.querySelector(`#log .row[data-id="${CSS.escape(bid)}"]`);if(!r)return;items.push({bid,want:r.getBoundingClientRect().top-bt,open:bid===S.cmOpen});});
+  items.sort((a,b)=>a.want-b.want);
+  col.innerHTML=items.map(it=>`<div class="cmc${it.open?" on":""}" data-cmbid="${esc(it.bid)}">${cmThreadHTML(it.bid,it.open)}</div>`).join("");
+  const cards=[...col.children];cards.forEach((c,i)=>{items[i].h=c.offsetHeight;});
+  // 고른 카드는 제 대사 높이에 딱 맞추고, 나머지는 겹치지 않게 위아래로 비켜요
+  let ai=items.findIndex(x=>x.open);if(ai<0)ai=0;
+  if(items.length){items[ai].top=Math.max(0,items[ai].want);
+    for(let i=ai-1;i>=0;i--)items[i].top=Math.min(items[i].want,items[i+1].top-items[i].h-8);
+    for(let i=ai+1;i<items.length;i++)items[i].top=Math.max(items[i].want,items[i-1].top+items[i-1].h+8);
+    let sh=Math.min(0,...items.map(x=>x.top));if(sh<0)items.forEach(x=>x.top-=sh);}
+  cards.forEach((c,i)=>c.style.top=items[i].top+"px");
+  col.style.height=items.length?Math.max(...items.map(x=>x.top+x.h))+"px":"0";
+  cmBind(col);
+}
+function cmSheet(){
+  document.querySelectorAll(".cmsheet-ov").forEach(e=>e.remove());
+  if(!S.cmOpen||cmWide())return;
+  const e=S.byId.get(S.cmOpen),ov=document.createElement("div");ov.className="cmsheet-ov";
+  const quote=e?(e.b.s===DICE?(e.b.x||"🎲"):e.b.x||"").split("\n")[0].slice(0,80):"";
+  ov.innerHTML=`<div class="cmsheet"><div class="grab"></div>${quote?`<div class="cmq">${esc(quote)}</div>`:""}<div class="cmsb">${cmThreadHTML(S.cmOpen,true)}</div></div>`;
+  document.body.appendChild(ov);
+  ov.onclick=ev=>{if(ev.target===ov){S.cmOpen=null;ov.remove();renderCmMarks();}};
+  cmBind(ov);
+}
+// 좁은 화면에서 쓰는 중에는 시트를 다시 그리지 않아요
+function cmRefresh(){
+  document.body.classList.toggle("cmwide",cmWide()&&!!S.sid&&!!cmScid()&&isOpen(cmScid()));
+  renderCmMarks();
+  if(cmWide())cmLayout();
+  else{const ov=document.querySelector(".cmsheet-ov");if(ov&&ov.contains(document.activeElement)&&document.activeElement.matches("textarea"))return;if(S.cmOpen)cmSheet();}
+}
+// 대사 줄의 표시(형광펜 · 💬 숫자)만 다시
+function renderCmMarks(){
+  const n={};S.cms.forEach(c=>n[c.bid]=(n[c.bid]||0)+1);
+  document.querySelectorAll("#log .row[data-id]").forEach(r=>{const k=n[r.dataset.id]||0;r.classList.toggle("hascm",!!k);r.classList.toggle("cmon",r.dataset.id===S.cmOpen);
+    let ch=r.querySelector(".cmchip");if(k){if(!ch){ch=document.createElement("button");ch.className="cmchip";ch.dataset.act="cm";r.querySelector(".body")?.appendChild(ch);}ch.textContent="💬 "+k;}else if(ch)ch.remove();});
+}
+function cmOpenAt(bid){
+  S.cmOpen=bid;S.cmEdit=null;renderCmMarks();
+  if(cmWide()){cmLayout();setTimeout(()=>{const t=$("#cmcol .cmc.on textarea");t&&!cmOf(bid).length&&t.focus();},0);}else{cmSheet();}
+}
+function cmClose(){S.cmOpen=null;S.cmEdit=null;renderCmMarks();if(cmWide())cmLayout();else cmSheet();}
+function cmBind(root){
+  root.querySelectorAll(".cmc:not(.on)").forEach(c=>c.onclick=()=>cmOpenAt(c.dataset.cmbid));
+  root.querySelectorAll("[data-cmclose]").forEach(b=>b.onclick=ev=>{ev.stopPropagation();cmClose();});
+  root.querySelectorAll("[data-cmme]").forEach(b=>b.onclick=()=>{const sc=scenById(cmScid());sc&&mePicker(sc);});
+  const ta=root.querySelector("#cmnew");if(ta)ta.oninput=()=>{S.cmDraft[S.cmOpen]=ta.value;};
+  root.querySelectorAll("[data-cmsend]").forEach(b=>b.onclick=async()=>{const bid=b.dataset.cmsend,t=root.querySelector("#cmnew"),text=(t?.value||"").trim();if(!text)return;
+    const scid=cmScid(),me=meSp(scid);
+    if(!me){toast("먼저 내가 누구인지 골라 주세요");const sc=scenById(scid);sc&&mePicker(sc);return;}
+    b.disabled=true;
+    try{if(!S.authUser)await S.auth.signInAnonymously();
+      await S.db.collection("comments").add({scid,sid:S.sid,bid,k:me.k,name:pcSplit(me.name||"").name,uid:myUid(),text:text.slice(0,2000),created:Date.now(),updated:Date.now()});
+      delete S.cmDraft[bid];t.value="";t.blur();}
+    catch(e){b.disabled=false;toast("댓글을 달지 못했어요"+(e.code==="permission-denied"?" (권한이 없어요)":""));}});
+  root.querySelectorAll("[data-cmed]").forEach(b=>b.onclick=()=>{S.cmEdit=b.dataset.cmed;cmRefreshForce();});
+  root.querySelectorAll("[data-cmedx]").forEach(b=>b.onclick=()=>{S.cmEdit=null;cmRefreshForce();});
+  root.querySelectorAll("[data-cmeds]").forEach(b=>b.onclick=async()=>{const id=b.dataset.cmeds,t=root.querySelector(`[data-cmedta="${CSS.escape(id)}"]`),text=(t?.value||"").trim();if(!text)return;
+    try{await S.db.doc("comments/"+id).update({text:text.slice(0,2000),updated:Date.now()});S.cmEdit=null;t.blur();cmRefreshForce();}catch(e){toast("고치지 못했어요");}});
+  root.querySelectorAll("[data-cmdel]").forEach(b=>b.onclick=async()=>{if(!confirm("이 댓글을 지울까요?"))return;
+    try{await S.db.doc("comments/"+b.dataset.cmdel).delete();}catch(e){toast("지우지 못했어요");}});
+}
+function cmRefreshForce(){const a=document.activeElement;a&&a.blur&&a.matches("textarea")&&a.blur();cmRefresh();}
+let _cmRz;addEventListener("resize",()=>{clearTimeout(_cmRz);_cmRz=setTimeout(()=>{if(S.sid){cmRefresh();if(S.cmOpen&&cmWide())document.querySelectorAll(".cmsheet-ov").forEach(e=>e.remove());}},150);});

@@ -1,4 +1,4 @@
-// 코코 로그 사이트 Firestore 보안 규칙 · 규칙 버전 3
+// 코코 로그 사이트 Firestore 보안 규칙 · 규칙 버전 4
 // 관리자 이메일 자리는 사이트 관리자 페이지에서 복사하면 자동으로 채워져요.
 rules_version = '2';
 service cloud.firestore {
@@ -33,9 +33,10 @@ service cloud.firestore {
     }
     // 규칙 버전 확인용 (사이트가 규칙이 최신인지 확인해요 · 숫자를 바꾸지 마세요)
     match /rulesv/{v} {
-      allow get: if v == "3";
+      allow get: if v == "4";
     }
-    // 세션 후기 — 누구나 읽고, 쓸 때 정한 '후기 비밀번호'로만 고쳐요 (주인은 언제나, 비밀번호 초기화도 주인만)
+    // 세션 후기 — 누구나 읽고, 시나리오를 연 사람이 써요. 쓴 브라우저(uid)와 주인만 고치고 지워요
+    // (예전 후기는 그때 정한 '후기 비밀번호'를 한 번 넣으면 쓴 브라우저가 이 브라우저로 옮겨와요)
     function revOk(rid) {
       return request.auth != null
         && exists(/databases/$(database)/documents/revunlocks/$(rid + '_' + request.auth.uid))
@@ -44,26 +45,44 @@ service cloud.firestore {
     }
     match /revkeys/{rid} {
       allow read, update, delete: if isOwner();
-      allow create: if request.auth != null && request.resource.data.pw is string
-        && request.resource.data.pw.size() >= 4 && request.resource.data.pw.size() <= 40;
     }
     match /revunlocks/{key} {
       allow read: if request.auth != null && resource.data.uid == request.auth.uid;
       allow create, update: if request.auth != null
         && request.resource.data.uid == request.auth.uid
         && key == request.resource.data.rid + '_' + request.auth.uid
-        && request.resource.data.pw == getAfter(/databases/$(database)/documents/revkeys/$(request.resource.data.rid)).data.pw;
+        && request.resource.data.pw == get(/databases/$(database)/documents/revkeys/$(request.resource.data.rid)).data.pw;
+    }
+    function textOk() {
+      return !('text' in request.resource.data) || (request.resource.data.text is string && request.resource.data.text.size() <= 20000);
     }
     match /reviews/{rid} {
       allow read: if true;
       allow create: if request.auth != null
-        && existsAfter(/databases/$(database)/documents/revkeys/$(rid))
-        && exists(/databases/$(database)/documents/scenarios/$(request.resource.data.scid))
-        && request.resource.size() <= 9
-        && (!('text' in request.resource.data) || request.resource.data.text.size() <= 20000);
-      allow update: if (isOwner() || revOk(rid)) && request.resource.data.scid == resource.data.scid
-        && (!('text' in request.resource.data) || request.resource.data.text.size() <= 20000);
-      allow delete: if isOwner() || revOk(rid);
+        && canRead(request.resource.data.scid)
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.size() <= 10 && textOk();
+      allow update: if request.auth != null && request.resource.data.scid == resource.data.scid && textOk()
+        && (isOwner()
+          || (resource.data.get('uid', '') == request.auth.uid && request.resource.data.uid == request.auth.uid)
+          || (revOk(rid) && request.resource.data.uid == request.auth.uid));
+      allow delete: if isOwner()
+        || (request.auth != null && resource.data.get('uid', '') == request.auth.uid);
+    }
+    // 로그 댓글 — 시나리오를 연 사람만 읽고 써요. 쓴 브라우저(uid)와 주인만 고치고 지워요
+    match /comments/{cid} {
+      allow read: if canRead(resource.data.scid);
+      allow create: if request.auth != null
+        && canRead(request.resource.data.scid)
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.sid is string && request.resource.data.bid is string
+        && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 2000
+        && request.resource.data.size() <= 10;
+      allow update: if request.auth != null
+        && (isOwner() || resource.data.uid == request.auth.uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'updated'])
+        && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 2000;
+      allow delete: if request.auth != null && (isOwner() || resource.data.uid == request.auth.uid);
     }
     // 시나리오
     match /scenarios/{id} {
