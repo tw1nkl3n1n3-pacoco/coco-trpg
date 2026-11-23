@@ -1833,7 +1833,7 @@ function scenHTML(){
           <span class="mgb"><button type="button" class="ghost" data-emv="${i}" data-d="-1" title="위로" ${i===0?"disabled":""}>↑</button><button type="button" class="ghost" data-emv="${i}" data-d="1" title="아래로" ${i===d.sp.length-1?"disabled":""}>↓</button><button type="button" class="ghost" data-edel="${i}" title="${n===0?"목록에서 지우기":"대사가 있어서 못 지워요 (로그 화면에서 다른 플레이어로 옮긴 뒤 지울 수 있어요)"}" ${n===0?"":"disabled"}>🗑</button></span>`;}).join("")}
         </div>
         <div style="margin-top:6px;display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button type="button" id="e-spadd">＋ 플레이어 추가</button><label class="chk"><input type="radio" name="gm" data-gm="" ${d.gm?"":"checked"}>GM 없음</label>
-          ${zero?`<button type="button" class="ghost" id="ezero">대사 없는 플레이어 ${zero}명 한꺼번에 지우기</button>`:""}</div>
+          ${zero&&!(sc.plays||[]).length?`<button type="button" class="ghost" id="ezero">대사 없는 플레이어 ${zero}명 한꺼번에 지우기</button>`:""}</div>
         <input type="file" id="e-avfile" accept="image/*" style="display:none">
         <div class="tip" style="margin-top:8px">동그라미를 누르면 인장을 올려요(정사각형으로 잘려요). ×로 지우면 GM은 GM 그림, 나머지는 캐릭터 이름 첫 글자가 나와요. ↑↓로 바꾼 순서가 로그 화면의 숫자키 순서예요(GM은 늘 1번). 🗑는 대사가 하나도 없는 플레이어만 지울 수 있어요. 바꾼 내용은 <b>저장</b>을 눌러야 반영돼요.</div>`;})()}
       </div>
@@ -1885,7 +1885,7 @@ function spManageHTML(sc){
     <span class="cnum">${n===null?"…":n}</span>
     <span class="mgb">${isG?"":`<button class="ghost" data-mv="${p.k}" data-d="-1" title="위로" ${i<=(g?1:0)?"disabled":""}>↑</button><button class="ghost" data-mv="${p.k}" data-d="1" title="아래로" ${i===list.length-1?"disabled":""}>↓</button><button class="ghost" data-spdel="${p.k}" title="${n===0?"지우기":"대사가 있어서 못 지워요 (로그 화면에서 다른 플레이어로 옮긴 뒤 지울 수 있어요)"}" ${n===0?"":"disabled"}>🗑</button>`}</span>`;}).join("")}
   </div>
-  ${zero?`<button class="ghost" id="spzero" style="margin-top:8px">대사 없는 플레이어 ${zero}명 한꺼번에 지우기</button>`:""}`;
+  ${zero&&!(sc.plays||[]).length?`<button class="ghost" id="spzero" style="margin-top:8px">대사 없는 플레이어 ${zero}명 한꺼번에 지우기</button>`:""}`;
 }
 function bindSpManage(sc){
   if(!S.canWrite||!sc)return;
@@ -2145,12 +2145,12 @@ function revSectionHTML(sc){
   const rows=list.map(r=>{const w=revWho(sc,r);
     return `<div class="rvr"><span class="av${w.gm?" gm":""}" style="--c:${fixC(w.p?.c||"#888")}">${w.p?avHTML(w.p,w.gm):`<span class="ini">${esc((w.ch||w.name).slice(0,1))}</span>`}</span>
       <span class="nm"><b>${esc(w.name)}</b>${w.ch||w.gm?`<small>${esc(w.gm?gmWord(sc):w.ch)}</small>`:""}</span>
-      ${r.url?`<a class="ext" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">외부 후기 ↗</a>`:`<button class="go" data-rvopen="${esc(r.id)}">후기 보기</button><button class="cp ghost" data-rvcopy="${esc(r.id)}" title="이 후기 링크 복사">🔗</button>`}
+      ${r.url?`<a class="ext" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">외부 후기 ↗</a>${r.lpw?`<button class="ghost lpw" data-rvlpw="${esc(r.id)}" title="눌러서 비밀번호 복사">🔑 ${esc(r.lpw)}</button>`:""}`:`<button class="go" data-rvopen="${esc(r.id)}">후기 보기</button><button class="cp ghost" data-rvcopy="${esc(r.id)}" title="이 후기 링크 복사">🔗</button>`}
       ${revMine(r)||(!r.uid&&canTalk(sc.id))?`<button class="ghost cp" data-rvedit="${esc(r.id)}" title="고치기">✎</button>`:""}${revMine(r)?`<button class="ghost cp" data-rvdel="${esc(r.id)}" title="지우기">🗑</button>`:""}</div>`;}).join("");
   const form=f?`<div class="rvform">
       ${f.id||!S.canAdmin?`<div class="tip">${esc(revWho(sc,f).name)} 님의 후기${f.id?"를 고쳐요":"예요"}</div>`:`<label>누구의 후기예요?<select id="rv-k">${cast.map(p=>`<option value="${esc(p.k)}"${f.k===p.k?" selected":""}>${esc(pcSplit(p.name).name)} · ${esc(p.k===gmKey(sc)?gmWord(sc):p.ch||"")}</option>`).join("")}</select></label>`}
       <div class="tabs"><button type="button" data-rvmode="text" class="${f.mode==="text"?"on":""}">여기에 쓰기</button><button type="button" data-rvmode="url" class="${f.mode==="url"?"on":""}">링크 붙이기</button></div>
-      ${f.mode==="text"?wedHTML("rv-wed",f.html!=null?f.html:textToRich(f.text||"")):`<input type="url" id="rv-url" value="${esc(f.url||"")}" placeholder="https:// (블로그·X·포스타입 등에 쓴 후기 주소)">`}
+      ${f.mode==="text"?wedHTML("rv-wed",f.html!=null?f.html:textToRich(f.text||"")):`<input type="url" id="rv-url" value="${esc(f.url||"")}" placeholder="https:// (블로그·X·포스타입 등에 쓴 후기 주소)"><input type="text" id="rv-lpw" value="${esc(f.lpw||"")}" placeholder="글 비밀번호 (걸려 있으면 · 선택)" autocomplete="off" style="margin-top:6px">`}
       <div class="rv-btns" style="margin-top:0"><button class="pri" id="rv-save">저장</button><button class="ghost" id="rv-cancel">취소</button><span id="rv-msg" class="tip"></span></div></div>`:"";
   if(!list.length&&!f&&(!S.db||!canTalk(sc.id)))return "";
   return `<div class="sc-sec rvsec"><h4 data-en="REVIEWS">세션 후기</h4>${rows?`<div class="rvlist">${rows}</div>`:""}${form}
@@ -2176,17 +2176,18 @@ function bindRevs(sc){
     // 예전 방식(후기 비밀번호)으로 쓴 후기: 비밀번호로 한 번 열면 이 브라우저 것이 돼요
     if(!revMine(r)){const pw=prompt(`예전에 정한 ${revWho(sc,r).name} 님의 후기 비밀번호를 넣어 주세요.\n한 번 넣으면 다음부터는 이 브라우저에서 바로 고칠 수 있어요.`);if(!pw)return;
       try{await revUnlock(r.id,pw);await S.db.doc("reviews/"+r.id).update({uid:myUid()});r.uid=myUid();}catch(e){toast("비밀번호가 틀렸어요");return;}}
-    S.revForm={scid:sc.id,id:r.id,k:r.k,mode:r.url?"url":"text",text:r.text||"",html:r.html!=null?r.html:null,url:r.url||""};render();});
+    S.revForm={scid:sc.id,id:r.id,k:r.k,mode:r.url?"url":"text",text:r.text||"",html:r.html!=null?r.html:null,url:r.url||"",lpw:r.lpw||""};render();});
+  document.querySelectorAll("[data-rvlpw]").forEach(b=>b.onclick=()=>{const r=byId(b.dataset.rvlpw);r&&copyText(r.lpw,"비밀번호를 복사했어요");});
   document.querySelectorAll("[data-rvdel]").forEach(b=>b.onclick=async()=>{const r=byId(b.dataset.rvdel);if(!r||!confirm(`${revWho(sc,r).name} 님의 후기를 지울까요? 되돌릴 수 없어요.`))return;
     try{await S.db.doc("reviews/"+r.id).delete();await S.db.doc("revkeys/"+r.id).delete().catch(()=>{});}catch(e){writeFail(e);}});
   const f=S.revForm;if(!f||f.scid!==sc.id)return;
-  const pull=()=>{const k=$("#rv-k");if(k)f.k=k.value;const w=$("#rv-wed");if(w)f.html=wedValue(w);const u=$("#rv-url");if(u)f.url=u.value.trim();};
+  const pull=()=>{const k=$("#rv-k");if(k)f.k=k.value;const w=$("#rv-wed");if(w)f.html=wedValue(w);const u=$("#rv-url");if(u)f.url=u.value.trim();const lp=$("#rv-lpw");if(lp)f.lpw=lp.value.trim();};
   {const w=$("#rv-wed");if(w)bindWed(w,sc.id);}
   document.querySelectorAll("[data-rvmode]").forEach(b=>b.onclick=()=>{pull();f.mode=b.dataset.rvmode;render();});
   $("#rv-cancel").onclick=()=>{S.revForm=null;render();};
   $("#rv-save").onclick=async()=>{pull();const msg=$("#rv-msg");
     const del=firebase.firestore.FieldValue.delete();
-    const body=f.mode==="text"?{html:f.html||"",text:del,url:del}:{url:f.url,text:del,html:del};
+    const body=f.mode==="text"?{html:f.html||"",text:del,url:del,lpw:del}:{url:f.url,lpw:f.lpw?f.lpw.slice(0,60):del,text:del,html:del};
     if(f.mode==="text"&&!(f.html||"").replace(/<br>|<\/?(div|p)>|\s|&nbsp;/g,"")){msg.textContent="후기를 적어 주세요";return;}
     if(f.mode==="url"&&!/^https?:\/\/\S+\.\S+/.test(f.url||"")){msg.textContent="https://로 시작하는 주소를 넣어 주세요";return;}
     const p=sc.sp.find(x=>x.k===f.k)||{};
@@ -2195,7 +2196,7 @@ function bindRevs(sc){
       else{if(!S.authUser)await S.auth.signInAnonymously();
         const uid=S.auth.currentUser.uid,rid="r"+Date.now().toString(36)+rid4();
         const data={scid:sc.id,k:f.k,name:pcSplit(p.name||"").name,ch:p.ch||"",uid,created:Date.now(),updated:Date.now()};
-        if(f.mode==="text")data.html=body.html;else data.url=f.url;
+        if(f.mode==="text")data.html=body.html;else{data.url=f.url;if(f.lpw)data.lpw=f.lpw.slice(0,60);}
         await S.db.doc("reviews/"+rid).set(data);
       }
       S.revForm=null;toast("후기를 저장했어요");render();

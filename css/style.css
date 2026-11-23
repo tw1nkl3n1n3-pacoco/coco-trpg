@@ -583,3 +583,4 @@ img.emo{width:1.6em;height:1.6em;vertical-align:-.45em;margin:0 1px;object-fit:c
 .plays{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .playd{display:inline-flex;align-items:center;gap:2px}
 .playd input{width:auto}
+.rvr .lpw{font-size:12px!important;padding:2px 8px!important;font-family:ui-monospace,monospace;color:var(--dim)!important;border:1px dashed var(--line)!important;border-radius:8px!important;white-space:nowrap}
