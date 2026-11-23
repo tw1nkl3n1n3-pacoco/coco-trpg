@@ -231,7 +231,7 @@ function adminHTML(){
           <input type="text" id="s-icon" value="${isImgIcon(st.icon)?"":esc(st.icon)}" placeholder="예: 🎲" style="width:80px">
           <button type="button" id="s-up">이미지 올리기</button><button type="button" class="ghost" id="s-clr">없애기</button>
           <input type="file" id="s-file" accept="image/*" style="display:none"></div>
-        <label>내 닉네임 · 여러 개면 쉼표로 (예: AA, BB) · 시나리오마다 이 이름의 플레이어가 자동으로 '나'가 돼요</label>
+        <label>내 닉네임 · 여러 개면 쉼표로 (예: AA, BB) · 세션마다 이 이름의 플레이어가 자동으로 '나'가 돼요</label>
         <input type="text" id="s-nicks" value="${esc((st.nicks||[]).join(", "))}" placeholder="AA, BB">
         <div class="btns"><button class="pri" id="s-ok">저장</button></div>
       </div></div>
@@ -435,7 +435,7 @@ function openSession(sid){
     S.meta=JSON.parse(JSON.stringify(d.data()));
     if(S.meta.audioPath&&!S.audioUrl&&!S.audioLoading)loadCloudAudio();
     if(refreshCanWrite())render();else{renderSide();renderAllRows();renderHeader();}maybeEnsure();watchCms();
-  },e=>{S.err=e&&e.code==="permission-denied"?"이 녹음은 잠겨 있어요. 시나리오 링크로 들어와서 비밀번호를 입력해 주세요.":"세션 정보를 불러오지 못했어요.";render();});
+  },e=>{S.err=e&&e.code==="permission-denied"?"이 녹음은 잠겨 있어요. 세션 링크로 들어와서 비밀번호를 입력해 주세요.":"세션 정보를 불러오지 못했어요.";render();});
   const u2=S.db.collection("sessions/"+sid+"/chunks").onSnapshot(snap=>{
     let changed=false;
     snap.docs.forEach(d=>{
@@ -526,7 +526,7 @@ async function flush(ci){
 function flushAll(){Object.keys(S.ops).forEach(ci=>{if((S.ops[ci]||[]).length){clearTimeout(S.tmr[ci]);flush(+ci);}});}
 window.addEventListener("beforeunload",ev=>{if(Object.values(S.ops).some(o=>o&&o.length)||S.inflight.size){flushAll();ev.preventDefault();ev.returnValue="";}});
 function writeFail(e){
-  if(e&&(e.code==="invalid_argument"||e.code==="permission-denied")){S.canWrite=false;S.err="고칠 권한이 없어서 보기 전용으로 바뀌었어요. 비밀번호가 바뀌었다면 시나리오 링크로 다시 들어와 새 비밀번호를 넣어 주세요.";render();}
+  if(e&&(e.code==="invalid_argument"||e.code==="permission-denied")){S.canWrite=false;S.err="고칠 권한이 없어서 보기 전용으로 바뀌었어요. 비밀번호가 바뀌었다면 세션 링크로 다시 들어와 새 비밀번호를 넣어 주세요.";render();}
   else if(e&&e.code==="quota_exceeded"){S.err="저장 공간이 가득 찼어요: "+(e.message||"");}
   else S.err="저장에 실패했어요. 잠시 후 다시 시도해 주세요.";
   renderStatus();
@@ -702,7 +702,7 @@ function shownSp(){
 async function removeSpeakerIfUnused(k){
   if((counts()[k]||0)>0)return false;
   const n=await usageElsewhere(k);
-  if(n>0){toast(`같은 시나리오의 다른 녹음에서 ${n}개 대사가 이 화자로 되어 있어서 목록에는 남겨뒀어요`,3500);return false;}
+  if(n>0){toast(`같은 세션의 다른 녹음에서 ${n}개 대사가 이 화자로 되어 있어서 목록에는 남겨뒀어요`,3500);return false;}
   const sc=curScen();if(sc)mutateScen(sc.id,d=>{d.sp=d.sp.filter(x=>x.k!==k);});
   if(S.meta.sp?.some(x=>x.k===k)){S.meta.sp=S.meta.sp.filter(x=>x.k!==k);saveMeta();}
   if(S.spFilter===k)S.spFilter=null;renderSide();return true;
@@ -806,7 +806,7 @@ function renderHeader(){
   h.innerHTML=`
     <div class="bar">
       ${S.meta?(()=>{const i=info(S.meta);const sib=siblings();const n=dayIndex();return `
-      <div class="crumb"><h1 title="시나리오 개요 보기"><a class="scl" href="#c-${esc(curScen()?.id||"")}">${esc(i.scen)}</a></h1>
+      <div class="crumb"><h1 title="세션 페이지 보기"><a class="scl" href="#c-${esc(curScen()?.id||"")}">${esc(i.scen)}</a></h1>
         <span class="status">${n?n+"회차 · ":""}${esc(fmtDay(i.day))}</span></div>
       <div class="pnav">${(sib.length?sib:[{id:S.sid,part:i.part}]).map(p=>`<a class="pchip${p.id===S.sid?" on":""}" href="#s-${esc(p.id)}">${p.part}부</a>`).join("")}</div>
 `;})():`<h1>${S.local?"미리보기":"불러오는 중…"}</h1>`}
@@ -868,7 +868,7 @@ function renderSide(){
     ${hidden?`<button class="ghost zt" id="zerot">${S.showZero?"대사 없는 화자 숨기기":`이 녹음에 대사 없는 화자 ${hidden}명 보기`}</button>`:""}
     ${S.canWrite?`<div class="addsp"><input type="text" id="newsp" placeholder="새 플레이어 이름"><button id="addsp">추가</button></div>`:""}
     </div>
-    ${(()=>{const ss=allSecs();return `<button class="foldh${S.openSec?" open":""}" data-fold="openSec"><span class="car">▸</span>단락 <span class="fc">${ss.length}</span><span class="fsub">시나리오 전체 · 누르면 이동</span></button>
+    ${(()=>{const ss=allSecs();return `<button class="foldh${S.openSec?" open":""}" data-fold="openSec"><span class="car">▸</span>단락 <span class="fc">${ss.length}</span><span class="fsub">세션 전체 · 누르면 이동</span></button>
     <div class="fold${S.openSec?" open":""}">
       <div class="secs">${(()=>{const days=[...new Set(S.sessions.map(info).filter(i=>S.meta&&i.scen===info(S.meta).scen).map(i=>i.day))].sort();const multi=new Set(ss.map(x=>x.day)).size>1||(ss.length&&ss[0].day!==(S.meta&&info(S.meta).day));let last=null;
         // '하' 단락은 바로 위 상·중 단락 아래에 접어 둬요
@@ -886,7 +886,7 @@ function renderSide(){
     ${S.canWrite?`<button class="ghost zt" id="addnoun">＋ 고유명사 묶음 추가</button>`:""}
     </div>`:""}
     ${(()=>{const hs=allHands();const days=[...new Set(S.sessions.map(info).filter(i=>S.meta&&i.scen===info(S.meta).scen).map(i=>i.day))].sort();const multi=new Set(hs.map(x=>x.day)).size>1;
-      return `<button class="foldh${S.openHand?" open":""}" data-fold="openHand"><span class="car">▸</span>핸드아웃 <span class="fc">${hs.length}</span><span class="fsub">시나리오 전체 · 누르면 이동</span></button>
+      return `<button class="foldh${S.openHand?" open":""}" data-fold="openHand"><span class="car">▸</span>핸드아웃 <span class="fc">${hs.length}</span><span class="fsub">세션 전체 · 누르면 이동</span></button>
     <div class="fold${S.openHand?" open":""}"><div class="secs">${hs.map(h=>`<button class="secb${h.sid===S.sid?"":" other"}" data-sec="${h.sid}|${h.id}" title="${esc((h.x||"").slice(0,80))}"><span class="sp">${multi?(days.indexOf(h.day)+1)+"회 ":""}${h.part}부</span>📜 ${esc(h.ti||(h.x||"").split("\n")[0].slice(0,24)||"(제목 없음)")}</button>`).join("")||'<div class="tip" style="padding:2px 4px 6px">아직 핸드아웃이 없어요. 대사를 고르고 <kbd>H</kbd>를 눌러 넣어요.</div>'}</div></div>`;})()}
     <h3 class="tip usage">사용법</h3>
     <div class="tip usage">
@@ -1528,7 +1528,7 @@ async function loadCloudAudio(){
 function uploadAudio(sess,file,onPct){
   return new Promise((ok,fail)=>{
     if(!S.storage){fail(new Error("Storage가 설정되지 않았어요"));return;}
-    const scid=sess.scid||findScen(info(sess).scen)?.id;if(!scid){fail(new Error("시나리오를 찾을 수 없어요"));return;}
+    const scid=sess.scid||findScen(info(sess).scen)?.id;if(!scid){fail(new Error("세션을 찾을 수 없어요"));return;}
     const ext=(file.name.match(/\.([a-z0-9]+)$/i)||[,"m4a"])[1].toLowerCase();
     const path=`audio/${scid}/${sess.id}.${ext}`;
     const task=S.storage.ref(path).put(file,{contentType:file.type||(ext==="m4a"?"audio/mp4":"audio/"+ext)});
@@ -1598,7 +1598,7 @@ function homeHTML(){
     ${S.err?`<div class="notice bad">${esc(S.err)}</div>`:""}
     ${!S.ready||(S.db&&!S.loaded)?`<div class="notice">불러오는 중…</div>`:""}
     ${S.ready&&S.setupNeeded?`<div class="notice bad">아직 Firebase 설정이 비어 있어요. 저장소 <b>Settings → Secrets and variables → Actions → Variables</b>에 <b>FIREBASE_CONFIG</b>와 <b>OWNER_EMAIL</b>을 넣고 다시 배포해 주세요. 자세한 방법은 저장소의 README에 있어요. (지금은 txt 미리보기만 돼요)</div>`:""}
-    ${S.ready&&S.db&&S.loaded&&!S.canAdmin&&S.scens.some(x=>!isOpen(x.id))?`<div class="notice">🔒 표시된 시나리오는 같이 플레이한 친구에게 받은 비밀번호를 넣어야 로그를 볼 수 있어요.</div>`:""}
+    ${S.ready&&S.db&&S.loaded&&!S.canAdmin&&S.scens.some(x=>!isOpen(x.id))?`<div class="notice">🔒 표시된 세션은 같이 플레이한 친구에게 받은 비밀번호를 넣어야 로그를 볼 수 있어요.</div>`:""}
     ${sysKeys.length>1||(sysKeys.length===1&&sysKeys[0]!==NOSYS)?`<div class="systabs">
       <button class="systab${S.sysFilter?"":" on"}" data-sys="">전체 <span>${all.length}</span></button>
       ${sysKeys.map(k=>`<button class="systab${S.sysFilter===k?" on":""}" data-sys="${esc(k)}">${esc(k)} <span>${systems[k]}</span></button>`).join("")}
@@ -1615,7 +1615,7 @@ function homeHTML(){
       <div class="tip" style="margin:4px 0 10px">클로바노트에서 내보낸 <b>대사 파일(.txt)</b>과 <b>녹음 파일(.m4a 등)</b>을 한꺼번에 골라요. 이름이 같은 txt와 녹음은 알아서 짝지어요. 예: <code>261114 세션 1.txt</code> + <code>261114 세션 1.m4a</code><br>
       녹음 파일만 고르면 이미 올린 녹음에 이름으로 짝지어 넣어요(있던 녹음은 새 파일로 바뀌어요). 한 번 플레이가 여러 개로 나뉘었으면 같은 시나리오·같은 날짜로 올리면 1부, 2부로 묶여요.<br>녹음 없는 온라인 세션은 코코포리아 방 메뉴의 <b>로그 출력</b>으로 받은 html을 고르면 회차별로 나눠서 올라가요.</div>
       <span class="filebtn"><button class="pri">📄🎧 txt · 녹음 · 코코포리아 로그 고르기</button><input type="file" id="tfile" accept=".txt,text/plain,.html,text/html${S.storage&&can?",audio/*,video/*,.m4a,.mp3,.wav,.ogg,.webm":""}" multiple></span>
-      ${can&&S.canAdmin?`<div style="margin-top:10px"><button class="ghost" id="newnolog">＋ 녹음 없이 시나리오 만들기</button> <span class="tip">녹음이 금지된 세션 · 개요·등장인물·후기만 써요</span></div>`:""}
+      ${can&&S.canAdmin?`<div style="margin-top:10px"><button class="ghost" id="newnolog">＋ 녹음 없이 세션 만들기</button> <span class="tip">녹음이 금지된 세션 · 개요·등장인물·후기만 써요</span></div>`:""}
       <div id="imp"></div>
       <div id="bulkres" class="tip" style="margin-top:8px">${S.bulkMsg||""}</div>
     </div>`:""}
@@ -1634,7 +1634,7 @@ async function importAll(data,prog){
       for(const c of chunks||[]){const {id:cid,...cb}=c;await put(`sessions/${id}/chunks/${cid}`,cb);}
     }
     if(inBatch)await retry(()=>batch.commit());
-    S.impMsg=`완료! 시나리오 ${data.scenarios.length}개, 녹음 ${data.sessions.length}개를 가져왔어요`;
+    S.impMsg=`완료! 세션 ${data.scenarios.length}개, 녹음 ${data.sessions.length}개를 가져왔어요`;
   }catch(e){S.impMsg="가져오다가 멈췄어요: "+(e.code||e.message)+" · 다시 가져오면 처음부터 덮어써요";}
   S.importing=false;render();
 }
@@ -1674,7 +1674,7 @@ function daysHTML(days,gear=true){
 async function gotoScen(name,edit){
   let sc=findScen(name);
   if(!sc){
-    if(!(S.db&&S.canWrite)){toast("아직 개요가 없는 시나리오예요");return;}
+    if(!(S.db&&S.canWrite)){toast("아직 페이지가 없는 세션이에요");return;}
     sc=createScen(name,[]);await saveScen(sc);
   }
   if(edit)S.pendingEdit=sc.id;location.hash="c-"+sc.id;
@@ -1695,14 +1695,14 @@ function bindBackup(){
     const f=ev.target.files[0];if(!f)return;const pr=$("#exprog");
     let data;try{data=JSON.parse(await f.text());}catch(e){pr.textContent="JSON 파일을 읽지 못했어요";return;}
     if(data.format!=="trpg-log"){pr.textContent="이 사이트에서 내보낸 파일이 아니에요";return;}
-    confirmBox(`시나리오 ${data.scenarios.length}개, 녹음 ${data.sessions.length}개를 가져올까요? 같은 녹음이 이미 있으면 덮어써요.`,"가져오기",()=>importAll(data,t=>pr.textContent=t));
+    confirmBox(`세션 ${data.scenarios.length}개, 녹음 ${data.sessions.length}개를 가져올까요? 같은 녹음이 이미 있으면 덮어써요.`,"가져오기",()=>importAll(data,t=>pr.textContent=t));
   };
 }
 function bindHome(){
   bindPartEdit();renderAuth();
   bindBackup();
   {const nb=$("#newnolog");if(nb)nb.onclick=async()=>{const n=(prompt("시나리오 이름")||"").trim();if(!n)return;
-    if(findScen(n)){toast("이미 있는 시나리오예요. 그 시나리오의 ✎ 수정에서 '녹음 없이 플레이한 날'을 넣어 주세요",4500);gotoScen(n,true);return;}
+    if(findScen(n)){toast("이미 있는 세션이에요. 그 세션의 ✎ 수정에서 '녹음 없이 플레이한 날'을 넣어 주세요",4500);gotoScen(n,true);return;}
     const sc=createScen(n,[]);sc.plays=[new Date(Date.now()+9*3600e3).toISOString().slice(0,10)];await saveScen(sc);S.pendingEdit=sc.id;location.hash="c-"+sc.id;};}
   async function bulkAudio(files){
     const box=$("#bulkres");
@@ -1789,11 +1789,11 @@ function scenHTML(){
   const sc=scenById(S.cid);
   if(!sc){
     if(!S.loaded||!S.authUser)return `<div class="sc-page"><div class="notice">불러오는 중…</div></div>`;
-    return `<div class="sc-page"><button class="ghost" id="scback">← 목록</button><div class="notice">이 시나리오를 찾을 수 없어요.</div></div>`;
+    return `<div class="sc-page"><button class="ghost" id="scback">← 목록</button><div class="notice">이 세션을 찾을 수 없어요.</div></div>`;
   }
   // 비밀번호를 넣기 전에는 시나리오 페이지 대신 잠금 화면만: 누구로 들어갈지 고르고 비밀번호
   if(!isOpen(sc.id))return `<div class="sc-page lockpage"><div class="lkwrap">
-      <div class="lockicon">🔒</div><h2>${esc(sc.name)}</h2><div class="tip">잠긴 시나리오예요</div>
+      <div class="lockicon">🔒</div><h2>${esc(sc.name)}</h2><div class="tip">잠긴 세션이에요</div>
       ${meChipsHTML(sc,S.lockPick,true)}
       ${S.lockPick?`<div class="lkpw"><div class="who">${S.lockPick==="ext"?`외부인은 로그를 <span class="me">읽기만</span> 할 수 있어요`:`<span class="me">${esc(meName(sc,S.lockPick))}</span>(으)로 들어가요`}</div>
         <form id="unlockf"><input type="text" id="unlockpw" placeholder="열람 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form>
@@ -1806,7 +1806,7 @@ function scenHTML(){
     if(!S.scDraft||S.scDraft.id!==sc.id){S.scDraft=JSON.parse(JSON.stringify(sc));S.scDraft.sp=gmFirst(S.scDraft.sp,gmKey(S.scDraft));S.scBase=clone(S.scDraft);}
     const d=S.scDraft;
     return `<div class="sc-page">
-      <div class="sc-top"><h2>시나리오 수정</h2><button data-x>취소</button><button class="pri" data-ok>저장</button></div>
+      <div class="sc-top"><h2>세션 수정</h2><button data-x>취소</button><button class="pri" data-ok>저장</button></div>
       <div class="sc-sec"><div class="fields" style="margin:0">
         <label>시나리오 이름<input type="text" id="e-name" value="${esc(d.name)}"></label>
         <label>원어 제목 <span class="tip" style="display:inline">· 선택</span><input type="text" id="e-orig" value="${esc(d.orig||"")}" placeholder="해외 시나리오면 원래 제목 (없으면 비워 두세요)"></label>
@@ -1838,23 +1838,23 @@ function scenHTML(){
         <div class="tip" style="margin-top:8px">동그라미를 누르면 인장을 올려요(정사각형으로 잘려요). ×로 지우면 GM은 GM 그림, 나머지는 캐릭터 이름 첫 글자가 나와요. ↑↓로 바꾼 순서가 로그 화면의 숫자키 순서예요(GM은 늘 1번). 🗑는 대사가 하나도 없는 플레이어만 지울 수 있어요. 바꾼 내용은 <b>저장</b>을 눌러야 반영돼요.</div>`;})()}
       </div>
 
-      ${S.canAdmin&&S.scens.length>1?`<div class="sc-sec"><h4 data-en="MERGE">다른 시나리오와 합치기</h4>
-        <div class="tip" style="margin-bottom:8px">실수로 두 개가 된 시나리오를 하나로 합쳐요. 이 시나리오의 녹음이 모두 고른 시나리오로 옮겨가고, 화자 목록은 이름이 같은 사람끼리 합쳐져요. 개요와 룰 시스템은 고른 쪽이 비어 있을 때만 옮겨와요.</div>
-        <div style="display:flex;gap:8px"><select id="mto" style="flex:1"><option value="">합칠 시나리오 고르기</option>${S.scens.filter(x=>x.id!==sc.id).map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join("")}</select><button id="mgo">합치기</button></div>
+      ${S.canAdmin&&S.scens.length>1?`<div class="sc-sec"><h4 data-en="MERGE">다른 세션과 합치기</h4>
+        <div class="tip" style="margin-bottom:8px">실수로 두 개가 된 세션을 하나로 합쳐요. 이 세션의 녹음이 모두 고른 세션으로 옮겨가고, 화자 목록은 이름이 같은 사람끼리 합쳐져요. 개요와 룰 시스템은 고른 쪽이 비어 있을 때만 옮겨와요.</div>
+        <div style="display:flex;gap:8px"><select id="mto" style="flex:1"><option value="">합칠 세션 고르기</option>${S.scens.filter(x=>x.id!==sc.id).map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join("")}</select><button id="mgo">합치기</button></div>
       </div>`:""}
-      ${S.canAdmin&&!days.some(x=>x.parts.length)?`<button id="scdel" style="color:var(--bad)">이 시나리오 지우기</button>`:""}
+      ${S.canAdmin&&!days.some(x=>x.parts.length)?`<button id="scdel" style="color:var(--bad)">이 세션 지우기</button>`:""}
     </div>`;
   }
   return `<div class="sc-page">
-    ${(()=>{const t=`<h2>${esc(sc.name)}${sc.orig?`<span class="orig">${esc(sc.orig)}</span>`:""}</h2>`,m=`${sc.system?`<span class="sys" data-th="${themeOf(sc)||"pa"}">${esc(sysLabel(sc.system))}</span>`:""}${S.canWrite?`<button id="scedit" title="시나리오 수정" aria-label="시나리오 수정">✎<span class="lbl"> 수정</span></button>`:""}`;
+    ${(()=>{const t=`<h2>${esc(sc.name)}${sc.orig?`<span class="orig">${esc(sc.orig)}</span>`:""}</h2>`,m=`${sc.system?`<span class="sys" data-th="${themeOf(sc)||"pa"}">${esc(sysLabel(sc.system))}</span>`:""}${S.canWrite?`<button id="scedit" title="세션 수정" aria-label="세션 수정">✎<span class="lbl"> 수정</span></button>`:""}`;
       return sc.og?`<div class="schero"><img src="${sc.og}" alt=""><div class="schero-t">${t}<span class="scmeta">${m}</span></div></div>`
         :`<div class="sc-top">${t}<span class="scmeta">${m}</span></div>`;})()}
     <div class="sc-sec"><h4 data-en="SUMMARY">개요</h4>${txt(sc.summary,"아직 개요가 없어요."+(S.canWrite?" ✎ 수정을 눌러 써 주세요.":""))}</div>
     <div class="sc-sec"><h4 data-en="CAST">플레이어 · 등장인물</h4>${sc.sp.length?`${(()=>{const m=meSp(sc.id),k=myK(sc.id);return k==="ext"&&!S.canAdmin?`<div class="meline">외부인으로 보는 중 · <button class="lnk" id="mepick">바꾸기</button></div>`:m?`<div class="meline" style="--c:${fixC(m.c)}"><span class="me"><i></i>나: ${esc(pcSplit(m.name).name)}</span>${m.ch?` · ${esc(m.ch)}`:""} · <button class="lnk" id="mepick">바꾸기</button></div>`:`<div class="meline"><button class="lnk" id="mepick">나는 누구? 고르기</button></div>`;})()}<div class="castrow">${gmFirst(sc.sp.filter(p=>p.k===gmKey(sc)||!isAnon(p)&&!/&/.test(p.name)||p.ch),gmKey(sc)).map(p=>{const gm=p.k===gmKey(sc),q=pcSplit(p.name);return `<div class="cc${gm?" gm":""}${p.k===myK(sc.id)?" mine":""}" style="--c:${fixC(p.c)}"><div class="av">${avHTML(p,gm)}</div><div class="cn">${esc(gm?(p.ch||gmWord(sc)):(p.ch||q.name))}</div><div class="cp">${gm?gmTag:q.n?`<span class="pcn">${q.n}</span>`:""}${p.ch||gm?esc(q.name):""}</div></div>`;}).join("")}</div>`:`<div class="sc-text empty">녹음을 올리면 화자가 여기 모여요.</div>`}</div>
     <div class="sc-sec"><h4 data-en="SESSIONS">${days.length&&days.every(x=>x.nolog)?"회차":"녹음"}</h4>${days.length?daysHTML(days):`<div class="sc-text empty">아직 녹음이 없어요. 목록 화면에서 txt를 올릴 때 시나리오를 '${esc(sc.name)}'(으)로 고르면 여기 묶여요.</div>`}</div>
     ${S.db?revSectionHTML(sc):""}
-    ${S.canAdmin?`    <div class="sc-sec"><h4 data-en="ACCESS">시나리오 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
-      <div class="tip" style="margin-bottom:10px">링크와 비밀번호를 같이 받은 사람만 이 시나리오를 보고 고칠 수 있어요. 비밀번호를 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
+    ${S.canAdmin?`    <div class="sc-sec"><h4 data-en="ACCESS">세션 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
+      <div class="tip" style="margin-bottom:10px">링크와 비밀번호를 같이 받은 사람만 이 세션을 보고 고칠 수 있어요. 비밀번호를 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
       ${S.secrets&&S.secrets[sc.id]?`<div class="pwrow"><code class="pw">${esc(S.secrets[sc.id])}</code>
         <button id="copyshare" class="pri">링크+비밀번호 복사</button><button id="regenpw" class="ghost">새로 만들기</button></div>
         <div class="tip" style="margin-top:8px;word-break:break-all">${esc(shareUrl(sc.id))}</div>`:`<div class="tip">비밀번호를 만드는 중…</div>`}
@@ -1973,7 +1973,7 @@ function bindScen(){
     pull();
     const old=sc.name;
     const other=findScen(d.name);
-    if(d.name!==old&&other&&other.id!==sc.id){toast("같은 이름의 시나리오가 이미 있어요. 합치려면 아래 '다른 시나리오와 합치기'를 써 주세요",3500);return;}
+    if(d.name!==old&&other&&other.id!==sc.id){toast("같은 이름의 세션이 이미 있어요. 합치려면 아래 '다른 세션과 합치기'를 써 주세요",3500);return;}
     const mine=S.sessions.filter(x=>info(x).scen===old);
     if(d.name!==old){d.aliases=[...new Set([...(d.aliases||[]),old])].filter(a=>a!==d.name);}
     const base=S.scBase||clone(sc),dd=clone(d);
@@ -1988,10 +1988,10 @@ function bindScen(){
     toast("저장했어요");
   };
   const mg=$("#mgo");if(mg)mg.onclick=()=>{
-    const to=scenById($("#mto").value);if(!to){toast("합칠 시나리오를 골라 주세요");return;}
+    const to=scenById($("#mto").value);if(!to){toast("합칠 세션을 골라 주세요");return;}
     confirmBox(`'${sc.name}'을(를) '${to.name}'(으)로 합칠까요? '${sc.name}'은(는) 목록에서 사라지고 녹음은 '${to.name}' 아래로 옮겨가요.`,"합치기",()=>mergeScen(sc,to));
   };
-  const del=$("#scdel");if(del)del.onclick=()=>confirmBox(`'${sc.name}' 시나리오와 개요를 지울까요?`,"삭제",async()=>{S.scEdit=false;location.hash="";try{await retry(()=>S.db.doc("scenarios/"+sc.id).delete());}catch(e){toast("지우지 못했어요");}});
+  const del=$("#scdel");if(del)del.onclick=()=>confirmBox(`'${sc.name}' 세션과 개요를 지울까요?`,"삭제",async()=>{S.scEdit=false;location.hash="";try{await retry(()=>S.db.doc("scenarios/"+sc.id).delete());}catch(e){toast("지우지 못했어요");}});
 }
 
 async function mergeScen(from,to){
@@ -2135,7 +2135,7 @@ function revCardHTML(sc,r,inPage){
     <div class="rv-t">${esc(sc?.name||"")}</div><div class="rv-s">${[sc?.orig,sc?.system?sysLabel(sc.system):""].filter(Boolean).map(esc).join(" · ")}</div>
     <div class="rv-body${r.html?" rich":""}">${r.html?richView(r.html):emoize(xEm(r.text||""))}</div>
     <div class="rv-sign">— ${esc(w.gm?gmWord(sc).replace(/ /g,""):"")}${w.gm?" ":""}${esc(w.name)}${w.ch&&!w.gm?` (${esc(w.ch)})`:""}</div>
-    <div class="rv-foot"><span>${esc(site().title)}</span>${inPage?`<a href="#c-${esc(r.scid)}" class="rv-go">시나리오 보기 ›</a>`:`<button class="pri" data-rvcopy="${esc(r.id)}">🔗 이 후기 링크 복사</button>`}</div></div>`;
+    <div class="rv-foot"><span>${esc(site().title)}</span>${inPage?`<a href="#c-${esc(r.scid)}" class="rv-go">세션 페이지 보기 ›</a>`:`<button class="pri" data-rvcopy="${esc(r.id)}">🔗 이 후기 링크 복사</button>`}</div></div>`;
 }
 function revSectionHTML(sc){
   watchRevs(sc.id);
