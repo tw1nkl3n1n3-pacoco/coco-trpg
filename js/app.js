@@ -297,6 +297,7 @@ function bindEmoAdmin(){
 function shrinkImage(file,size,type="image/jpeg",w=size,h=size){
   return new Promise((ok,no)=>{const img=new Image();const u=URL.createObjectURL(file);
     img.onload=()=>{const c=document.createElement("canvas");c.width=w;c.height=h;const g=c.getContext("2d");
+      if(type==="image/jpeg"){g.fillStyle="#fff";g.fillRect(0,0,w,h);} // 투명한 부분이 검게 되지 않게 흰 바탕
       const r=Math.max(w/img.width,h/img.height),dw=img.width*r,dh=img.height*r;g.drawImage(img,(w-dw)/2,(h-dh)/2,dw,dh);
       URL.revokeObjectURL(u);ok(c.toDataURL(type,.85));};
     img.onerror=()=>{URL.revokeObjectURL(u);no();};img.src=u;});
@@ -2429,7 +2430,7 @@ async function uploadPic(file,scid){
   if(!S.authUser)await S.auth.signInAnonymously();
   const img=await new Promise((ok,no)=>{const i=new Image(),u=URL.createObjectURL(file);i.onload=()=>{ok(i);};i.onerror=no;i.src=u;});
   const r=Math.min(1,1200/img.width),w=Math.round(img.width*r),h=Math.round(img.height*r);
-  const c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(img,0,0,w,h);URL.revokeObjectURL(img.src);
+  const c=document.createElement("canvas");c.width=w;c.height=h;const cg=c.getContext("2d");cg.fillStyle="#fff";cg.fillRect(0,0,w,h);cg.drawImage(img,0,0,w,h);URL.revokeObjectURL(img.src);
   const blob=await new Promise(ok=>c.toBlob(ok,"image/jpeg",.86));
   const ref=S.storage.ref(`img/${scid}/${myUid()}/${Date.now().toString(36)}${rid4()}.jpg`);
   await ref.put(blob,{contentType:"image/jpeg",cacheControl:"public,max-age=31536000"});
