@@ -701,6 +701,8 @@ const THEMES={"":{n:"양피지",d:"지금 기본 · 판타지",sw:["#efe3cc","#f
 const pcSplit=v=>{const m=String(v||"").match(/^\s*PC\s*(\d{1,2})\s*[.:·\-]?\s*(.+)$/i);return m?{n:m[1],name:m[2]}:{n:"",name:String(v||"")};};
 const spDot=(p,style="")=>{const q=pcSplit(p.name);return `<span class="dot${q.n?" pcn":""}"${style?` style="${style}"`:""}>${q.n}</span>`;};
 const spName=p=>esc(pcSplit(p.name).name);
+// 인장(동그란 캐릭터 이미지): 올린 그림 → 없으면 GM은 GM 그림, 나머지는 캐릭터 이름 첫 글자
+const avHTML=(p,gm)=>p.img?`<img src="${p.img}" alt="">`:gm?`<span class="gmav">GM</span>`:`<span class="ini">${esc((p.ch||pcSplit(p.name).name||"?").trim().slice(0,1))}</span>`;
 // 룰 이름 표기: DnD·D＆D → D&D
 const sysLabel=v=>String(v||"").replace(/\bD\s*(n|＆)\s*D\b/gi,"D&D");
 // 완주 도장: 시나리오 이름으로 각도·위치·잉크를 정해요 (항상 같은 모양)
@@ -1598,7 +1600,7 @@ function castHTML(sc){
   const g=gmKey(sc);
   const cast=gmFirst((sc?.sp||[]).filter(p=>p.k===g||!isAnon(p)&&!/&/.test(p.name)||p.ch),g);
   if(!cast.length)return "";
-  return `<div class="cast">${cast.map(p=>`<span class="castc${p.k===g?" gm":""}" style="--c:${fixC(p.c)}">${p.k===g?gmTag:spDot(p)}<b>${spName(p)}</b>${p.ch?`<span>${esc(p.ch)}</span>`:""}</span>`).join("")}</div>`;
+  return `<div class="cast" data-th="${themeOf(sc)||"pa"}">${cast.map(p=>`<span class="castc${p.k===g?" gm":""}" style="--c:${fixC(p.c)}">${p.k===g?gmTag:spDot(p)}<b>${spName(p)}</b>${p.ch?`<span>${esc(p.ch)}</span>`:""}</span>`).join("")}</div>`;
 }
 function daysHTML(days,gear=true){
   const exp=d=>S.db&&d.parts.length?`<button class="ghost dexp" data-exps="${esc(d.parts[0].scen)}" data-expd="${esc(d.day)}" title="이 회차 로그를 HTML 파일로 받기">⬇ HTML</button>`:"";
@@ -1740,15 +1742,16 @@ function scenHTML(){
         <div class="donerow"><label class="chk"><input type="checkbox" id="e-done"${d.done?" checked":""}> 완주했어요</label><label class="donedate">완주한 날 <input type="date" id="e-doneat" value="${esc(d.doneAt||"")}"></label></div>
         <datalist id="syslist">${[...new Set(S.scens.map(x=>(x.system||"").trim()).filter(Boolean))].map(x=>`<option value="${esc(x)}">`).join("")}</datalist>
       </div></div>
-      <div class="sc-sec"><h4>공유 이미지 <span class="tip" style="letter-spacing:0">· 링크를 보낼 때 카톡·디스코드 미리보기에 뜨는 그림 (가로로 긴 1200×630으로 맞춰져요)</span></h4>
+      <div class="sc-sec"><h4 data-en="SHARE IMAGE">공유 이미지 <span class="tip" style="letter-spacing:0">· 링크를 보낼 때 카톡·디스코드 미리보기에 뜨는 그림 (가로로 긴 1200×630으로 맞춰져요)</span></h4>
         <div class="ogcard${d.og?"":" empty"}" id="e-ogprev">${d.og?`<img src="${d.og}" alt="">`:`<span>아직 이미지가 없어요</span>`}</div>
         <div style="display:flex;gap:6px;margin-top:8px"><button type="button" id="e-ogup">이미지 올리기</button>${d.og?`<button type="button" class="ghost" id="e-ogdel">지우기</button>`:""}<input type="file" id="e-ogfile" accept="image/*" style="display:none"></div>
       </div>
-      <div class="sc-sec"><h4>개요</h4><textarea id="e-sum" placeholder="배경, 도입, 목표, 등장 NPC 등">${esc(d.summary||"")}</textarea></div>
-      <div class="sc-sec"><h4>플레이어 · 등장인물</h4>
+      <div class="sc-sec"><h4 data-en="SUMMARY">개요</h4><textarea id="e-sum" placeholder="배경, 도입, 목표, 등장 NPC 등">${esc(d.summary||"")}</textarea></div>
+      <div class="sc-sec"><h4 data-en="CAST">플레이어 · 등장인물</h4>
         ${(()=>{const c=SCC[sc.id];const zero=c?d.sp.filter(p=>p.k!==d.gm&&!(c[p.k]>0)).length:0;return `
-        <div class="roster ed"><span></span><span class="h">플레이어 (로그에 나오는 이름)</span><span class="h">등장인물</span><span class="h">GM</span><span class="h" style="text-align:right">대사</span><span class="h" style="text-align:right">순서 · 지우기</span>
+        <div class="roster ed"><span></span><span class="h">인장</span><span class="h">플레이어 (로그에 나오는 이름)</span><span class="h">등장인물</span><span class="h">GM</span><span class="h" style="text-align:right">대사</span><span class="h" style="text-align:right">순서 · 지우기</span>
         ${d.sp.map((p,i)=>{const n=c?(c[p.k]||0):null;return `<button class="swatch" data-sw="${i}" style="--c:${fixC(p.c)}" title="색 바꾸기"></button>
+          <button type="button" class="avb" data-av="${i}" style="--c:${fixC(p.c)}" title="눌러서 인장 올리기">${avHTML(p,d.gm===p.k)}${p.img?`<span class="avx" data-avx="${i}" title="인장 지우기">×</span>`:""}</button>
           <input type="text" data-nm="${i}" value="${esc(p.name)}"><input type="text" data-ch="${i}" value="${esc(p.ch||"")}" placeholder="(선택)">
           <input type="radio" name="gm" data-gm="${p.k}" ${d.gm===p.k?"checked":""} title="GM으로 지정">
           <span class="cnum">${n===null?"…":n}</span>
@@ -1756,10 +1759,11 @@ function scenHTML(){
         </div>
         <div style="margin-top:6px;display:flex;gap:12px;align-items:center;flex-wrap:wrap"><label class="chk"><input type="radio" name="gm" data-gm="" ${d.gm?"":"checked"}>GM 없음</label>
           ${zero?`<button type="button" class="ghost" id="ezero">대사 없는 플레이어 ${zero}명 한꺼번에 지우기</button>`:""}</div>
-        <div class="tip" style="margin-top:8px">↑↓로 바꾼 순서가 로그 화면의 숫자키 순서예요(GM은 늘 1번). 🗑는 대사가 하나도 없는 플레이어만 지울 수 있어요. 바꾼 내용은 <b>저장</b>을 눌러야 반영돼요.</div>`;})()}
+        <input type="file" id="e-avfile" accept="image/*" style="display:none">
+        <div class="tip" style="margin-top:8px">동그라미를 누르면 인장을 올려요(정사각형으로 잘려요). ×로 지우면 GM은 GM 그림, 나머지는 캐릭터 이름 첫 글자가 나와요. ↑↓로 바꾼 순서가 로그 화면의 숫자키 순서예요(GM은 늘 1번). 🗑는 대사가 하나도 없는 플레이어만 지울 수 있어요. 바꾼 내용은 <b>저장</b>을 눌러야 반영돼요.</div>`;})()}
       </div>
 
-      ${S.canAdmin&&S.scens.length>1?`<div class="sc-sec"><h4>다른 시나리오와 합치기</h4>
+      ${S.canAdmin&&S.scens.length>1?`<div class="sc-sec"><h4 data-en="MERGE">다른 시나리오와 합치기</h4>
         <div class="tip" style="margin-bottom:8px">실수로 두 개가 된 시나리오를 하나로 합쳐요. 이 시나리오의 녹음이 모두 고른 시나리오로 옮겨가고, 화자 목록은 이름이 같은 사람끼리 합쳐져요. 개요와 룰 시스템은 고른 쪽이 비어 있을 때만 옮겨와요.</div>
         <div style="display:flex;gap:8px"><select id="mto" style="flex:1"><option value="">합칠 시나리오 고르기</option>${S.scens.filter(x=>x.id!==sc.id).map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join("")}</select><button id="mgo">합치기</button></div>
       </div>`:""}
@@ -1770,10 +1774,10 @@ function scenHTML(){
     ${(()=>{const t=`<h2>${esc(sc.name)}${sc.orig?`<span class="orig">${esc(sc.orig)}</span>`:""}</h2>`,m=`${sc.system?`<span class="sys" data-th="${themeOf(sc)||"pa"}">${esc(sysLabel(sc.system))}</span>`:""}${S.canWrite?`<button id="scedit" title="시나리오 수정" aria-label="시나리오 수정">✎<span class="lbl"> 수정</span></button>`:""}`;
       return sc.og?`<div class="schero"><img src="${sc.og}" alt=""><div class="schero-t">${t}<span class="scmeta">${m}</span></div></div>`
         :`<div class="sc-top">${t}<span class="scmeta">${m}</span></div>`;})()}
-    <div class="sc-sec"><h4>개요</h4>${txt(sc.summary,"아직 개요가 없어요."+(S.canWrite?" ✎ 수정을 눌러 써 주세요.":""))}</div>
-    <div class="sc-sec"><h4>플레이어 · 등장인물</h4>${sc.sp.length?(`<div class="roster" style="grid-template-columns:16px 1fr 1fr"><span></span><span class="h">플레이어</span><span class="h">등장인물</span>${gmFirst(sc.sp.filter(p=>!isAnon(p)),gmKey(sc)).map(p=>`${spDot(p,`--c:${fixC(p.c)}`)}<span>${p.k===gmKey(sc)?gmTag+" ":""}<b>${spName(p)}</b></span><span style="color:var(--dim);font-size:13.5px">${esc(p.ch||(p.k===gmKey(sc)?"게임 마스터":""))}</span>`).join("")}</div>`):`<div class="sc-text empty">녹음을 올리면 화자가 여기 모여요.</div>`}</div>
-    <div class="sc-sec"><h4>녹음</h4>${days.length?daysHTML(days):`<div class="sc-text empty">아직 녹음이 없어요. 목록 화면에서 txt를 올릴 때 시나리오를 '${esc(sc.name)}'(으)로 고르면 여기 묶여요.</div>`}</div>
-    ${S.canAdmin?`    <div class="sc-sec"><h4>시나리오 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
+    <div class="sc-sec"><h4 data-en="SUMMARY">개요</h4>${txt(sc.summary,"아직 개요가 없어요."+(S.canWrite?" ✎ 수정을 눌러 써 주세요.":""))}</div>
+    <div class="sc-sec"><h4 data-en="CAST">플레이어 · 등장인물</h4>${sc.sp.length?`<div class="castrow">${gmFirst(sc.sp.filter(p=>!isAnon(p)),gmKey(sc)).map(p=>{const gm=p.k===gmKey(sc),q=pcSplit(p.name);return `<div class="cc" style="--c:${fixC(p.c)}"><div class="av">${avHTML(p,gm)}</div><div class="cn">${esc(gm?(p.ch||"게임 마스터"):(p.ch||q.name))}</div><div class="cp">${gm?gmTag:q.n?`<span class="pcn">${q.n}</span>`:""}${p.ch||gm?esc(q.name):""}</div></div>`;}).join("")}</div>`:`<div class="sc-text empty">녹음을 올리면 화자가 여기 모여요.</div>`}</div>
+    <div class="sc-sec"><h4 data-en="SESSIONS">녹음</h4>${days.length?daysHTML(days):`<div class="sc-text empty">아직 녹음이 없어요. 목록 화면에서 txt를 올릴 때 시나리오를 '${esc(sc.name)}'(으)로 고르면 여기 묶여요.</div>`}</div>
+    ${S.canAdmin?`    <div class="sc-sec"><h4 data-en="ACCESS">시나리오 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
       <div class="tip" style="margin-bottom:10px">링크와 비밀번호를 같이 받은 사람만 이 시나리오를 보고 고칠 수 있어요. 비밀번호를 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
       ${S.secrets&&S.secrets[sc.id]?`<div class="pwrow"><code class="pw">${esc(S.secrets[sc.id])}</code>
         <button id="copyshare" class="pri">링크+비밀번호 복사</button><button id="regenpw" class="ghost">새로 만들기</button></div>
@@ -1833,7 +1837,7 @@ function mergeScenEdit(L,base,d){
   if((d.gm||null)!==(base.gm||null)){if(d.gm)L.gm=d.gm;else delete L.gm;}
   const bk=new Map((base.sp||[]).map(p=>[p.k,p])),dk=new Map((d.sp||[]).map(p=>[p.k,p]));
   let arr=(L.sp||[]).filter(p=>!(bk.has(p.k)&&!dk.has(p.k)));
-  (d.sp||[]).forEach(p=>{const b=bk.get(p.k)||{},l=arr.find(x=>x.k===p.k);if(!l)return;["name","ch","c"].forEach(f=>{if((p[f]||"")!==(b[f]||""))l[f]=p[f];});});
+  (d.sp||[]).forEach(p=>{const b=bk.get(p.k)||{},l=arr.find(x=>x.k===p.k);if(!l)return;["name","ch","c"].forEach(f=>{if((p[f]||"")!==(b[f]||""))l[f]=p[f];});if((p.img||"")!==(b.img||"")){if(p.img)l.img=p.img;else delete l.img;}});
   if((d.sp||[]).map(p=>p.k).join()!==(base.sp||[]).map(p=>p.k).join()){
     const pos=new Map(d.sp.map((p,i)=>[p.k,i]));
     arr=[...arr.filter(p=>pos.has(p.k)).sort((a,b)=>pos.get(a.k)-pos.get(b.k)),...arr.filter(p=>!pos.has(p.k))];
@@ -1870,6 +1874,9 @@ function bindScen(){
     const g=document.querySelector("[data-gm]:checked");if(g){if(g.dataset.gm)d.gm=g.dataset.gm;else delete d.gm;}};
   document.querySelectorAll("[data-sw]").forEach(btn=>btn.onclick=()=>{pull();const p=d.sp[+btn.dataset.sw];p.c=COLORS[(COLORS.indexOf(p.c)+1)%COLORS.length];render();});
   window.__scPull=pull;
+  {const fi=$("#e-avfile");let at=-1;
+    document.querySelectorAll("[data-av]").forEach(btn=>btn.onclick=ev=>{if(ev.target.closest("[data-avx]")){pull();delete d.sp[+btn.dataset.av].img;render();return;}at=+btn.dataset.av;if(fi){fi.value="";fi.click();}});
+    if(fi)fi.onchange=async ev=>{const f=ev.target.files[0];if(!f||at<0)return;try{pull();d.sp[at].img=await shrinkImage(f,160,"image/jpeg");render();toast("저장을 눌러야 적용돼요");}catch(e){toast("이미지를 읽지 못했어요");}};}
   document.querySelectorAll("[data-emv]").forEach(btn=>btn.onclick=()=>{pull();const i=+btn.dataset.emv,j=i+(+btn.dataset.d);if(j<0||j>=d.sp.length)return;[d.sp[i],d.sp[j]]=[d.sp[j],d.sp[i]];render();});
   document.querySelectorAll("[data-edel]").forEach(btn=>btn.onclick=()=>{pull();const p=d.sp[+btn.dataset.edel];if(!p)return;d.sp=d.sp.filter(x=>x!==p);if(d.gm===p.k)delete d.gm;render();});
   const ez=$("#ezero");if(ez)ez.onclick=()=>{pull();const c=SCC[sc.id]||{};d.sp=d.sp.filter(p=>p.k===d.gm||c[p.k]>0);render();};
