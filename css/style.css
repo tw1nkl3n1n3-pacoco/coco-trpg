@@ -436,3 +436,10 @@ body[data-theme=deco] .gmav{background:#7a200d;color:#f6d98a;font-family:"Gowun 
 .avb{position:relative;width:30px;height:30px;border-radius:50%!important;padding:0!important;border:0!important;background:none!important;box-shadow:0 0 0 2px var(--c)!important;cursor:pointer;justify-self:center}
 .avb .ini,.avb .gmav{font-size:11px}
 .avb .avx{position:absolute;right:-6px;top:-6px;width:15px;height:15px;border-radius:50%;background:#0f1113;color:#fff;font-size:11px;line-height:15px;text-align:center}
+/* GM 인장 테두리는 사람 색이 아니라 룰(테마) 색으로 고정 */
+body{--gmc:#8a5a2b}
+body[data-theme=deco]{--gmc:#7a200d}
+body[data-theme=wa]{--gmc:#d0141f}
+body[data-theme=dx]{--gmc:#0f1113}
+.cc.gm .av,.avb.gm{box-shadow:0 0 0 2px var(--gmc)!important}
+.cc.gm .cn{color:var(--ink)}

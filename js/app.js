@@ -1751,7 +1751,7 @@ function scenHTML(){
         ${(()=>{const c=SCC[sc.id];const zero=c?d.sp.filter(p=>p.k!==d.gm&&!(c[p.k]>0)).length:0;return `
         <div class="roster ed"><span></span><span class="h">인장</span><span class="h">플레이어 (로그에 나오는 이름)</span><span class="h">등장인물</span><span class="h">GM</span><span class="h" style="text-align:right">대사</span><span class="h" style="text-align:right">순서 · 지우기</span>
         ${d.sp.map((p,i)=>{const n=c?(c[p.k]||0):null;return `<button class="swatch" data-sw="${i}" style="--c:${fixC(p.c)}" title="색 바꾸기"></button>
-          <button type="button" class="avb" data-av="${i}" style="--c:${fixC(p.c)}" title="눌러서 인장 올리기">${avHTML(p,d.gm===p.k)}${p.img?`<span class="avx" data-avx="${i}" title="인장 지우기">×</span>`:""}</button>
+          <button type="button" class="avb${d.gm===p.k?" gm":""}" data-av="${i}" style="--c:${fixC(p.c)}" title="눌러서 인장 올리기">${avHTML(p,d.gm===p.k)}${p.img?`<span class="avx" data-avx="${i}" title="인장 지우기">×</span>`:""}</button>
           <input type="text" data-nm="${i}" value="${esc(p.name)}"><input type="text" data-ch="${i}" value="${esc(p.ch||"")}" placeholder="(선택)">
           <input type="radio" name="gm" data-gm="${p.k}" ${d.gm===p.k?"checked":""} title="GM으로 지정">
           <span class="cnum">${n===null?"…":n}</span>
@@ -1775,7 +1775,7 @@ function scenHTML(){
       return sc.og?`<div class="schero"><img src="${sc.og}" alt=""><div class="schero-t">${t}<span class="scmeta">${m}</span></div></div>`
         :`<div class="sc-top">${t}<span class="scmeta">${m}</span></div>`;})()}
     <div class="sc-sec"><h4 data-en="SUMMARY">개요</h4>${txt(sc.summary,"아직 개요가 없어요."+(S.canWrite?" ✎ 수정을 눌러 써 주세요.":""))}</div>
-    <div class="sc-sec"><h4 data-en="CAST">플레이어 · 등장인물</h4>${sc.sp.length?`<div class="castrow">${gmFirst(sc.sp.filter(p=>!isAnon(p)),gmKey(sc)).map(p=>{const gm=p.k===gmKey(sc),q=pcSplit(p.name);return `<div class="cc" style="--c:${fixC(p.c)}"><div class="av">${avHTML(p,gm)}</div><div class="cn">${esc(gm?(p.ch||"게임 마스터"):(p.ch||q.name))}</div><div class="cp">${gm?gmTag:q.n?`<span class="pcn">${q.n}</span>`:""}${p.ch||gm?esc(q.name):""}</div></div>`;}).join("")}</div>`:`<div class="sc-text empty">녹음을 올리면 화자가 여기 모여요.</div>`}</div>
+    <div class="sc-sec"><h4 data-en="CAST">플레이어 · 등장인물</h4>${sc.sp.length?`<div class="castrow">${gmFirst(sc.sp.filter(p=>!isAnon(p)),gmKey(sc)).map(p=>{const gm=p.k===gmKey(sc),q=pcSplit(p.name);return `<div class="cc${gm?" gm":""}" style="--c:${fixC(p.c)}"><div class="av">${avHTML(p,gm)}</div><div class="cn">${esc(gm?(p.ch||"게임 마스터"):(p.ch||q.name))}</div><div class="cp">${gm?gmTag:q.n?`<span class="pcn">${q.n}</span>`:""}${p.ch||gm?esc(q.name):""}</div></div>`;}).join("")}</div>`:`<div class="sc-text empty">녹음을 올리면 화자가 여기 모여요.</div>`}</div>
     <div class="sc-sec"><h4 data-en="SESSIONS">녹음</h4>${days.length?daysHTML(days):`<div class="sc-text empty">아직 녹음이 없어요. 목록 화면에서 txt를 올릴 때 시나리오를 '${esc(sc.name)}'(으)로 고르면 여기 묶여요.</div>`}</div>
     ${S.canAdmin?`    <div class="sc-sec"><h4 data-en="ACCESS">시나리오 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
       <div class="tip" style="margin-bottom:10px">링크와 비밀번호를 같이 받은 사람만 이 시나리오를 보고 고칠 수 있어요. 비밀번호를 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
