@@ -443,3 +443,6 @@ body[data-theme=wa]{--gmc:#d0141f}
 body[data-theme=dx]{--gmc:#0f1113}
 .cc.gm .av,.avb.gm{box-shadow:0 0 0 2px var(--gmc)!important}
 .cc.gm .cn{color:var(--ink)}
+/* D&D는 GM 대신 DM (던전 마스터) */
+body[data-theme=deco] .gmw,.cast[data-th=deco] .gmw{display:none}
+body[data-theme=deco] .gmtag::after,.cast[data-th=deco] .gmtag::after,body[data-theme=deco] .gmav::after{content:"DM"}

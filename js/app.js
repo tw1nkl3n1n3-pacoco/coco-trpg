@@ -600,7 +600,9 @@ function spList(){
   return gmFirst(sc.sp.filter(x=>x.k!==ALL).concat(own.filter(o=>!sc.sp.some(x=>x.k===o.k))),gmKey(sc)).concat(ALLSP);
 }
 const isGM=k=>!!k&&gmKey(curScen())===k;
-const gmTag='<span class="gmtag">GM</span>';
+// GM 딱지 (D&D는 CSS로 'DM'으로 바뀌어요)
+const gmTag='<span class="gmtag"><span class="gmw">GM</span></span>';
+const gmWord=sc=>themeOf(sc)==="deco"?"던전 마스터":"게임 마스터";
 const spBy=k=>spList().find(s=>s.k===k)||{k,name:"(목록에 없는 화자)",c:"#888"};
 function spTarget(){const sc=curScen();return sc?sc.sp:S.meta.sp;}
 function saveSp(){saveMeta();}
@@ -702,7 +704,7 @@ const pcSplit=v=>{const m=String(v||"").match(/^\s*PC\s*(\d{1,2})\s*[.:·\-]?\s*
 const spDot=(p,style="")=>{const q=pcSplit(p.name);return `<span class="dot${q.n?" pcn":""}"${style?` style="${style}"`:""}>${q.n}</span>`;};
 const spName=p=>esc(pcSplit(p.name).name);
 // 인장(동그란 캐릭터 이미지): 올린 그림 → 없으면 GM은 GM 그림, 나머지는 캐릭터 이름 첫 글자
-const avHTML=(p,gm)=>p.img?`<img src="${p.img}" alt="">`:gm?`<span class="gmav">GM</span>`:`<span class="ini">${esc((p.ch||pcSplit(p.name).name||"?").trim().slice(0,1))}</span>`;
+const avHTML=(p,gm)=>p.img?`<img src="${p.img}" alt="">`:gm?`<span class="gmav"><span class="gmw">GM</span></span>`:`<span class="ini">${esc((p.ch||pcSplit(p.name).name||"?").trim().slice(0,1))}</span>`;
 // 룰 이름 표기: DnD·D＆D → D&D
 const sysLabel=v=>String(v||"").replace(/\bD\s*(n|＆)\s*D\b/gi,"D&D");
 // 완주 도장: 시나리오 이름으로 각도·위치·잉크를 정해요 (항상 같은 모양)
@@ -1775,7 +1777,7 @@ function scenHTML(){
       return sc.og?`<div class="schero"><img src="${sc.og}" alt=""><div class="schero-t">${t}<span class="scmeta">${m}</span></div></div>`
         :`<div class="sc-top">${t}<span class="scmeta">${m}</span></div>`;})()}
     <div class="sc-sec"><h4 data-en="SUMMARY">개요</h4>${txt(sc.summary,"아직 개요가 없어요."+(S.canWrite?" ✎ 수정을 눌러 써 주세요.":""))}</div>
-    <div class="sc-sec"><h4 data-en="CAST">플레이어 · 등장인물</h4>${sc.sp.length?`<div class="castrow">${gmFirst(sc.sp.filter(p=>!isAnon(p)),gmKey(sc)).map(p=>{const gm=p.k===gmKey(sc),q=pcSplit(p.name);return `<div class="cc${gm?" gm":""}" style="--c:${fixC(p.c)}"><div class="av">${avHTML(p,gm)}</div><div class="cn">${esc(gm?(p.ch||"게임 마스터"):(p.ch||q.name))}</div><div class="cp">${gm?gmTag:q.n?`<span class="pcn">${q.n}</span>`:""}${p.ch||gm?esc(q.name):""}</div></div>`;}).join("")}</div>`:`<div class="sc-text empty">녹음을 올리면 화자가 여기 모여요.</div>`}</div>
+    <div class="sc-sec"><h4 data-en="CAST">플레이어 · 등장인물</h4>${sc.sp.length?`<div class="castrow">${gmFirst(sc.sp.filter(p=>!isAnon(p)),gmKey(sc)).map(p=>{const gm=p.k===gmKey(sc),q=pcSplit(p.name);return `<div class="cc${gm?" gm":""}" style="--c:${fixC(p.c)}"><div class="av">${avHTML(p,gm)}</div><div class="cn">${esc(gm?(p.ch||gmWord(sc)):(p.ch||q.name))}</div><div class="cp">${gm?gmTag:q.n?`<span class="pcn">${q.n}</span>`:""}${p.ch||gm?esc(q.name):""}</div></div>`;}).join("")}</div>`:`<div class="sc-text empty">녹음을 올리면 화자가 여기 모여요.</div>`}</div>
     <div class="sc-sec"><h4 data-en="SESSIONS">녹음</h4>${days.length?daysHTML(days):`<div class="sc-text empty">아직 녹음이 없어요. 목록 화면에서 txt를 올릴 때 시나리오를 '${esc(sc.name)}'(으)로 고르면 여기 묶여요.</div>`}</div>
     ${S.canAdmin?`    <div class="sc-sec"><h4 data-en="ACCESS">시나리오 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
       <div class="tip" style="margin-bottom:10px">링크와 비밀번호를 같이 받은 사람만 이 시나리오를 보고 고칠 수 있어요. 비밀번호를 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
@@ -1805,7 +1807,7 @@ function spManageHTML(sc){
   ${list.map((p,i)=>{const n=c?(c[p.k]||0):null;const isG=p.k===g;
     return `<span class="dot" style="--c:${fixC(p.c)}"></span>
     <span>${isG?gmTag+" ":""}<b style="${n===0?"color:var(--faint)":""}">${esc(p.name)}</b></span>
-    <span style="color:var(--dim);font-size:13.5px">${esc(p.ch||(isG?"게임 마스터":""))}</span>
+    <span style="color:var(--dim);font-size:13.5px">${esc(p.ch||(isG?gmWord(sc):""))}</span>
     <span class="cnum">${n===null?"…":n}</span>
     <span class="mgb">${isG?"":`<button class="ghost" data-mv="${p.k}" data-d="-1" title="위로" ${i<=(g?1:0)?"disabled":""}>↑</button><button class="ghost" data-mv="${p.k}" data-d="1" title="아래로" ${i===list.length-1?"disabled":""}>↓</button><button class="ghost" data-spdel="${p.k}" title="${n===0?"지우기":"대사가 있어서 못 지워요 (로그 화면에서 다른 플레이어로 옮긴 뒤 지울 수 있어요)"}" ${n===0?"":"disabled"}>🗑</button>`}</span>`;}).join("")}
   </div>
