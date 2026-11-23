@@ -85,7 +85,10 @@ function isOpen(id){return S.canAdmin||(!!id&&!!SUB.sessData[id]);}
 function canWriteScen(id){return !!id&&isOpen(id)&&!isExt(id);}
 // 이 브라우저에서 고른 '나' (시나리오마다): 화자 key · "ext"(외부인 · 읽기만) · 없음
 let _me={};try{_me=JSON.parse(localStorage.getItem("trpg-me")||"{}")||{};}catch(e){}
-function myK(id){return id&&_me[id]||"";}
+// 주인은 관리 페이지에 적은 '내 닉네임'과 같은 플레이어를 자동으로 '나'로 써요 (직접 고른 게 있으면 그게 먼저)
+function ownerK(id){if(!S.canAdmin||!id)return "";const ns=(site().nicks||[]).map(x=>String(x).trim().toLowerCase()).filter(Boolean);if(!ns.length)return "";
+  const sc=scenById(id);const p=(sc?.sp||[]).find(x=>ns.includes(pcSplit(x.name||"").name.trim().toLowerCase())||ns.includes(String(x.name||"").trim().toLowerCase()));return p?p.k:"";}
+function myK(id){return id&&(_me[id]||ownerK(id))||"";}
 function setMe(id,k){if(k)_me[id]=k;else delete _me[id];try{localStorage.setItem("trpg-me",JSON.stringify(_me));}catch(e){}}
 function isExt(id){return !S.canAdmin&&myK(id)==="ext";}
 function meSp(id){const k=myK(id),sc=scenById(id);return k&&k!=="ext"&&sc?(sc.sp||[]).find(p=>p.k===k)||null:null;}
@@ -228,6 +231,8 @@ function adminHTML(){
           <input type="text" id="s-icon" value="${isImgIcon(st.icon)?"":esc(st.icon)}" placeholder="예: 🎲" style="width:80px">
           <button type="button" id="s-up">이미지 올리기</button><button type="button" class="ghost" id="s-clr">없애기</button>
           <input type="file" id="s-file" accept="image/*" style="display:none"></div>
+        <label>내 닉네임 · 여러 개면 쉼표로 (예: 코코, 코곰) · 시나리오마다 이 이름의 플레이어가 자동으로 '나'가 돼요</label>
+        <input type="text" id="s-nicks" value="${esc((st.nicks||[]).join(", "))}" placeholder="코코, 코곰">
         <div class="btns"><button class="pri" id="s-ok">저장</button></div>
       </div></div>
     ${S.db?`<div class="card emadm"><b>이모티콘</b> <span class="tip">· 사이트 어디서든 :이름: 으로 써요 (후기·댓글) · 주인만 등록</span>
@@ -258,7 +263,7 @@ function bindAdmin(){
   $("#s-up").onclick=()=>$("#s-file").click();
   $("#s-file").onchange=async ev=>{const f=ev.target.files[0];if(!f)return;try{icon=await shrinkImage(f,128,"image/png");$("#s-icon").value="";prev();}catch(e){toast("이미지를 읽지 못했어요");}};
   $("#s-ok").onclick=async()=>{
-    const v={title:$("#s-title").value.trim()||SITE_DEF.title,sub:$("#s-sub").value.trim(),icon:icon||""};
+    const v={title:$("#s-title").value.trim()||SITE_DEF.title,sub:$("#s-sub").value.trim(),icon:icon||"",nicks:[...new Set($("#s-nicks").value.split(/[,，、\n]/).map(x=>x.trim()).filter(Boolean))]};
     S.site={...S.site,...v};applySite();
     try{await S.db.doc("scenarios/_site").set(v,{merge:true});toast("저장했어요");}catch(e){writeFail(e);}
     render();
