@@ -737,3 +737,15 @@ body[data-theme=deco][data-page=scen] :is(.sc-page,.rvpage)>.ldr{--ink:#f6e7c8;-
 .picov .pv-bar button{color:#fff;border-color:rgba(255,255,255,.3)}
 .picov .pv-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.12);color:#fff;border:0;font-size:30px;width:46px;height:64px;border-radius:8px}
 .picov .pv-nav.l{left:12px}.picov .pv-nav.r{right:12px}
+/* 캠프 페이지 */
+.camp-k h2 .hsub{display:block;margin-top:6px;font:500 13.5px/1.4 "Noto Sans KR",sans-serif;letter-spacing:0;color:var(--dim)}
+.camp-k .schero-t h2 .hsub{color:rgba(255,255,255,.82)}
+.camp-k h2 .hsub .dot{font-style:normal;margin:0 7px;opacity:.6}
+.camp-k .schero{margin-bottom:16px}
+.camp-k .ctab{padding:12px 0 14px;border-top:1px solid var(--line)}
+.camp-k h4+.ctab{border-top:0;padding-top:4px}
+.camp-k .ct-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+.camp-k .ct-h a{font-weight:700;font-size:16px;color:var(--ink);text-decoration:none}
+.camp-k .ct-h a:hover{text-decoration:underline}
+.camp-k .ctab .cast{margin:0}
+.camp-k .cadd{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:-2px 0 18px}

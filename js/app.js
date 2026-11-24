@@ -1931,7 +1931,7 @@ function scenHTML(){
     </div>`;
   }
   return `<div class="sc-page">
-    ${campOf(sc)?isCamp(campOf(sc))?`<div class="campline">⛺ <a href="#g-${esc(sc.camp)}">${esc(campOf(sc).name)}</a> · 캠프 <span class="tip">(${campCount(campOf(sc))})</span></div>`:`<div class="campline">📚 <a href="#g-${esc(sc.camp)}">${esc(campOf(sc).name)}</a> · ${esc(epLabel(campOf(sc),sc))}${sc.gaiden?"":` <span class="tip">(전체 ${campCount(campOf(sc))})</span>`}</div>`:""}
+    ${campOf(sc)?isCamp(campOf(sc))?`<div class="campline">캠프 · <a href="#g-${esc(sc.camp)}">${esc(campOf(sc).name)}</a></div>`:`<div class="campline">📚 <a href="#g-${esc(sc.camp)}">${esc(campOf(sc).name)}</a> · ${esc(epLabel(campOf(sc),sc))}${sc.gaiden?"":` <span class="tip">(전체 ${campCount(campOf(sc))})</span>`}</div>`:""}
     ${(()=>{const t=`<h2>${esc(sc.name)}${sc.orig?`<span class="orig">${esc(sc.orig)}</span>`:""}</h2>`,m=`${effSys(sc)?`<span class="sys" data-th="${themeOf(sc)||"pa"}">${esc(sysLabel(effSys(sc)))}</span>`:""}${S.canWrite?`<button id="scedit" title="세션 수정" aria-label="세션 수정">✎<span class="lbl"> 수정</span></button>`:""}`;
       return sc.og?`<div class="schero"><img src="${sc.og}" alt=""><div class="schero-t">${t}<span class="scmeta">${m}</span></div></div>`
         :`<div class="sc-top">${t}<span class="scmeta">${m}</span></div>`;})()}
@@ -2794,7 +2794,7 @@ function campDays(c){const es=campEps(c);if(!c.start)return [{lab:"",eps:es.slic
   for(let i=0;;i++){const dt=new Date(y,m-1,d+i);const ds=`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;if(ds>b||i>30)break;
     out.push({lab:`${i+1}일차`,day:ds,eps:es.filter(e=>(e.plays||[]).includes(ds)||groups().find(g=>g.scen===e.name)?.days.some(x=>x.day===ds)||e.lastDay===ds)});}
   const placed=new Set(out.flatMap(x=>x.eps.map(e=>e.id))),rest=es.filter(e=>!placed.has(e.id));
-  if(rest.length)out.push({lab:"날짜 밖",eps:rest});return out.filter(x=>x.eps.length||out.length<=4);}
+  if(rest.length)out.push({lab:"그 밖의 탁",eps:rest});return out.filter(x=>x.eps.length||out.length<=4);}
 // 캠프 후기용: 모든 탁의 참가자를 이름으로 한 번씩
 function campSc(c){const sp=[],seen=new Set();
   campEps(c).forEach(e=>{const g=gmKey(e);(e.sp||[]).forEach(p=>{if(/&/.test(p.name||"")||(isAnon(p)&&!p.ch&&p.k!==g))return;const n=pcSplit(p.name||"").name;if(!n||seen.has(n))return;seen.add(n);sp.push({k:"n_"+n,name:n,c:p.c});});});
@@ -2814,17 +2814,20 @@ function campPgHTML(c){
       <div style="display:flex;gap:6px;margin-top:8px"><button type="button" id="g-ogup">이미지 올리기</button><button type="button" class="ghost" id="g-ogdel"${og?"":' style="display:none"'}>지우기</button><input type="file" id="g-ogfile" accept="image/*" style="display:none"></div>`;})()}</div>
     ${es.length?"":`<div class="sc-sec"><h4 data-en="DELETE">캠프 지우기</h4><div class="tip" style="margin-bottom:8px">탁이 하나도 없을 때만 지울 수 있어요.</div><button class="ghost" id="g-del">이 캠프 지우기</button></div>`}
     <div class="homefoot"><button class="ghost" onclick="location.hash=''">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div></div>`;
-  const days=campDays(c),row=e=>`<div class="trow"><div class="tr-h"><a href="#c-${esc(e.id)}">${esc(e.name)} ›</a>${effSys(e)?`<span class="sys" data-th="${themeOf(e)}">${esc(sysLabel(effSys(e)))}</span>`:""}</div>${castHTML(e)||`<div class="tip">참가자를 아직 안 적었어요</div>`}</div>`;
-  const sc=campSc(c);
+  const days=campDays(c).filter(d=>d.eps.length),sc=campSc(c);
+  const sub=[when,c.place,`탁 ${es.length}개`].filter(Boolean).map(esc).join('<i class="dot">·</i>');
+  const row=e=>`<div class="ctab"><div class="ct-h"><a href="#c-${esc(e.id)}">${esc(e.name)}</a>${effSys(e)?`<span class="sys" data-th="${themeOf(e)}">${esc(sysLabel(effSys(e)))}</span>`:""}</div>${castHTML(e)||`<div class="tip">참가자를 아직 안 적었어요</div>`}</div>`;
+  const edb=S.canAdmin?`<button id="g-edit" title="캠프 수정" aria-label="캠프 수정">✎<span class="lbl"> 수정</span></button>`:"";
+  const add=S.canAdmin&&S.db?(()=>{const free=S.scens.filter(x=>!x.camp||!campById(x.camp)).sort((a,b)=>(b.lastDay||"").localeCompare(a.lastDay||""));
+    return `<div class="cadd"><a class="btnlike${es.length?"":" pri"}" href="#up-${esc(c.id)}">＋ 탁 올리기</a>
+      ${free.length?`<span class="gadd-ex"><select id="g-addsel"><option value="">이미 있는 세션 넣기…</option>${free.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}${x.system?` · ${esc(sysLabel(x.system))}`:""}</option>`).join("")}</select><button class="ghost" id="g-addgo">넣기</button></span>`:""}</div>`;})():"";
   return `<div class="sc-page campage camp-k">
-    ${(()=>{const m=S.canAdmin?`<button id="g-edit" title="캠프 수정" aria-label="캠프 수정">✎<span class="lbl"> 수정</span></button>`:"";
-      return c.og?`<div class="campline">⛺ 캠프</div><div class="schero"><img src="${c.og}" alt=""><div class="schero-t"><h2>${esc(c.name)}</h2><span class="scmeta">${m}</span></div></div><div style="height:14px"></div>`
-        :`<div class="ckick"><span class="cbadge">캠프</span></div><div class="sc-top"><h2>${esc(c.name)}</h2><span class="scmeta">${m}</span></div>`;})()}
-    <div class="cwhen">${when?`<span>📅 ${esc(when)}</span>`:S.canAdmin?`<span class="tip">✎ 수정에서 날짜를 넣어 주세요</span>`:""}${c.place?`<span>📍 ${esc(c.place)}</span>`:""}<span>🎲 탁 ${es.length}개</span></div>
-    <div class="sc-sec"><h4 data-en="TABLES">탁 · 참가자</h4>${days.map(d=>`${d.lab?`<div class="cday"><b>${esc(d.lab)}</b>${d.day?`<span>${esc(fmtDay(d.day))}</span>`:""}</div>`:""}${d.eps.map(row).join("")||`<div class="tip cday-e">이날 탁 없음</div>`}`).join("")||`<div class="sc-text empty">아직 탁이 없어요.</div>`}
-      ${S.canAdmin&&S.db?(()=>{const free=S.scens.filter(x=>!x.camp||!campById(x.camp)).sort((a,b)=>(b.lastDay||"").localeCompare(a.lastDay||""));
-        return `<div class="gadd"><a class="btnlike pri" href="#up-${esc(c.id)}">＋ 탁 올리기</a>
-          ${free.length?`<span class="gadd-ex"><select id="g-addsel"><option value="">이미 있는 세션 넣기…</option>${free.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}${x.system?` · ${esc(sysLabel(x.system))}`:""}</option>`).join("")}</select><button class="ghost" id="g-addgo">넣기</button></span>`:""}</div>`;})():""}</div>
+    ${c.og?`<div class="campline">캠프</div><div class="schero"><img src="${c.og}" alt=""><div class="schero-t"><h2>${esc(c.name)}<small class="hsub">${sub}</small></h2><span class="scmeta">${edb}</span></div></div>`
+      :`<div class="ckick"><span class="cbadge">캠프</span></div><div class="sc-top"><h2>${esc(c.name)}<small class="hsub">${sub}</small></h2><span class="scmeta">${edb}</span></div>`}
+    ${!when&&S.canAdmin?`<div class="notice" style="margin:12px 0">✎ 수정에서 캠프 날짜를 넣으면 탁이 일차별로 나뉘어요.</div>`:""}
+    ${days.length?days.map((d,i)=>`<div class="sc-sec cday-sec"><h4 data-en="${d.day?`DAY ${i+1}`:"ETC"}">${esc(d.lab||"탁")}${d.day?` <span class="tip" style="letter-spacing:0">${esc(fmtDay(d.day))}</span>`:""}</h4>${d.eps.map(row).join("")}</div>`).join("")
+      :`<div class="sc-sec"><h4 data-en="TABLES">탁</h4><div class="sc-text empty">아직 탁이 없어요.</div></div>`}
+    ${add}
     ${S.db?revSectionHTML(sc):""}
     ${S.canAdmin?`<div class="sc-sec"><h4 data-en="ACCESS">캠프 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
       <div class="tip">이 비밀번호 하나로 캠프의 모든 탁 로그가 열리고, 캠프 후기를 쓸 수 있어요. 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
