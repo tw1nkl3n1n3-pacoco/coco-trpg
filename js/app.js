@@ -722,6 +722,20 @@ async function removeSpeakerIfUnused(k){
   if(S.meta.sp?.some(x=>x.k===k)){S.meta.sp=S.meta.sp.filter(x=>x.k!==k);saveMeta();}
   if(S.spFilter===k)S.spFilter=null;renderSide();return true;
 }
+// 세션(시나리오)의 모든 녹음에서 화자 from → to 로 옮기고 목록에서 from을 지워요
+async function mergeSpeakerAll(from,to){
+  const sc=curScen();
+  doOps(S.flat.filter(e=>e.b.s===from||e.b.w===from).map(e=>({ci:e.ci,op:{t:"set",id:e.b.id,f:{...(e.b.s===from?{s:to}:{}),...(e.b.w===from?{w:to}:{})}}})),"화자 합치기");
+  if(S.spFilter===from)S.spFilter=null;renderAllRows();renderSide();
+  if(sc&&!S.local){const others=S.sessions.filter(x=>x.scid===sc.id&&x.id!==S.sid);let n=0;
+    for(const ss of others){try{const q=await S.db.collection(`sessions/${ss.id}/chunks`).get();
+      for(const d of q.docs){const b=d.data().b||[];let ch=false;const nb=b.map(x=>{if(x.s!==from&&x.w!==from)return x;ch=true;n++;return {...x,...(x.s===from?{s:to}:{}),...(x.w===from?{w:to}:{})};});
+        if(ch)await retry(()=>d.ref.update({b:nb}));}}catch(e){toast("다른 녹음 일부를 옮기지 못했어요",4000);}}
+    await mutateScen(sc.id,d=>{d.sp=(d.sp||[]).filter(x=>x.k!==from);if(d.gm===from)d.gm=to;});
+    toast(`합쳤어요${n?` (다른 녹음 ${n}줄 포함)`:""}`);}
+  else{await removeSpeakerIfUnused(from);toast("합쳤어요");}
+  renderSide();renderAllRows(true);
+}
 async function mergeSpeaker(from,to){
   doOps(S.flat.filter(e=>e.b.s===from).map(e=>({ci:e.ci,op:{t:"set",id:e.b.id,f:{s:to}}})),"화자 합치기");
   if(S.spFilter===from)S.spFilter=null;
@@ -1104,6 +1118,9 @@ function spMenu(anchor,k){
     ${c===0?`<hr><button data-a="del" style="color:var(--bad)">목록에서 지우기</button>`:""}`,p=>{
     const rn=$("#rn",p),rch=$("#rch",p);
     const doRename=()=>{const v=rn.value.trim(),ch=rch.value.trim();const t=spTarget().find(x=>x.k===k)||(S.meta.sp||[]).find(x=>x.k===k);
+      // 같은 세션에 같은 이름이 이미 있으면 하나로 합칠지 물어봐요
+      const dup=v&&t&&v!==t.name?spList().find(x=>x.k!==k&&x.name===v&&(!ch||!x.ch||x.ch===ch)):null;
+      if(dup){closePop();confirmBox(`'${v}'이(가) 이미 있어요. 둘을 하나로 합칠까요? 이 세션의 모든 녹음에서 '${t.name}'의 대사를 '${v}'(으)로 옮겨요.`,"합치기",()=>mergeSpeakerAll(k,dup.k));return;}
       if(t&&v&&(v!==t.name||ch!==(t.ch||""))){const sc=curScen();
         if(sc&&sc.sp.some(x=>x.k===k))mutateScen(sc.id,d=>{const x=d.sp.find(x=>x.k===k);if(x){x.name=v;x.ch=ch;}});else{t.name=v;t.ch=ch;saveMeta();}
         renderSide();renderAllRows(true);}closePop();};
