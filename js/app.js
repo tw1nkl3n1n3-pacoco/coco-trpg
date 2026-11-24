@@ -1667,7 +1667,7 @@ function homeHTML(){
   const sysOf=g=>sysKey(effSys(g.sc));
   // 캠페인에 들어간 세션은 캠페인 카드 안에서만 보여요
   const plainGs=all.filter(g=>!(g.sc&&g.sc.camp&&campById(g.sc.camp)));
-  const systems={};plainGs.forEach(g=>{const k=sysOf(g);systems[k]=(systems[k]||0)+1;});S.camps.forEach(c=>{const k=sysKey(c.system);systems[k]=(systems[k]||0)+1;});
+  const systems={};plainGs.forEach(g=>{const k=sysOf(g);systems[k]=(systems[k]||0)+1;});S.camps.forEach(c=>{const ks=isCamp(c)?[...new Set(campEps(c).map(e=>sysKey(effSys(e))))]:[sysKey(c.system)];ks.forEach(k=>{systems[k]=(systems[k]||0)+1;});});
   const sysKeys=Object.keys(systems).sort((a,b)=>(a===NOSYS)-(b===NOSYS)||systems[b]-systems[a]||a.localeCompare(b,"ko"));
   if(S.sysFilter&&!systems[S.sysFilter])S.sysFilter=null;
   const gs=S.sysFilter?plainGs.filter(g=>sysOf(g)===S.sysFilter):plainGs;
