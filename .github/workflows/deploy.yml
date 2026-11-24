@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.dep.outputs.page_url }}
+      url: ${{ steps.dep1.outputs.page_url || steps.dep2.outputs.page_url || steps.dep.outputs.page_url }}
     steps:
       - name: Pages 배포 방식 확인 (Settings → Pages → Source가 GitHub Actions여야 해요)
         id: mode
@@ -74,6 +74,21 @@ jobs:
         if: steps.chg.outputs.go == 'yes'
         with:
           path: _site
-      - id: dep
+      # GitHub 쪽이 가끔 "artifact metadata" 오류를 내서, 실패하면 잠깐 쉬었다가 두 번 더 시도해요
+      - id: dep1
         uses: actions/deploy-pages@v4
         if: steps.chg.outputs.go == 'yes'
+        continue-on-error: true
+      - name: 잠깐 기다리기
+        if: steps.chg.outputs.go == 'yes' && steps.dep1.outcome == 'failure'
+        run: sleep 45
+      - id: dep2
+        uses: actions/deploy-pages@v4
+        if: steps.chg.outputs.go == 'yes' && steps.dep1.outcome == 'failure'
+        continue-on-error: true
+      - name: 조금 더 기다리기
+        if: steps.chg.outputs.go == 'yes' && steps.dep1.outcome == 'failure' && steps.dep2.outcome == 'failure'
+        run: sleep 90
+      - id: dep
+        uses: actions/deploy-pages@v4
+        if: steps.chg.outputs.go == 'yes' && steps.dep1.outcome == 'failure' && steps.dep2.outcome == 'failure'
