@@ -648,3 +648,37 @@ body[data-theme=wa] .lkbox{border-radius:0;border:1px solid #111;box-shadow:6px 
 /* 어두운 배경 위 로딩 점 */
 body[data-theme=dx] :is(.sc-page,.rvpage)>.ldr{--ink:#f3f4f5;--faint:#8a8d92}
 body[data-theme=deco][data-page=scen] :is(.sc-page,.rvpage)>.ldr{--ink:#f6e7c8;--faint:#e2cfa8}
+/* 캠페인 */
+.hlab{font-size:12.5px;font-weight:700;color:var(--faint);margin:18px 0 8px}
+.scen.camp{border:1.5px solid var(--ink)!important;position:relative}
+.camp .ch{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.camp .ch h3{margin:0;font-size:18px}.camp .ch h3 a{color:inherit;text-decoration:none}
+.cbadge{font-size:11.5px;font-weight:700;background:var(--ink);color:var(--panel,#fff);border-radius:6px;padding:1px 7px;white-space:nowrap}
+.camp .meta{margin-left:auto;font-size:12.5px;color:var(--faint)}
+.cep{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:14px}
+.camp .ch+.cep{margin-top:10px}
+.cep .en{width:36px;flex:none;font-weight:800;color:var(--faint);font-size:13px}
+.cep .en.gai{color:#c8102e;font-size:12px}
+.cep .et{font-weight:700;color:var(--ink);text-decoration:none;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cep .et:hover{text-decoration:underline}
+.cep .st{margin-left:auto;font-size:12px;color:var(--faint);white-space:nowrap}
+.cep .st.now{color:#12a35a;font-weight:700}
+.cmore{display:block;width:100%;text-align:left;border:0!important;border-top:1px solid var(--line)!important;background:none!important;padding:9px 0 0!important;margin-top:2px;font-size:13px;color:var(--dim)!important;border-radius:0!important;box-shadow:none!important;clip-path:none!important}
+.camp.done .mini{font-size:12.5px;color:var(--dim);margin-top:6px;padding-right:70px}
+.camp .donestamp{top:8px;right:12px}
+.campline{font-size:13px;color:var(--dim);margin:0 0 6px}.campline a{color:var(--ink);font-weight:700;text-decoration:none}
+.epnav{display:flex;gap:10px;margin:14px 0}
+.epnav a,.epnav span{flex:1}
+.epnav a{border:1px solid var(--line);background:var(--panel,#fff);border-radius:12px;padding:10px 14px;text-decoration:none;color:var(--ink);font-size:13.5px;font-weight:700}
+.epnav a small{display:block;color:var(--faint);font-size:11.5px;font-weight:400}.epnav a.r{text-align:right}
+.campfld{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:14px}
+.campage .prow{display:grid;grid-template-columns:72px minmax(0,1fr);gap:10px;padding:10px 0;border-top:1px solid var(--line);font-size:14px}
+.campage .prow:first-of-type{border-top:0}
+.runs{display:flex;flex-direction:column;gap:6px}
+.run{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.rc{font-weight:700;border-left:4px solid var(--c);padding-left:8px}
+.rr{font-size:12.5px;background:var(--panel2);border-radius:10px;padding:0 8px}
+.rp{font-size:12px;color:var(--faint);font-variant-numeric:tabular-nums}
+.run.off .rr{background:none;color:var(--faint);padding:0}
+.campage .ctop{margin-bottom:6px}
+.campage .sc-top{position:relative}

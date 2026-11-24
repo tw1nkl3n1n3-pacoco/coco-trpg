@@ -1,4 +1,4 @@
-// 코코 로그방 Firestore 보안 규칙 · 규칙 버전 4
+// 코코 로그방 Firestore 보안 규칙 · 규칙 버전 5
 // 관리자 이메일 자리는 사이트 관리자 페이지에서 복사하면 자동으로 채워져요.
 rules_version = '2';
 service cloud.firestore {
@@ -7,12 +7,20 @@ service cloud.firestore {
     function isOwner() {
       return request.auth != null && request.auth.token.email == "__OWNER_EMAIL__";
     }
-    // 비밀번호로 연 사람인가 (비밀번호를 새로 만들면 다시 잠겨요)
-    function unlocked(id) {
+    // 그 비밀번호로 직접 연 사람인가 (비밀번호를 새로 만들면 다시 잠겨요)
+    function openedWith(id) {
       return request.auth != null
         && exists(/databases/$(database)/documents/unlocks/$(id + '_' + request.auth.uid))
         && get(/databases/$(database)/documents/unlocks/$(id + '_' + request.auth.uid)).data.pw
            == get(/databases/$(database)/documents/secrets/$(id)).data.pw;
+    }
+    // 세션을 연 사람인가: 세션 비밀번호, 또는 그 세션이 속한 캠페인의 비밀번호로
+    function campOf(id) {
+      return exists(/databases/$(database)/documents/scenarios/$(id))
+        ? get(/databases/$(database)/documents/scenarios/$(id)).data.get('camp', '') : '';
+    }
+    function unlocked(id) {
+      return openedWith(id) || (campOf(id) != '' && openedWith(campOf(id)));
     }
     // 비밀번호로 연 사람은 보기·고치기 모두 가능
     function canRead(id) {
@@ -33,7 +41,7 @@ service cloud.firestore {
     }
     // 규칙 버전 확인용 (사이트가 규칙이 최신인지 확인해요 · 숫자를 바꾸지 마세요)
     match /rulesv/{v} {
-      allow get: if v == "4";
+      allow get: if v == "5";
     }
     // 세션 후기 — 누구나 읽고, 시나리오를 연 사람이 써요. 쓴 브라우저(uid)와 주인만 고치고 지워요
     // (예전 후기는 그때 정한 '후기 비밀번호'를 한 번 넣으면 쓴 브라우저가 이 브라우저로 옮겨와요)
@@ -89,7 +97,17 @@ service cloud.firestore {
       // 시나리오 목록·개요·등장인물은 누구나 볼 수 있어요 (로그는 아래 sessions에서 잠가요)
       allow read: if true;
       allow create, delete: if isOwner();
-      allow update: if isOwner() || unlocked(id);
+      // 캠페인에 넣고 빼기는 주인만
+      allow update: if isOwner() || (unlocked(id)
+        && request.resource.data.get('camp', '') == resource.data.get('camp', '')
+        && request.resource.data.get('gaiden', false) == resource.data.get('gaiden', false));
+    }
+    // 캠페인 — 누구나 볼 수 있고, 캠페인 비밀번호로 연 사람은 소개를 고칠 수 있어요
+    match /camps/{gid} {
+      allow read: if true;
+      allow create, delete: if isOwner();
+      allow update: if isOwner() || (openedWith(gid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['intro']));
     }
     // 녹음과 대사
     match /sessions/{sid} {

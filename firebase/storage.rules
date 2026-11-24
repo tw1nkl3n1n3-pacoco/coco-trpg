@@ -1,20 +1,27 @@
-// 코코 로그방 Storage(녹음 파일·사진·이모티콘) 보안 규칙 · 규칙 버전 3
+// 코코 로그방 Storage(녹음 파일·사진·이모티콘) 보안 규칙 · 규칙 버전 4
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     function isOwner() {
       return request.auth != null && request.auth.token.email == "__OWNER_EMAIL__";
     }
-    // 시나리오 비밀번호로 연 사람인가 (Firestore 규칙과 같은 기준)
-    function unlocked(scid) {
+    // 세션 비밀번호, 또는 그 세션이 속한 캠페인 비밀번호로 연 사람인가 (Firestore 규칙과 같은 기준)
+    function openedWith(id) {
       return request.auth != null
-        && firestore.exists(/databases/(default)/documents/unlocks/$(scid + '_' + request.auth.uid))
-        && firestore.get(/databases/(default)/documents/unlocks/$(scid + '_' + request.auth.uid)).data.pw
-           == firestore.get(/databases/(default)/documents/secrets/$(scid)).data.pw;
+        && firestore.exists(/databases/(default)/documents/unlocks/$(id + '_' + request.auth.uid))
+        && firestore.get(/databases/(default)/documents/unlocks/$(id + '_' + request.auth.uid)).data.pw
+           == firestore.get(/databases/(default)/documents/secrets/$(id)).data.pw;
+    }
+    function campOf(scid) {
+      return firestore.exists(/databases/(default)/documents/scenarios/$(scid))
+        ? firestore.get(/databases/(default)/documents/scenarios/$(scid)).data.get('camp', '') : '';
+    }
+    function unlocked(scid) {
+      return openedWith(scid) || (campOf(scid) != '' && openedWith(campOf(scid)));
     }
     // 규칙 버전 확인용 (숫자를 바꾸지 마세요)
     match /rulesv/{v} {
-      allow read: if v == "3";
+      allow read: if v == "4";
     }
     match /audio/{scid}/{file} {
       allow read: if isOwner() || unlocked(scid);
