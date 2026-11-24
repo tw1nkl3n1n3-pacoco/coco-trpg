@@ -2306,7 +2306,8 @@ async function importBuilt(built,pre="",cfg={}){
     setProg(prog,pre+"세션 만드는 중…",0.02);
     await mutateScen(sc.id,L=>{if(!L.name)Object.assign(L,clone(sc));sc.sp.forEach(e=>{if(!L.sp.some(x=>x.k===e.k))L.sp.push(clone(e));});
       if(gmK&&!(L.gm&&L.sp.some(x=>x.k===L.gm)))L.gm=gmK;if(cfg.system&&!L.system)L.system=cfg.system;if(cfg.orig&&!L.orig)L.orig=cfg.orig;if(cfg.camp&&!L.camp){L.camp=cfg.camp;if(cfg.gaiden)L.gaiden=true;}});
-    if(cfg.camp){const c=campById(cfg.camp);if(c&&!(c.eps||[]).includes(sc.id))await S.db.doc("camps/"+cfg.camp).update({eps:[...campEps(c).map(e=>e.id).filter(x=>x!==sc.id),sc.id]});}
+    if(cfg.camp){const c=campById(cfg.camp);if(c&&!(c.eps||[]).includes(sc.id)){const eps=[...campEps(c).map(e=>e.id).filter(x=>x!==sc.id),sc.id];await S.db.doc("camps/"+cfg.camp).update({eps});
+      if(!cfg.gaiden){c.eps=eps;const ns=scenById(sc.id);if(ns)ns.camp=cfg.camp;await closePrevEps(cfg.camp,sc.id);}}}
     await retry(()=>S.db.doc("sessions/"+sid).set(meta));
     for(let i=0;i<chunks.length;i++){
       setProg(prog,`${pre}대사 올리는 중… ${i+1}/${chunks.length}`,(i+1)/chunks.length);
@@ -2642,7 +2643,7 @@ function bindUp(){
         const gmP=sp.find(p=>p._gm);sp.forEach(p=>delete p._gm);
         sc=createScen(u.name.trim(),sp);sc.plays=ds;if(gmP)sc.gm=gmP.k;if(u.system)sc.system=u.system;if(u.orig)sc.orig=u.orig;if(c){sc.camp=c.id;if(u.gaiden)sc.gaiden=true;}
         await saveScen(sc);
-        if(c)await S.db.doc("camps/"+c.id).update({eps:[...campEps(c).map(e=>e.id).filter(x=>x!==sc.id),sc.id]});
+        if(c){await S.db.doc("camps/"+c.id).update({eps:[...campEps(c).map(e=>e.id).filter(x=>x!==sc.id),sc.id]});if(!u.gaiden){c.eps=[...(c.eps||[]),sc.id];await closePrevEps(c.id,sc.id);}}
         S.pendingEdit=sc.id;location.hash="c-"+sc.id;}
     }catch(e){ug.disabled=false;pr.innerHTML=`<span style="color:var(--bad)">올리지 못했어요: ${esc(e.code||e.message||"")}</span>`;}
   };
@@ -2756,6 +2757,12 @@ async function setEpCamp(scid,gid,afterId,gaiden){
   if(gid){const nc=campById(gid);const cur=campEps(nc).map(e=>e.id).filter(x=>x!==scid);
     let at=afterId==="__first"?0:afterId?cur.indexOf(afterId)+1:cur.length;if(at<0)at=cur.length;cur.splice(at,0,scid);
     await S.db.doc("camps/"+gid).update({eps:cur});}
+}
+// 캠페인에 새 편(외전 말고)이 올라오면 그 앞의 편은 자동으로 완주 처리 (완주한 날 = 그 편 마지막 플레이 날)
+async function closePrevEps(gid,newId){
+  const c=campById(gid);if(!c)return;const es=campEps(c),i=es.findIndex(e=>e.id===newId);if(i<=0)return;
+  const today=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+  for(const e of es.slice(0,i)){if(e.done)continue;try{await S.db.doc("scenarios/"+e.id).update({done:true,doneAt:e.lastDay||today});}catch(err){}}
 }
 async function newCamp(name,system){const id="g"+Date.now().toString(36)+rid4();
   await S.db.doc("camps/"+id).set({name,system:system||"",intro:"",done:false,eps:[],created:Date.now()});
