@@ -1691,7 +1691,9 @@ function homeHTML(){
   const plainGs=all.filter(g=>!(g.sc&&g.sc.camp&&campById(g.sc.camp)));
   // 검색: 제목·원어 제목·룰·플레이어·캐릭터·캠페인/캠프 이름 (띄어쓰기·대소문자 무시)
   const nq=x=>String(x||"").toLowerCase().replace(/\s+/g,"");
-  const terms=String(S.homeQ||"").trim().split(/\s+/).map(nq).filter(Boolean);
+  // 목록은 Enter로 확정한 검색어(homeQc)로, 드롭다운은 치는 중인 글자(homeQ)로
+  const toTerms=v=>String(v||"").trim().split(/\s+/).map(nq).filter(Boolean);
+  const terms=toTerms(S.homeQc),tterms=toTerms(S.homeQ);
   const hay=sc=>sc?nq([sc.name,sc.orig,effSys(sc),sysLabel(effSys(sc)),themeOf(sc)==="deco"?"D&D 디앤디":themeOf(sc)==="dx"?"더블크로스 DX":themeOf(sc)==="wa"?"인세인":"",...(sc.sp||[]).flatMap(p=>[pcSplit(p.name||"").name,p.ch])].join("|")):"";
   const hit=h=>terms.every(t=>h.includes(t));
   const campHay=c=>nq([c.name,c.orig,c.place,c.system,sysLabel(c.system||"")].join("|"))+"|"+campEps(c).map(hay).join("|");
@@ -1709,8 +1711,8 @@ function homeHTML(){
     ${!S.ready||(S.db&&!S.loaded)?loaderHTML():""}
     ${S.ready&&S.setupNeeded?`<div class="notice bad">아직 Firebase 설정이 비어 있어요. 저장소 <b>Settings → Secrets and variables → Actions → Variables</b>에 <b>FIREBASE_CONFIG</b>와 <b>OWNER_EMAIL</b>을 넣고 다시 배포해 주세요. 자세한 방법은 저장소의 README에 있어요. (지금은 txt 미리보기만 돼요)</div>`:""}
     ${S.ready&&S.db&&S.loaded&&!S.canAdmin&&S.scens.some(x=>!isOpen(x.id))?`<div class="notice">🔒 표시된 세션은 같이 플레이한 친구에게 받은 비밀번호를 넣어야 로그를 볼 수 있어요.</div>`:""}
-    ${S.loaded&&plainGs.length+S.camps.length>0?`<div class="hsearch${who?" haschip":""}"><svg class="hq-ic" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>${who?`<span class="hq-chip">👤 ${esc(who)}<button type="button" id="hq-who-x" title="풀기">✕</button></span>`:""}<input type="search" id="hq" value="${esc(S.homeQ||"")}" placeholder="${who?"더 좁혀 보기":"세션 · 룰 · 플레이어 · 캐릭터 검색"}" autocomplete="off">${terms.length||who?`<span class="hq-n">${live.length+items.length}개</span>`:""}${S.hqOpen&&terms.length?hqDropHTML(terms,nq):""}</div>`:""}
-    <div id="sesslist">${live.length?`<div class="hlab">진행 중인 캠페인</div>${live.map(campCardHTML).join("")}`:""}${listHTML||(live.length?"":terms.length?`<div class="notice">'${esc(S.homeQ.trim())}'에 맞는 세션이 없어요.</div>`:S.ready&&S.db&&S.loaded?`<div class="notice">아직 올린 세션이 없어요.${S.canAdmin?" 아래 ＋ 세션 올리기로 올려 주세요.":""}</div>`:"")}</div>
+    ${S.loaded&&plainGs.length+S.camps.length>0?`<div class="hsearch${who?" haschip":""}"><svg class="hq-ic" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>${who?`<span class="hq-chip">👤 ${esc(who)}<button type="button" id="hq-who-x" title="풀기">✕</button></span>`:""}<input type="search" id="hq" value="${esc(S.homeQ||"")}" placeholder="${who?"더 좁혀 보기":"세션 · 룰 · 플레이어 · 캐릭터 검색"}" autocomplete="off">${terms.length||who?`<span class="hq-n">${live.length+items.length}개</span>`:""}${S.hqOpen&&tterms.length?hqDropHTML(tterms,nq):""}</div>`:""}
+    <div id="sesslist">${live.length?`<div class="hlab">진행 중인 캠페인</div>${live.map(campCardHTML).join("")}`:""}${listHTML||(live.length?"":terms.length?`<div class="notice">'${esc(String(S.homeQc||"").trim())}'에 맞는 세션이 없어요.</div>`:S.ready&&S.db&&S.loaded?`<div class="notice">아직 올린 세션이 없어요.${S.canAdmin?" 아래 ＋ 세션 올리기로 올려 주세요.":""}</div>`:"")}</div>
     ${can?`<div class="upentry"><a class="btnlike pri upbtn" href="#up">＋ 세션 올리기</a><span class="tip">녹음 · 코코포리아 로그 · 녹음 없는 세션</span></div>`:""}
     ${!S.db?`<div class="card">
       <b>txt 미리보기</b>
@@ -1818,24 +1820,24 @@ function bindHome(){
       catch(e){row.textContent=`✗ ${f.name}: ${e.code||e.message}`;row.style.color="var(--bad)";}}
     S.bulkMsg=box.innerHTML;S.importing=false;render();
   }
-  {const hq=$("#hq");const again=pos=>{S.hqFull=true;try{render();}finally{S.hqFull=false;}const n=$("#hq");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}};
+  {const hq=$("#hq");const again=pos=>{S.hqFull=true;try{render();const n=$("#hq");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}}finally{S.hqFull=false;}};
     // 입력칸은 그대로 두고 목록·드롭다운만 바꿔요 (한글 조합이 끊기지 않게)
     const soft=homeSoft;
     if(hq&&!S.hqSoft){
     {const ch=document.querySelector(".hq-chip");if(ch)hq.style.paddingLeft=(ch.offsetWidth+44)+"px";}
-    hq.oninput=()=>{S.homeQ=hq.value;S.hqOpen=true;S.hqSel=-1;S.hqMore={};soft();};
-    hq.onfocus=()=>{if(!S.hqOpen&&hq.value.trim()){S.hqOpen=true;soft();}};
+    hq.oninput=()=>{S.homeQ=hq.value;if(!hq.value.trim())S.homeQc="";S.hqOpen=!!hq.value.trim();S.hqSel=-1;S.hqMore={};soft();};
+    hq.onfocus=()=>{if(S.hqFull||S.hqRender)return;if(!S.hqOpen&&hq.value.trim()){S.hqOpen=true;soft();}};
     hq.onblur=()=>{if(S.hqRender)return;setTimeout(()=>{if(S.hqOpen&&document.activeElement!==$("#hq")){S.hqOpen=false;soft();}},150);};
     hq.onkeydown=e=>{const n=(S.hqItems||[]).length;
       if(e.isComposing)return;
       if(e.key==="ArrowDown"&&S.hqOpen&&n){e.preventDefault();S.hqSel=((S.hqSel??-1)+1)%n;soft();}
       else if(e.key==="ArrowUp"&&S.hqOpen&&n){e.preventDefault();S.hqSel=((S.hqSel??0)-1+n)%n;soft();}
-      else if(e.key==="Enter"){e.preventDefault();const el=S.hqOpen&&S.hqSel>=0?document.querySelector(`[data-hqi="${S.hqSel}"]`):null;if(el){el.dispatchEvent(new MouseEvent("mousedown",{bubbles:true}));return;}S.hqOpen=false;again(hq.selectionStart);}
-      else if(e.key==="Escape"){if(S.hqOpen){S.hqOpen=false;again(hq.selectionStart);}else if(hq.value){S.homeQ="";render();}}
+      else if(e.key==="Enter"){e.preventDefault();const el=S.hqOpen&&S.hqSel>=0?document.querySelector(`[data-hqi="${S.hqSel}"]`):null;if(el){el.dispatchEvent(new MouseEvent("mousedown",{bubbles:true}));return;}S.homeQc=S.homeQ;S.hqOpen=false;again(hq.selectionStart);}
+      else if(e.key==="Escape"){if(S.hqOpen){S.hqOpen=false;again(hq.selectionStart);}else if(hq.value){S.homeQ="";S.homeQc="";again(0);}}
       else if(e.key==="Backspace"&&!hq.value&&S.homePerson){S.homePerson="";again(0);}};}
     document.querySelectorAll("[data-hqi]").forEach(el=>el.onmousedown=e=>{e.preventDefault();
-      if(el.dataset.hqwho){S.homePerson=el.dataset.hqwho;S.homeQ="";S.hqOpen=false;S.hqSel=-1;again(0);}
-      else{S.hqOpen=false;S.homeQ="";location.hash=el.getAttribute("href").slice(1);}});
+      if(el.dataset.hqwho){S.homePerson=el.dataset.hqwho;S.homeQ="";S.homeQc="";S.hqOpen=false;S.hqSel=-1;again(0);}
+      else{S.hqOpen=false;S.homeQ="";S.homeQc="";location.hash=el.getAttribute("href").slice(1);}});
     document.querySelectorAll("[data-hqmore]").forEach(b=>b.onmousedown=e=>{e.preventDefault();S.hqMore={...(S.hqMore||{}),[b.dataset.hqmore]:true};soft();});
     const wx=$("#hq-who-x");if(wx)wx.onclick=()=>{S.homePerson="";render();};}
   document.querySelectorAll("[data-scen]").forEach(a=>a.onclick=ev=>{ev.preventDefault();gotoScen(a.dataset.scen);});
