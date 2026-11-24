@@ -749,3 +749,5 @@ body[data-theme=deco][data-page=scen] :is(.sc-page,.rvpage)>.ldr{--ink:#f6e7c8;-
 .camp-k .ct-h a:hover{text-decoration:underline}
 .camp-k .ctab .cast{margin:0}
 .camp-k .cadd{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:-2px 0 18px}
+.camp-k .ctab .sum{font-size:13.5px;color:var(--dim);margin:-2px 0 10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap}
+.rvr.noav .nm{white-space:normal}.rvr.noav .nm small{display:block;margin:2px 0 0;line-height:1.4}

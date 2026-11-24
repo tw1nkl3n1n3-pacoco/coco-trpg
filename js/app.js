@@ -2242,7 +2242,7 @@ function revSectionHTML(sc){
   const cast=gmFirst(sc.sp.filter(p=>p.k===gmKey(sc)||!isAnon(p)&&!/&/.test(p.name)||p.ch),gmKey(sc)).filter(p=>!cm||!has.has(p.k)||(f&&f.k===p.k));
   const rows=list.map(r=>{const w=revWho(sc,r);
     return `<div class="rvr${cm?" noav":""}">${cm?"":`<span class="av${w.gm?" gm":""}" style="--c:${fixC(w.p?.c||"#888")}">${w.p?avHTML(w.p,w.gm):`<span class="ini">${esc((w.ch||w.name).slice(0,1))}</span>`}</span>`}
-      <span class="nm"><b>${esc(w.name)}</b>${w.ch||w.gm?`<small>${esc(w.gm?gmWord(sc):w.ch)}</small>`:""}</span>
+      <span class="nm"><b>${esc(w.name)}</b>${cm?(w.p?.roles?`<small>${esc(w.p.roles)}</small>`:""):w.ch||w.gm?`<small>${esc(w.gm?gmWord(sc):w.ch)}</small>`:""}</span>
       ${r.url?`<a class="ext" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">외부 후기 ↗</a>${r.lpw?`<button class="ghost lpw" data-rvlpw="${esc(r.id)}" title="눌러서 비밀번호 복사">🔑 ${esc(r.lpw)}</button>`:""}`:`<button class="go" data-rvopen="${esc(r.id)}">후기 보기</button><button class="cp ghost" data-rvcopy="${esc(r.id)}" title="이 후기 링크 복사">🔗</button>`}
       ${revMine(r)||(!r.uid&&canTalk(sc.id))?`<button class="ghost cp" data-rvedit="${esc(r.id)}" title="고치기">✎</button>`:""}${revMine(r)?`<button class="ghost cp" data-rvdel="${esc(r.id)}" title="지우기">🗑</button>`:""}</div>`;}).join("");
   const form=f?`<div class="rvform">
@@ -2796,8 +2796,11 @@ function campDays(c){const es=campEps(c);if(!c.start)return [{lab:"",eps:es.slic
   const placed=new Set(out.flatMap(x=>x.eps.map(e=>e.id))),rest=es.filter(e=>!placed.has(e.id));
   if(rest.length)out.push({lab:"그 밖의 탁",eps:rest});return out.filter(x=>x.eps.length||out.length<=4);}
 // 캠프 후기용: 모든 탁의 참가자를 이름으로 한 번씩
-function campSc(c){const sp=[],seen=new Set();
-  campEps(c).forEach(e=>{const g=gmKey(e);(e.sp||[]).forEach(p=>{if(/&/.test(p.name||"")||(isAnon(p)&&!p.ch&&p.k!==g))return;const n=pcSplit(p.name||"").name;if(!n||seen.has(n))return;seen.add(n);sp.push({k:"n_"+n,name:n,c:p.c});});});
+function campSc(c){const sp=[],by=new Map();
+  campEps(c).forEach(e=>{const g=gmKey(e);(e.sp||[]).forEach(p=>{if(/&/.test(p.name||"")||(isAnon(p)&&!p.ch&&p.k!==g))return;const q=pcSplit(p.name||""),n=q.name;if(!n)return;
+    const role=p.k===g?(themeOf(e)==="deco"?"DM":"GM"):q.n?"PC"+q.n:"PL";
+    if(!by.has(n)){const o={k:"n_"+n,name:n,c:p.c,rl:[]};by.set(n,o);sp.push(o);}by.get(n).rl.push(`${e.name} ${role}`);});});
+  sp.forEach(o=>{o.roles=o.rl.join(" · ");delete o.rl;});
   return {id:c.id,name:c.name,sp,isCampSc:true,place:c.place||"",when:campWhen(c)};}
 function campScById(id){const c=campById(id);return c&&isCamp(c)?campSc(c):null;}
 function campSelfK(id){const c=campById(id);if(!c||!isCamp(c))return "";for(const e of campEps(c)){const p=meSp(e.id);if(p)return "n_"+pcSplit(p.name||"").name;}return "";}
@@ -2816,7 +2819,7 @@ function campPgHTML(c){
     <div class="homefoot"><button class="ghost" onclick="location.hash=''">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div></div>`;
   const days=campDays(c).filter(d=>d.eps.length),sc=campSc(c);
   const sub=[when,c.place,`탁 ${es.length}개`].filter(Boolean).map(esc).join('<i class="dot">·</i>');
-  const row=e=>`<div class="ctab"><div class="ct-h"><a href="#c-${esc(e.id)}">${esc(e.name)}</a>${effSys(e)?`<span class="sys" data-th="${themeOf(e)}">${esc(sysLabel(effSys(e)))}</span>`:""}</div>${castHTML(e)||`<div class="tip">참가자를 아직 안 적었어요</div>`}</div>`;
+  const row=e=>`<div class="ctab"><div class="ct-h"><a href="#c-${esc(e.id)}">${esc(e.name)}</a>${effSys(e)?`<span class="sys" data-th="${themeOf(e)}">${esc(sysLabel(effSys(e)))}</span>`:""}</div>${e.summary?`<div class="sum">${esc(e.summary)}</div>`:""}${castHTML(e)||`<div class="tip">참가자를 아직 안 적었어요</div>`}</div>`;
   const edb=S.canAdmin?`<button id="g-edit" title="캠프 수정" aria-label="캠프 수정">✎<span class="lbl"> 수정</span></button>`:"";
   const add=S.canAdmin&&S.db?(()=>{const free=S.scens.filter(x=>!x.camp||!campById(x.camp)).sort((a,b)=>(b.lastDay||"").localeCompare(a.lastDay||""));
     return `<div class="cadd"><a class="btnlike${es.length?"":" pri"}" href="#up-${esc(c.id)}">＋ 탁 올리기</a>
