@@ -438,7 +438,7 @@ async function login(){
 function authHTML(){
   if(!S.auth)return "";
   const u=S.authUser;
-  return u&&!u.isAnonymous?`<span class="me">${esc(u.displayName||u.email)}${S.canAdmin?" · 주인":""}</span><button class="ghost" data-logout>로그아웃</button>`
+  return u&&!u.isAnonymous?`<span class="me">${esc((S.canAdmin&&((S.site&&S.site.nicks)||[])[0])||u.displayName||u.email)}${S.canAdmin?" · 주인":""}</span><button class="ghost" data-logout>로그아웃</button>`
     :`<button class="ghost small" data-login title="사이트 주인 전용">관리자 로그인</button>`;
 }
 function renderAuth(){
