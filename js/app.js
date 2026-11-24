@@ -2671,7 +2671,7 @@ function campCount(c){const es=campEps(c),g=es.filter(e=>e.gaiden).length;return
 function campLast(c){return campEps(c).map(e=>e.lastDay||"").sort().pop()||"";}
 function effSys(sc){return (sc&&(sc.system||campOf(sc)?.system))||"";}
 function campOpen(c){return S.canAdmin||campEps(c).some(e=>!!SUB.sessData[e.id]);}
-function epStatus(sc){const n=groups().find(g=>g.scen===sc.name)?.days.length||sc.nDays||0;return sc.done?`<span class="st">완주</span>`:`<span class="st now">진행 중${n?` · ${n}회차`:""}</span>`;}
+function epStatus(sc){const n=groups().find(g=>g.scen===sc.name)?.days.length||sc.nDays||0;return sc.done||campOf(sc)?.done?`<span class="st">완주</span>`:`<span class="st now">진행 중${n?` · ${n}회차`:""}</span>`;}
 function epRowHTML(c,sc){const diff=sc.system&&sysLabel(sc.system)!==sysLabel(c.system||"");
   return `<div class="cep"><span class="en${sc.gaiden?" gai":""}">${esc(epLabel(c,sc))}</span><a href="#c-${esc(sc.id)}" class="et">${esc(sc.name)}</a>${diff?`<span class="sys" data-th="${themeOf(sc)}">${esc(sysLabel(sc.system))}</span>`:""}${epStatus(sc)}</div>`;}
 function campTagHTML(c){return c.system?`<span class="sys" data-th="${themeOf({system:c.system})}">${esc(sysLabel(c.system))}</span>`:"";}
@@ -2679,9 +2679,8 @@ function campCardHTML(c){
   const es=campEps(c).slice().reverse(),last=campLast(c);
   // 일반 세션 카드와 같은 머리 모양: 제목 · 오른쪽에 룰 태그와 편 수 (캠페인인 건 '진행 중인 캠페인' 칸과 굵은 테두리로 보여요)
   const head=`<div class="scen-h"><h3><a href="#g-${esc(c.id)}">${esc(c.name)} ›</a>${c.orig?`<span class="orig">${esc(c.orig)}</span>`:""}</h3>${campTagHTML(c)}<span class="d${c.done?" dstamp":""}">${campCount(c)}${last?` · 마지막 ${esc(fmtDay(last))}`:""}${stampHTML(c)}</span></div>`;
-  if(c.done)return `<section class="scen camp done">${head}<div class="mini">${es.map(e=>`${esc(epLabel(c,e))} ${esc(e.name)}`).join(" · ")}</div></section>`;
   const more=!!S.campMore[c.id],shown=more?es:es.slice(0,3);
-  return `<section class="scen camp">${head}${shown.map(e=>epRowHTML(c,e)).join("")||`<div class="tip" style="margin-top:8px">아직 편이 없어요</div>`}
+  return `<section class="scen camp${c.done?" done":""}">${head}${shown.map(e=>epRowHTML(c,e)).join("")||`<div class="tip" style="margin-top:8px">아직 편이 없어요</div>`}
     ${es.length>3?`<button class="cmore" data-cmore="${esc(c.id)}">${more?"▴ 접기":`▾ 이전 편 ${es.length-3}개 더 보기`}</button>`:""}</section>`;
 }
 // 플레이어별 캐릭터: 같은 캐릭터로 이어진 편을 한 줄로
@@ -2740,7 +2739,9 @@ function bindCamp(){
   const x=$("#g-x");if(x)x.onclick=()=>{S.campEdit=false;render();};
   const sv=$("#g-save");if(sv)sv.onclick=async()=>{const name=$("#g-name").value.trim();if(!name){toast("이름을 넣어 주세요");return;}
     const done=$("#g-done").checked;const v={name,orig:$("#g-orig").value.trim(),system:$("#g-sys").value.trim(),intro:$("#g-intro").value.trim(),done};if(done&&!c.done)v.doneAt=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
-    try{await S.db.doc("camps/"+c.id).update(v);S.campEdit=false;Object.assign(c,v);render();toast("저장했어요");}catch(err){writeFail(err);}};
+    try{await S.db.doc("camps/"+c.id).update(v);S.campEdit=false;Object.assign(c,v);
+      if(done){const es=campEps(c);if(es.length)await closePrevEps(c.id,"__all");}
+      render();toast("저장했어요");}catch(err){writeFail(err);}};
   const dl=$("#g-del");if(dl)dl.onclick=()=>confirmBox(`'${c.name}' 캠페인을 지울까요?`,"삭제",async()=>{try{await S.db.doc("camps/"+c.id).delete();S.db.doc("secrets/"+c.id).delete().catch(()=>{});location.hash="";}catch(err){writeFail(err);}});
   const cp=$("#g-copy");if(cp)cp.onclick=()=>copyText(`${c.name}\n${campLink(c)}\n비밀번호: ${S.secrets?.[c.id]||""}`,"링크와 비밀번호를 복사했어요");
   const np=$("#g-newpw");if(np)np.onclick=()=>confirmBox("캠페인 비밀번호를 새로 만들까요? 예전 비밀번호로 연 사람은 다시 잠겨요.","새로 만들기",async()=>{try{await S.db.doc("secrets/"+c.id).set({pw:genPw()});}catch(err){writeFail(err);}});
@@ -2762,7 +2763,7 @@ async function setEpCamp(scid,gid,afterId,gaiden){
 }
 // 캠페인에 새 편(외전 말고)이 올라오면 그 앞의 편은 자동으로 완주 처리 (완주한 날 = 그 편 마지막 플레이 날)
 async function closePrevEps(gid,newId){
-  const c=campById(gid);if(!c)return;const es=campEps(c),i=es.findIndex(e=>e.id===newId);if(i<=0)return;
+  const c=campById(gid);if(!c)return;const es=campEps(c),i=newId==="__all"?es.length:es.findIndex(e=>e.id===newId);if(i<=0)return;
   const today=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
   for(const e of es.slice(0,i)){if(e.done)continue;try{await S.db.doc("scenarios/"+e.id).update({done:true,doneAt:e.lastDay||today});}catch(err){}}
 }
