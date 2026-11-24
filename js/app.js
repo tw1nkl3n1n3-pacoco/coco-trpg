@@ -816,11 +816,11 @@ const avHTML=(p,gm)=>p.img?`<img src="${p.img}" alt="">`:gm?`<span class="gmav">
 // 룰 이름 표기: DnD·D＆D → D&D
 const sysLabel=v=>String(v||"").replace(/\bD\s*(n|＆)\s*D\b/gi,"D&D");
 // 완주 도장: 시나리오 이름으로 각도·위치·잉크를 정해요 (항상 같은 모양)
-function stampHTML(sc){
-  if(!sc||!sc.done)return "";
+function stampHTML(sc,word){
+  if(!sc||!sc.done&&!word)return "";
   let x=2166136261;for(const c of sc.name||sc.id||"")x=Math.imul(x^c.codePointAt(0),16777619)>>>0;
   const st=`--sr:${-26+x%23}deg;--sx:${(x>>>5)%13-6}px;--sy:${(x>>>9)%9-4}px;opacity:${(0.74+((x>>>13)%13)/100).toFixed(2)}`;
-  return `<span class="donestamp" style="${st}" title="완주${sc.doneAt?" · "+esc(sc.doneAt):""}">완주</span>`;
+  return `<span class="donestamp" style="${st}" title="${word||"완주"}${sc.doneAt?" · "+esc(sc.doneAt):""}">${word||"완주"}</span>`;
 }
 function themeOf(sc){
   const r=String(effSys(sc)).toLowerCase().replace(/\s+/g,"");
@@ -2771,7 +2771,7 @@ function campTagHTML(c){return c.system?`<span class="sys" data-th="${themeOf({s
 function campCardHTML(c){
   const es=campEps(c).slice().reverse(),last=campLast(c);
   // 일반 세션 카드와 같은 머리 모양: 제목 · 오른쪽에 룰 태그와 편 수 (캠페인인 건 '진행 중인 캠페인' 칸과 굵은 테두리로 보여요)
-  const head=`<div class="scen-h"><h3><a href="#g-${esc(c.id)}">${esc(c.name)} ›</a>${c.orig&&!isCamp(c)?`<span class="orig">${esc(c.orig)}</span>`:""}</h3>${campTagHTML(c)}<span class="d${c.done&&!isCamp(c)?" dstamp":""}">${isCamp(c)?`캠프 · ${campWhen(c)?esc(campWhen(c).replace(/ · 당일치기$/,"")):""}${campWhen(c)?" · ":""}${campCount(c)}`:`${campCount(c)}${last?` · 마지막 ${esc(fmtDay(last))}`:""}`}${isCamp(c)?"":stampHTML(c)}</span></div>`;
+  const head=`<div class="scen-h"><h3><a href="#g-${esc(c.id)}">${esc(c.name)} ›</a>${c.orig&&!isCamp(c)?`<span class="orig">${esc(c.orig)}</span>`:""}</h3>${campTagHTML(c)}<span class="d${c.done&&!isCamp(c)||isCamp(c)&&campEnded(c)?" dstamp":""}">${isCamp(c)?`캠프 · ${campWhen(c)?esc(campWhen(c).replace(/ · 당일치기$/,"")):""}${campWhen(c)?" · ":""}${campCount(c)}`:`${campCount(c)}${last?` · 마지막 ${esc(fmtDay(last))}`:""}`}${isCamp(c)?(campEnded(c)?stampHTML(c,"종료"):""):stampHTML(c)}</span></div>`;
   const more=!!S.campMore[c.id],shown=more?es:es.slice(0,3);
   return `<section class="scen camp${c.done&&!isCamp(c)?" done":""}">${head}${shown.map(e=>epRowHTML(c,e)).join("")||`<div class="tip" style="margin-top:8px">아직 ${isCamp(c)?"탁이":"편이"} 없어요</div>`}
     ${es.length>3?`<button class="cmore" data-cmore="${esc(c.id)}">${more?"▴ 접기":`▾ ${isCamp(c)?"탁":"이전 편"} ${es.length-3}개 더 보기`}</button>`:""}</section>`;
@@ -2837,6 +2837,7 @@ function campWhen(c){const a=c.start||"",b=c.end||a;if(!a)return "";
   if(n<=0)return `${fmtDay(a)} · 당일치기`;
   const tail=y1!==y2?`${y2}년 ${m2}월 ${d2}일`:m1!==m2?`${m2}월 ${d2}일`:`${d2}일`;
   return `${fmtDay(a).replace(/ \(.\)$/,"")} – ${tail} · ${n}박 ${n+1}일`;}
+function campEnded(c){const e=c.end||c.start;if(!e)return false;return e<new Date(Date.now()+9*3600e3).toISOString().slice(0,10);}
 function campKey(c){return isCamp(c)?(c.end||c.start||campLast(c)):campLast(c);}
 function campDays(c){const es=campEps(c);if(!c.start)return [{lab:"",eps:es.slice().sort((a,b)=>(a.lastDay||"").localeCompare(b.lastDay||""))}];
   const a=c.start,b=c.end||a,out=[];const [y,m,d]=a.split("-").map(Number);
