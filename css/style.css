@@ -254,7 +254,7 @@ a.scl:hover{color:var(--acc2)}
 .gmtag{display:inline-block;font:700 10px/1.5 "Noto Sans KR",sans-serif;letter-spacing:.04em;color:#fff8ec;background:var(--gold);border-radius:4px;padding:0 5px;vertical-align:1px;margin-right:4px}
 .roster.ed{grid-template-columns:16px 1fr 1fr 34px 44px 96px}
 .roster.ed input[type=radio]{accent-color:var(--acc);justify-self:center;width:16px;height:16px}
-.castc span:not(.dot):not(.gmtag){color:var(--faint);font-size:12px}
+.castc span:not(.dot):not(.gmtag):not(.gmw){color:var(--faint);font-size:12px}
 .castc .gmtag{margin-right:0}
 .scen-h h3 a{color:inherit;text-decoration:none}
 .scen-h h3 a:hover{color:var(--acc2)}
