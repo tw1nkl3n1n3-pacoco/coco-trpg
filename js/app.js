@@ -820,7 +820,7 @@ function stampHTML(sc,word){
   if(!sc||!sc.done&&!word)return "";
   let x=2166136261;for(const c of sc.name||sc.id||"")x=Math.imul(x^c.codePointAt(0),16777619)>>>0;
   const st=`--sr:${-26+x%23}deg;--sx:${(x>>>5)%13-6}px;--sy:${(x>>>9)%9-4}px;opacity:${(0.74+((x>>>13)%13)/100).toFixed(2)}`;
-  return `<span class="donestamp" style="${st}" title="${word||"완주"}${sc.doneAt?" · "+esc(sc.doneAt):""}">${word||"완주"}</span>`;
+  return `<span class="donestamp${word==="종료"?" end":""}" style="${st}" title="${word||"완주"}${sc.doneAt?" · "+esc(sc.doneAt):""}">${word||"완주"}</span>`;
 }
 function themeOf(sc){
   const r=String(effSys(sc)).toLowerCase().replace(/\s+/g,"");
