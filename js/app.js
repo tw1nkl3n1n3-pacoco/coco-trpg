@@ -289,7 +289,7 @@ function storeUseHTML(){
     <div class="stnum"><b>${fmtMB(tot)}</b> / 무료 ${FREE_GB}GB <span class="tip">(${pct<1&&tot>0?"1% 미만":Math.round(pct)+"%"})</span></div>
     <div class="tip">녹음 ${u.nAudio}개 ${fmtMB(u.audio)} · 이모티콘 ${u.nEmo}개 ${fmtMB(u.emo)}${u.miss?` · 크기를 못 읽은 파일 ${u.miss}개`:""}</div>
     <div class="stcost">이번 달 예상 비용: <b>${over>0?`약 ${krw.toLocaleString("ko-KR")}원`:"0원"}</b> <span class="tip">${over>0?`(무료 5GB를 넘은 ${over.toFixed(2)}GB × $${USD_GB} · $1=${KRW}원으로 셈)`:"· 무료 범위 안이에요"}</span></div>
-    <div class="tip" style="margin-top:4px">녹음 평균 ${u.nAudio?fmtMB(u.audio/u.nAudio):"-"} 기준으로 녹음 약 ${u.nAudio&&u.audio?Math.max(0,Math.floor((FREE_GB*1073741824-tot)/(u.audio/u.nAudio))):"-"}개를 더 올릴 수 있어요. 듣기(내려받기)는 월 100GB까지 무료라 따로 셈하지 않아요. 후기 사진은 빠져 있어요.</div>`;
+    <div class="tip" style="margin-top:4px">${u.nAudio&&u.audio?`녹음 평균 ${fmtMB(u.audio/u.nAudio)} 기준으로 녹음 약 ${Math.max(0,Math.floor((FREE_GB*1073741824-tot)/(u.audio/u.nAudio)))}개를 더 올릴 수 있어요. `:""}듣기(내려받기)는 월 100GB까지 무료라 따로 셈하지 않아요. 후기 사진은 빠져 있어요.</div>`;
 }
 async function storeScan(){
   if(!S.canAdmin||!S.storage)return;
@@ -1884,7 +1884,7 @@ function scenHTML(){
     if(!S.scDraft||S.scDraft.id!==sc.id){S.scDraft=JSON.parse(JSON.stringify(sc));S.scDraft.sp=gmFirst(S.scDraft.sp,gmKey(S.scDraft));S.scBase=clone(S.scDraft);}
     const d=S.scDraft;
     return `<div class="sc-page">
-      <div class="sc-top"><h2>세션 수정</h2><button data-x>취소</button><button class="pri" data-ok>저장</button></div>
+      <div class="sc-top"><h2>세션 수정</h2><button class="ghost" data-x>취소</button><button class="pri" data-ok>저장</button></div>
       <div class="sc-sec"><div class="fields" style="margin:0">
         <label>시나리오 이름<input type="text" id="e-name" value="${esc(d.name)}"></label>
         <label>원어 제목 <span class="tip" style="display:inline">· 선택</span><input type="text" id="e-orig" value="${esc(d.orig||"")}" placeholder="해외 시나리오면 원래 제목 (없으면 비워 두세요)"></label>

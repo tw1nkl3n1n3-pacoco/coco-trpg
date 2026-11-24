@@ -128,7 +128,7 @@ mark{background:#f2c970;color:inherit;border-radius:3px}
 .noun{display:inline-flex;flex-wrap:wrap;align-items:baseline;gap:4px;background:#fffdf8;border:1px solid var(--line);border-radius:10px;padding:3px 9px;font-size:13px;text-align:left;cursor:pointer;max-width:100%}
 .noun b{font-weight:600}.noun small{color:#9a8a78;font-size:11.5px}
 .pct{font-size:10px;font-weight:700;color:var(--acc);border:1px solid currentColor;border-radius:4px;padding:0 3px;line-height:14px}
-.nedit{display:flex;flex-direction:column;gap:5px;padding:6px;min-width:250px}.nedit label{font-size:12px;color:#8a7a68}
+.nedit{display:flex;flex-direction:column;gap:5px;padding:6px;min-width:250px}.nedit label{font-size:12px;color:var(--dim)}
 .nedit .btns{display:flex;gap:6px;justify-content:flex-end;margin-top:4px}
 .ngrp{display:flex;flex-wrap:wrap;align-items:center;gap:2px;padding:1px 2px}
 .ngrp button{width:auto!important;padding:3px 8px!important}.ngrp button.alt{color:#8a7a68;font-size:12.5px}
@@ -236,7 +236,7 @@ h1,h2,.scen-h h3{color:#4a2c17}
 .systabs{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0 4px}
 .systab{border-radius:999px;padding:4px 13px;background:var(--panel);font-size:13.5px}
 .systab span{color:var(--faint);font-size:12px;margin-left:2px}
-.systab.on{background:var(--acc);border-color:#7d2f19;color:#fff8ec;font-weight:700}
+.systab.on{background:var(--acc);border-color:var(--acc);color:#fff8ec;font-weight:700}
 .systab.on span{color:#f3d9c8}
 .addscen input{flex:1;min-width:0}
 
@@ -392,8 +392,8 @@ h1,h2,h3,.scen-h h3,.sc-top h2,.hometop h2{word-break:keep-all;overflow-wrap:any
 .dstamp{position:relative}
 .donestamp{position:absolute;right:2px;top:50%;width:48px;height:48px;margin-top:-33px;border-radius:50%;border:2px solid #c8102e;box-shadow:inset 0 0 0 3px transparent,inset 0 0 0 4px #c8102e;display:flex;align-items:center;justify-content:center;color:#c8102e;font-family:"Noto Serif KR",serif;font-weight:700;font-size:15px;letter-spacing:.02em;white-space:nowrap;mix-blend-mode:multiply;pointer-events:none;z-index:5;transform:translate(var(--sx,0),var(--sy,0)) rotate(var(--sr,-14deg))}
 .donerow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;margin-top:2px}
-.donerow .chk{display:inline-flex;align-items:center;gap:6px}
-.donerow .donedate{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--dim)}
+.donerow .chk{display:inline-flex!important;flex-direction:row!important;align-items:center;gap:6px;margin:0;white-space:nowrap}.donerow .chk input{width:auto;margin:0}
+.donerow .donedate{display:inline-flex!important;flex-direction:row!important;white-space:nowrap;align-items:center;gap:6px;font-size:13px;color:var(--dim)}
 .donerow .donedate input{width:auto;padding:3px 8px}
 /* PC 번호 동그라미 (플레이어 이름이 "PC1 …"로 시작할 때) */
 .dot.pcn{width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:10.5px;font-weight:700;line-height:1;font-family:inherit;letter-spacing:0}
@@ -702,3 +702,5 @@ body[data-theme=deco][data-page=scen] :is(.sc-page,.rvpage)>.ldr{--ink:#f6e7c8;-
 .stcost{font-size:14px;margin-top:8px}.stcost b{font-variant-numeric:tabular-nums}
 /* 섹션 제목 바로 아래 첫 줄은 위 선 없이 (선이 두 줄로 겹치지 않게) */
 .sc-sec h4+.cep{border-top:0;padding-top:4px}
+
+#s-prev:empty{display:none}

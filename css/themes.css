@@ -235,3 +235,7 @@ body[data-theme=plain] .pbtn,body[data-theme=plain] .part{background:#f3f3f2;bor
 /* 기본(plain) 테마: 플랫 — 세션 카드는 회색 선, 캠페인은 검은 선 */
 body[data-theme=plain] .scen,body[data-theme=plain] .card,body[data-theme=plain] .sc-sec{border:1.5px solid #a8a8a4;box-shadow:none;border-radius:12px}
 body[data-theme=plain] .scen.camp{border-color:#1c1c1b}
+body[data-theme=plain] .upcard{border-color:#a8a8a4!important;border-radius:12px!important}
+body[data-theme=plain] .upcard.on{border-color:#1c1c1b!important}
+body[data-theme=deco] .homefoot{--ink:#f6e7c8;--dim:#e2cfa8;--faint:#c4ad86;--line:#6e2020;color:#f6e7c8}
+body[data-theme=deco] .homefoot button.ghost{color:#e2cfa8}
