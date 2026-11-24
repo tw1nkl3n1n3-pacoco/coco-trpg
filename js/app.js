@@ -83,17 +83,17 @@ function myEmail(){return String(S.authUser&&!S.authUser.isAnonymous&&S.authUser
 function isEditorOf(id){const sc=scenById(id);return !!sc&&!!myEmail()&&(sc.editors||[]).map(x=>String(x).toLowerCase()).includes(myEmail());}
 // 비밀번호로 연 시나리오는 보기·고치기 모두 가능
 // 시나리오 목록·개요는 누구나 보고, 로그는 비밀번호로 연 사람만 (녹음 목록을 받아온 시나리오 = 열린 시나리오)
-function isOpen(id){return S.canAdmin||(!!id&&!!SUB.sessData[id]);}
+function isOpen(id){return S.canAdmin||(!!id&&(!!SUB.sessData[id]||(!!S.camps&&S.camps.some(c=>c.id===id&&c.kind==="camp")&&campOpen(campById(id)))));}
 function canWriteScen(id){return !!id&&isOpen(id)&&!isExt(id);}
 // 이 브라우저에서 고른 '나' (시나리오마다): 화자 key · "ext"(외부인 · 읽기만) · 없음
 let _me={};try{_me=JSON.parse(localStorage.getItem("trpg-me")||"{}")||{};}catch(e){}
 // 주인은 관리 페이지에 적은 '내 닉네임'과 같은 플레이어를 자동으로 '나'로 써요 (직접 고른 게 있으면 그게 먼저)
 function ownerK(id){if(!S.canAdmin||!id)return "";const ns=(site().nicks||[]).map(x=>String(x).trim().toLowerCase()).filter(Boolean);if(!ns.length)return "";
   const sc=scenById(id);const p=(sc?.sp||[]).find(x=>ns.includes(pcSplit(x.name||"").name.trim().toLowerCase())||ns.includes(String(x.name||"").trim().toLowerCase()));return p?p.k:"";}
-function myK(id){return id&&(_me[id]||ownerK(id)||(typeof campMeK==="function"?campMeK(id):""))||"";}
+function myK(id){return id&&(_me[id]||ownerK(id)||(typeof campMeK==="function"?campMeK(id):"")||(typeof campSelfK==="function"?campSelfK(id):""))||"";}
 function setMe(id,k){if(k)_me[id]=k;else delete _me[id];try{localStorage.setItem("trpg-me",JSON.stringify(_me));}catch(e){}}
 function isExt(id){return !S.canAdmin&&myK(id)==="ext";}
-function meSp(id){const k=myK(id),sc=scenById(id);return k&&k!=="ext"&&sc?(sc.sp||[]).find(p=>p.k===k)||null:null;}
+function meSp(id){const k=myK(id),sc=scenById(id)||(typeof campScById==="function"?campScById(id):null);return k&&k!=="ext"&&sc?(sc.sp||[]).find(p=>p.k===k)||null:null;}
 // 후기·댓글을 쓸 수 있는 사람: 연 시나리오에서 나를 고른 멤버 (주인은 언제나)
 function canTalk(id){return isOpen(id)&&(S.canAdmin||!!meSp(id));}
 function myUid(){return S.auth&&S.auth.currentUser?S.auth.currentUser.uid:"";}
@@ -461,7 +461,7 @@ function route(){
   const upm=h==="up"?"":h.startsWith("up-")?h.slice(3):null;
   if(upm!==null){
     if(!S.up||S.up.from!==h){const g=upm.startsWith("g")?upm:"";
-      S.up={from:h,step:0,kind:"",mode:g?"next":"cont",scid:g?"":upm,gid:g,fixedCamp:!!g,fixed:!!upm&&!g,name:"",system:"",orig:"",src:"",dates:[],picked:false};}
+      S.up={from:h,step:0,kind:"",mode:g?"next":"cont",scid:g?"":upm,gid:g,ck:g&&isCamp(campById(g))?"camp":"",fixedCamp:!!g,fixed:!!upm&&!g,name:"",system:"",orig:"",src:"",dates:[],picked:false};}
     S.admin=false;if(S.sid||S.cid){S.cid=null;openSession(null);}else render();window.scrollTo(0,0);return;}
   if(S.up){S.up=null;S.bulkMsg="";if(!sid&&!cid){render();}}
   const adm=h==="admin";
@@ -1671,10 +1671,10 @@ function homeHTML(){
   const sysKeys=Object.keys(systems).sort((a,b)=>(a===NOSYS)-(b===NOSYS)||systems[b]-systems[a]||a.localeCompare(b,"ko"));
   if(S.sysFilter&&!systems[S.sysFilter])S.sysFilter=null;
   const gs=S.sysFilter?plainGs.filter(g=>sysOf(g)===S.sysFilter):plainGs;
-  const cs=S.sysFilter?S.camps.filter(c=>sysKey(c.system)===S.sysFilter):S.camps;
-  const live=cs.filter(c=>!c.done).sort((a,b)=>campLast(b).localeCompare(campLast(a)));
+  const cs=S.sysFilter?S.camps.filter(c=>isCamp(c)?campEps(c).some(e=>sysKey(effSys(e))===S.sysFilter):sysKey(c.system)===S.sysFilter):S.camps;
+  const live=cs.filter(c=>!c.done&&!isCamp(c)).sort((a,b)=>campLast(b).localeCompare(campLast(a)));
   // 완주한 캠페인은 일반 세션 사이에 마지막 플레이 날짜 순으로
-  const items=[...gs.map(g=>({k:g.last||"",html:scenSecHTML(g)})),...cs.filter(c=>c.done).map(c=>({k:campLast(c),html:campCardHTML(c)}))].sort((a,b)=>b.k.localeCompare(a.k));
+  const items=[...gs.map(g=>({k:g.last||"",html:scenSecHTML(g)})),...cs.filter(c=>c.done||isCamp(c)).map(c=>({k:campKey(c),html:campCardHTML(c)}))].sort((a,b)=>b.k.localeCompare(a.k));
   return `<div class="home">
     <div class="hometop"><h2>${iconHTML(site().icon)}${esc(site().title)}</h2></div>
     <div class="tip" style="font-size:13.5px">${esc(site().sub).replace(/\n/g,"<br>")}</div>
@@ -1900,11 +1900,12 @@ function scenHTML(){
         <div class="plays">${(d.plays||[]).map((v,i)=>`<span class="playd"><input type="date" data-play="${i}" value="${esc(v)}"><button type="button" class="ghost" data-playdel="${i}" title="빼기">✕</button></span>`).join("")}<button type="button" id="e-playadd">＋ 날짜 추가</button></div>
       </div>
       ${S.canAdmin&&S.db?(()=>{const others=d.camp&&campById(d.camp)?campEps(campById(d.camp)).filter(e=>e.id!==sc.id):[];
-        return `<div class="sc-sec"><h4 data-en="CAMPAIGN">캠페인</h4><div class="campfld">
-        <select id="e-camp"><option value="">캠페인 없음</option>${S.camps.map(c=>`<option value="${esc(c.id)}"${c.id===d.camp?" selected":""}>${esc(c.name)}${c.done?" (완주)":""}</option>`).join("")}<option value="__new">＋ 새 캠페인…</option></select>
-        ${d.camp&&campById(d.camp)?`<span>순서</span><select id="e-campafter"><option value="__first"${d.campAfter==="__first"?" selected":""}>맨 앞</option>${others.map(e=>`<option value="${esc(e.id)}"${d.campAfter===e.id?" selected":""}>${esc(epLabel(campById(d.camp),e))} ${esc(e.name)} 뒤</option>`).join("")}</select>
+        const dc=campById(d.camp);
+        return `<div class="sc-sec"><h4 data-en="CAMPAIGN">캠페인 · 캠프</h4><div class="campfld">
+        <select id="e-camp"><option value="">없음</option>${S.camps.map(c=>`<option value="${esc(c.id)}"${c.id===d.camp?" selected":""}>${esc(c.name)}${isCamp(c)?" · 캠프":c.done?" (완주)":""}</option>`).join("")}<option value="__new">＋ 새 캠페인…</option><option value="__newcamp">＋ 새 캠프…</option></select>
+        ${dc&&!isCamp(dc)?`<span>순서</span><select id="e-campafter"><option value="__first"${d.campAfter==="__first"?" selected":""}>맨 앞</option>${others.map(e=>`<option value="${esc(e.id)}"${d.campAfter===e.id?" selected":""}>${esc(epLabel(campById(d.camp),e))} ${esc(e.name)} 뒤</option>`).join("")}</select>
         <label class="chk"><input type="checkbox" id="e-gaiden"${d.gaiden?" checked":""}> 외전</label>`:""}</div>
-        <div class="tip" style="margin-top:6px">룰을 비워 두면 캠페인 룰을 따라가요 · 외전은 편 번호 없이 '외전'으로 표시돼요</div></div>`;})():""}
+        <div class="tip" style="margin-top:6px">${dc&&isCamp(dc)?"캠프는 여러 탁이 같이 돈 모임이에요 · 탁은 플레이 날짜 순서로 보여요":"캠페인: 이어지는 시나리오 · 룰을 비워 두면 캠페인 룰을 따라가요 · 외전은 편 번호 없이 '외전'으로 표시돼요<br>캠프: 여러 탁이 같이 돈 모임 (편 번호 없이 탁별로 보여요)"}</div></div>`;})():""}
       <div class="sc-sec"><h4 data-en="SUMMARY">개요</h4><textarea id="e-sum" placeholder="배경, 도입, 목표, 등장 NPC 등">${esc(d.summary||"")}</textarea></div>
       <div class="sc-sec"><h4 data-en="CAST">플레이어 · 등장인물</h4>
         ${(()=>{const c=SCC[sc.id];const zero=c?d.sp.filter(p=>p.k!==d.gm&&!(c[p.k]>0)).length:0;return `
@@ -1930,7 +1931,7 @@ function scenHTML(){
     </div>`;
   }
   return `<div class="sc-page">
-    ${campOf(sc)?`<div class="campline">📚 <a href="#g-${esc(sc.camp)}">${esc(campOf(sc).name)}</a> · ${esc(epLabel(campOf(sc),sc))}${sc.gaiden?"":` <span class="tip">(전체 ${campCount(campOf(sc))})</span>`}</div>`:""}
+    ${campOf(sc)?isCamp(campOf(sc))?`<div class="campline">⛺ <a href="#g-${esc(sc.camp)}">${esc(campOf(sc).name)}</a> · 캠프 <span class="tip">(${campCount(campOf(sc))})</span></div>`:`<div class="campline">📚 <a href="#g-${esc(sc.camp)}">${esc(campOf(sc).name)}</a> · ${esc(epLabel(campOf(sc),sc))}${sc.gaiden?"":` <span class="tip">(전체 ${campCount(campOf(sc))})</span>`}</div>`:""}
     ${(()=>{const t=`<h2>${esc(sc.name)}${sc.orig?`<span class="orig">${esc(sc.orig)}</span>`:""}</h2>`,m=`${effSys(sc)?`<span class="sys" data-th="${themeOf(sc)||"pa"}">${esc(sysLabel(effSys(sc)))}</span>`:""}${S.canWrite?`<button id="scedit" title="세션 수정" aria-label="세션 수정">✎<span class="lbl"> 수정</span></button>`:""}`;
       return sc.og?`<div class="schero"><img src="${sc.og}" alt=""><div class="schero-t">${t}<span class="scmeta">${m}</span></div></div>`
         :`<div class="sc-top">${t}<span class="scmeta">${m}</span></div>`;})()}
@@ -1945,7 +1946,7 @@ function scenHTML(){
         <div class="tip" style="margin-top:8px;word-break:break-all">${esc(shareUrl(sc.id))}</div>`:`<div class="tip">비밀번호를 만드는 중…</div>`}
     </div>`:""}
     ${(()=>{const c=campOf(sc);if(!c)return "";const es=campEps(c),i=es.findIndex(e=>e.id===sc.id),pv=es[i-1],nx=es[i+1];
-      return pv||nx?`<div class="epnav">${pv?`<a href="#c-${esc(pv.id)}">◀ ${esc(epLabel(c,pv))}<small>${esc(pv.name)}</small></a>`:"<span></span>"}${nx?`<a class="r" href="#c-${esc(nx.id)}">${esc(epLabel(c,nx))} ▶<small>${esc(nx.name)}</small></a>`:"<span></span>"}</div>`:"";})()}
+      return pv||nx?`<div class="epnav">${pv?`<a href="#c-${esc(pv.id)}">◀ ${esc(epLabel(c,pv)||"이전 탁")}<small>${esc(pv.name)}</small></a>`:"<span></span>"}${nx?`<a class="r" href="#c-${esc(nx.id)}">${esc(epLabel(c,nx)||"다음 탁")} ▶<small>${esc(nx.name)}</small></a>`:"<span></span>"}</div>`:"";})()}
     <div class="homefoot"><button class="ghost" id="scback">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
   </div>`;
 }
@@ -2043,8 +2044,9 @@ function bindScen(){
     document.querySelectorAll("[data-ch]").forEach(i=>{d.sp[+i.dataset.ch].ch=i.value.trim();});
     const g=document.querySelector("[data-gm]:checked");if(g){if(g.dataset.gm)d.gm=g.dataset.gm;else delete d.gm;}
     if(document.querySelector(".plays"))d.plays=[...document.querySelectorAll("[data-play]")].map(i=>i.value);
-    const ec=$("#e-camp");if(ec&&ec.value!=="__new")d.camp=ec.value;const ea=$("#e-campafter");if(ea)d.campAfter=ea.value;const eg=$("#e-gaiden");if(eg)d.gaiden=eg.checked;};
-  {const ec=$("#e-camp");if(ec)ec.onchange=async()=>{if(ec.value==="__new"){const n=(prompt("새 캠페인 이름")||"").trim();if(!n){ec.value=d.camp||"";return;}
+    const ec=$("#e-camp");if(ec&&!/^__new/.test(ec.value))d.camp=ec.value;const ea=$("#e-campafter");if(ea)d.campAfter=ea.value;const eg=$("#e-gaiden");if(eg)d.gaiden=eg.checked;if(isCamp(campById(d.camp)))d.gaiden=false;};
+  {const ec=$("#e-camp");if(ec)ec.onchange=async()=>{if(ec.value==="__new"||ec.value==="__newcamp"){const cm=ec.value==="__newcamp";const n=(prompt(cm?"새 캠프 이름":"새 캠페인 이름")||"").trim();if(!n){ec.value=d.camp||"";return;}
+      if(cm){try{pull();const id=await newCamp(n,"","camp");d.camp=id;d.campAfter="";d.gaiden=false;S.camps.push({id,name:n,system:"",kind:"camp",eps:[]});toast("캠프를 만들었어요");render();}catch(e){writeFail(e);}return;}
       try{pull();const id=await newCamp(n,d.system||"");d.camp=id;d.campAfter="";d.system="";S.camps.push({id,name:n,system:sc.system||"",eps:[]});toast("캠페인을 만들었어요. 캠페인 룰은 캠페인 페이지에서 바꿀 수 있어요",3500);render();}catch(e){writeFail(e);}return;}
     pull();d.campAfter="";render();};}
   {const pa=$("#e-playadd");if(pa)pa.onclick=()=>{pull();d.plays=[...(d.plays||[]),new Date(Date.now()+9*3600e3).toISOString().slice(0,10)];render();};}
@@ -2217,7 +2219,7 @@ function watchRevs(scid){
   S.db.collection("reviews").where("scid","==",scid).onSnapshot(snap=>{
     S.revs[scid]=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.created||0)-(b.created||0));
     // 후기를 쓰는 중이면 다시 그리지 않아요 (쓰던 글이 지워지지 않게)
-    if(S.cid===scid&&!S.scEdit&&!(S.revForm&&S.revForm.scid===scid))render();
+    if((S.cid===scid||S.gid===scid)&&!S.scEdit&&!S.campEdit&&!(S.revForm&&S.revForm.scid===scid))render();
   },()=>{S.revs[scid]=[];});
 }
 const revUrl=rid=>location.href.split("#")[0].replace(/\?.*$/,"")+"#r-"+rid;
@@ -2226,30 +2228,31 @@ function revWho(sc,r){const p=(sc?.sp||[]).find(x=>x.k===r.k);return {p,name:p?p
 function revMine(r){return S.canAdmin||(!!r.uid&&r.uid===myUid());}
 function revCardHTML(sc,r,inPage){
   const w=revWho(sc,r);
-  return `<div class="rvcard">${inPage?"":`<button class="x" data-rvclose title="닫기">×</button>`}<div class="rv-k">SESSION REVIEW</div>
-    <div class="rv-t">${esc(sc?.name||"")}</div><div class="rv-s">${[sc?.orig,sc?.system?sysLabel(sc.system):""].filter(Boolean).map(esc).join(" · ")}</div>
+  return `<div class="rvcard">${inPage?"":`<button class="x" data-rvclose title="닫기">×</button>`}<div class="rv-k">${sc?.isCampSc?"CAMP REVIEW":"SESSION REVIEW"}</div>
+    <div class="rv-t">${esc(sc?.name||"")}</div><div class="rv-s">${(sc?.isCampSc?[sc.place,sc.when]:[sc?.orig,sc?.system?sysLabel(sc.system):""]).filter(Boolean).map(esc).join(" · ")}</div>
     <div class="rv-body${r.html?" rich":""}">${r.html?richView(r.html):emoize(xEm(r.text||""))}</div>
     <div class="rv-sign">— ${esc(w.gm?gmWord(sc).replace(/ /g,""):"")}${w.gm?" ":""}${esc(w.name)}${w.ch&&!w.gm?` (${esc(w.ch)})`:""}</div>
-    <div class="rv-foot"><span>${esc(site().title)}</span>${inPage?`<a href="#c-${esc(r.scid)}" class="rv-go">세션 페이지 보기 ›</a>`:`<button class="pri" data-rvcopy="${esc(r.id)}">🔗 이 후기 링크 복사</button>`}</div></div>`;
+    <div class="rv-foot"><span>${esc(site().title)}</span>${inPage?`<a href="#${sc?.isCampSc?"g":"c"}-${esc(r.scid)}" class="rv-go">${sc?.isCampSc?"캠프":"세션"} 페이지 보기 ›</a>`:`<button class="pri" data-rvcopy="${esc(r.id)}">🔗 이 후기 링크 복사</button>`}</div></div>`;
 }
 function revSectionHTML(sc){
   watchRevs(sc.id);
   const list=S.revs[sc.id]||[];
   const f=S.revForm&&S.revForm.scid===sc.id?S.revForm:null;
-  const cast=gmFirst(sc.sp.filter(p=>p.k===gmKey(sc)||!isAnon(p)&&!/&/.test(p.name)||p.ch),gmKey(sc));
+  const cm=!!sc.isCampSc,has=new Set(list.map(r=>r.k)),mine=list.some(r=>r.uid&&r.uid===myUid()||r.k===myK(sc.id));
+  const cast=gmFirst(sc.sp.filter(p=>p.k===gmKey(sc)||!isAnon(p)&&!/&/.test(p.name)||p.ch),gmKey(sc)).filter(p=>!cm||!has.has(p.k)||(f&&f.k===p.k));
   const rows=list.map(r=>{const w=revWho(sc,r);
     return `<div class="rvr"><span class="av${w.gm?" gm":""}" style="--c:${fixC(w.p?.c||"#888")}">${w.p?avHTML(w.p,w.gm):`<span class="ini">${esc((w.ch||w.name).slice(0,1))}</span>`}</span>
       <span class="nm"><b>${esc(w.name)}</b>${w.ch||w.gm?`<small>${esc(w.gm?gmWord(sc):w.ch)}</small>`:""}</span>
       ${r.url?`<a class="ext" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">외부 후기 ↗</a>${r.lpw?`<button class="ghost lpw" data-rvlpw="${esc(r.id)}" title="눌러서 비밀번호 복사">🔑 ${esc(r.lpw)}</button>`:""}`:`<button class="go" data-rvopen="${esc(r.id)}">후기 보기</button><button class="cp ghost" data-rvcopy="${esc(r.id)}" title="이 후기 링크 복사">🔗</button>`}
       ${revMine(r)||(!r.uid&&canTalk(sc.id))?`<button class="ghost cp" data-rvedit="${esc(r.id)}" title="고치기">✎</button>`:""}${revMine(r)?`<button class="ghost cp" data-rvdel="${esc(r.id)}" title="지우기">🗑</button>`:""}</div>`;}).join("");
   const form=f?`<div class="rvform">
-      ${f.id||!S.canAdmin?`<div class="tip">${esc(revWho(sc,f).name)} 님의 후기${f.id?"를 고쳐요":"예요"}</div>`:`<label>누구의 후기예요?<select id="rv-k">${cast.map(p=>`<option value="${esc(p.k)}"${f.k===p.k?" selected":""}>${esc(pcSplit(p.name).name)} · ${esc(p.k===gmKey(sc)?gmWord(sc):p.ch||"")}</option>`).join("")}</select></label>`}
+      ${f.id||!S.canAdmin?`<div class="tip">${esc(revWho(sc,f).name)} 님의 후기${f.id?"를 고쳐요":"예요"}</div>`:`<label>누구의 후기예요?<select id="rv-k">${cast.map(p=>`<option value="${esc(p.k)}"${f.k===p.k?" selected":""}>${esc(pcSplit(p.name).name)}${p.k===gmKey(sc)||p.ch?` · ${esc(p.k===gmKey(sc)?gmWord(sc):p.ch)}`:""}</option>`).join("")}</select></label>`}
       <div class="tabs"><button type="button" data-rvmode="text" class="${f.mode==="text"?"on":""}">여기에 쓰기</button><button type="button" data-rvmode="url" class="${f.mode==="url"?"on":""}">링크 붙이기</button></div>
       ${f.mode==="text"?wedHTML("rv-wed",f.html!=null?f.html:textToRich(f.text||"")):`<input type="url" id="rv-url" value="${esc(f.url||"")}" placeholder="https:// (블로그·X·포스타입 등에 쓴 후기 주소)"><input type="text" id="rv-lpw" value="${esc(f.lpw||"")}" placeholder="글 비밀번호 (걸려 있으면 · 선택)" autocomplete="off" style="margin-top:6px">`}
       <div class="rv-btns" style="margin-top:0"><button class="pri" id="rv-save">저장</button><button class="ghost" id="rv-cancel">취소</button><span id="rv-msg" class="tip"></span></div></div>`:"";
   if(!list.length&&!f&&(!S.db||!canTalk(sc.id)))return "";
-  return `<div class="sc-sec rvsec"><h4 data-en="REVIEWS">세션 후기</h4>${rows?`<div class="rvlist">${rows}</div>`:""}${form}
-    ${f||!canTalk(sc.id)?"":`<div class="rv-btns"><button class="${list.length?"":"pri"}" id="rv-add">＋ 후기 남기기</button></div>`}</div>`;
+  return `<div class="sc-sec rvsec"><h4 data-en="REVIEWS">${cm?"캠프 후기":"세션 후기"}${cm?` <span class="tip" style="letter-spacing:0">· 한 사람당 하나 · 탁 후기는 각 세션 페이지에</span>`:""}</h4>${rows?`<div class="rvlist">${rows}</div>`:""}${form}
+    ${f||!canTalk(sc.id)||cm&&(S.canAdmin?!cast.length:mine)?"":`<div class="rv-btns"><button class="${list.length?"":"pri"}" id="rv-add">＋ 후기 남기기</button></div>`}</div>`;
 }
 function revPopup(sc,r){
   const ov=document.createElement("div");ov.className="rvov";ov.innerHTML=revCardHTML(sc,r,false);document.body.appendChild(ov);
@@ -2266,7 +2269,7 @@ function bindRevs(sc){
   const list=S.revs[sc.id]||[],byId=id=>list.find(x=>x.id===id);
   document.querySelectorAll("[data-rvopen]").forEach(b=>b.onclick=()=>revPopup(sc,byId(b.dataset.rvopen)));
   document.querySelectorAll(".rvsec [data-rvcopy]").forEach(b=>b.onclick=()=>copyText(revUrl(b.dataset.rvcopy),"후기 링크를 복사했어요"));
-  const add=$("#rv-add");if(add)add.onclick=()=>{const m=meSp(sc.id);S.revForm={scid:sc.id,mode:"text",k:(m||sc.sp.find(p=>p.k!==gmKey(sc))||sc.sp[0]||{}).k};render();};
+  const add=$("#rv-add");if(add)add.onclick=()=>{const m=meSp(sc.id),taken=new Set(sc.isCampSc?list.map(r=>r.k):[]);S.revForm={scid:sc.id,mode:"text",k:(m&&!taken.has(m.k)?m:sc.sp.find(p=>p.k!==gmKey(sc)&&!taken.has(p.k))||sc.sp[0]||{}).k};render();};
   document.querySelectorAll("[data-rvedit]").forEach(b=>b.onclick=async()=>{const r=byId(b.dataset.rvedit);if(!r)return;
     // 예전 방식(후기 비밀번호)으로 쓴 후기: 비밀번호로 한 번 열면 이 브라우저 것이 돼요
     if(!revMine(r)){const pw=prompt(`예전에 정한 ${revWho(sc,r).name} 님의 후기 비밀번호를 넣어 주세요.\n한 번 넣으면 다음부터는 이 브라우저에서 바로 고칠 수 있어요.`);if(!pw)return;
@@ -2304,7 +2307,9 @@ async function openRevPage(rid){
   S.revPage={rid,loading:true};render();
   try{const d=await S.db.doc("reviews/"+rid).get();if(!d.exists){S.revPage={rid,err:"후기를 찾을 수 없어요."};render();return;}
     const r={id:d.id,...d.data()};const s=await S.db.doc("scenarios/"+r.scid).get();
-    S.revPage={rid,r,sc:s.exists?{id:s.id,...s.data()}:null};}
+    let sc=s.exists?{id:s.id,...s.data()}:null;
+    if(!sc){const g=await S.db.doc("camps/"+r.scid).get();if(g.exists){const c={id:g.id,...g.data()};sc={id:c.id,name:c.name,sp:[],isCampSc:true,place:c.place||"",when:campWhen(c)};}}
+    S.revPage={rid,r,sc};}
   catch(e){S.revPage={rid,err:"후기를 불러오지 못했어요."};}
   render();
 }
@@ -2603,15 +2608,16 @@ function upHTML(){
     ${card(u.kind==="off",'data-upk="off"',"🎙","오프라인 세션","만나서 플레이 · 클로바노트 녹음·대사 txt를 올리거나, 녹음 없이 날짜만 남겨요")}
     ${card(u.kind==="on",'data-upk="on"',"💻","온라인 세션","코코포리아 등에서 플레이 · 방의 로그 html을 올리거나, 로그 없이 날짜만 남겨요")}</div>`;
   else if(st===1){const list=upCont();
-    body=`${u.fixedCamp?`<div class="upq">${esc(campById(u.gid)?.name||"캠페인")}의 다음 시나리오</div>`:`<div class="upq">어느 세션이에요?</div><div class="upcards">
+    body=`${u.fixedCamp?`<div class="upq">${isCamp(campById(u.gid))?`${esc(campById(u.gid)?.name||"캠프")}에 탁 추가`:`${esc(campById(u.gid)?.name||"캠페인")}의 다음 시나리오`}</div>`:`<div class="upq">어느 세션이에요?</div><div class="upcards">
       ${card(u.mode==="cont",'data-upm="cont"',"","이어서 하는 세션","이미 있는 세션에 회차를 추가해요 · 완주한 세션은 안 보여요")}
       ${card(u.mode==="new",'data-upm="new"',"","새 세션","처음 올리는 시나리오")}
-      ${S.camps.some(c=>!c.done)?card(u.mode==="next",'data-upm="next"',"","캠페인의 다음 시나리오","진행 중인 캠페인에 새 편을 붙여요 · 지난 편 플레이어가 미리 채워져요"):""}</div>`}
-      ${u.mode==="next"?`<div class="upq"${u.fixedCamp?' style="display:none"':""}>캠페인</div><div class="upsel"${u.fixedCamp?' style="display:none"':""}><select id="up-g"><option value="">— 골라 주세요 —</option>${S.camps.filter(c=>!c.done).map(c=>`<option value="${esc(c.id)}"${c.id===u.gid?" selected":""}>${esc(c.name)} · ${campCount(c)}</option>`).join("")}</select></div>
-        <div class="fields" style="margin-top:10px"><label>시나리오 이름<input type="text" id="up-name" value="${esc(u.name||"")}" placeholder="이번 편 시나리오 이름"></label>
+      ${S.camps.some(c=>!c.done&&!isCamp(c))?card(u.mode==="next"&&!u.ck,'data-upm="next"',"","캠페인의 다음 시나리오","진행 중인 캠페인에 새 편을 붙여요 · 지난 편 플레이어가 미리 채워져요"):""}
+      ${card(u.mode==="next"&&!!u.ck,'data-upm="camp"',"","캠프의 탁","당일치기·며칠짜리 캠프에서 돈 탁을 올려요 · 캠프는 여기서 새로 만들 수도 있어요")}</div>`}
+      ${u.mode==="next"?`<div class="upq"${u.fixedCamp?' style="display:none"':""}>${u.ck?"캠프":"캠페인"}</div><div class="upsel"${u.fixedCamp?' style="display:none"':""}><select id="up-g"><option value="">— 골라 주세요 —</option>${S.camps.filter(c=>u.ck?isCamp(c):!c.done&&!isCamp(c)).map(c=>`<option value="${esc(c.id)}"${c.id===u.gid?" selected":""}>${esc(c.name)} · ${campCount(c)}</option>`).join("")}${u.ck?`<option value="__newcamp">＋ 새 캠프…</option>`:""}</select></div>
+        <div class="fields" style="margin-top:10px"><label>시나리오 이름<input type="text" id="up-name" value="${esc(u.name||"")}" placeholder="${u.ck?"이 탁의 시나리오 이름":"이번 편 시나리오 이름"}"></label>
         <label>해외 시나리오면 원래 제목 (선택)<input type="text" id="up-orig" value="${esc(u.orig||"")}"></label>
-        <label>룰 <span class="tip" style="display:inline">· 비워 두면 캠페인 룰${upCamp()&&upCamp().system?`(${esc(sysLabel(upCamp().system))})`:""}을 따라가요</span><input type="text" id="up-sys" value="${esc(u.system||"")}" placeholder="다른 룰로 갈 때만"></label>
-        <label class="chk"><input type="checkbox" id="up-gai"${u.gaiden?" checked":""}> 외전</label></div>`
+        ${u.ck?`<label>룰<input type="text" id="up-sys" value="${esc(u.system||"")}" placeholder="예: 더블크로스 3rd · 인세인 · D&D 5e"></label></div>`:`<label>룰 <span class="tip" style="display:inline">· 비워 두면 캠페인 룰${upCamp()&&upCamp().system?`(${esc(sysLabel(upCamp().system))})`:""}을 따라가요</span><input type="text" id="up-sys" value="${esc(u.system||"")}" placeholder="다른 룰로 갈 때만"></label>
+        <label class="chk"><input type="checkbox" id="up-gai"${u.gaiden?" checked":""}> 외전</label></div>`}`
       :u.mode==="cont"?(list.length?`<div class="upq">세션 고르기</div><div class="upsel"><select id="up-sc"><option value="">— 골라 주세요 —</option>${list.map(x=>{const n=groups().find(g=>g.scen===x.name)?.days.length||0;return `<option value="${esc(x.id)}"${x.id===u.scid?" selected":""}>${esc(x.name)}${x.system?` · ${esc(sysLabel(x.system))}`:""}${n?` · ${n}회차`:""}</option>`;}).join("")}</select></div>`:`<div class="tip" style="margin-top:12px">이어서 할 세션이 없어요. 완주하지 않은 세션만 여기 떠요.</div>`)
       :`<div class="upq">새 세션</div><div class="fields"><label>시나리오 이름<input type="text" id="up-name" value="${esc(u.name||"")}" placeholder="시나리오 이름"></label>
         <label>해외 시나리오면 원래 제목 (선택)<input type="text" id="up-orig" value="${esc(u.orig||"")}"></label>
@@ -2627,7 +2633,7 @@ function upHTML(){
         <div id="imp"></div><div id="bulkres" class="tip" style="margin-top:8px">${S.bulkMsg||""}</div>`
       :u.src==="none"?`<div class="upq">플레이한 날</div><div class="updates">${u.dates.map((v,i)=>`<span class="playd"><input type="date" data-upd="${i}" value="${esc(v)}">${u.dates.length>1?`<button type="button" class="ghost" data-updel="${i}">✕</button>`:""}</span>`).join("")}<button type="button" class="ghost" id="up-dadd">＋ 날짜 추가</button></div>`:""}`;}
   else if(st===3){const sc=upScen(),n=(groups().find(g=>g.scen===upName())?.days.length)||0;const ds=[...new Set(u.dates.filter(Boolean))].sort();
-    body=`<div class="upq">이렇게 올릴게요</div><div class="upsum"><b>${esc(upName())}</b> · ${u.kind==="off"?"오프라인":"온라인"}${(sc?.system||u.system)?` · ${esc(sysLabel(sc?.system||u.system))}`:""}${sc?"":upCamp()?` · <span class="tip">${esc(upCamp().name)}의 ${u.gaiden?"외전":"다음 편"}</span>`:` · <span class="tip">새 세션</span>`}<br>
+    body=`<div class="upq">이렇게 올릴게요</div><div class="upsum"><b>${esc(upName())}</b> · ${u.kind==="off"?"오프라인":"온라인"}${(sc?.system||u.system)?` · ${esc(sysLabel(sc?.system||u.system))}`:""}${sc?"":upCamp()?` · <span class="tip">${isCamp(upCamp())?`${esc(upCamp().name)}의 탁`:`${esc(upCamp().name)}의 ${u.gaiden?"외전":"다음 편"}`}</span>`:` · <span class="tip">새 세션</span>`}<br>
       ${ds.map((d,i)=>`${n+i+1}회차 · ${esc(fmtDay(d))} — ${u.kind==="off"?"녹음 없음":"로그 없음"}`).join("<br>")}</div>
       ${sc?"":`<div class="tip" style="margin-top:8px">올린 뒤 세션 수정 화면이 열려요. 거기서 플레이어·등장인물을 넣어 주세요.</div>`}<div id="iprog" class="tip" style="margin-top:6px"></div>`;}
   const fileStep=st===2&&u.src==="file";
@@ -2644,10 +2650,12 @@ function bindUp(){
     const ds=document.querySelectorAll("[data-upd]");if(ds.length)u.dates=[...ds].map(i=>i.value);};
   const go=()=>{render();window.scrollTo(0,0);};
   document.querySelectorAll("[data-upk]").forEach(b=>b.onclick=()=>{u.kind=b.dataset.upk;u.src="";u.picked=false;render();});
-  document.querySelectorAll("[data-upm]").forEach(b=>b.onclick=()=>{pull();u.mode=b.dataset.upm;render();});
+  document.querySelectorAll("[data-upm]").forEach(b=>b.onclick=()=>{pull();const m=b.dataset.upm,ck=m==="camp"?"camp":"";if(ck!==(u.ck||""))u.gid="";u.ck=ck;u.mode=m==="camp"?"next":m;render();});
   document.querySelectorAll("[data-ups]").forEach(b=>b.onclick=()=>{u.src=b.dataset.ups;u.picked=false;S.bulkMsg="";if(u.src==="none"&&!u.dates.length)u.dates=[new Date(Date.now()+9*3600e3).toISOString().slice(0,10)];render();});
   const sc=$("#up-sc");if(sc)sc.onchange=()=>{pull();render();};
-  const ugs=$("#up-g");if(ugs)ugs.onchange=()=>{pull();render();};
+  const ugs=$("#up-g");if(ugs)ugs.onchange=async()=>{if(ugs.value==="__newcamp"){const n=(prompt("새 캠프 이름")||"").trim();if(!n){ugs.value=u.gid||"";return;}
+    try{const id=await newCamp(n,"","camp");S.camps.push({id,name:n,system:"",kind:"camp",eps:[]});u.gid=id;toast("캠프를 만들었어요. 날짜·장소는 캠프 페이지에서 넣어요",3500);render();}catch(e){writeFail(e);}return;}
+    pull();render();};
   const nm=$("#up-name");if(nm)nm.oninput=()=>{pull();const b=$("#up-next");if(b)b.disabled=!u.name.trim()||(u.mode==="next"&&!u.gid);};
   const da=$("#up-dadd");if(da)da.onclick=()=>{pull();u.dates.push(u.dates[u.dates.length-1]||new Date(Date.now()+9*3600e3).toISOString().slice(0,10));render();};
   document.querySelectorAll("[data-updel]").forEach(b=>b.onclick=()=>{pull();u.dates.splice(+b.dataset.updel,1);render();});
@@ -2657,7 +2665,7 @@ function bindUp(){
   const nx=$("#up-next");if(nx)nx.onclick=()=>{pull();
     if(u.step===1&&(u.mode==="new"||u.mode==="next")){const n=u.name.trim();if(findScen(n)){toast("이미 있는 세션이에요. '이어서 하는 세션'에서 골라 주세요",3500);return;}}
     u.step=u.step===0&&u.fixed?2:u.step+1;go();};
-  const opt=()=>{const s=upScen();return {scen:upName(),system:s?"":u.system||"",orig:s?"":u.orig||"",camp:u.mode==="next"?u.gid:"",gaiden:u.mode==="next"&&!!u.gaiden};};
+  const opt=()=>{const s=upScen();return {scen:upName(),system:s?"":u.system||"",orig:s?"":u.orig||"",camp:u.mode==="next"?u.gid:"",gaiden:u.mode==="next"&&!!u.gaiden&&!isCamp(upCamp())};};
   const fi=$("#up-file");if(fi){fi.onchange=async()=>{const all=[...fi.files];fi.value="";if(!all.length)return;u.picked=true;
       document.querySelectorAll(".upsteps span").forEach((x,i)=>{x.className=i===3?"on":i<3?"done":"";});
       await takeFiles(all,opt());};
@@ -2670,11 +2678,11 @@ function bindUp(){
     try{let sc=upScen();
       if(sc){await mutateScen(sc.id,L=>{L.plays=[...new Set([...(L.plays||[]),...ds])].sort();});location.hash="c-"+sc.id;}
       else{let sp=[];const c=upCamp();
-        if(c){const last=campEps(c).filter(e=>(e.sp||[]).length).pop();if(last)sp=(last.sp||[]).filter(p=>!/&/.test(p.name||"")&&(p.k===gmKey(last)||!isAnon(p)||p.ch)).map(p=>({k:"k"+rid(),name:pcSplit(p.name||"").name,c:p.c,...(p.ch?{ch:p.ch}:{}),...(p.img?{img:p.img}:{}),_gm:p.k===gmKey(last)}));}
+        if(c&&!isCamp(c)){const last=campEps(c).filter(e=>(e.sp||[]).length).pop();if(last)sp=(last.sp||[]).filter(p=>!/&/.test(p.name||"")&&(p.k===gmKey(last)||!isAnon(p)||p.ch)).map(p=>({k:"k"+rid(),name:pcSplit(p.name||"").name,c:p.c,...(p.ch?{ch:p.ch}:{}),...(p.img?{img:p.img}:{}),_gm:p.k===gmKey(last)}));}
         const gmP=sp.find(p=>p._gm);sp.forEach(p=>delete p._gm);
-        sc=createScen(u.name.trim(),sp);sc.plays=ds;if(gmP)sc.gm=gmP.k;if(u.system)sc.system=u.system;if(u.orig)sc.orig=u.orig;if(c){sc.camp=c.id;if(u.gaiden)sc.gaiden=true;}
+        sc=createScen(u.name.trim(),sp);sc.plays=ds;if(gmP)sc.gm=gmP.k;if(u.system)sc.system=u.system;if(u.orig)sc.orig=u.orig;if(c){sc.camp=c.id;if(u.gaiden&&!isCamp(c))sc.gaiden=true;}
         await saveScen(sc);
-        if(c){await S.db.doc("camps/"+c.id).update({eps:[...campEps(c).map(e=>e.id).filter(x=>x!==sc.id),sc.id]});if(!u.gaiden){c.eps=[...(c.eps||[]),sc.id];await closePrevEps(c.id,sc.id);}}
+        if(c){await S.db.doc("camps/"+c.id).update({eps:[...campEps(c).map(e=>e.id).filter(x=>x!==sc.id),sc.id]});if(!sc.gaiden){c.eps=[...(c.eps||[]),sc.id];await closePrevEps(c.id,sc.id);}}
         S.pendingEdit=sc.id;location.hash="c-"+sc.id;}
     }catch(e){ug.disabled=false;pr.innerHTML=`<span style="color:var(--bad)">올리지 못했어요: ${esc(e.code||e.message||"")}</span>`;}
   };
@@ -2695,24 +2703,27 @@ function setProg(el,label,f){if(!el)return;let b=el.querySelector(".upbar");
 S.camps=[];S.campMore={};
 const campById=id=>S.camps.find(c=>c.id===id)||null;
 const campOf=sc=>sc&&sc.camp?campById(sc.camp):null;
+// 캠프(kind:"camp"): 여러 탁이 같은 때 돈 모임 · 편 번호·자동 완주·이어받기 없이 탁만 묶어요
+const isCamp=c=>!!c&&c.kind==="camp";
+const campWord=c=>isCamp(c)?"캠프":"캠페인";
 function campEps(c){const pos=new Map((c.eps||[]).map((id,i)=>[id,i]));
   return S.scens.filter(s=>s.camp===c.id).sort((a,b)=>(pos.has(a.id)?pos.get(a.id):1e9)-(pos.has(b.id)?pos.get(b.id):1e9)||(a.lastDay||"").localeCompare(b.lastDay||""));}
-function epLabel(c,sc){if(sc.gaiden)return "외전";let n=0;for(const e of campEps(c)){if(!e.gaiden)n++;if(e.id===sc.id)return n+"편";}return "";}
-function campCount(c){const es=campEps(c),g=es.filter(e=>e.gaiden).length;return `${es.length-g}편${g?` + 외전 ${g}`:""}`;}
+function epLabel(c,sc){if(isCamp(c))return "";if(sc.gaiden)return "외전";let n=0;for(const e of campEps(c)){if(!e.gaiden)n++;if(e.id===sc.id)return n+"편";}return "";}
+function campCount(c){if(isCamp(c))return `탁 ${campEps(c).length}개`;const es=campEps(c),g=es.filter(e=>e.gaiden).length;return `${es.length-g}편${g?` + 외전 ${g}`:""}`;}
 function campLast(c){return campEps(c).map(e=>e.lastDay||"").sort().pop()||"";}
 function effSys(sc){return (sc&&(sc.system||campOf(sc)?.system))||"";}
 function campOpen(c){return S.canAdmin||campEps(c).some(e=>!!SUB.sessData[e.id]);}
 function epStatus(sc){const n=groups().find(g=>g.scen===sc.name)?.days.length||sc.nDays||0;return sc.done||campOf(sc)?.done?`<span class="st">완주</span>`:`<span class="st now">진행 중${n?` · ${n}회차`:""}</span>`;}
-function epRowHTML(c,sc){const diff=sc.system&&sysLabel(sc.system)!==sysLabel(c.system||"");
-  return `<div class="cep"><span class="en${sc.gaiden?" gai":""}">${esc(epLabel(c,sc))}</span><a href="#c-${esc(sc.id)}" class="et">${esc(sc.name)}</a>${diff?`<span class="sys" data-th="${themeOf(sc)}">${esc(sysLabel(sc.system))}</span>`:""}${epStatus(sc)}</div>`;}
+function epRowHTML(c,sc){const cm=isCamp(c),diff=sc.system&&(cm||sysLabel(sc.system)!==sysLabel(c.system||""));
+  return `<div class="cep"><span class="en${sc.gaiden&&!cm?" gai":""}">${cm?esc((sc.lastDay||"").slice(5).replace("-","/")):esc(epLabel(c,sc))}</span><a href="#c-${esc(sc.id)}" class="et">${esc(sc.name)}</a>${diff?`<span class="sys" data-th="${themeOf(sc)}">${esc(sysLabel(sc.system))}</span>`:""}${epStatus(sc)}</div>`;}
 function campTagHTML(c){return c.system?`<span class="sys" data-th="${themeOf({system:c.system})}">${esc(sysLabel(c.system))}</span>`:"";}
 function campCardHTML(c){
   const es=campEps(c).slice().reverse(),last=campLast(c);
   // 일반 세션 카드와 같은 머리 모양: 제목 · 오른쪽에 룰 태그와 편 수 (캠페인인 건 '진행 중인 캠페인' 칸과 굵은 테두리로 보여요)
-  const head=`<div class="scen-h"><h3><a href="#g-${esc(c.id)}">${esc(c.name)} ›</a>${c.orig?`<span class="orig">${esc(c.orig)}</span>`:""}</h3>${campTagHTML(c)}<span class="d${c.done?" dstamp":""}">${campCount(c)}${last?` · 마지막 ${esc(fmtDay(last))}`:""}${stampHTML(c)}</span></div>`;
+  const head=`<div class="scen-h"><h3><a href="#g-${esc(c.id)}">${esc(c.name)} ›</a>${c.orig?`<span class="orig">${esc(c.orig)}</span>`:""}</h3>${campTagHTML(c)}<span class="d${c.done?" dstamp":""}">${isCamp(c)?`캠프 · ${campWhen(c)?esc(campWhen(c).replace(/ · 당일치기$/,"")):""}${campWhen(c)?" · ":""}${campCount(c)}`:`${campCount(c)}${last?` · 마지막 ${esc(fmtDay(last))}`:""}`}${stampHTML(c)}</span></div>`;
   const more=!!S.campMore[c.id],shown=more?es:es.slice(0,3);
-  return `<section class="scen camp${c.done?" done":""}">${head}${shown.map(e=>epRowHTML(c,e)).join("")||`<div class="tip" style="margin-top:8px">아직 편이 없어요</div>`}
-    ${es.length>3?`<button class="cmore" data-cmore="${esc(c.id)}">${more?"▴ 접기":`▾ 이전 편 ${es.length-3}개 더 보기`}</button>`:""}</section>`;
+  return `<section class="scen camp${c.done?" done":""}">${head}${shown.map(e=>epRowHTML(c,e)).join("")||`<div class="tip" style="margin-top:8px">아직 ${isCamp(c)?"탁이":"편이"} 없어요</div>`}
+    ${es.length>3?`<button class="cmore" data-cmore="${esc(c.id)}">${more?"▴ 접기":`▾ ${isCamp(c)?"탁":"이전 편"} ${es.length-3}개 더 보기`}</button>`:""}</section>`;
 }
 // 플레이어별 캐릭터: 같은 캐릭터로 이어진 편을 한 줄로
 function campRuns(c){
@@ -2732,52 +2743,111 @@ function campRuns(c){
 }
 function campPageHTML(){
   const c=campById(S.gid);
-  if(!c)return S.loaded?`<div class="sc-page"><div class="notice">캠페인을 찾을 수 없어요.</div><button class="ghost" onclick="location.hash=''">← 목록</button></div>`:`<div class="sc-page">${loaderHTML()}</div>`;
-  const es=campEps(c),open=campOpen(c),ed=S.campEdit&&S.canAdmin;
-  const rows=campRuns(c);
+  if(c&&isCamp(c))return campPgHTML(c);
+  if(!c)return S.loaded?`<div class="sc-page"><div class="notice">캠페인·캠프를 찾을 수 없어요.</div><button class="ghost" onclick="location.hash=''">← 목록</button></div>`:`<div class="sc-page">${loaderHTML()}</div>`;
+  const cm=isCamp(c),W=campWord(c),es=campEps(c),open=campOpen(c),ed=S.campEdit&&S.canAdmin;
+  const rows=cm?[]:campRuns(c);
+  // 캠프 목록은 날짜 최신순 (같은 날이면 이름순)
+  const list=cm?es.slice().sort((a,b)=>(b.lastDay||"").localeCompare(a.lastDay||"")||a.name.localeCompare(b.name,"ko")):es.slice().reverse();
   return `<div class="sc-page campage">
-    ${ed?`<div class="sc-top"><h2>캠페인 수정</h2><button class="ghost" id="g-x">취소</button><button class="pri" id="g-save">저장</button></div>
+    ${ed?`<div class="sc-top"><h2>${W} 수정</h2><button class="ghost" id="g-x">취소</button><button class="pri" id="g-save">저장</button></div>
       <div class="sc-sec"><div class="fields" style="margin:0">
-        <label>캠페인 이름<input type="text" id="g-name" value="${esc(c.name)}"></label>
+        <label>${W} 이름<input type="text" id="g-name" value="${esc(c.name)}"></label>
         <label>원어 제목 <span class="tip" style="display:inline">· 선택</span><input type="text" id="g-orig" value="${esc(c.orig||"")}" placeholder="해외 캠페인이면 원래 제목 (없으면 비워 두세요)"></label>
-        <label>캠페인 룰 <span class="tip" style="display:inline">· 각 편은 룰을 비워 두면 이 룰을 따라가요</span><input type="text" id="g-sys" value="${esc(c.system||"")}" placeholder="예: 더블크로스 3rd, 인세인, D&D 5.5e" list="g-syslist"></label>
+        <div class="g-cponly fields" style="margin:0${cm?";display:none":""}"><label>캠페인 룰 <span class="tip" style="display:inline">· 각 편은 룰을 비워 두면 이 룰을 따라가요</span><input type="text" id="g-sys" value="${esc(c.system||"")}" placeholder="예: 더블크로스 3rd, 인세인, D&D 5.5e" list="g-syslist"></label>
         <datalist id="g-syslist">${[...new Set(S.scens.map(x=>(x.system||"").trim()).filter(Boolean))].map(x=>`<option value="${esc(x)}">`).join("")}</datalist>
-        <div class="donerow"><label class="chk"><input type="checkbox" id="g-done"${c.done?" checked":""}> 캠페인 완주</label><span class="tip">첫 화면에 캠페인 완주 도장이 찍히고, 진행 중인 캠페인 칸에서 빠져요</span></div>
+        <div class="donerow"><label class="chk"><input type="checkbox" id="g-done"${c.done?" checked":""}> 캠페인 완주</label><span class="tip">첫 화면에 캠페인 완주 도장이 찍히고, 진행 중인 캠페인 칸에서 빠져요</span></div></div>
       </div></div>
-      <div class="sc-sec"><h4 data-en="INTRO">소개</h4><textarea id="g-intro" placeholder="어떤 캠페인인지 적어 주세요 (선택)">${esc(c.intro||"")}</textarea></div>
-      ${es.length?"":`<div class="sc-sec"><h4 data-en="DELETE">캠페인 지우기</h4><div class="tip" style="margin-bottom:8px">편이 하나도 없을 때만 지울 수 있어요.</div><button class="ghost" id="g-del">이 캠페인 지우기</button></div>`}`
-      :`<div class="ckick"><span class="cbadge">캠페인</span></div>
-      <div class="sc-top"><h2>${esc(c.name)}${c.orig?`<span class="orig">${esc(c.orig)}</span>`:""}</h2><span class="scmeta">${campTagHTML(c)}${S.canAdmin?`<button id="g-edit" title="캠페인 수정" aria-label="캠페인 수정">✎<span class="lbl"> 수정</span></button>`:""}</span></div>`}
+      <div class="sc-sec"><h4 data-en="INTRO">소개</h4><textarea id="g-intro" placeholder="${cm?"언제 어디서 모인 캠프인지 적어 주세요 (선택)":"어떤 캠페인인지 적어 주세요 (선택)"}">${esc(c.intro||"")}</textarea></div>
+      ${es.length?"":`<div class="sc-sec"><h4 data-en="DELETE">${W} 지우기</h4><div class="tip" style="margin-bottom:8px">${cm?"탁이":"편이"} 하나도 없을 때만 지울 수 있어요.</div><button class="ghost" id="g-del">이 ${W} 지우기</button></div>`}`
+      :`<div class="ckick"><span class="cbadge">${W}</span></div>
+      <div class="sc-top"><h2>${esc(c.name)}${c.orig?`<span class="orig">${esc(c.orig)}</span>`:""}</h2><span class="scmeta">${campTagHTML(c)}${S.canAdmin?`<button id="g-edit" title="${W} 수정" aria-label="${W} 수정">✎<span class="lbl"> 수정</span></button>`:""}</span></div>`}
     ${!ed&&c.intro?`<div class="sc-sec"><h4 data-en="INTRO">소개</h4><div class="sc-text">${emoize(esc(c.intro)).replace(/\n/g,"<br>")}</div></div>`:""}
-    ${ed?"":`<div class="sc-sec"><h4 data-en="EPISODES">시나리오 목록</h4>${es.slice().reverse().map(e=>epRowHTML(c,e)).join("")||`<div class="sc-text empty">아직 편이 없어요.</div>`}
+    ${ed?"":`<div class="sc-sec"><h4 data-en="${cm?"TABLES":"EPISODES"}">${cm?"탁 목록":"시나리오 목록"}</h4>${list.map(e=>epRowHTML(c,e)).join("")||`<div class="sc-text empty">아직 ${cm?"탁이":"편이"} 없어요.</div>`}
       ${S.canAdmin&&S.db?(()=>{const free=S.scens.filter(x=>!x.camp||!campById(x.camp)).sort((a,b)=>(b.lastDay||"").localeCompare(a.lastDay||""));
-        return `<div class="gadd">${c.done?"":`<a class="btnlike pri" href="#up-${esc(c.id)}">＋ 다음 시나리오 올리기</a>`}
-          ${free.length?`<span class="gadd-ex"><select id="g-addsel"><option value="">이미 있는 세션 넣기…</option>${free.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}${x.system?` · ${esc(sysLabel(x.system))}`:""}</option>`).join("")}</select><label class="chk"><input type="checkbox" id="g-addgai"> 외전</label><button class="ghost" id="g-addgo">넣기</button></span>`:""}</div>
-          <div class="tip" style="margin-top:6px">넣은 세션은 마지막 플레이 날짜 순서에 맞춰 들어가요. 순서는 그 세션의 ✎ 수정 → 캠페인 칸에서 바꿔요.</div>`;})():""}</div>
+        return `<div class="gadd">${c.done&&!cm?"":`<a class="btnlike pri" href="#up-${esc(c.id)}">${cm?"＋ 탁 올리기":"＋ 다음 시나리오 올리기"}</a>`}
+          ${free.length?`<span class="gadd-ex"><select id="g-addsel"><option value="">이미 있는 세션 넣기…</option>${free.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}${x.system?` · ${esc(sysLabel(x.system))}`:""}</option>`).join("")}</select>${cm?"":`<label class="chk"><input type="checkbox" id="g-addgai"> 외전</label>`}<button class="ghost" id="g-addgo">넣기</button></span>`:""}</div>
+          <div class="tip" style="margin-top:6px">${cm?"넣은 탁은 플레이 날짜 순서로 보여요.":"넣은 세션은 마지막 플레이 날짜 순서에 맞춰 들어가요. 순서는 그 세션의 ✎ 수정 → 캠페인 칸에서 바꿔요."}</div>`;})():""}</div>
+    ${cm&&list.length?`<div class="sc-sec"><h4 data-en="CAST">탁별 참가자</h4>${list.map(e=>`<div class="trow"><div class="tr-h"><a href="#c-${esc(e.id)}">${esc(e.name)}</a>${e.system?`<span class="sys" data-th="${themeOf(e)}">${esc(sysLabel(e.system))}</span>`:""}</div>${castHTML(e)||`<div class="tip">참가자를 아직 안 적었어요</div>`}</div>`).join("")}</div>`:""}
     ${rows.length?`<div class="sc-sec"><h4 data-en="CAST">플레이어별 캐릭터</h4>${rows.map(r=>`<div class="prow"><b>${esc(r.who)}</b><div class="runs">${r.runs.map(x=>`<div class="run"><span class="rc" style="--c:${x.c}">${x.ch?esc(x.ch):`<span class="tip">캐릭터 미정</span>`}</span><span class="rr">${esc(x.r)}</span>${x.pc&&r.who!=="GM"?`<span class="rp">${esc(x.pc)}</span>`:""}</div>`).join("")}${r.miss?`<div class="run off"><span class="rr">${esc(r.miss)} 불참</span></div>`:""}</div></div>`).join("")}</div>`:""}
-    ${S.canAdmin?`<div class="sc-sec"><h4 data-en="ACCESS">캠페인 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
-      <div class="tip">이 비밀번호 하나로 캠페인의 모든 편이 열려요. 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
+    ${S.canAdmin?`<div class="sc-sec"><h4 data-en="ACCESS">${W} 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
+      <div class="tip">이 비밀번호 하나로 ${cm?"캠프의 모든 탁이":"캠페인의 모든 편이"} 열려요. 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
       <div class="pwrow"><code class="pw">${esc(S.secrets?.[c.id]||"…")}</code><button class="pri" id="g-copy">링크+비밀번호 복사</button><button class="ghost" id="g-newpw">새로 만들기</button></div></div>`
-      :!open?`<div class="sc-sec"><h4 data-en="ACCESS">캠페인 열기</h4><div class="tip">같이 플레이한 친구에게 받은 캠페인 비밀번호를 넣으면 모든 편의 로그가 열려요.</div>
-      <form id="g-unlock" class="pwrow"><input type="text" id="g-pw" placeholder="캠페인 비밀번호" autocomplete="off"><button class="pri">열기</button></form><div class="tip" id="g-msg"></div></div>`:""}`}
+      :!open?`<div class="sc-sec"><h4 data-en="ACCESS">${W} 열기</h4><div class="tip">같이 플레이한 친구에게 받은 ${W} 비밀번호를 넣으면 모든 ${cm?"탁":"편"}의 로그가 열려요.</div>
+      <form id="g-unlock" class="pwrow"><input type="text" id="g-pw" placeholder="${W} 비밀번호" autocomplete="off"><button class="pri">열기</button></form><div class="tip" id="g-msg"></div></div>`:""}`}
+    <div class="homefoot"><button class="ghost" onclick="location.hash=''">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
+  </div>`;
+}
+// ---------- 캠프: 날짜가 정해진 모임 (당일치기·며칠) · 여러 탁 · 캠프 후기 ----------
+// camps/{gid} 중 kind:"camp" · {name, place, start, end, intro, eps:[탁 세션 id]}
+function campWhen(c){const a=c.start||"",b=c.end||a;if(!a)return "";
+  const [y1,m1,d1]=a.split("-").map(Number),[y2,m2,d2]=b.split("-").map(Number);
+  const n=Math.round((new Date(y2,m2-1,d2)-new Date(y1,m1-1,d1))/864e5);
+  if(n<=0)return `${fmtDay(a)} · 당일치기`;
+  const tail=y1!==y2?`${y2}년 ${m2}월 ${d2}일`:m1!==m2?`${m2}월 ${d2}일`:`${d2}일`;
+  return `${fmtDay(a).replace(/ \(.\)$/,"")} – ${tail} · ${n}박 ${n+1}일`;}
+function campKey(c){return isCamp(c)?(c.end||c.start||campLast(c)):campLast(c);}
+function campDays(c){const es=campEps(c);if(!c.start)return [{lab:"",eps:es.slice().sort((a,b)=>(a.lastDay||"").localeCompare(b.lastDay||""))}];
+  const a=c.start,b=c.end||a,out=[];const [y,m,d]=a.split("-").map(Number);
+  for(let i=0;;i++){const dt=new Date(y,m-1,d+i);const ds=`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;if(ds>b||i>30)break;
+    out.push({lab:`${i+1}일차`,day:ds,eps:es.filter(e=>(e.plays||[]).includes(ds)||groups().find(g=>g.scen===e.name)?.days.some(x=>x.day===ds)||e.lastDay===ds)});}
+  const placed=new Set(out.flatMap(x=>x.eps.map(e=>e.id))),rest=es.filter(e=>!placed.has(e.id));
+  if(rest.length)out.push({lab:"날짜 밖",eps:rest});return out.filter(x=>x.eps.length||out.length<=4);}
+// 캠프 후기용: 모든 탁의 참가자를 이름으로 한 번씩
+function campSc(c){const sp=[],seen=new Set();
+  campEps(c).forEach(e=>{const g=gmKey(e);(e.sp||[]).forEach(p=>{if(/&/.test(p.name||"")||(isAnon(p)&&!p.ch&&p.k!==g))return;const n=pcSplit(p.name||"").name;if(!n||seen.has(n))return;seen.add(n);sp.push({k:"n_"+n,name:n,c:p.c,...(p.img?{img:p.img}:{})});});});
+  return {id:c.id,name:c.name,sp,isCampSc:true,place:c.place||"",when:campWhen(c)};}
+function campScById(id){const c=campById(id);return c&&isCamp(c)?campSc(c):null;}
+function campSelfK(id){const c=campById(id);if(!c||!isCamp(c))return "";for(const e of campEps(c)){const p=meSp(e.id);if(p)return "n_"+pcSplit(p.name||"").name;}return "";}
+function campPgHTML(c){
+  const ed=S.campEdit&&S.canAdmin,es=campEps(c),open=campOpen(c),when=campWhen(c);
+  if(ed)return `<div class="sc-page campage"><div class="sc-top"><h2>캠프 수정</h2><button class="ghost" id="g-x">취소</button><button class="pri" id="g-save">저장</button></div>
+    <div class="sc-sec"><div class="fields" style="margin:0">
+      <label>캠프 이름<input type="text" id="g-name" value="${esc(c.name)}"></label>
+      <label>장소 (선택)<input type="text" id="g-place" value="${esc(c.place||"")}" placeholder="예: 가평 펜션"></label>
+      <div class="gdates"><label>시작일<input type="date" id="g-start" value="${esc(c.start||"")}"></label><span>–</span><label>끝나는 날<input type="date" id="g-end" value="${esc(c.end&&c.end!==c.start?c.end:"")}"></label></div><div class="tip" style="margin-top:-4px">당일치기면 끝나는 날은 비워 두세요</div>
+    </div></div>
+    <div class="sc-sec"><h4 data-en="INTRO">소개</h4><textarea id="g-intro" placeholder="어떤 캠프였는지 적어 주세요 (선택)">${esc(c.intro||"")}</textarea></div>
+    ${es.length?"":`<div class="sc-sec"><h4 data-en="DELETE">캠프 지우기</h4><div class="tip" style="margin-bottom:8px">탁이 하나도 없을 때만 지울 수 있어요.</div><button class="ghost" id="g-del">이 캠프 지우기</button></div>`}
+    <div class="homefoot"><button class="ghost" onclick="location.hash=''">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div></div>`;
+  const days=campDays(c),row=e=>`<div class="trow"><div class="tr-h"><a href="#c-${esc(e.id)}">${esc(e.name)} ›</a>${effSys(e)?`<span class="sys" data-th="${themeOf(e)}">${esc(sysLabel(effSys(e)))}</span>`:""}</div>${castHTML(e)||`<div class="tip">참가자를 아직 안 적었어요</div>`}</div>`;
+  const sc=campSc(c);
+  return `<div class="sc-page campage camp-k">
+    <div class="ckick"><span class="cbadge">캠프</span></div>
+    <div class="sc-top"><h2>${esc(c.name)}</h2><span class="scmeta">${S.canAdmin?`<button id="g-edit" title="캠프 수정" aria-label="캠프 수정">✎<span class="lbl"> 수정</span></button>`:""}</span></div>
+    <div class="cwhen">${when?`<span>📅 ${esc(when)}</span>`:S.canAdmin?`<span class="tip">✎ 수정에서 날짜를 넣어 주세요</span>`:""}${c.place?`<span>📍 ${esc(c.place)}</span>`:""}<span>🎲 탁 ${es.length}개 · ${sc.sp.length}명</span></div>
+    ${c.intro?`<div class="sc-sec"><h4 data-en="INTRO">소개</h4><div class="sc-text">${emoize(esc(c.intro)).replace(/\n/g,"<br>")}</div></div>`:""}
+    <div class="sc-sec"><h4 data-en="TABLES">탁 · 참가자</h4>${days.map(d=>`${d.lab?`<div class="cday"><b>${esc(d.lab)}</b>${d.day?`<span>${esc(fmtDay(d.day))}</span>`:""}</div>`:""}${d.eps.map(row).join("")||`<div class="tip cday-e">이날 탁 없음</div>`}`).join("")||`<div class="sc-text empty">아직 탁이 없어요.</div>`}
+      ${S.canAdmin&&S.db?(()=>{const free=S.scens.filter(x=>!x.camp||!campById(x.camp)).sort((a,b)=>(b.lastDay||"").localeCompare(a.lastDay||""));
+        return `<div class="gadd"><a class="btnlike pri" href="#up-${esc(c.id)}">＋ 탁 올리기</a>
+          ${free.length?`<span class="gadd-ex"><select id="g-addsel"><option value="">이미 있는 세션 넣기…</option>${free.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}${x.system?` · ${esc(sysLabel(x.system))}`:""}</option>`).join("")}</select><button class="ghost" id="g-addgo">넣기</button></span>`:""}</div>`;})():""}</div>
+    ${S.db?revSectionHTML(sc):""}
+    ${S.canAdmin?`<div class="sc-sec"><h4 data-en="ACCESS">캠프 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
+      <div class="tip">이 비밀번호 하나로 캠프의 모든 탁 로그가 열리고, 캠프 후기를 쓸 수 있어요. 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
+      <div class="pwrow"><code class="pw">${esc(S.secrets?.[c.id]||"…")}</code><button class="pri" id="g-copy">링크+비밀번호 복사</button><button class="ghost" id="g-newpw">새로 만들기</button></div></div>`
+      :!open?`<div class="sc-sec"><h4 data-en="ACCESS">캠프 열기</h4><div class="tip">같이 간 사람에게 받은 캠프 비밀번호를 넣으면 모든 탁의 로그가 열려요.</div>
+      <form id="g-unlock" class="pwrow"><input type="text" id="g-pw" placeholder="캠프 비밀번호" autocomplete="off"><button class="pri">열기</button></form><div class="tip" id="g-msg"></div></div>`:""}
     <div class="homefoot"><button class="ghost" onclick="location.hash=''">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
   </div>`;
 }
 function campLink(c){return location.href.split("#")[0]+"#g-"+c.id;}
 function bindCamp(){
   const c=campById(S.gid);renderAuth&&renderAuth();if(!c)return;
+  if(isCamp(c)&&!S.campEdit)bindRevs(campSc(c));
   const e=$("#g-edit");if(e)e.onclick=()=>{S.campEdit=true;render();};
   const x=$("#g-x");if(x)x.onclick=()=>{S.campEdit=false;render();};
   const sv=$("#g-save");if(sv)sv.onclick=async()=>{const name=$("#g-name").value.trim();if(!name){toast("이름을 넣어 주세요");return;}
-    const done=$("#g-done").checked;const v={name,orig:$("#g-orig").value.trim(),system:$("#g-sys").value.trim(),intro:$("#g-intro").value.trim(),done};if(done&&!c.done)v.doneAt=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+    const cm=isCamp(c);let v;
+    if(cm){const a=$("#g-start").value,b=$("#g-end").value||a;if(a&&b<a){toast("끝나는 날이 시작일보다 빨라요");return;}v={name,place:$("#g-place").value.trim(),start:a,end:b,intro:$("#g-intro").value.trim()};}
+    else{v={name,orig:$("#g-orig").value.trim(),system:$("#g-sys").value.trim(),intro:$("#g-intro").value.trim(),done:$("#g-done").checked};}const done=!cm&&v.done;if(done&&!c.done)v.doneAt=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
     try{await S.db.doc("camps/"+c.id).update(v);S.campEdit=false;Object.assign(c,v);
       if(done){const es=campEps(c);if(es.length)await closePrevEps(c.id,"__all");}
       render();toast("저장했어요");}catch(err){writeFail(err);}};
-  const dl=$("#g-del");if(dl)dl.onclick=()=>confirmBox(`'${c.name}' 캠페인을 지울까요?`,"삭제",async()=>{try{await S.db.doc("camps/"+c.id).delete();S.db.doc("secrets/"+c.id).delete().catch(()=>{});location.hash="";}catch(err){writeFail(err);}});
+  const dl=$("#g-del");if(dl)dl.onclick=()=>confirmBox(`'${c.name}' ${campWord(c)}을(를) 지울까요?`,"삭제",async()=>{try{await S.db.doc("camps/"+c.id).delete();S.db.doc("secrets/"+c.id).delete().catch(()=>{});location.hash="";}catch(err){writeFail(err);}});
   const cp=$("#g-copy");if(cp)cp.onclick=()=>copyText(`${c.name}\n${campLink(c)}\n비밀번호: ${S.secrets?.[c.id]||""}`,"링크와 비밀번호를 복사했어요");
   const np=$("#g-newpw");if(np)np.onclick=()=>confirmBox("캠페인 비밀번호를 새로 만들까요? 예전 비밀번호로 연 사람은 다시 잠겨요.","새로 만들기",async()=>{try{await S.db.doc("secrets/"+c.id).set({pw:genPw()});}catch(err){writeFail(err);}});
   const ag=$("#g-addgo");if(ag)ag.onclick=async()=>{const id=$("#g-addsel").value;if(!id){toast("넣을 세션을 골라 주세요");return;}
-    ag.disabled=true;try{await setEpCamp(id,c.id,"",$("#g-addgai").checked);toast("캠페인에 넣었어요");}catch(err){ag.disabled=false;writeFail(err);}};
+    ag.disabled=true;try{await setEpCamp(id,c.id,"",!!$("#g-addgai")?.checked);toast(isCamp(c)?"캠프에 넣었어요":"캠페인에 넣었어요");}catch(err){ag.disabled=false;writeFail(err);}};
   const uf=$("#g-unlock");if(uf)uf.onsubmit=async ev=>{ev.preventDefault();const pw=$("#g-pw").value.trim();if(!pw)return;const m=$("#g-msg");m.textContent="확인하는 중…";
     try{await unlockScen(c.id,pw);m.textContent="열렸어요!";}catch(err){m.textContent=err&&err.code==="permission-denied"?"비밀번호가 틀렸어요.":"열지 못했어요: "+(err.code||err.message);}};
 }
@@ -2794,12 +2864,12 @@ async function setEpCamp(scid,gid,afterId,gaiden){
 }
 // 캠페인에 새 편(외전 말고)이 올라오면 그 앞의 편은 자동으로 완주 처리 (완주한 날 = 그 편 마지막 플레이 날)
 async function closePrevEps(gid,newId){
-  const c=campById(gid);if(!c)return;const es=campEps(c),i=newId==="__all"?es.length:es.findIndex(e=>e.id===newId);if(i<=0)return;
+  const c=campById(gid);if(!c||isCamp(c))return;const es=campEps(c),i=newId==="__all"?es.length:es.findIndex(e=>e.id===newId);if(i<=0)return;
   const today=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
   for(const e of es.slice(0,i)){if(e.done)continue;try{await S.db.doc("scenarios/"+e.id).update({done:true,doneAt:e.lastDay||today});}catch(err){}}
 }
-async function newCamp(name,system){const id="g"+Date.now().toString(36)+rid4();
-  await S.db.doc("camps/"+id).set({name,system:system||"",intro:"",done:false,eps:[],created:Date.now()});
+async function newCamp(name,system,kind){const id="g"+Date.now().toString(36)+rid4();
+  await S.db.doc("camps/"+id).set({name,system:kind==="camp"?"":(system||""),intro:"",done:false,eps:[],created:Date.now(),...(kind==="camp"?{kind:"camp",place:"",start:"",end:""}:{})});
   try{await S.db.doc("secrets/"+id).set({pw:genPw()});}catch(e){}
   return id;}
 // 같은 캠페인의 다른 편에서 고른 '나'와 같은 플레이어를 자동으로
