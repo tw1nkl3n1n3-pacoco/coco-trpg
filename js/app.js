@@ -41,8 +41,7 @@ async function retry(fn){
 }
 
 // ---------- state ----------
-let _sys=null;try{_sys=localStorage.getItem("trpg-sys")||null;}catch(e){}
-const S={site:null,ops:{},sysFilter:_sys,fresh:new Set(),showZero:false,db:null,user:null,canWrite:false,canAdmin:false,ready:false,auth:null,authUser:null,editors:[],owner:"",setupNeeded:false,
+const S={site:null,ops:{},fresh:new Set(),showZero:false,db:null,user:null,canWrite:false,canAdmin:false,ready:false,auth:null,authUser:null,editors:[],owner:"",setupNeeded:false,
   sessions:[],sid:null,meta:null,chunks:{},flat:[],byId:new Map(),
   sel:null,q:"",spFilter:null,follow:true,undo:[],
   dirty:new Set(),inflight:new Set(),tmr:{},err:null,
@@ -80,7 +79,6 @@ let _unlockIds=[];try{_unlockIds=JSON.parse(localStorage.getItem("trpg-unlocked"
 function saveUnlocks(){try{localStorage.setItem("trpg-unlocked",JSON.stringify(_unlockIds));}catch(e){}}
 const SUB={mode:null,all:[],scen:{},sess:{},edQ:null,scData:{},sessData:{},edIds:[]};
 function myEmail(){return String(S.authUser&&!S.authUser.isAnonymous&&S.authUser.email||"").toLowerCase();}
-function isEditorOf(id){const sc=scenById(id);return !!sc&&!!myEmail()&&(sc.editors||[]).map(x=>String(x).toLowerCase()).includes(myEmail());}
 // 비밀번호로 연 시나리오는 보기·고치기 모두 가능
 // 시나리오 목록·개요는 누구나 보고, 로그는 비밀번호로 연 사람만 (녹음 목록을 받아온 시나리오 = 열린 시나리오)
 function isOpen(id){return S.canAdmin||(!!id&&(!!SUB.sessData[id]||(!!S.camps&&S.camps.some(c=>c.id===id&&c.kind==="camp")&&campOpen(campById(id)))));}
@@ -97,7 +95,6 @@ function meSp(id){const k=myK(id),sc=scenById(id)||(typeof campScById==="functio
 // 후기·댓글을 쓸 수 있는 사람: 연 시나리오에서 나를 고른 멤버 (주인은 언제나)
 function canTalk(id){return isOpen(id)&&(S.canAdmin||!!meSp(id));}
 function myUid(){return S.auth&&S.auth.currentUser?S.auth.currentUser.uid:"";}
-function canReadScen(id){return isOpen(id);}
 // 처음 열 때 잠깐 기본값이 보이지 않게: 지난번에 본 사이트 정보(브라우저에 저장)나 페이지 제목으로 시작해요
 const SITE_UNSET="사이트 이름을 정해주세요"; // 사이트 설정에 이름이 없을 때
 const _initTitle=document.title||SITE_UNSET;
@@ -119,31 +116,6 @@ function applySite(){
   if(!href){if(l)l.remove();return;}
   if(!l){l=document.createElement("link");l.rel="icon";document.head.appendChild(l);}
   if(l.href!==href)l.href=href;
-}
-function siteEdit(anchor){
-  const st=site();let icon=st.icon;
-  popAt(anchor,`<div class="nedit" style="min-width:320px">
-    <label>사이트 이름</label><input type="text" id="s-title" value="${esc((S.site&&S.site.title)||"")}" placeholder="${esc(SITE_UNSET)}">
-    <label>설명 문구</label><textarea id="s-sub" rows="2" style="resize:vertical">${esc(st.sub)}</textarea>
-    <label>아이콘 · 이모지 하나를 넣거나 이미지를 올려요 (브라우저 탭에도 보여요)</label>
-    <div style="display:flex;gap:6px;align-items:center"><span id="s-prev" style="font-size:24px;min-width:32px;text-align:center">${iconHTML(icon,"sicon big")}</span>
-      <input type="text" id="s-icon" value="${isImgIcon(icon)?"":esc(icon)}" placeholder="예: 🎲" style="width:80px">
-      <button type="button" id="s-up">이미지 올리기</button><button type="button" class="ghost" id="s-clr">없애기</button>
-      <input type="file" id="s-file" accept="image/*" style="display:none"></div>
-    <div class="btns"><button class="pri" id="s-ok">저장</button></div></div>`,p=>{
-    const prev=()=>{$("#s-prev",p).innerHTML=iconHTML(icon,"sicon big");};
-    p.querySelectorAll("input,textarea").forEach(i=>i.addEventListener("keydown",ev=>ev.stopPropagation()));
-    $("#s-icon",p).oninput=ev=>{icon=ev.target.value.trim();prev();};
-    $("#s-clr",p).onclick=()=>{icon="";$("#s-icon",p).value="";prev();};
-    $("#s-up",p).onclick=()=>$("#s-file",p).click();
-    $("#s-file",p).onchange=async ev=>{const f=ev.target.files[0];if(!f)return;
-      try{icon=await shrinkImage(f,128,"image/png");$("#s-icon",p).value="";prev();}catch(e){toast("이미지를 읽지 못했어요");}};
-    $("#s-ok",p).onclick=async()=>{
-      const v={title:$("#s-title",p).value.trim()||SITE_DEF.title,sub:$("#s-sub",p).value.trim(),icon:icon||""};
-      closePop();S.site={...S.site,...v};applySite();render();
-      try{await S.db.doc("scenarios/_site").set(v,{merge:true});toast("저장했어요");}catch(e){writeFail(e);}
-    };
-  });
 }
 // ---------- 관리자 페이지 (#admin) ----------
 const RULES_VERSION="5"; // firebase/firestore.rules 의 rulesv 숫자와 같아야 해요
@@ -388,7 +360,6 @@ function watchSess(id){
     _unlockIds=_unlockIds.filter(x=>x!==id);saveUnlocks();publish();
   });
 }
-function watchScenSessions(){}
 async function unlockScen(id,pw){
   if(!S.authUser){await S.auth.signInAnonymously();}
   const uid=S.auth.currentUser.uid;
@@ -699,7 +670,6 @@ const gmTag='<span class="gmtag"><span class="gmw">GM</span></span>';
 const gmWord=sc=>themeOf(sc)==="deco"?"던전 마스터":"게임 마스터";
 const spBy=k=>spList().find(s=>s.k===k)||{k,name:"(목록에 없는 화자)",c:"#888"};
 function spTarget(){const sc=curScen();return sc?sc.sp:S.meta.sp;}
-function saveSp(){saveMeta();}
 function counts(){const c={};S.flat.forEach(e=>{if(e.b.s!==NOTE&&e.b.s!==DICE&&e.b.s!==HAND&&e.b.s!==SEC)c[e.b.s]=(c[e.b.s]||0)+1;});return c;}
 function addNote(afterId){
   if(!S.canWrite)return;
@@ -1709,19 +1679,11 @@ function homeHTML(){
     <div class="tip" style="font-size:13.5px">${esc(site().sub).replace(/\n/g,"<br>")}</div>
     ${S.err?`<div class="notice bad">${esc(S.err)}</div>`:""}
     ${!S.ready||(S.db&&!S.loaded)?loaderHTML():""}
-    ${S.ready&&S.setupNeeded?`<div class="notice bad">아직 Firebase 설정이 비어 있어요. 저장소 <b>Settings → Secrets and variables → Actions → Variables</b>에 <b>FIREBASE_CONFIG</b>와 <b>OWNER_EMAIL</b>을 넣고 다시 배포해 주세요. 자세한 방법은 저장소의 README에 있어요. (지금은 txt 미리보기만 돼요)</div>`:""}
+    ${S.ready&&S.setupNeeded?`<div class="notice bad">아직 Firebase 설정이 비어 있어요. 저장소 <b>Settings → Secrets and variables → Actions → Variables</b>에 <b>FIREBASE_CONFIG</b>와 <b>OWNER_EMAIL</b>을 넣고 다시 배포해 주세요. 자세한 방법은 저장소의 README에 있어요. </div>`:""}
     ${S.ready&&S.db&&S.loaded&&!S.canAdmin&&S.scens.some(x=>!isOpen(x.id))?`<div class="notice">🔒 표시된 세션은 같이 플레이한 친구에게 받은 비밀번호를 넣어야 로그를 볼 수 있어요.</div>`:""}
     ${S.loaded&&plainGs.length+S.camps.length>0?`<div class="hsearch${who?" haschip":""}"><svg class="hq-ic" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>${who?`<span class="hq-chip">👤 ${esc(who)}<button type="button" id="hq-who-x" title="풀기">✕</button></span>`:""}<input type="search" id="hq" value="${esc(S.homeQ||"")}" placeholder="${who?"더 좁혀 보기":"세션 · 룰 · 플레이어 · 캐릭터 검색"}" autocomplete="off">${terms.length||who?`<span class="hq-n">${live.length+items.length}개</span>`:""}${S.hqOpen&&tterms.length?hqDropHTML(tterms,nq):""}</div>`:""}
     <div id="sesslist">${live.length?`<div class="hlab">진행 중인 캠페인</div>${live.map(campCardHTML).join("")}`:""}${listHTML||(live.length?"":terms.length?`<div class="notice">'${esc(String(S.homeQc||"").trim())}'에 맞는 세션이 없어요.</div>`:S.ready&&S.db&&S.loaded?`<div class="notice">아직 올린 세션이 없어요.${S.canAdmin?" 아래 ＋ 세션 올리기로 올려 주세요.":""}</div>`:"")}</div>
     ${can?`<div class="upentry"><a class="btnlike pri upbtn" href="#up">＋ 세션 올리기</a><span class="tip">녹음 · 코코포리아 로그 · 녹음 없는 세션</span></div>`:""}
-    ${S.ready&&!S.db?`<div class="card">
-      <b>txt 미리보기</b>
-      <div class="tip" style="margin:4px 0 10px">클로바노트에서 내보낸 <b>대사 파일(.txt)</b>과 <b>녹음 파일(.m4a 등)</b>을 한꺼번에 골라요. 이름이 같은 txt와 녹음은 알아서 짝지어요. 예: <code>261114 세션 1.txt</code> + <code>261114 세션 1.m4a</code><br>
-      녹음 파일만 고르면 이미 올린 녹음에 이름으로 짝지어 넣어요(있던 녹음은 새 파일로 바뀌어요). 한 번 플레이가 여러 개로 나뉘었으면 같은 시나리오·같은 날짜로 올리면 1부, 2부로 묶여요.<br>녹음 없는 온라인 세션은 코코포리아 방 메뉴의 <b>로그 출력</b>으로 받은 html을 고르면 회차별로 나눠서 올라가요.</div>
-      <span class="filebtn"><button class="pri">📄🎧 txt · 녹음 · 코코포리아 로그 고르기</button><input type="file" id="tfile" accept=".txt,text/plain,.html,text/html${S.storage&&can?",audio/*,video/*,.m4a,.mp3,.wav,.ogg,.webm":""}" multiple></span>
-      <div id="imp"></div>
-      <div id="bulkres" class="tip" style="margin-top:8px">${S.bulkMsg||""}</div>
-    </div>`:""}
     <div class="homefoot"><span class="hright">${S.canAdmin&&S.db?`<a class="ghost adminbtn" href="#admin" title="관리자 페이지">⚙ 관리${adminAlert()?'<i class="dot-alert"></i>':""}</a>`:""}<span class="authbox"></span></span></div>
   </div>`;
 }
@@ -1842,7 +1804,6 @@ function bindHome(){
     const wx=$("#hq-who-x");if(wx)wx.onclick=()=>{S.homePerson="";render();};}
   document.querySelectorAll("[data-scen]").forEach(a=>a.onclick=ev=>{ev.preventDefault();gotoScen(a.dataset.scen);});
   const nb=$("#nscenb");if(nb){const ni=$("#nscen");const go=()=>{const v=ni.value.trim();if(!v)return;if(scenByName(v)){gotoScen(v);return;}gotoScen(v,true);};nb.onclick=go;ni.onkeydown=ev=>{if(ev.key==="Enter")go();};}
-  if($("#tfile"))$("#tfile").onchange=ev=>takeFiles([...ev.target.files],{});
 }
 // 고른 파일 읽기: 코코포리아 html · 클로바노트 txt(+녹음) · 녹음만. opt.scen/system/orig이 있으면 그 세션으로 (세션 올리기 페이지)
 async function takeFiles(all,opt){
@@ -1873,7 +1834,7 @@ async function takeFiles(all,opt){
     if(opt.scen){const fs=$("#f-scen");if(fs){fs.value=opt.scen;fs.closest("label").style.display="none";}}
     $("#igo").onclick=async()=>{
       const f=readFields();
-      if(!(S.db&&S.canWrite)){previewLocal(items[0],f);return;}
+      if(!(S.db&&S.canWrite)){toast("관리자로 로그인해야 올릴 수 있어요");return;}
       let first=null;S.importing=true;
       try{for(let i=0;i<items.length;i++){
         const inf={...f,part:f.part+i};
@@ -2008,35 +1969,6 @@ async function loadScenCounts(sc){
     snap.docs.forEach(d=>(d.data().b||[]).forEach(b=>{m[b.s]=(m[b.s]||0)+1;}));
   }
   SCC[sc.id]=m;
-}
-function spManageHTML(sc){
-  const g=gmKey(sc),c=SCC[sc.id];
-  const list=gmFirst(sc.sp,g);
-  const zero=c?list.filter(p=>p.k!==g&&!(c[p.k]>0)).length:0;
-  return `<div class="tip" style="margin-bottom:8px">↑↓로 순서를 바꾸면 로그 화면의 숫자키 순서도 바뀌어요. 대사가 하나도 없는 플레이어는 🗑로 지울 수 있어요. GM은 늘 맨 앞이에요.</div>
-  <div class="roster mg"><span></span><span class="h">플레이어</span><span class="h">등장인물</span><span class="h" style="text-align:right">대사</span><span></span>
-  ${list.map((p,i)=>{const n=c?(c[p.k]||0):null;const isG=p.k===g;
-    return `<span class="dot" style="--c:${fixC(p.c)}"></span>
-    <span>${isG?gmTag+" ":""}<b style="${n===0?"color:var(--faint)":""}">${esc(p.name)}</b></span>
-    <span style="color:var(--dim);font-size:13.5px">${esc(p.ch||(isG?gmWord(sc):""))}</span>
-    <span class="cnum">${n===null?"…":n}</span>
-    <span class="mgb">${isG?"":`<button class="ghost" data-mv="${p.k}" data-d="-1" title="위로" ${i<=(g?1:0)?"disabled":""}>↑</button><button class="ghost" data-mv="${p.k}" data-d="1" title="아래로" ${i===list.length-1?"disabled":""}>↓</button><button class="ghost" data-spdel="${p.k}" title="${n===0?"지우기":"대사가 있어서 못 지워요 (로그 화면에서 다른 플레이어로 옮긴 뒤 지울 수 있어요)"}" ${n===0?"":"disabled"}>🗑</button>`}</span>`;}).join("")}
-  </div>
-  ${zero&&!(sc.plays||[]).length?`<button class="ghost" id="spzero" style="margin-top:8px">대사 없는 플레이어 ${zero}명 한꺼번에 지우기</button>`:""}`;
-}
-function bindSpManage(sc){
-  if(!S.canWrite||!sc)return;
-  if(!SCC[sc.id]&&!SCC["_l"+sc.id]){SCC["_l"+sc.id]=1;loadScenCounts(sc).then(()=>{delete SCC["_l"+sc.id];if(S.cid===sc.id&&!S.scEdit)render();}).catch(()=>{delete SCC["_l"+sc.id];});}
-  document.querySelectorAll("[data-mv]").forEach(b=>b.onclick=()=>{
-    const k=b.dataset.mv,d=+b.dataset.d,g=gmKey(sc);
-    const arr=gmFirst(sc.sp,g).slice();const i=arr.findIndex(x=>x.k===k),j=i+d;
-    if(j<0||j>=arr.length||arr[j].k===g)return;
-    [arr[i],arr[j]]=[arr[j],arr[i]];const order=arr.map(x=>x.k);sc.sp=arr;
-    mutateScen(sc.id,L=>{const pos=new Map(order.map((k,i)=>[k,i]));L.sp=[...L.sp.filter(p=>pos.has(p.k)).sort((a,b)=>pos.get(a.k)-pos.get(b.k)),...L.sp.filter(p=>!pos.has(p.k))];});render();
-  });
-  const del=ks=>{mutateScen(sc.id,L=>{L.sp=L.sp.filter(x=>!ks.includes(x.k));});render();toast(ks.length>1?`${ks.length}명 지웠어요`:"지웠어요");};
-  document.querySelectorAll("[data-spdel]").forEach(b=>b.onclick=()=>{const p=sc.sp.find(x=>x.k===b.dataset.spdel);if(p)confirmBox(`'${p.name}'을(를) 플레이어 목록에서 지울까요?`,"지우기",()=>del([p.k]));});
-  const z=$("#spzero");if(z)z.onclick=()=>{const c=SCC[sc.id]||{},g=gmKey(sc);const ks=sc.sp.filter(p=>p.k!==g&&!(c[p.k]>0)).map(p=>p.k);confirmBox(`대사가 하나도 없는 플레이어 ${ks.length}명을 지울까요?`,"지우기",()=>del(ks));};
 }
 // 녹음 목록을 다 받아온 뒤에만 대사 수를 세요 (빈 목록으로 세면 모두 0이 돼요)
 function sessionsReady(id){return S.canAdmin?!!SUB.sessData.all:!!SUB.sessData[id];}
@@ -2368,10 +2300,6 @@ function revPageHTML(){
   if(P.err)return `<div class="rvpage"><div class="notice bad">${esc(P.err)}</div></div>`;
   return `<div class="rvpage">${revCardHTML(P.sc,P.r,true)}</div>`;
 }
-function previewLocal(r,inf){
-  const {meta,chunks}=buildSession(r,inf);
-  closeSession();S.local=true;S.sid="local";S.meta=meta;chunks.forEach((c,i)=>S.chunks[i]=c);rebuild();render();
-}
 function attachToScen(meta,chunks){
   let sc=findScen(meta.scen);if(sc)meta.scen=sc.name;else sc=createScen(meta.scen,[]);
   const remap={};
@@ -2575,16 +2503,16 @@ function wedHTML(id,html){
     <div class="wbody" contenteditable="true" data-ph="후기를 적어 주세요. 저장하면 이 후기만 따로 볼 수 있는 링크가 생겨요.">${emoize(html||"")}</div></div>`;
 }
 function wedValue(root){return cleanHTML(root.querySelector(".wbody").innerHTML);}
-async function uploadPic(file,scid,full,maxW){
+async function uploadPic(file,scid){
   if(!S.storage)throw new Error("저장소를 쓸 수 없어요");
   if(!S.authUser)await S.auth.signInAnonymously();
   const img=await new Promise((ok,no)=>{const i=new Image(),u=URL.createObjectURL(file);i.onload=()=>{ok(i);};i.onerror=no;i.src=u;});
-  const r=Math.min(1,(maxW||1200)/img.width),w=Math.round(img.width*r),h=Math.round(img.height*r);
+  const r=Math.min(1,1200/img.width),w=Math.round(img.width*r),h=Math.round(img.height*r);
   const c=document.createElement("canvas");c.width=w;c.height=h;const cg=c.getContext("2d");cg.fillStyle="#fff";cg.fillRect(0,0,w,h);cg.drawImage(img,0,0,w,h);URL.revokeObjectURL(img.src);
   const blob=await new Promise(ok=>c.toBlob(ok,"image/jpeg",.86));
   const ref=S.storage.ref(`img/${scid}/${myUid()}/${Date.now().toString(36)}${rid4()}.jpg`);
   await ref.put(blob,{contentType:"image/jpeg",cacheControl:"public,max-age=31536000"});
-  const url=await ref.getDownloadURL();return full?{url,path:ref.fullPath,w,h}:url;
+  return await ref.getDownloadURL();
 }
 function emoPop(anchor,onPick){
   document.querySelectorAll(".emopop").forEach(e=>e.remove());
@@ -2819,7 +2747,6 @@ function campPageHTML(){
         return `<div class="gadd">${c.done&&!cm?"":`<a class="btnlike pri" href="#up-${esc(c.id)}">${cm?"＋ 탁 올리기":"＋ 다음 시나리오 올리기"}</a>`}
           ${free.length?`<span class="gadd-ex"><select id="g-addsel"><option value="">이미 있는 세션 넣기…</option>${free.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}${x.system?` · ${esc(sysLabel(x.system))}`:""}</option>`).join("")}</select>${cm?"":`<label class="chk"><input type="checkbox" id="g-addgai"> 외전</label>`}<button class="ghost" id="g-addgo">넣기</button></span>`:""}</div>
           <div class="tip" style="margin-top:6px">${cm?"넣은 탁은 플레이 날짜 순서로 보여요.":"넣은 세션은 마지막 플레이 날짜 순서에 맞춰 들어가요. 순서는 그 세션의 ✎ 수정 → 캠페인 칸에서 바꿔요."}</div>`;})():""}</div>
-    ${cm&&list.length?`<div class="sc-sec"><h4 data-en="CAST">탁별 참가자</h4>${list.map(e=>`<div class="trow"><div class="tr-h"><a href="#c-${esc(e.id)}">${esc(e.name)}</a>${e.system?`<span class="sys" data-th="${themeOf(e)}">${esc(sysLabel(e.system))}</span>`:""}</div>${castHTML(e)||`<div class="tip">참가자를 아직 안 적었어요</div>`}</div>`).join("")}</div>`:""}
     ${rows.length?`<div class="sc-sec"><h4 data-en="CAST">플레이어별 캐릭터</h4>${rows.map(r=>`<div class="prow"><b>${esc(r.who)}</b><div class="runs">${r.runs.map(x=>`<div class="run"><span class="rc" style="--c:${x.c}">${x.ch?esc(x.ch):`<span class="tip">캐릭터 미정</span>`}</span><span class="rr">${esc(x.r)}</span>${x.pc&&r.who!=="GM"?`<span class="rp">${esc(x.pc)}</span>`:""}</div>`).join("")}${r.miss?`<div class="run off"><span class="rr">${esc(r.miss)} 불참</span></div>`:""}</div></div>`).join("")}</div>`:""}
     ${S.canAdmin?`<div class="sc-sec"><h4 data-en="ACCESS">${W} 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
       <div class="tip">이 비밀번호 하나로 ${cm?"캠프의 모든 탁이":"캠페인의 모든 편이"} 열려요. 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>

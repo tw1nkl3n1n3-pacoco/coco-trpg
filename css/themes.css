@@ -136,10 +136,7 @@ body[data-theme=plain] .dexp{color:#5a5a57!important}body[data-theme=plain] .dex
 /* 사람 대사는 어떤 테마에서도 고딕 */
 .row:not(.sec):not(.note):not(.hand):not(.dice) .tx,.row:not(.sec):not(.note):not(.hand):not(.dice) .tx textarea{font-family:"Noto Sans KR",system-ui,sans-serif!important}
 body[data-theme=wa] .row:not(.sec):not(.note):not(.hand):not(.dice) .tx{font-size:15.5px;line-height:1.8}
-.thopts{display:flex;gap:10px;flex-wrap:wrap}
-.thopt{display:flex;flex-direction:column;gap:6px;align-items:flex-start;padding:8px;border-radius:10px;border:2px solid var(--line);background:var(--panel2);min-width:140px;text-align:left}
-.thopt.on{border-color:var(--acc)}.thopt .sw{display:flex;gap:4px}.thopt .sw i{width:22px;height:22px;border-radius:5px;display:block;border:1px solid rgba(0,0,0,.12)}
-.thopt b{font-size:13.5px}.thopt span{font-size:11.5px;color:var(--dim)}
+
 /* 공유 이미지 카드: 테마별 액자 */
 body:not([data-theme]) .ogcard{border:1px solid #d9c4a3;border-radius:14px;box-shadow:0 2px 12px rgba(80,50,20,.1)}
 body:not([data-theme]) .ogcard.view{box-shadow:0 0 0 4px #fbf6ec,0 0 0 5px #c9a46a,0 4px 14px rgba(80,50,20,.12)}
@@ -229,9 +226,9 @@ body[data-theme=dx] .foldh .fc{color:#ff5a6e}
 body[data-theme=dx] :is(.foldh .fsub,.secadd,.secb .sp,.sectog){color:#8a8d92}
 /* 기본(plain) 테마: 로그·세션 페이지에서도 양피지색 없이 */
 body[data-theme=plain] header,body[data-theme=plain] #pbar{background:rgba(255,255,255,.96);box-shadow:0 1px 0 #e2e2df}
-body[data-theme=plain] .pchip.on,body[data-theme=plain] .nth,body[data-theme=plain] .ptag{background:#1c1c1b!important;border-color:#1c1c1b!important;color:#fff!important}
+body[data-theme=plain] .pchip.on,body[data-theme=plain] .nth{background:#1c1c1b!important;border-color:#1c1c1b!important;color:#fff!important}
 body[data-theme=plain] .foldh .fc{color:#8e8e8a}body[data-theme=plain] .foldh .fsub{color:#a3a39f}
-body[data-theme=plain] .pbtn,body[data-theme=plain] .part{background:#f3f3f2;border-color:#e2e2df}
+body[data-theme=plain] .part{background:#f3f3f2;border-color:#e2e2df}
 /* 기본(plain) 테마: 플랫 — 세션 카드는 회색 선, 캠페인은 검은 선 */
 body[data-theme=plain] .scen,body[data-theme=plain] .card,body[data-theme=plain] .sc-sec{border:1.5px solid #a8a8a4;box-shadow:none;border-radius:12px}
 body[data-theme=plain] .scen.camp{border-color:#1c1c1b}
