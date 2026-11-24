@@ -2243,7 +2243,7 @@ function revSectionHTML(sc){
   const rows=list.map(r=>{const w=revWho(sc,r);
     return `<div class="rvr${cm?" noav":""}">${cm?"":`<span class="av${w.gm?" gm":""}" style="--c:${fixC(w.p?.c||"#888")}">${w.p?avHTML(w.p,w.gm):`<span class="ini">${esc((w.ch||w.name).slice(0,1))}</span>`}</span>`}
       <span class="nm"><b>${esc(w.name)}</b>${cm?(w.p?.roles?`<small>${esc(w.p.roles)}</small>`:""):w.ch||w.gm?`<small>${esc(w.gm?gmWord(sc):w.ch)}</small>`:""}</span>
-      ${r.url?`<a class="ext" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">외부 후기 ↗</a>${r.lpw?`<button class="ghost lpw" data-rvlpw="${esc(r.id)}" title="눌러서 비밀번호 복사">🔑 ${esc(r.lpw)}</button>`:cm&&list.some(x=>x.lpw)?`<span class="lpw-ph"></span>`:""}`:`<button class="go" data-rvopen="${esc(r.id)}">후기 보기</button><button class="cp ghost" data-rvcopy="${esc(r.id)}" title="이 후기 링크 복사">🔗</button>`}
+      ${r.url?`<a class="ext" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">외부 후기 ↗</a>${r.lpw?`<button class="ghost lpw" data-rvlpw="${esc(r.id)}" title="눌러서 비밀번호 복사">🔑 ${esc(r.lpw)}</button>`:""}`:`<button class="go" data-rvopen="${esc(r.id)}">후기 보기</button><button class="cp ghost" data-rvcopy="${esc(r.id)}" title="이 후기 링크 복사">🔗</button>`}
       ${revMine(r)||(!r.uid&&canTalk(sc.id))?`<button class="ghost cp" data-rvedit="${esc(r.id)}" title="고치기">✎</button>`:""}${revMine(r)?`<button class="ghost cp" data-rvdel="${esc(r.id)}" title="지우기">🗑</button>`:""}</div>`;}).join("");
   const form=f?`<div class="rvform">
       ${f.id||!S.canAdmin?`<div class="tip">${esc(revWho(sc,f).name)} 님의 후기${f.id?"를 고쳐요":"예요"}</div>`:`<label>누구의 후기예요?<select id="rv-k">${cast.map(p=>`<option value="${esc(p.k)}"${f.k===p.k?" selected":""}>${esc(pcSplit(p.name).name)}${p.k===gmKey(sc)||p.ch?` · ${esc(p.k===gmKey(sc)?gmWord(sc):p.ch)}`:""}</option>`).join("")}</select></label>`}
@@ -2251,7 +2251,7 @@ function revSectionHTML(sc){
       ${f.mode==="text"?wedHTML("rv-wed",f.html!=null?f.html:textToRich(f.text||"")):`<input type="url" id="rv-url" value="${esc(f.url||"")}" placeholder="https:// (블로그·X·포스타입 등에 쓴 후기 주소)"><input type="text" id="rv-lpw" value="${esc(f.lpw||"")}" placeholder="글 비밀번호 (걸려 있으면 · 선택)" autocomplete="off" style="margin-top:6px">`}
       <div class="rv-btns" style="margin-top:0"><button class="pri" id="rv-save">저장</button><button class="ghost" id="rv-cancel">취소</button><span id="rv-msg" class="tip"></span></div></div>`:"";
   if(!list.length&&!f&&(!S.db||!canTalk(sc.id)))return "";
-  return `<div class="sc-sec rvsec"><h4 data-en="REVIEWS">${cm?"캠프 후기":"세션 후기"}${cm?` <span class="tip" style="letter-spacing:0">· 탁 후기는 각 세션 페이지에</span>`:""}</h4>${rows?`<div class="rvlist">${rows}</div>`:""}${form}
+  return `<div class="sc-sec rvsec"><h4 data-en="REVIEWS">${cm?"캠프 후기":"세션 후기"}</h4>${rows?`<div class="rvlist">${rows}</div>`:""}${form}
     ${f||!canTalk(sc.id)||cm&&(S.canAdmin?!cast.length:mine)?"":`<div class="rv-btns"><button class="${list.length?"":"pri"}" id="rv-add">＋ 후기 남기기</button></div>`}</div>`;
 }
 function revPopup(sc,r){

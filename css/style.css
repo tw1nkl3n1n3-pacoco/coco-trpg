@@ -759,7 +759,6 @@ body[data-theme=deco][data-page=scen] :is(.sc-page,.rvpage)>.ldr{--ink:#f6e7c8;-
 .rvr.noav .ext,.rvr.noav .go,.rvr.noav .lpw{flex:none}
 .rvsec .rvr.noav:last-child{border-bottom:1px solid var(--line)}
 .rvsec .rvlist+.rv-btns{margin-top:14px}
-.rvr.noav .lpw,.rvr.noav .lpw-ph{width:78px;flex:none;justify-content:center}
 .rvr.noav .nm small{word-break:keep-all}
 .rvsec .rvr.noav:first-child{padding-top:4px}
 .camp-k .ctab:last-child{padding-bottom:2px}
