@@ -1024,7 +1024,7 @@ function renderAllRows(keepScroll){
   let anchor=null,off=0;
   if(keepScroll){for(const r of log.children){const rc=r.getBoundingClientRect();if(rc.bottom>130){anchor=r.dataset.id;off=rc.top;break;}}}
   if(!S.flat.length){
-    log.innerHTML=`<div class="notice">${S.local||S.loaded||!S.db?"아직 대사가 없어요.":"불러오는 중…"}</div>`;
+    log.innerHTML=S.local||!S.db||(S.loaded&&S.chunksLoaded)?`<div class="notice">아직 대사가 없어요.</div>`:skelHTML();
     $("#qcount")&&($("#qcount").textContent="");return;
   }
   const vis=S.flat.filter(visible);
@@ -1605,7 +1605,7 @@ function homeHTML(){
     <div class="hometop"><h2>${iconHTML(site().icon)}${esc(site().title)}</h2></div>
     <div class="tip" style="font-size:13.5px">${esc(site().sub).replace(/\n/g,"<br>")}</div>
     ${S.err?`<div class="notice bad">${esc(S.err)}</div>`:""}
-    ${!S.ready||(S.db&&!S.loaded)?`<div class="notice">불러오는 중…</div>`:""}
+    ${!S.ready||(S.db&&!S.loaded)?loaderHTML():""}
     ${S.ready&&S.setupNeeded?`<div class="notice bad">아직 Firebase 설정이 비어 있어요. 저장소 <b>Settings → Secrets and variables → Actions → Variables</b>에 <b>FIREBASE_CONFIG</b>와 <b>OWNER_EMAIL</b>을 넣고 다시 배포해 주세요. 자세한 방법은 저장소의 README에 있어요. (지금은 txt 미리보기만 돼요)</div>`:""}
     ${S.ready&&S.db&&S.loaded&&!S.canAdmin&&S.scens.some(x=>!isOpen(x.id))?`<div class="notice">🔒 표시된 세션은 같이 플레이한 친구에게 받은 비밀번호를 넣어야 로그를 볼 수 있어요.</div>`:""}
     ${sysKeys.length>1||(sysKeys.length===1&&sysKeys[0]!==NOSYS)?`<div class="systabs">
@@ -1765,7 +1765,7 @@ async function takeFiles(all,opt){
         const sid=await importSession(items[i],inf,`(${i+1}/${items.length}) `,{system:opt.system||"",orig:opt.orig||""});if(!sid)return;first=first||sid;
         const au=audioFor(items[i]);
         if(au&&S.storage){const pr=$("#iprog");const sc=findScen(inf.scen);
-          try{await uploadAudio({id:sid,scid:sc&&sc.id,title:items[i].title,scen:inf.scen},au,p=>pr.textContent=`(${i+1}/${items.length}) 녹음 올리는 중… ${p}%`);}
+          try{await uploadAudio({id:sid,scid:sc&&sc.id,title:items[i].title,scen:inf.scen},au,p=>setProg(pr,`(${i+1}/${items.length}) 녹음 올리는 중…`,p/100));}
           catch(e){toast(`${au.name} 녹음을 올리지 못했어요: ${e.code||e.message}`,5000);}}
       }}
       finally{S.importing=false;}
@@ -1800,7 +1800,7 @@ function mePicker(sc){
 function scenHTML(){
   const sc=scenById(S.cid);
   if(!sc){
-    if(!S.loaded||!S.authUser)return `<div class="sc-page"><div class="notice">불러오는 중…</div></div>`;
+    if(!S.loaded||!S.authUser)return `<div class="sc-page">${loaderHTML()}</div>`;
     return `<div class="sc-page"><button class="ghost" id="scback">← 목록</button><div class="notice">이 세션을 찾을 수 없어요.</div></div>`;
   }
   // 비밀번호를 넣기 전에는 시나리오 페이지 대신 잠금 화면만: 누구로 들어갈지 고르고 비밀번호
@@ -2229,7 +2229,7 @@ async function openRevPage(rid){
 }
 function revPageHTML(){
   const P=S.revPage||{};
-  if(P.loading)return `<div class="rvpage"><div class="notice">불러오는 중…</div></div>`;
+  if(P.loading)return `<div class="rvpage">${loaderHTML()}</div>`;
   if(P.err)return `<div class="rvpage"><div class="notice bad">${esc(P.err)}</div></div>`;
   return `<div class="rvpage">${revCardHTML(P.sc,P.r,true)}</div>`;
 }
@@ -2253,16 +2253,16 @@ async function importBuilt(built,pre="",cfg={}){
   const sid="s"+Date.now().toString(36)+rid().slice(0,3);
   const prog=$("#iprog"),btn=$("#igo");btn.disabled=true;
   try{
-    prog.textContent=pre+"세션 만드는 중…";
+    setProg(prog,pre+"세션 만드는 중…",0.02);
     await mutateScen(sc.id,L=>{if(!L.name)Object.assign(L,clone(sc));sc.sp.forEach(e=>{if(!L.sp.some(x=>x.k===e.k))L.sp.push(clone(e));});
       if(gmK&&!(L.gm&&L.sp.some(x=>x.k===L.gm)))L.gm=gmK;if(cfg.system&&!L.system)L.system=cfg.system;if(cfg.orig&&!L.orig)L.orig=cfg.orig;});
     await retry(()=>S.db.doc("sessions/"+sid).set(meta));
     for(let i=0;i<chunks.length;i++){
-      prog.textContent=`${pre}대사 올리는 중… ${i+1}/${chunks.length}`;
+      setProg(prog,`${pre}대사 올리는 중… ${i+1}/${chunks.length}`,(i+1)/chunks.length);
       await retry(()=>S.db.doc(`sessions/${sid}/chunks/${ckey(i)}`).set({i,b:chunks[i]}));
       await sleep(150);
     }
-    prog.textContent="완료!";return sid;
+    setProg(prog,"완료!",1);return sid;
   }catch(e){
     btn.disabled=false;
     prog.innerHTML=`<span style="color:var(--bad)">${e&&e.code==="invalid_argument"?"이 링크에서는 올릴 권한이 없어요. 페이지 주인에게 편집 권한(Contributor 이상)을 받아 주세요.":"올리다가 멈췄어요. 다시 눌러 주세요."}</span>`;
@@ -2582,3 +2582,21 @@ function bindUp(){
     }catch(e){ug.disabled=false;pr.innerHTML=`<span style="color:var(--bad)">올리지 못했어요: ${esc(e.code||e.message||"")}</span>`;}
   };
 }
+
+// ---------- 로딩 화면 (테마별) · 로그 뼈대 · 진행 막대 ----------
+// 0.3초 안에 끝나는 로딩에는 안 보이게 CSS에서 살짝 늦게 나타나요
+function loaderHTML(){
+  const th=document.body.dataset.theme||"plain";
+  const inner=th==="dx"?`<div class="ldx"><div class="r"><span>LOADING //</span><b>SESSION LOG</b></div><div class="bar"></div><div class="lg"><span>&gt; 세션 기록 접속</span><span>&gt; 대사 데이터 수신</span><span>&gt; 침식률 확인</span></div></div>`
+    :th==="deco"?`<svg class="ld20" viewBox="0 0 100 100" aria-hidden="true"><polygon points="50,4 92,28 92,72 50,96 8,72 8,28" fill="#c9962e" stroke="#7a5418" stroke-width="3"/><polygon points="50,4 72,40 28,40" fill="#e0b85a"/><polygon points="28,40 72,40 50,76" fill="#d4a546"/><polygon points="8,28 28,40 8,72" fill="#a8792a"/><polygon points="92,28 72,40 92,72" fill="#b88732"/><polygon points="8,72 50,76 50,96" fill="#946a22"/><polygon points="92,72 50,76 50,96" fill="#a37526"/><text x="50" y="62" text-anchor="middle" font-family="Gowun Batang,serif" font-weight="700" font-size="20" fill="#3a0b0b">20</text></svg><div class="lbl">주사위를 굴리는 중…</div>`
+    :th==="wa"?`<div class="lwa"><div class="card"><div class="f b"></div><div class="f fr"><span class="k">狂</span><span class="c">?</span></div></div></div><div class="lbl lwat" data-t="광기 카드를 뒤집는 중">광기 카드를 뒤집는 중</div>`
+    :`<div class="ldots"><i></i><i></i><i></i></div><div class="lbl">불러오는 중</div>`;
+  return `<div class="ldr" role="status" aria-label="불러오는 중">${inner}</div>`;
+}
+function skelHTML(n=7){const W=[[92,64],[78],[88,40],[70],[95,55],[60],[84,72]];
+  return `<div class="skel" aria-label="불러오는 중">${Array.from({length:n},(_,i)=>`<div class="sk"><span class="t shim"></span><div class="bd"><div class="nm shim"></div>${W[i%W.length].map(x=>`<div class="ln shim" style="width:${x}%"></div>`).join("")}</div></div>`).join("")}</div>`;}
+// 올리기 진행 막대: label · 0~1
+function setProg(el,label,f){if(!el)return;let b=el.querySelector(".upbar");
+  if(!b){el.innerHTML=`<div class="upbar"><div class="top"><span class="l"></span><b class="p"></b></div><div class="pbar"><i></i></div></div>`;b=el.querySelector(".upbar");}
+  b.querySelector(".l").textContent=label;const p=f==null?null:Math.max(0,Math.min(1,f));
+  b.querySelector(".p").textContent=p==null?"":Math.round(p*100)+"%";b.querySelector(".pbar i").style.width=(p==null?100:p*100)+"%";b.classList.toggle("ind",p==null);}
