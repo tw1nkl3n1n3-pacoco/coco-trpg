@@ -600,3 +600,29 @@ img.emo{width:1.6em;height:1.6em;vertical-align:-.45em;margin:0 1px;object-fit:c
 .lockpage .lkbox .homefoot{margin-top:22px;padding-top:12px;border-top:1px solid var(--line)}
 body[data-theme=dx] .lkbox{border-radius:0}
 body[data-theme=wa] .lkbox{border-radius:0;border:1px solid #111;box-shadow:6px 6px 0 #111}
+/* 세션 올리기 페이지 */
+.upw{max-width:720px;margin:0 auto;padding:28px 16px 60px}
+.upw h2{margin:0 0 4px;font-size:24px}
+.upsteps{display:flex;gap:6px;margin:14px 0 18px;font-size:12.5px;color:var(--faint);flex-wrap:wrap}
+.upsteps span{padding:3px 10px;border-radius:12px;border:1px solid var(--line)}
+.upsteps span.on{background:#1b1b1b;color:#fff;border-color:#1b1b1b}
+.upsteps span.done{color:var(--ink)}
+.upq{font-weight:700;font-size:15px;margin:22px 0 10px}
+.upsc{font-size:14px;color:var(--dim);margin-top:4px}
+.upcards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.upcard{border:1.5px solid var(--line)!important;border-radius:14px!important;padding:16px!important;background:var(--panel,#fff)!important;text-align:left;cursor:pointer;color:var(--ink)!important;font:inherit;height:auto;display:block;width:100%}
+.upcard.on{border-color:#1b1b1b!important;box-shadow:0 0 0 2px #1b1b1b}
+.upcard .ic{font-size:24px;display:block}.upcard b{display:block;font-size:16px;margin:6px 0 3px}.upcard .d{display:block;font-size:12.5px;color:var(--dim);line-height:1.5;font-weight:400}
+.upsel{display:flex;gap:8px;flex-wrap:wrap}.upsel select{flex:1;min-width:200px}
+.updrop{display:block;border:2px dashed var(--line);border-radius:14px;padding:26px;text-align:center;color:var(--dim);font-size:13.5px;background:var(--panel,#fff);cursor:pointer}
+.updrop.over{border-color:#1b1b1b;background:color-mix(in srgb,var(--panel,#fff) 92%,#000)}
+.updrop b{color:var(--ink);font-size:15px;display:block;margin-bottom:4px}
+.updates{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.upnav{display:flex;justify-content:space-between;margin-top:26px}
+.upnav .pri:disabled{opacity:.4}
+.upsum{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--panel,#fff);font-size:13.5px;line-height:1.8}
+.upw #imp{margin-top:12px}
+.upentry{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:18px 0 6px}
+.upbtn{display:inline-block;padding:9px 18px;border-radius:10px;text-decoration:none;font-weight:700}
+.upadd{margin-top:10px;text-align:right}.upadd a{text-decoration:none;font-size:13px}
+@media(max-width:560px){.upcards{grid-template-columns:1fr}}

@@ -419,6 +419,11 @@ function route(){
   const rid=h.startsWith("r-")?h.slice(2):null;
   if(rid){if(!S.revPage||S.revPage.rid!==rid){S.cid=null;openSession(null);openRevPage(rid);}return;}
   if(S.revPage){S.revPage=null;if(!sid&&!cid){render();}}
+  const upm=h==="up"?"":h.startsWith("up-")?h.slice(3):null;
+  if(upm!==null){
+    if(!S.up||S.up.from!==h)S.up={from:h,step:0,kind:"",mode:upm?"cont":"cont",scid:upm||"",fixed:!!upm,name:"",system:"",orig:"",src:"",dates:[],picked:false};
+    S.admin=false;if(S.sid||S.cid){S.cid=null;openSession(null);}else render();window.scrollTo(0,0);return;}
+  if(S.up){S.up=null;S.bulkMsg="";if(!sid&&!cid){render();}}
   const adm=h==="admin";
   if(adm!==!!S.admin){S.admin=adm;if(!sid&&!cid&&!S.sid&&!S.cid){render();window.scrollTo(0,0);return;}}
   if(sid!==S.sid||cid!==S.cid){if(cid)delete SCC[cid];S.cid=cid;S.lockPick=null;S.scEdit=!!cid&&S.pendingEdit===cid;S.pendingEdit=null;S.scDraft=null;openSession(sid);window.scrollTo(0,0);}
@@ -781,6 +786,7 @@ function render(){
   const app=$("#app");
   refreshCanWrite();applyTheme();if(typeof setTitle==="function")setTitle();
   if(S.revPage){app.innerHTML=revPageHTML();return;}
+  if(S.up&&!S.sid&&!S.cid){app.innerHTML=upHTML();bindUp();return;}
   if(S.cid){app.innerHTML=scenHTML();bindScen();return;}
   if(!S.sid&&S.admin){app.innerHTML=adminHTML();bindAdmin();return;}
   if(!S.sid){app.innerHTML=homeHTML();bindHome();return;}
@@ -1612,13 +1618,13 @@ function homeHTML(){
         ${g.sc?.summary?`<div class="sum">${esc(g.sc.summary)}</div>`:""}
         ${castHTML(g.sc)}
         ${g.sc&&!isOpen(g.sc.id)?"":daysHTML(g.days,false)}
-      </section>`).join("")||(S.ready&&S.db&&S.loaded?`<div class="notice">아직 올린 세션이 없어요.${S.canAdmin?" 아래에서 클로바노트 txt를 올려 주세요.":""}</div>`:"")}</div>
-    ${can||!S.db?`<div class="card">
-      <b>${can?"녹음 추가":"txt 미리보기"}</b>
+      </section>`).join("")||(S.ready&&S.db&&S.loaded?`<div class="notice">아직 올린 세션이 없어요.${S.canAdmin?" 아래 ＋ 세션 올리기로 올려 주세요.":""}</div>`:"")}</div>
+    ${can?`<div class="upentry"><a class="btnlike pri upbtn" href="#up">＋ 세션 올리기</a><span class="tip">녹음 · 코코포리아 로그 · 녹음 없는 세션</span></div>`:""}
+    ${!S.db?`<div class="card">
+      <b>txt 미리보기</b>
       <div class="tip" style="margin:4px 0 10px">클로바노트에서 내보낸 <b>대사 파일(.txt)</b>과 <b>녹음 파일(.m4a 등)</b>을 한꺼번에 골라요. 이름이 같은 txt와 녹음은 알아서 짝지어요. 예: <code>261114 세션 1.txt</code> + <code>261114 세션 1.m4a</code><br>
       녹음 파일만 고르면 이미 올린 녹음에 이름으로 짝지어 넣어요(있던 녹음은 새 파일로 바뀌어요). 한 번 플레이가 여러 개로 나뉘었으면 같은 시나리오·같은 날짜로 올리면 1부, 2부로 묶여요.<br>녹음 없는 온라인 세션은 코코포리아 방 메뉴의 <b>로그 출력</b>으로 받은 html을 고르면 회차별로 나눠서 올라가요.</div>
       <span class="filebtn"><button class="pri">📄🎧 txt · 녹음 · 코코포리아 로그 고르기</button><input type="file" id="tfile" accept=".txt,text/plain,.html,text/html${S.storage&&can?",audio/*,video/*,.m4a,.mp3,.wav,.ogg,.webm":""}" multiple></span>
-      ${can&&S.canAdmin?`<div style="margin-top:10px"><button class="ghost" id="newnolog">＋ 녹음 없이 세션 만들기</button> <span class="tip">녹음이 금지된 세션 · 개요·등장인물·후기만 써요</span></div>`:""}
       <div id="imp"></div>
       <div id="bulkres" class="tip" style="margin-top:8px">${S.bulkMsg||""}</div>
     </div>`:""}
@@ -1721,12 +1727,15 @@ function bindHome(){
   document.querySelectorAll("[data-sys]").forEach(b=>b.onclick=()=>{S.sysFilter=b.dataset.sys||null;try{localStorage.setItem("trpg-sys",S.sysFilter||"");}catch(e){}render();});
   document.querySelectorAll("[data-scen]").forEach(a=>a.onclick=ev=>{ev.preventDefault();gotoScen(a.dataset.scen);});
   const nb=$("#nscenb");if(nb){const ni=$("#nscen");const go=()=>{const v=ni.value.trim();if(!v)return;if(scenByName(v)){gotoScen(v);return;}gotoScen(v,true);};nb.onclick=go;ni.onkeydown=ev=>{if(ev.key==="Enter")go();};}
-  if($("#tfile"))$("#tfile").onchange=async ev=>{
-    const all=[...ev.target.files];if(!all.length)return;
+  if($("#tfile"))$("#tfile").onchange=ev=>takeFiles([...ev.target.files],{});
+}
+// 고른 파일 읽기: 코코포리아 html · 클로바노트 txt(+녹음) · 녹음만. opt.scen/system/orig이 있으면 그 세션으로 (세션 올리기 페이지)
+async function takeFiles(all,opt){
+    if(!all.length)return;
     const htm=all.find(f=>/\.html?$/i.test(f.name)||f.type==="text/html");
     if(htm){const box=$("#imp");S.bulkMsg="";$("#bulkres").innerHTML="";const text=await htm.text();const cc=parseCcfolia(text);
       if(!cc||!cc.days.length){box.innerHTML=`<div class="notice bad">코코포리아 로그에서 대사를 찾지 못했어요. 방 메뉴의 로그 출력으로 받은 html이 맞는지 확인해 주세요.</div>`;return;}
-      ccForm(cc,box);return;}
+      ccForm(cc,box,opt);return;}
     const isTxt=f=>/\.txt$/i.test(f.name)||f.type==="text/plain";
     const files=all.filter(isTxt),audios=all.filter(f=>!isTxt(f));
     const box=$("#imp");S.bulkMsg="";$("#bulkres").innerHTML="";
@@ -1737,7 +1746,7 @@ function bindHome(){
     // txt와 이름이 같은 녹음 파일 짝짓기
     const audioFor=r=>audios.find(a=>normT(a.name)===normT(r.fileName))||audios.find(a=>normT(a.name)===normT(r.title));
     items.sort((a,b)=>a.title.localeCompare(b.title,"ko",{numeric:true}));
-    const g=guessInfo(items[0].title,items[0].dateLine);g.scen=resolveScen(g.scen);
+    const g=guessInfo(items[0].title,items[0].dateLine);g.scen=opt.scen||resolveScen(g.scen);
     const exists=S.sessions.some(s=>{const i=info(s);return i.scen===g.scen&&i.day===g.day&&i.part===g.part;});
     const v={...g,part:items.length===1&&!exists?g.part:(exists?nextPart(g.scen,g.day):g.part)};
     const unmatched=audios.filter(a=>!items.some(r=>audioFor(r)===a));
@@ -1746,13 +1755,14 @@ function bindHome(){
       ${infoFields(v)}
       ${items.length>1?`<div class="tip">파일 이름 순서대로 ${v.part}부부터 차례로 붙여요.</div>`:""}
       <div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="pri" id="igo">${S.db&&S.canWrite?"올리기":"미리보기"}</button></div><div id="iprog" class="tip" style="margin-top:6px"></div>`;
+    if(opt.scen){const fs=$("#f-scen");if(fs){fs.value=opt.scen;fs.closest("label").style.display="none";}}
     $("#igo").onclick=async()=>{
       const f=readFields();
       if(!(S.db&&S.canWrite)){previewLocal(items[0],f);return;}
       let first=null;S.importing=true;
       try{for(let i=0;i<items.length;i++){
         const inf={...f,part:f.part+i};
-        const sid=await importSession(items[i],inf,`(${i+1}/${items.length}) `);if(!sid)return;first=first||sid;
+        const sid=await importSession(items[i],inf,`(${i+1}/${items.length}) `,{system:opt.system||"",orig:opt.orig||""});if(!sid)return;first=first||sid;
         const au=audioFor(items[i]);
         if(au&&S.storage){const pr=$("#iprog");const sc=findScen(inf.scen);
           try{await uploadAudio({id:sid,scid:sc&&sc.id,title:items[i].title,scen:inf.scen},au,p=>pr.textContent=`(${i+1}/${items.length}) 녹음 올리는 중… ${p}%`);}
@@ -1761,7 +1771,6 @@ function bindHome(){
       finally{S.importing=false;}
       location.hash="s-"+first;
     };
-  };
 }
 function buildSession(r,inf){
   const sp=[],map={};
@@ -1854,7 +1863,7 @@ function scenHTML(){
         :`<div class="sc-top">${t}<span class="scmeta">${m}</span></div>`;})()}
     <div class="sc-sec"><h4 data-en="SUMMARY">개요</h4>${txt(sc.summary,"아직 개요가 없어요."+(S.canWrite?" ✎ 수정을 눌러 써 주세요.":""))}</div>
     <div class="sc-sec"><h4 data-en="CAST">플레이어 · 등장인물</h4>${sc.sp.length?`${(()=>{const m=meSp(sc.id),k=myK(sc.id);return k==="ext"&&!S.canAdmin?`<div class="meline">외부인으로 보는 중 · <button class="lnk" id="mepick">바꾸기</button></div>`:m?`<div class="meline" style="--c:${fixC(m.c)}"><span class="me"><i></i>나: ${esc(pcSplit(m.name).name)}</span>${m.ch?` · ${esc(m.ch)}`:""} · <button class="lnk" id="mepick">바꾸기</button></div>`:`<div class="meline"><button class="lnk" id="mepick">나는 누구? 고르기</button></div>`;})()}<div class="castrow">${gmFirst(sc.sp.filter(p=>p.k===gmKey(sc)||!isAnon(p)&&!/&/.test(p.name)||p.ch),gmKey(sc)).map(p=>{const gm=p.k===gmKey(sc),q=pcSplit(p.name);return `<div class="cc${gm?" gm":""}${p.k===myK(sc.id)?" mine":""}" style="--c:${fixC(p.c)}"><div class="av">${avHTML(p,gm)}</div><div class="cn">${esc(gm?(p.ch||gmWord(sc)):(p.ch||q.name))}</div><div class="cp">${gm?gmTag:q.n?`<span class="pcn">${q.n}</span>`:""}${p.ch||gm?esc(q.name):""}</div></div>`;}).join("")}</div>`:`<div class="sc-text empty">녹음을 올리면 화자가 여기 모여요.</div>`}</div>
-    <div class="sc-sec"><h4 data-en="SESSIONS">${days.length&&days.every(x=>x.nolog)?"회차":"녹음"}</h4>${days.length?daysHTML(days):`<div class="sc-text empty">아직 녹음이 없어요. 목록 화면에서 txt를 올릴 때 시나리오를 '${esc(sc.name)}'(으)로 고르면 여기 묶여요.</div>`}</div>
+    <div class="sc-sec"><h4 data-en="SESSIONS">${days.length&&days.every(x=>x.nolog)?"회차":"녹음"}</h4>${days.length?daysHTML(days):`<div class="sc-text empty">아직 올린 회차가 없어요.</div>`}${S.db&&S.canWrite&&!sc.done?`<div class="upadd"><a class="btnlike" href="#up-${esc(sc.id)}">＋ 회차 올리기</a></div>`:""}</div>
     ${S.db?revSectionHTML(sc):""}
     ${S.canAdmin?`    <div class="sc-sec"><h4 data-en="ACCESS">세션 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
       <div class="tip" style="margin-bottom:10px">링크와 비밀번호를 같이 받은 사람만 이 세션을 보고 고칠 수 있어요. 비밀번호를 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
@@ -2073,8 +2082,8 @@ function ccBuild(day,cfg){
   const chunks=[];for(let i=0;i<out.length;i+=CHUNK)chunks.push(out.slice(i,i+CHUNK));
   return {meta:{title:`${cfg.scen} ${kst(t0)}`,date:kst(t0),created:Date.now(),n:out.length,sp,src:"ccfolia",scen:cfg.scen,day:kst(t0),part:cfg.part||1},chunks,gmName:cfg.gmNick||"GM"};
 }
-function ccForm(cc,box){
-  const ex=findScen(cc.title);
+function ccForm(cc,box,opt={}){
+  const ex=findScen(opt.scen||cc.title);
   const days=cc.days.map((d,i)=>({i,d,n:d.filter(m=>!m.sys).length,date:kst((d.find(m=>m.ch==="main")||d[0]).t)}));
   const names=Object.keys(cc.cnt).sort((a,b)=>{const o={gm:0,pc:1,npc:2,hand:3};return o[ccRole(cc,a)]-o[ccRole(cc,b)]||cc.cnt[b]-cc.cnt[a];});
   const exSp=ex?ex.sp:[];
@@ -2093,6 +2102,8 @@ function ccForm(cc,box){
       <div class="cc-roles">${names.map(n=>{const pc=exSp.find(x=>x.ch===n);return `<div class="cc-r"><span class="cc-n" title="${esc(n)}">${esc(n)}</span><span class="cc-c">${cc.cnt[n]}</span>${roleSel(n)}<input type="text" data-pl="${esc(n)}" value="${esc(pc?pc.name:"")}" placeholder="플레이어 닉네임" list="cc-pls"></div>`;}).join("")}</div>
       <datalist id="cc-pls">${[...new Set(S.scens.flatMap(s=>(s.sp||[]).map(x=>x.name)))].map(x=>`<option value="${esc(x)}">`).join("")}</datalist></div>
     <div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="pri" id="igo">${S.db&&S.canWrite?"올리기":"미리보기"}</button></div><div id="iprog" class="tip" style="margin-top:6px"></div>`;
+  if(opt.scen){const cs=$("#cc-scen");cs.value=opt.scen;cs.closest("label").style.display="none";}
+  if(opt.system&&!$("#cc-sys").value)$("#cc-sys").value=opt.system;
   const sync=()=>box.querySelectorAll(".cc-r").forEach(r=>{r.querySelector("input").style.visibility=r.querySelector("select").value==="pc"?"visible":"hidden";});
   box.querySelectorAll("[data-role]").forEach(s=>s.onchange=sync);sync();
   $("#igo").onclick=async()=>{
@@ -2103,7 +2114,7 @@ function ccForm(cc,box){
     if(miss.length){$("#iprog").innerHTML=`<span style="color:var(--bad)">플레이어 닉네임을 넣어 주세요: ${miss.map(esc).join(", ")}</span>`;return;}
     const pick=[...box.querySelectorAll("[data-day]:checked")].map(i=>cc.days[+i.dataset.day]);
     if(!pick.length){$("#iprog").innerHTML=`<span style="color:var(--bad)">올릴 회차를 하나 이상 골라 주세요</span>`;return;}
-    const cfg={scen:resolveScen($("#cc-scen").value.trim()||cc.title),system:$("#cc-sys").value.trim(),gmNick:$("#cc-gm").value.trim()||"GM",roles,players};
+    const cfg={scen:resolveScen($("#cc-scen").value.trim()||cc.title),system:$("#cc-sys").value.trim(),orig:opt.orig||"",gmNick:$("#cc-gm").value.trim()||"GM",roles,players};
     if(!(S.db&&S.canWrite)){const b=ccBuild(pick[0],cfg);closeSession();S.local=true;S.sid="local";S.meta=b.meta;b.chunks.forEach((c,i)=>S.chunks[i]=c);rebuild();render();return;}
     let first=null;S.importing=true;
     try{for(let i=0;i<pick.length;i++){
@@ -2234,7 +2245,7 @@ function attachToScen(meta,chunks){
   chunks.forEach(c=>c.forEach(b=>{if(remap[b.s])b.s=remap[b.s];if(b.w&&remap[b.w])b.w=remap[b.w];}));
   meta.sp=[];return sc;
 }
-async function importSession(r,inf,pre=""){return importBuilt(buildSession(r,inf),pre);}
+async function importSession(r,inf,pre="",cfg={}){return importBuilt(buildSession(r,inf),pre,cfg);}
 async function importBuilt(built,pre="",cfg={}){
   const {meta,chunks}=built;
   const sc=attachToScen(meta,chunks);meta.scid=sc.id;
@@ -2244,7 +2255,7 @@ async function importBuilt(built,pre="",cfg={}){
   try{
     prog.textContent=pre+"세션 만드는 중…";
     await mutateScen(sc.id,L=>{if(!L.name)Object.assign(L,clone(sc));sc.sp.forEach(e=>{if(!L.sp.some(x=>x.k===e.k))L.sp.push(clone(e));});
-      if(gmK&&!(L.gm&&L.sp.some(x=>x.k===L.gm)))L.gm=gmK;if(cfg.system&&!L.system)L.system=cfg.system;});
+      if(gmK&&!(L.gm&&L.sp.some(x=>x.k===L.gm)))L.gm=gmK;if(cfg.system&&!L.system)L.system=cfg.system;if(cfg.orig&&!L.orig)L.orig=cfg.orig;});
     await retry(()=>S.db.doc("sessions/"+sid).set(meta));
     for(let i=0;i<chunks.length;i++){
       prog.textContent=`${pre}대사 올리는 중… ${i+1}/${chunks.length}`;
@@ -2491,4 +2502,83 @@ function bindWed(root,scid){
     const before=n.nodeValue.slice(0,s.anchorOffset),m=before.match(/:([^:\s<>"'&]{1,20}):$/);if(!m)return;const u=emoMap()[m[1]];if(!u)return;
     const r=document.createRange();r.setStart(n,s.anchorOffset-m[0].length);r.setEnd(n,s.anchorOffset);s.removeAllRanges();s.addRange(r);
     document.execCommand("insertHTML",false,emoImg(m[1],u)+"&#8203;");keep();});
+}
+
+// ---------- 세션 올리기 페이지 (#up · #up-<세션id>) ----------
+// 1 종류(오프라인/온라인) → 2 세션(이어서/새로) → 3 자료(녹음·코코포리아 로그·없음) → 4 확인
+const UP_STEPS=["종류","세션","자료","확인"];
+function upScen(){const u=S.up;return u.mode==="cont"?scenById(u.scid):null;}
+function upName(){const u=S.up,sc=upScen();return sc?sc.name:(u.name||"").trim();}
+function upCont(){return S.scens.filter(x=>!x.done&&x.id!=="_site").sort((a,b)=>(b.lastDay||"").localeCompare(a.lastDay||"")||a.name.localeCompare(b.name,"ko"));}
+function upHTML(){
+  const u=S.up,st=u.step,can=S.db&&S.canWrite;
+  const card=(on,attr,ic,t,d)=>`<button type="button" class="upcard${on?" on":""}" ${attr}>${ic?`<span class="ic">${ic}</span>`:""}<b>${t}</b><span class="d">${d}</span></button>`;
+  let body="";
+  if(!can)body=`<div class="notice">세션을 올리려면 관리자로 로그인해 주세요.</div>`;
+  else if(st===0)body=`<div class="upq">어떤 세션이에요?</div><div class="upcards">
+    ${card(u.kind==="off",'data-upk="off"',"🎙","오프라인 세션","만나서 플레이 · 클로바노트 녹음·대사 txt를 올리거나, 녹음 없이 날짜만 남겨요")}
+    ${card(u.kind==="on",'data-upk="on"',"💻","온라인 세션","코코포리아 등에서 플레이 · 방의 로그 html을 올리거나, 로그 없이 날짜만 남겨요")}</div>`;
+  else if(st===1){const list=upCont();
+    body=`<div class="upq">어느 세션이에요?</div><div class="upcards">
+      ${card(u.mode==="cont",'data-upm="cont"',"","이어서 하는 세션","이미 있는 세션에 회차를 추가해요 · 완주한 세션은 안 보여요")}
+      ${card(u.mode==="new",'data-upm="new"',"","새 세션","처음 올리는 시나리오")}</div>
+      ${u.mode==="cont"?(list.length?`<div class="upq">세션 고르기</div><div class="upsel"><select id="up-sc"><option value="">— 골라 주세요 —</option>${list.map(x=>{const n=groups().find(g=>g.scen===x.name)?.days.length||0;return `<option value="${esc(x.id)}"${x.id===u.scid?" selected":""}>${esc(x.name)}${x.system?` · ${esc(sysLabel(x.system))}`:""}${n?` · ${n}회차`:""}</option>`;}).join("")}</select></div>`:`<div class="tip" style="margin-top:12px">이어서 할 세션이 없어요. 완주하지 않은 세션만 여기 떠요.</div>`)
+      :`<div class="upq">새 세션</div><div class="fields"><label>시나리오 이름<input type="text" id="up-name" value="${esc(u.name||"")}" placeholder="시나리오 이름"></label>
+        <label>해외 시나리오면 원래 제목 (선택)<input type="text" id="up-orig" value="${esc(u.orig||"")}"></label>
+        <label>룰<input type="text" id="up-sys" value="${esc(u.system||"")}" placeholder="예: 더블크로스 3rd · 인세인 · D&D 5e" list="up-syslist"></label>
+        <datalist id="up-syslist">${[...new Set(S.scens.map(x=>sysLabel(x.system||"")).filter(Boolean))].map(x=>`<option value="${esc(x)}">`).join("")}</datalist></div>`}`;}
+  else if(st===2){const off=u.kind==="off";
+    body=`<div class="upsc"><b>${esc(upName())}</b> · ${off?"오프라인":"온라인"}</div><div class="upq">무엇을 올릴까요?</div><div class="upcards">
+      ${off?card(u.src==="file",'data-ups="file"',"🎧","녹음 올리기","클로바노트 대사 txt + 녹음 파일(m4a 등)을 한꺼번에 · 이름이 같으면 알아서 짝지어요 · 녹음 파일만 골라 이미 올린 회차에 붙일 수도 있어요")
+        :card(u.src==="file",'data-ups="file"',"📜","코코포리아 로그","방 메뉴 → 로그 출력으로 받은 html · 날짜별로 회차를 나눠요")}
+      ${card(u.src==="none",'data-ups="none"',"🚫",off?"녹음 없음":"로그 없음",off?"녹음이 금지된 세션 · 플레이한 날짜만 회차로 남겨요":"플레이한 날짜만 회차로 남겨요")}</div>
+      ${u.src==="file"?`<div class="upq">파일</div><label class="updrop" id="up-drop"><b>${off?"여기로 끌어다 놓거나 눌러서 고르기":"로그 html 고르기"}</b>${off?"대사 txt · 녹음 파일을 한꺼번에":"[메인]·[잡담] 탭이 다 들어간 로그면 좋아요"}
+          <input type="file" id="up-file" ${off?`accept=".txt,text/plain${S.storage?",audio/*,video/*,.m4a,.mp3,.wav,.ogg,.webm":""}" multiple`:'accept=".html,.htm,text/html"'} style="display:none"></label>
+        <div id="imp"></div><div id="bulkres" class="tip" style="margin-top:8px">${S.bulkMsg||""}</div>`
+      :u.src==="none"?`<div class="upq">플레이한 날</div><div class="updates">${u.dates.map((v,i)=>`<span class="playd"><input type="date" data-upd="${i}" value="${esc(v)}">${u.dates.length>1?`<button type="button" class="ghost" data-updel="${i}">✕</button>`:""}</span>`).join("")}<button type="button" class="ghost" id="up-dadd">＋ 날짜 추가</button></div>`:""}`;}
+  else if(st===3){const sc=upScen(),n=(groups().find(g=>g.scen===upName())?.days.length)||0;const ds=[...new Set(u.dates.filter(Boolean))].sort();
+    body=`<div class="upq">이렇게 올릴게요</div><div class="upsum"><b>${esc(upName())}</b> · ${u.kind==="off"?"오프라인":"온라인"}${(sc?.system||u.system)?` · ${esc(sysLabel(sc?.system||u.system))}`:""}${sc?"":` · <span class="tip">새 세션</span>`}<br>
+      ${ds.map((d,i)=>`${n+i+1}회차 · ${esc(fmtDay(d))} — ${u.kind==="off"?"녹음 없음":"로그 없음"}`).join("<br>")}</div>
+      ${sc?"":`<div class="tip" style="margin-top:8px">올린 뒤 세션 수정 화면이 열려요. 거기서 플레이어·등장인물을 넣어 주세요.</div>`}<div id="iprog" class="tip" style="margin-top:6px"></div>`;}
+  const fileStep=st===2&&u.src==="file";
+  const shown=fileStep&&u.picked?3:st;
+  const nextOk=st===0?!!u.kind:st===1?(u.mode==="cont"?!!u.scid:!!(u.name||"").trim()):st===2?u.src==="none":false;
+  return `<div class="upw"><h2>세션 올리기</h2><div class="tip">플레이한 세션을 올려요</div>
+    <div class="upsteps">${UP_STEPS.map((x,i)=>`<span class="${i===shown?"on":i<shown?"done":""}">${i+1}. ${x}</span>`).join("")}</div>
+    ${body}
+    <div class="upnav"><button class="ghost" id="up-back">${st===0||(st===2&&u.fixed&&false)?"← 목록":"← 이전"}</button>${!can||fileStep?"":st===3?`<button class="pri" id="up-go">올리기</button>`:`<button class="pri" id="up-next"${nextOk?"":" disabled"}>다음 →</button>`}</div></div>`;
+}
+function bindUp(){
+  const u=S.up;if(!u)return;
+  const pull=()=>{const sc=$("#up-sc");if(sc)u.scid=sc.value;const n=$("#up-name");if(n)u.name=n.value;const o=$("#up-orig");if(o)u.orig=o.value.trim();const y=$("#up-sys");if(y)u.system=y.value.trim();
+    const ds=document.querySelectorAll("[data-upd]");if(ds.length)u.dates=[...ds].map(i=>i.value);};
+  const go=()=>{render();window.scrollTo(0,0);};
+  document.querySelectorAll("[data-upk]").forEach(b=>b.onclick=()=>{u.kind=b.dataset.upk;u.src="";u.picked=false;render();});
+  document.querySelectorAll("[data-upm]").forEach(b=>b.onclick=()=>{pull();u.mode=b.dataset.upm;render();});
+  document.querySelectorAll("[data-ups]").forEach(b=>b.onclick=()=>{u.src=b.dataset.ups;u.picked=false;S.bulkMsg="";if(u.src==="none"&&!u.dates.length)u.dates=[new Date(Date.now()+9*3600e3).toISOString().slice(0,10)];render();});
+  const sc=$("#up-sc");if(sc)sc.onchange=()=>{pull();render();};
+  const nm=$("#up-name");if(nm)nm.oninput=()=>{pull();const b=$("#up-next");if(b)b.disabled=!u.name.trim();};
+  const da=$("#up-dadd");if(da)da.onclick=()=>{pull();u.dates.push(u.dates[u.dates.length-1]||new Date(Date.now()+9*3600e3).toISOString().slice(0,10));render();};
+  document.querySelectorAll("[data-updel]").forEach(b=>b.onclick=()=>{pull();u.dates.splice(+b.dataset.updel,1);render();});
+  $("#up-back").onclick=()=>{pull();u.picked=false;
+    if(u.step===0){location.hash=u.fixed?"c-"+u.scid:"";return;}
+    u.step=u.step===2&&u.fixed?0:u.step-1;go();};
+  const nx=$("#up-next");if(nx)nx.onclick=()=>{pull();
+    if(u.step===1&&u.mode==="new"){const n=u.name.trim();if(findScen(n)){toast("이미 있는 세션이에요. '이어서 하는 세션'에서 골라 주세요",3500);return;}}
+    u.step=u.step===0&&u.fixed?2:u.step+1;go();};
+  const opt=()=>{const s=upScen();return {scen:upName(),system:s?"":u.system||"",orig:s?"":u.orig||""};};
+  const fi=$("#up-file");if(fi){fi.onchange=async()=>{const all=[...fi.files];fi.value="";if(!all.length)return;u.picked=true;
+      document.querySelectorAll(".upsteps span").forEach((x,i)=>{x.className=i===3?"on":i<3?"done":"";});
+      await takeFiles(all,opt());};
+    const dr=$("#up-drop");dr.ondragover=e=>{e.preventDefault();dr.classList.add("over");};dr.ondragleave=()=>dr.classList.remove("over");
+    dr.ondrop=async e=>{e.preventDefault();dr.classList.remove("over");const all=[...(e.dataTransfer?.files||[])];if(!all.length)return;u.picked=true;
+      document.querySelectorAll(".upsteps span").forEach((x,i)=>{x.className=i===3?"on":i<3?"done":"";});await takeFiles(all,opt());};}
+  const ug=$("#up-go");if(ug)ug.onclick=async()=>{
+    const ds=[...new Set(u.dates.filter(x=>/^\d{4}-\d\d-\d\d$/.test(x)))].sort();if(!ds.length){toast("날짜를 넣어 주세요");return;}
+    ug.disabled=true;const pr=$("#iprog");pr.textContent="올리는 중…";
+    try{let sc=upScen();
+      if(sc){await mutateScen(sc.id,L=>{L.plays=[...new Set([...(L.plays||[]),...ds])].sort();});location.hash="c-"+sc.id;}
+      else{sc=createScen(u.name.trim(),[]);sc.plays=ds;if(u.system)sc.system=u.system;if(u.orig)sc.orig=u.orig;await saveScen(sc);S.pendingEdit=sc.id;location.hash="c-"+sc.id;}
+    }catch(e){ug.disabled=false;pr.innerHTML=`<span style="color:var(--bad)">올리지 못했어요: ${esc(e.code||e.message||"")}</span>`;}
+  };
 }
