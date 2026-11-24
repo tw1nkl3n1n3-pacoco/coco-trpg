@@ -2707,6 +2707,8 @@ const campOf=sc=>sc&&sc.camp?campById(sc.camp):null;
 const isCamp=c=>!!c&&c.kind==="camp";
 const campWord=c=>isCamp(c)?"캠프":"캠페인";
 function campEps(c){const pos=new Map((c.eps||[]).map((id,i)=>[id,i]));
+  // 캠프는 넣은 순서가 아니라 플레이한 날짜 순서
+  if(c.kind==="camp")return S.scens.filter(s=>s.camp===c.id).sort((a,b)=>(a.lastDay||"").localeCompare(b.lastDay||"")||(pos.has(a.id)?pos.get(a.id):1e9)-(pos.has(b.id)?pos.get(b.id):1e9));
   return S.scens.filter(s=>s.camp===c.id).sort((a,b)=>(pos.has(a.id)?pos.get(a.id):1e9)-(pos.has(b.id)?pos.get(b.id):1e9)||(a.lastDay||"").localeCompare(b.lastDay||""));}
 function epLabel(c,sc){if(isCamp(c))return "";if(sc.gaiden)return "외전";let n=0;for(const e of campEps(c)){if(!e.gaiden)n++;if(e.id===sc.id)return n+"편";}return "";}
 function campCount(c){if(isCamp(c))return `탁 ${campEps(c).length}개`;const es=campEps(c),g=es.filter(e=>e.gaiden).length;return `${es.length-g}편${g?` + 외전 ${g}`:""}`;}
