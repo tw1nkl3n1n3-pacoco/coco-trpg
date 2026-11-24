@@ -2241,7 +2241,7 @@ function revSectionHTML(sc){
   const cm=!!sc.isCampSc,has=new Set(list.map(r=>r.k)),mine=list.some(r=>r.uid&&r.uid===myUid()||r.k===myK(sc.id));
   const cast=gmFirst(sc.sp.filter(p=>p.k===gmKey(sc)||!isAnon(p)&&!/&/.test(p.name)||p.ch),gmKey(sc)).filter(p=>!cm||!has.has(p.k)||(f&&f.k===p.k));
   const rows=list.map(r=>{const w=revWho(sc,r);
-    return `<div class="rvr"><span class="av${w.gm?" gm":""}" style="--c:${fixC(w.p?.c||"#888")}">${w.p?avHTML(w.p,w.gm):`<span class="ini">${esc((w.ch||w.name).slice(0,1))}</span>`}</span>
+    return `<div class="rvr${cm?" noav":""}">${cm?"":`<span class="av${w.gm?" gm":""}" style="--c:${fixC(w.p?.c||"#888")}">${w.p?avHTML(w.p,w.gm):`<span class="ini">${esc((w.ch||w.name).slice(0,1))}</span>`}</span>`}
       <span class="nm"><b>${esc(w.name)}</b>${w.ch||w.gm?`<small>${esc(w.gm?gmWord(sc):w.ch)}</small>`:""}</span>
       ${r.url?`<a class="ext" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">외부 후기 ↗</a>${r.lpw?`<button class="ghost lpw" data-rvlpw="${esc(r.id)}" title="눌러서 비밀번호 복사">🔑 ${esc(r.lpw)}</button>`:""}`:`<button class="go" data-rvopen="${esc(r.id)}">후기 보기</button><button class="cp ghost" data-rvcopy="${esc(r.id)}" title="이 후기 링크 복사">🔗</button>`}
       ${revMine(r)||(!r.uid&&canTalk(sc.id))?`<button class="ghost cp" data-rvedit="${esc(r.id)}" title="고치기">✎</button>`:""}${revMine(r)?`<button class="ghost cp" data-rvdel="${esc(r.id)}" title="지우기">🗑</button>`:""}</div>`;}).join("");
@@ -2251,7 +2251,7 @@ function revSectionHTML(sc){
       ${f.mode==="text"?wedHTML("rv-wed",f.html!=null?f.html:textToRich(f.text||"")):`<input type="url" id="rv-url" value="${esc(f.url||"")}" placeholder="https:// (블로그·X·포스타입 등에 쓴 후기 주소)"><input type="text" id="rv-lpw" value="${esc(f.lpw||"")}" placeholder="글 비밀번호 (걸려 있으면 · 선택)" autocomplete="off" style="margin-top:6px">`}
       <div class="rv-btns" style="margin-top:0"><button class="pri" id="rv-save">저장</button><button class="ghost" id="rv-cancel">취소</button><span id="rv-msg" class="tip"></span></div></div>`:"";
   if(!list.length&&!f&&(!S.db||!canTalk(sc.id)))return "";
-  return `<div class="sc-sec rvsec"><h4 data-en="REVIEWS">${cm?"캠프 후기":"세션 후기"}${cm?` <span class="tip" style="letter-spacing:0">· 한 사람당 하나 · 탁 후기는 각 세션 페이지에</span>`:""}</h4>${rows?`<div class="rvlist">${rows}</div>`:""}${form}
+  return `<div class="sc-sec rvsec"><h4 data-en="REVIEWS">${cm?"캠프 후기":"세션 후기"}${cm?` <span class="tip" style="letter-spacing:0">· 탁 후기는 각 세션 페이지에</span>`:""}</h4>${rows?`<div class="rvlist">${rows}</div>`:""}${form}
     ${f||!canTalk(sc.id)||cm&&(S.canAdmin?!cast.length:mine)?"":`<div class="rv-btns"><button class="${list.length?"":"pri"}" id="rv-add">＋ 후기 남기기</button></div>`}</div>`;
 }
 function revPopup(sc,r){
@@ -2722,7 +2722,7 @@ function campTagHTML(c){return c.system?`<span class="sys" data-th="${themeOf({s
 function campCardHTML(c){
   const es=campEps(c).slice().reverse(),last=campLast(c);
   // 일반 세션 카드와 같은 머리 모양: 제목 · 오른쪽에 룰 태그와 편 수 (캠페인인 건 '진행 중인 캠페인' 칸과 굵은 테두리로 보여요)
-  const head=`<div class="scen-h"><h3><a href="#g-${esc(c.id)}">${esc(c.name)} ›</a>${c.orig?`<span class="orig">${esc(c.orig)}</span>`:""}</h3>${campTagHTML(c)}<span class="d${c.done?" dstamp":""}">${isCamp(c)?`캠프 · ${campWhen(c)?esc(campWhen(c).replace(/ · 당일치기$/,"")):""}${campWhen(c)?" · ":""}${campCount(c)}`:`${campCount(c)}${last?` · 마지막 ${esc(fmtDay(last))}`:""}`}${stampHTML(c)}</span></div>`;
+  const head=`<div class="scen-h"><h3><a href="#g-${esc(c.id)}">${esc(c.name)} ›</a>${c.orig&&!isCamp(c)?`<span class="orig">${esc(c.orig)}</span>`:""}</h3>${campTagHTML(c)}<span class="d${c.done?" dstamp":""}">${isCamp(c)?`캠프 · ${campWhen(c)?esc(campWhen(c).replace(/ · 당일치기$/,"")):""}${campWhen(c)?" · ":""}${campCount(c)}`:`${campCount(c)}${last?` · 마지막 ${esc(fmtDay(last))}`:""}`}${stampHTML(c)}</span></div>`;
   const more=!!S.campMore[c.id],shown=more?es:es.slice(0,3);
   return `<section class="scen camp${c.done?" done":""}">${head}${shown.map(e=>epRowHTML(c,e)).join("")||`<div class="tip" style="margin-top:8px">아직 ${isCamp(c)?"탁이":"편이"} 없어요</div>`}
     ${es.length>3?`<button class="cmore" data-cmore="${esc(c.id)}">${more?"▴ 접기":`▾ ${isCamp(c)?"탁":"이전 편"} ${es.length-3}개 더 보기`}</button>`:""}</section>`;
@@ -2797,7 +2797,7 @@ function campDays(c){const es=campEps(c);if(!c.start)return [{lab:"",eps:es.slic
   if(rest.length)out.push({lab:"날짜 밖",eps:rest});return out.filter(x=>x.eps.length||out.length<=4);}
 // 캠프 후기용: 모든 탁의 참가자를 이름으로 한 번씩
 function campSc(c){const sp=[],seen=new Set();
-  campEps(c).forEach(e=>{const g=gmKey(e);(e.sp||[]).forEach(p=>{if(/&/.test(p.name||"")||(isAnon(p)&&!p.ch&&p.k!==g))return;const n=pcSplit(p.name||"").name;if(!n||seen.has(n))return;seen.add(n);sp.push({k:"n_"+n,name:n,c:p.c,...(p.img?{img:p.img}:{})});});});
+  campEps(c).forEach(e=>{const g=gmKey(e);(e.sp||[]).forEach(p=>{if(/&/.test(p.name||"")||(isAnon(p)&&!p.ch&&p.k!==g))return;const n=pcSplit(p.name||"").name;if(!n||seen.has(n))return;seen.add(n);sp.push({k:"n_"+n,name:n,c:p.c});});});
   return {id:c.id,name:c.name,sp,isCampSc:true,place:c.place||"",when:campWhen(c)};}
 function campScById(id){const c=campById(id);return c&&isCamp(c)?campSc(c):null;}
 function campSelfK(id){const c=campById(id);if(!c||!isCamp(c))return "";for(const e of campEps(c)){const p=meSp(e.id);if(p)return "n_"+pcSplit(p.name||"").name;}return "";}
