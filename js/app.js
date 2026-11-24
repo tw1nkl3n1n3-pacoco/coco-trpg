@@ -238,6 +238,7 @@ function adminHTML(){
         <input type="text" id="s-nicks" value="${esc((st.nicks||[]).join(", "))}" placeholder="AA, BB">
         <div class="btns"><button class="pri" id="s-ok">저장</button></div>
       </div></div>
+    ${S.db&&S.storage?`<div class="card"><b>저장 공간</b> <span class="tip">· 녹음·이모티콘 파일 (US 지역 무료 범위 기준)</span><div id="stuse">${storeUseHTML()}</div></div>`:""}
     ${S.db?`<div class="card emadm"><b>이모티콘</b> <span class="tip">· 사이트 어디서든 :이름: 으로 써요 (후기·댓글) · 주인만 등록</span>
       <div class="emrow">${(st.emo||[]).map(e=>`<div class="it" title=":${esc(e.n)}:"><button class="x" data-emdel="${esc(e.n)}" title="지우기">✕</button><img src="${esc(e.u)}" alt=""><span>:${esc(e.n)}:</span></div>`).join("")||`<span class="tip">아직 없어요.</span>`}</div>
       <div class="emadd"><button type="button" class="up" id="em-pick" title="이미지 고르기">${S.emPrev?`<img src="${S.emPrev}" alt="">`:"＋"}</button><input type="text" id="em-n" placeholder="이름 (예: 하하)" maxlength="20" style="width:140px"><button class="pri" id="em-add">등록</button><span class="tip">정사각형 이미지 · 128px로 줄여서 저장 · 움직이는 GIF도 돼요</span>
@@ -272,7 +273,35 @@ function bindAdmin(){
     render();
   };
   bindEmoAdmin();
+  storeScan();
   if(!_chkRan)runAdminChecks();
+}
+// ---------- 저장 공간 · 예상 비용 (관리 페이지) ----------
+// 무료: 저장 5GB-월 · 내려받기 월 100GB (US-EAST1 등 US 지역 버킷). 넘는 저장은 GB당 월 약 $0.02
+const FREE_GB=5,USD_GB=0.02,KRW=1400;
+S.stu=null;let _stuRun=false;
+function fmtMB(b){const m=b/1048576;return m>=1024?(m/1024).toFixed(2)+"GB":m>=1?Math.round(m)+"MB":b>0?Math.max(1,Math.round(b/1024))+"KB":"0MB";}
+function storeUseHTML(){
+  const u=S.stu;if(!u)return `<div class="tip" style="margin-top:6px">세는 중…</div>`;
+  const tot=u.audio+u.emo,gb=tot/1073741824,pct=Math.min(100,gb/FREE_GB*100);
+  const over=Math.max(0,gb-FREE_GB),usd=over*USD_GB,krw=Math.ceil(usd*KRW);
+  return `<div class="stbar"><i style="width:${pct.toFixed(1)}%"></i></div>
+    <div class="stnum"><b>${fmtMB(tot)}</b> / 무료 ${FREE_GB}GB <span class="tip">(${pct<1&&tot>0?"1% 미만":Math.round(pct)+"%"})</span></div>
+    <div class="tip">녹음 ${u.nAudio}개 ${fmtMB(u.audio)} · 이모티콘 ${u.nEmo}개 ${fmtMB(u.emo)}${u.miss?` · 크기를 못 읽은 파일 ${u.miss}개`:""}</div>
+    <div class="stcost">이번 달 예상 비용: <b>${over>0?`약 ${krw.toLocaleString("ko-KR")}원`:"0원"}</b> <span class="tip">${over>0?`(무료 5GB를 넘은 ${over.toFixed(2)}GB × $${USD_GB} · $1=${KRW}원으로 셈)`:"· 무료 범위 안이에요"}</span></div>
+    <div class="tip" style="margin-top:4px">녹음 평균 ${u.nAudio?fmtMB(u.audio/u.nAudio):"-"} 기준으로 녹음 약 ${u.nAudio&&u.audio?Math.max(0,Math.floor((FREE_GB*1073741824-tot)/(u.audio/u.nAudio))):"-"}개를 더 올릴 수 있어요. 듣기(내려받기)는 월 100GB까지 무료라 따로 셈하지 않아요. 후기 사진은 빠져 있어요.</div>`;
+}
+async function storeScan(){
+  if(_stuRun||!S.canAdmin||!S.storage)return;_stuRun=true;
+  const u={audio:0,nAudio:0,emo:0,nEmo:0,miss:0};
+  for(const x of S.sessions.filter(x=>x.audioPath)){let sz=x.audioSize||0;
+    if(!sz){try{sz=(await S.storage.ref(x.audioPath).getMetadata()).size||0;if(sz)S.db.doc("sessions/"+x.id).update({audioSize:sz}).catch(()=>{});}catch(e){u.miss++;}}
+    if(sz){u.audio+=sz;u.nAudio++;}}
+  const list=site().emo||[];let fix=false;
+  for(const e of list){let sz=e.sz||0;if(!sz&&e.p){try{sz=(await S.storage.ref(e.p).getMetadata()).size||0;e.sz=sz;fix=true;}catch(err){u.miss++;}}if(sz){u.emo+=sz;u.nEmo++;}}
+  if(fix)S.db.doc("scenarios/_site").set({emo:list},{merge:true}).catch(()=>{});
+  S.stu=u;const el=$("#stuse");if(el)el.innerHTML=storeUseHTML();
+  setTimeout(()=>{_stuRun=false;},60000);
 }
 function bindEmoAdmin(){
   const pick=$("#em-pick"),file=$("#em-file");if(!pick)return;
@@ -288,7 +317,7 @@ function bindEmoAdmin(){
     const b=$("#em-add");b.disabled=true;
     try{const gif=/gif/i.test(S.emBlob.type),ref=S.storage.ref(`emoji/${Date.now().toString(36)}${rid4()}.${gif?"gif":"png"}`);
       await ref.put(S.emBlob,{contentType:gif?"image/gif":"image/png",cacheControl:"public,max-age=31536000"});
-      const u=await ref.getDownloadURL();list.push({n,u,p:ref.fullPath});
+      const u=await ref.getDownloadURL();list.push({n,u,p:ref.fullPath,sz:S.emBlob.size||0});
       await S.db.doc("scenarios/_site").set({emo:list},{merge:true});S.site={...S.site,emo:list};
       S.emBlob=null;S.emPrev=null;toast(`:${n}: 를 등록했어요`);render();}
     catch(e){b.disabled=false;toast("등록하지 못했어요"+(e&&e.code?` (${e.code})`:""));}};
