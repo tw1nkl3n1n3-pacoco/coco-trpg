@@ -2749,7 +2749,7 @@ function campPageHTML(){
       :`<div class="ckick"><span class="cbadge">캠페인</span></div>
       <div class="sc-top"><h2>${esc(c.name)}${c.orig?`<span class="orig">${esc(c.orig)}</span>`:""}</h2><span class="scmeta">${campTagHTML(c)}${S.canAdmin?`<button id="g-edit" title="캠페인 수정" aria-label="캠페인 수정">✎<span class="lbl"> 수정</span></button>`:""}</span></div>`}
     ${!ed&&c.intro?`<div class="sc-sec"><h4 data-en="INTRO">소개</h4><div class="sc-text">${emoize(esc(c.intro)).replace(/\n/g,"<br>")}</div></div>`:""}
-    ${ed?"":`<div class="sc-sec"><h4 data-en="EPISODES">편</h4>${es.slice().reverse().map(e=>epRowHTML(c,e)).join("")||`<div class="sc-text empty">아직 편이 없어요.</div>`}
+    ${ed?"":`<div class="sc-sec"><h4 data-en="EPISODES">시나리오 목록</h4>${es.slice().reverse().map(e=>epRowHTML(c,e)).join("")||`<div class="sc-text empty">아직 편이 없어요.</div>`}
       ${S.canAdmin&&S.db?(()=>{const free=S.scens.filter(x=>!x.camp||!campById(x.camp)).sort((a,b)=>(b.lastDay||"").localeCompare(a.lastDay||""));
         return `<div class="gadd">${c.done?"":`<a class="btnlike pri" href="#up-${esc(c.id)}">＋ 다음 시나리오 올리기</a>`}
           ${free.length?`<span class="gadd-ex"><select id="g-addsel"><option value="">이미 있는 세션 넣기…</option>${free.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}${x.system?` · ${esc(sysLabel(x.system))}`:""}</option>`).join("")}</select><label class="chk"><input type="checkbox" id="g-addgai"> 외전</label><button class="ghost" id="g-addgo">넣기</button></span>`:""}</div>
