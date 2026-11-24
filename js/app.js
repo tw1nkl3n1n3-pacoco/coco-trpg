@@ -1024,7 +1024,7 @@ function renderAllRows(keepScroll){
   let anchor=null,off=0;
   if(keepScroll){for(const r of log.children){const rc=r.getBoundingClientRect();if(rc.bottom>130){anchor=r.dataset.id;off=rc.top;break;}}}
   if(!S.flat.length){
-    log.innerHTML=S.local||!S.db||(S.loaded&&S.chunksLoaded)?`<div class="notice">아직 대사가 없어요.</div>`:skelHTML();
+    log.innerHTML=S.local||!S.db||(S.loaded&&S.chunksLoaded)?`<div class="notice">아직 대사가 없어요.</div>`:loaderHTML();
     $("#qcount")&&($("#qcount").textContent="");return;
   }
   const vis=S.flat.filter(visible);
@@ -2582,16 +2582,7 @@ function bindUp(){
 
 // ---------- 로딩 화면 (테마별) · 로그 뼈대 · 진행 막대 ----------
 // 0.3초 안에 끝나는 로딩에는 안 보이게 CSS에서 살짝 늦게 나타나요
-function loaderHTML(){
-  const th=document.body.dataset.theme||"plain";
-  const inner=th==="dx"?`<div class="ldx"><div class="r"><span>LOADING //</span><b>SESSION LOG</b></div><div class="bar"></div><div class="lg"><span>&gt; 세션 기록 접속</span><span>&gt; 대사 데이터 수신</span><span>&gt; 침식률 확인</span></div></div>`
-    :th==="deco"?`<svg class="ld20" viewBox="0 0 100 100" aria-hidden="true"><polygon points="50,4 92,28 92,72 50,96 8,72 8,28" fill="#c9962e" stroke="#7a5418" stroke-width="3"/><polygon points="50,4 72,40 28,40" fill="#e0b85a"/><polygon points="28,40 72,40 50,76" fill="#d4a546"/><polygon points="8,28 28,40 8,72" fill="#a8792a"/><polygon points="92,28 72,40 92,72" fill="#b88732"/><polygon points="8,72 50,76 50,96" fill="#946a22"/><polygon points="92,72 50,76 50,96" fill="#a37526"/><text x="50" y="62" text-anchor="middle" font-family="Gowun Batang,serif" font-weight="700" font-size="20" fill="#3a0b0b">20</text></svg><div class="lbl">주사위를 굴리는 중…</div>`
-    :th==="wa"?`<div class="lwa"><div class="card"><div class="f b"></div><div class="f fr"><span class="c">?</span><span class="c c2">?</span></div></div></div><div class="lbl lwat" data-t="광기 카드를 뒤집는 중">광기 카드를 뒤집는 중</div>`
-    :`<div class="ldots"><i></i><i></i><i></i></div><div class="lbl">불러오는 중</div>`;
-  return `<div class="ldr" role="status" aria-label="불러오는 중">${inner}</div>`;
-}
-function skelHTML(n=7){const W=[[92,64],[78],[88,40],[70],[95,55],[60],[84,72]];
-  return `<div class="skel" aria-label="불러오는 중">${Array.from({length:n},(_,i)=>`<div class="sk"><span class="t shim"></span><div class="bd"><div class="nm shim"></div>${W[i%W.length].map(x=>`<div class="ln shim" style="width:${x}%"></div>`).join("")}</div></div>`).join("")}</div>`;}
+function loaderHTML(){return `<div class="ldr" role="status" aria-label="불러오는 중"><div class="ldots"><i></i><i></i><i></i></div><div class="lbl">불러오는 중</div></div>`;}
 // 올리기 진행 막대: label · 0~1
 function setProg(el,label,f){if(!el)return;let b=el.querySelector(".upbar");
   if(!b){el.innerHTML=`<div class="upbar"><div class="top"><span class="l"></span><b class="p"></b></div><div class="pbar"><i></i></div></div>`;b=el.querySelector(".upbar");}

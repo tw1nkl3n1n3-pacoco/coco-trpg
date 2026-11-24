@@ -1,4 +1,4 @@
-// TRPG 로그 사이트 Firestore 보안 규칙 · 규칙 버전 4
+// 코코 로그방 Firestore 보안 규칙 · 규칙 버전 4
 // 관리자 이메일 자리는 사이트 관리자 페이지에서 복사하면 자동으로 채워져요.
 rules_version = '2';
 service cloud.firestore {
