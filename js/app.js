@@ -292,7 +292,10 @@ function storeUseHTML(){
     <div class="tip" style="margin-top:4px">녹음 평균 ${u.nAudio?fmtMB(u.audio/u.nAudio):"-"} 기준으로 녹음 약 ${u.nAudio&&u.audio?Math.max(0,Math.floor((FREE_GB*1073741824-tot)/(u.audio/u.nAudio))):"-"}개를 더 올릴 수 있어요. 듣기(내려받기)는 월 100GB까지 무료라 따로 셈하지 않아요. 후기 사진은 빠져 있어요.</div>`;
 }
 async function storeScan(){
-  if(_stuRun||!S.canAdmin||!S.storage)return;_stuRun=true;
+  if(!S.canAdmin||!S.storage)return;
+  // 녹음 목록이 바뀌었으면(처음 불러올 때 포함) 다시 세요
+  const key=S.sessions.filter(x=>x.audioPath).map(x=>x.id+":"+(x.audioSize||0)).join(",")+"|"+(site().emo||[]).length;
+  if(_stuRun||(S.stu&&S.stu.key===key))return;_stuRun=true;
   const u={audio:0,nAudio:0,emo:0,nEmo:0,miss:0};
   for(const x of S.sessions.filter(x=>x.audioPath)){let sz=x.audioSize||0;
     if(!sz){try{sz=(await S.storage.ref(x.audioPath).getMetadata()).size||0;if(sz)S.db.doc("sessions/"+x.id).update({audioSize:sz}).catch(()=>{});}catch(e){u.miss++;}}
@@ -300,8 +303,7 @@ async function storeScan(){
   const list=site().emo||[];let fix=false;
   for(const e of list){let sz=e.sz||0;if(!sz&&e.p){try{sz=(await S.storage.ref(e.p).getMetadata()).size||0;e.sz=sz;fix=true;}catch(err){u.miss++;}}if(sz){u.emo+=sz;u.nEmo++;}}
   if(fix)S.db.doc("scenarios/_site").set({emo:list},{merge:true}).catch(()=>{});
-  S.stu=u;const el=$("#stuse");if(el)el.innerHTML=storeUseHTML();
-  setTimeout(()=>{_stuRun=false;},60000);
+  u.key=key;S.stu=u;_stuRun=false;const el=$("#stuse");if(el)el.innerHTML=storeUseHTML();
 }
 function bindEmoAdmin(){
   const pick=$("#em-pick"),file=$("#em-file");if(!pick)return;
