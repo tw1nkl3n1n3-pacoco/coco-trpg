@@ -626,3 +626,6 @@ body[data-theme=wa] .lkbox{border-radius:0;border:1px solid #111;box-shadow:6px 
 .upbtn{display:inline-block;padding:9px 18px;border-radius:10px;text-decoration:none;font-weight:700}
 .upadd{margin-top:10px;text-align:right}.upadd a{text-decoration:none;font-size:13px}
 @media(max-width:560px){.upcards{grid-template-columns:1fr}}
+/* 기본(plain) 테마: 룰 태그·GM 딱지 */
+.sys[data-th=plain]{background:#f1f1f0!important;color:#2b2b2b!important;border:1px solid #d6d6d3!important;border-radius:5px}
+.cast[data-th=plain] .gmtag{background:#2b2b2b!important;color:#fff!important}

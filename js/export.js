@@ -149,20 +149,7 @@ p{border-bottom-color:#efdfbf}
 .sub3{font-family:"Gowun Batang",serif;color:#5b4636;font-style:italic;border-bottom:0}.sub3:before{content:"✦ ";color:#c9962e;font-style:normal}
 .dice{background:#fdf1dc;border:0;border-top:3px solid #e69a28;border-bottom:3px solid #e69a28;padding:6px 8px}
 .hand{font-family:"Gowun Batang",serif;background:#f6e3b8;border:1px solid #b88a3a;border-radius:3px;box-shadow:inset 0 0 0 3px #fbefd4,inset 0 0 0 4px #c9962e;color:#2b1d14}.hand .hlab{color:#7a200d;font-family:"Gowun Batang",serif}
-.hsec{color:#7a200d}`,
-blue:`body{background:#eef3f9;color:#142033}
-main{background:#fff;border:1px solid #dfe7f2;border-radius:18px;margin:28px auto;box-shadow:0 10px 30px rgba(20,32,51,.06)}
-header{border-bottom:1px solid #e2e9f3}header h1{font-weight:800;color:#0f1b2d}header div{color:#8494ab}
-h2{color:#2563eb}h2:before,h2:after{border-top-color:#dbe6f6}
-p{border-bottom-color:#eef2f8}
-.gm{background:#eef4ff;border-left:4px solid #2563eb}
-.gmt{background:#2563eb!important;color:#fff;border-radius:999px;padding:0 7px}
-.note{color:#4a5a72;font-style:normal}
-.sec{font-family:"Noto Sans KR",sans-serif;font-weight:800;color:#0f1b2d;border-bottom:0;border-left:6px solid #2563eb;padding:0 0 0 10px}
-.sub{font-family:"Noto Sans KR",sans-serif;font-weight:700;color:#1d4ed8;border-left:0;padding:3px 12px;background:#e8f0ff;border-radius:999px;display:inline-block}
-.sub3{font-family:"Noto Sans KR",sans-serif;color:#4a5a72;border-bottom:0}.sub3:before{content:"• ";color:#38bdf8}
-.dice{background:#f4f8ff;border:1px solid #d6e3fb;border-left:3px solid #2563eb;border-radius:10px}
-.hand{font-family:"Noto Sans KR",sans-serif;background:#fff;border:1px solid #d6e3fb;border-radius:14px;color:#142033}.hand .hlab{color:#2563eb;font-weight:700}`};
+.hsec{color:#7a200d}`};
 async function exportDay(scen,day){
   toast("HTML 만드는 중…");
   try{

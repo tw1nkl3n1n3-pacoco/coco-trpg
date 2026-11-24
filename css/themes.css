@@ -117,55 +117,6 @@ body[data-theme=deco][data-page=scen] .sc-top .sys{background:#c9962e;border-col
 body[data-theme=deco][data-page=scen] .sc-top .authbox,body[data-theme=deco][data-page=scen] .sc-top .authbox *{color:#e2cfa8}
 body[data-theme=deco][data-page=scen] .sc-sec{box-shadow:0 0 0 3px #4a0d0d,0 0 0 4px #c9962e}
 
-/* --- 블루 모던: 깔끔한 앱 느낌 --- */
-body[data-theme=blue]{--bg:#eef3f9;--panel:#ffffff;--panel2:#f3f7fc;--line:#d7e1ee;--ink:#142033;--dim:#4a5a72;--faint:#8494ab;--acc:#2563eb;--acc2:#1d4ed8;--sel:#e6efff;--play:#e8f6ff;--gold:#2563eb;--ok:#0f9f6e;
-  background:linear-gradient(180deg,#f4f8fd 0,#e9f0f8 100%) fixed}
-body[data-theme=blue] header{background:rgba(255,255,255,.9);border-bottom:1px solid #d7e1ee;box-shadow:0 1px 0 rgba(37,99,235,.08),0 6px 20px rgba(20,32,51,.05)}
-body[data-theme=blue] header h1{font-family:"Noto Sans KR",sans-serif;font-weight:700;letter-spacing:-.01em}
-body[data-theme=blue] header .scl{border-bottom:2px solid #93b4f5}
-body[data-theme=blue] header h1,body[data-theme=blue] header .scl{color:#0f1b2d!important}
-body[data-theme=blue] .secadd,body[data-theme=blue] .secb .sp,body[data-theme=blue] .sectog,body[data-theme=blue] .foldh .fsub{color:#8494ab}
-body[data-theme=blue] .who small{color:#8494ab}
-body[data-theme=blue] .pchip{border-radius:999px!important}
-body[data-theme=blue] .pchip.on{background:#2563eb!important;border-color:#2563eb!important;color:#fff!important}
-body[data-theme=blue] #pbar{background:rgba(255,255,255,.92);border-top:1px solid #d7e1ee;box-shadow:0 -6px 20px rgba(20,32,51,.05)}
-body[data-theme=blue] aside{border-right:1px solid #d7e1ee}
-body[data-theme=blue] .foldh{border-bottom:1px solid #d7e1ee;color:#142033}
-body[data-theme=blue] .foldh .car,body[data-theme=blue] .foldh .fc{color:#2563eb}
-body[data-theme=blue] .spk{border-radius:10px}
-body[data-theme=blue] button{border-radius:10px}
-body[data-theme=blue] input[type=text],body[data-theme=blue] input[type=search],body[data-theme=blue] select,body[data-theme=blue] textarea{background:#fff;border-radius:10px}
-body[data-theme=blue] #log{background:#fff;border:1px solid #dfe7f2;border-radius:18px;box-shadow:0 10px 30px rgba(20,32,51,.06)}
-body[data-theme=blue] .row{border-radius:12px}
-body[data-theme=blue] .row:hover{background:#f6f9fe}
-body[data-theme=blue] .row.sel{background:#e9f1ff;border-color:#b9cff8}
-body[data-theme=blue] .row.playing{background:#e8f6ff}
-body[data-theme=blue] .row.gm{background:#eef4ff}body[data-theme=blue] .row.gm .body{box-shadow:inset 4px 0 0 #2563eb}
-body[data-theme=blue] .body{box-shadow:inset 3px 0 0 color-mix(in srgb,var(--c) 45%,transparent);border-radius:0}
-body[data-theme=blue] .row.playing .body{box-shadow:inset 3px 0 0 #2563eb}
-body[data-theme=blue] .tx{color:#1b2638;font-size:15.5px}
-body[data-theme=blue] .gmtag{background:#2563eb;color:#fff;border-radius:999px;padding:0 7px}
-body[data-theme=blue] button.pri{background:#2563eb;border-color:#2563eb;color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.25)}
-body[data-theme=blue] button.pri:hover{background:#1d4ed8;border-color:#1d4ed8}
-body[data-theme=blue] .row.sec .tx{font-family:"Noto Sans KR",sans-serif}
-body[data-theme=blue] .row.sec.l1 .tx{font-size:20px;font-weight:800;color:#0f1b2d;border-bottom:0;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
-body[data-theme=blue] .row.sec.l1 .tx::before{content:"";width:6px;height:22px;border-radius:3px;background:linear-gradient(180deg,#2563eb,#38bdf8)}
-body[data-theme=blue] .row.sec.l1 .tx::after{content:"";flex:1;height:1px;background:#e2e9f3;margin-left:6px}
-body[data-theme=blue] .row.sec.l2 .tx{font-size:15px;font-weight:700;color:#1d4ed8;border-left:0;padding:0}
-body[data-theme=blue] .row.sec.l2 .tx .ln{background:#e8f0ff;border-radius:999px;padding:3px 12px}
-body[data-theme=blue] .row.sec.l3 .tx{font-size:13.5px;font-weight:600;color:#4a5a72;border-bottom:0;padding-left:16px}
-body[data-theme=blue] .row.sec.l3 .tx .ln::before{content:"• ";color:#38bdf8}
-body[data-theme=blue] .row.note .tx{color:#4a5a72;font-size:13.5px}
-body[data-theme=blue] .row.note .tx::before,body[data-theme=blue] .row.note .tx::after{display:none}
-body[data-theme=blue] .row.note .tx>span{background:#f1f5fb;border:1px solid #e2e9f3;border-radius:999px;padding:4px 14px}
-body[data-theme=blue] .row.dice .tx{background:#f4f8ff;border:1px solid #d6e3fb;border-left:3px solid #2563eb;border-radius:12px}
-body[data-theme=blue] .row.hand .body{background:#fff;border:1px solid #d6e3fb;border-radius:14px;box-shadow:0 4px 14px rgba(37,99,235,.08)}
-body[data-theme=blue] .row.hand .tx{font-family:"Noto Sans KR",sans-serif;color:#142033}
-body[data-theme=blue] .row.hand .hlab{color:#2563eb;font-weight:700}
-body[data-theme=blue] .nb{background:#e6f0ff;box-shadow:none;color:#1d4ed8;border-radius:6px}
-body[data-theme=blue] .sc-sec,body[data-theme=blue] .card{border-radius:16px;border-color:#dfe7f2;box-shadow:0 6px 20px rgba(20,32,51,.05)}
-body[data-theme=blue] .sc-top h2{font-family:"Noto Sans KR",sans-serif;font-weight:800;color:#0f1b2d}
-body[data-theme=blue] .sc-sec h4{color:#2563eb}
 /* --- 메인 화면: 테마 없는 기본값 --- */
 body[data-theme=plain]{--bg:#f5f5f4;--panel:#ffffff;--panel2:#f3f3f2;--line:#e2e2df;--ink:#1c1c1b;--dim:#5a5a57;--faint:#8e8e8a;--acc:#1c1c1b;--acc2:#3a3a38;--sel:#efefed;--play:#efefed;--gold:#6b6b67;--ok:#3f7a3a;background:#f5f5f4}
 body[data-theme=plain] h1,body[data-theme=plain] h2,body[data-theme=plain] h3{font-family:"Noto Sans KR",system-ui,sans-serif;color:#1c1c1b}
@@ -196,12 +147,10 @@ body[data-theme=wa] .ogcard{border:1.5px solid #0d0d0d;border-radius:0;box-shado
 body[data-theme=wa] .ogcard.view{box-shadow:4px 4px 0 #0d0d0d}
 body[data-theme=deco] .ogcard{border:1px solid #c9962e;border-radius:3px;background:#fdf1dc}
 body[data-theme=deco] .ogcard.view{box-shadow:0 0 0 4px #4a0d0d,0 0 0 5px #c9962e,0 8px 20px rgba(0,0,0,.35)}
-body[data-theme=blue] .ogcard{border:1px solid #dfe7f2;border-radius:18px;box-shadow:0 10px 30px rgba(20,32,51,.08)}
 body[data-theme=plain] .ogcard{border:1px solid #e2e2df;border-radius:12px;box-shadow:none}
 body[data-theme=wa] .schero-t{background:rgba(0,0,0,.74);border-bottom:3px solid #b3121b}
 body[data-theme=deco] .schero-t{background:rgba(40,6,6,.74);border-bottom:2px solid #c9962e}
 body[data-theme=deco] .schero-t .orig{color:#e6cf9c!important}
-body[data-theme=blue] .schero-t{background:rgba(10,20,40,.66)}
 /* ── 더블크로스(dx): SF 전술 UI (데스티니·마라톤·명일방주 계열) — 얇은 선, 모서리 브래킷, 영문 고정폭 라벨, 빨강·초록 포인트 ── */
 body[data-theme=dx]{--bg:#0b0c0e;--panel:#fff;--panel2:#f3f3f4;--line:#d9dadc;--ink:#0f1113;--dim:#3f4246;--faint:#85888d;--acc:#e0263d;--acc2:#0f1113;--sel:#fde6ea;--play:#e8f7ef;--gold:#e0263d;--ok:#12a35a;
   background-color:#0b0c0e;background-image:radial-gradient(rgba(255,255,255,.07) 1px,transparent 1.3px);background-size:16px 16px}
@@ -278,3 +227,8 @@ body[data-theme=dx] .lkbox .homefoot{--ink:#0f1113;--dim:#3f4246;--faint:#85888d
 body[data-theme=dx] .tools input{background:#16191c;color:#f3f4f5;border-color:#2c3035}
 body[data-theme=dx] .foldh .fc{color:#ff5a6e}
 body[data-theme=dx] :is(.foldh .fsub,.secadd,.secb .sp,.sectog){color:#8a8d92}
+/* 기본(plain) 테마: 로그·세션 페이지에서도 양피지색 없이 */
+body[data-theme=plain] header,body[data-theme=plain] #pbar{background:rgba(255,255,255,.96);box-shadow:0 1px 0 #e2e2df}
+body[data-theme=plain] .pchip.on,body[data-theme=plain] .nth,body[data-theme=plain] .ptag{background:#1c1c1b!important;border-color:#1c1c1b!important;color:#fff!important}
+body[data-theme=plain] .foldh .fc{color:#8e8e8a}body[data-theme=plain] .foldh .fsub{color:#a3a39f}
+body[data-theme=plain] .pbtn,body[data-theme=plain] .part{background:#f3f3f2;border-color:#e2e2df}

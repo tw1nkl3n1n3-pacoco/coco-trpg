@@ -773,7 +773,7 @@ function themeOf(sc){
   if(/인세인|insane/.test(r))return "wa";
   if(/d&d|dnd|d＆d|디앤디|던전앤드래곤|던전&드래곤|dungeons/.test(r))return "deco";
   if(/더블크로스|doublecross|덥크|^dx(\d|$)|^dx3/.test(r))return "dx";
-  return "";
+  return "plain";
 }
 function applyTheme(){
   const sc=S.revPage?S.revPage.sc:S.cid?(S.scEdit&&S.scDraft?S.scDraft:scenById(S.cid)):(S.sid&&S.meta?curScen():null);
