@@ -39,7 +39,7 @@ async function list() {
   } while (token);
   return out;
 }
-let siteTitle = "로그방", dbOk = false;
+let siteTitle = "사이트 이름을 정해주세요", dbOk = false;
 if (cfg && cfg.projectId && cfg.apiKey) {
   try {
     const docs = await list();

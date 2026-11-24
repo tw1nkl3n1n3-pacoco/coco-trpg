@@ -99,11 +99,12 @@ function canTalk(id){return isOpen(id)&&(S.canAdmin||!!meSp(id));}
 function myUid(){return S.auth&&S.auth.currentUser?S.auth.currentUser.uid:"";}
 function canReadScen(id){return isOpen(id);}
 // 처음 열 때 잠깐 기본값이 보이지 않게: 지난번에 본 사이트 정보(브라우저에 저장)나 페이지 제목으로 시작해요
-const _initTitle=document.title||"로그방";
+const SITE_UNSET="사이트 이름을 정해주세요"; // 사이트 설정에 이름이 없을 때
+const _initTitle=document.title||SITE_UNSET;
 let _siteCache=null;try{_siteCache=JSON.parse(localStorage.getItem("trpg-site")||"null");}catch(e){}
 const SITE_DEF={title:_initTitle,sub:"",icon:""};
 if(_siteCache&&!S.site)S.site=_siteCache;
-const site=()=>({...SITE_DEF,...Object.fromEntries(Object.entries(S.site||{}).filter(([k,v])=>v!==undefined&&v!==null))});
+const site=()=>{const o={...SITE_DEF,...Object.fromEntries(Object.entries(S.site||{}).filter(([k,v])=>v!==undefined&&v!==null))};if(!String(o.title||"").trim())o.title=SITE_UNSET;return o;};
 const isImgIcon=v=>/^(data:image\/|https?:\/\/)/.test(v||"");
 function iconHTML(v,cls="sicon"){if(!v)return "";return isImgIcon(v)?`<img class="${cls}" src="${esc(v)}" alt="">`:`<span class="${cls}">${esc(v)}</span>`;}
 // 브라우저 탭 제목: 메인은 사이트 이름, 시나리오·로그는 "시나리오 · 사이트 이름"
@@ -122,7 +123,7 @@ function applySite(){
 function siteEdit(anchor){
   const st=site();let icon=st.icon;
   popAt(anchor,`<div class="nedit" style="min-width:320px">
-    <label>사이트 이름</label><input type="text" id="s-title" value="${esc(st.title)}">
+    <label>사이트 이름</label><input type="text" id="s-title" value="${esc((S.site&&S.site.title)||"")}" placeholder="${esc(SITE_UNSET)}">
     <label>설명 문구</label><textarea id="s-sub" rows="2" style="resize:vertical">${esc(st.sub)}</textarea>
     <label>아이콘 · 이모지 하나를 넣거나 이미지를 올려요 (브라우저 탭에도 보여요)</label>
     <div style="display:flex;gap:6px;align-items:center"><span id="s-prev" style="font-size:24px;min-width:32px;text-align:center">${iconHTML(icon,"sicon big")}</span>
@@ -226,7 +227,7 @@ function adminHTML(){
     <div class="hometop"><h2><a href="#" class="back" title="목록으로">←</a> ⚙ 관리</h2><span class="authbox"></span></div>
     <div class="card"><b>사이트 설정</b>
       <div class="nedit" style="padding:6px 0 0">
-        <label>사이트 이름</label><input type="text" id="s-title" value="${esc(st.title)}">
+        <label>사이트 이름</label><input type="text" id="s-title" value="${esc((S.site&&S.site.title)||"")}" placeholder="${esc(SITE_UNSET)}">
         <label>설명 문구</label><textarea id="s-sub" rows="2" style="resize:vertical">${esc(st.sub)}</textarea>
         <label>아이콘 · 이모지 하나를 넣거나 이미지를 올려요 (브라우저 탭에도 보여요)</label>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span id="s-prev" style="font-size:24px;min-width:32px;text-align:center">${iconHTML(st.icon,"sicon big")}</span>
@@ -265,7 +266,7 @@ function bindAdmin(){
   $("#s-up").onclick=()=>$("#s-file").click();
   $("#s-file").onchange=async ev=>{const f=ev.target.files[0];if(!f)return;try{icon=await shrinkImage(f,128,"image/png");$("#s-icon").value="";prev();}catch(e){toast("이미지를 읽지 못했어요");}};
   $("#s-ok").onclick=async()=>{
-    const v={title:$("#s-title").value.trim()||SITE_DEF.title,sub:$("#s-sub").value.trim(),icon:icon||"",nicks:[...new Set($("#s-nicks").value.split(/[,，、\n]/).map(x=>x.trim()).filter(Boolean))]};
+    const v={title:$("#s-title").value.trim(),sub:$("#s-sub").value.trim(),icon:icon||"",nicks:[...new Set($("#s-nicks").value.split(/[,，、\n]/).map(x=>x.trim()).filter(Boolean))]};
     S.site={...S.site,...v};applySite();
     try{await S.db.doc("scenarios/_site").set(v,{merge:true});toast("저장했어요");}catch(e){writeFail(e);}
     render();
