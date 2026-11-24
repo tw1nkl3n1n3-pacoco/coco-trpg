@@ -845,6 +845,7 @@ function render(){
   if(S.gid&&!S.sid&&!S.cid){app.innerHTML=campPageHTML();bindCamp();return;}
   if(S.cid){app.innerHTML=scenHTML();bindScen();return;}
   if(!S.sid&&S.admin){app.innerHTML=adminHTML();bindAdmin();return;}
+  if(!S.sid&&!S.admin&&document.activeElement&&document.activeElement.id==="hq"&&$("#sesslist")&&!S.hqFull){refreshCanWrite();homeSoft();return;}
   if(!S.sid){const ae=document.activeElement,keep=ae&&ae.id==="hq"?[ae.selectionStart,ae.selectionEnd]:null;S.hqRender=true;
     app.innerHTML=homeHTML();bindHome();if(keep){const n=$("#hq");if(n){n.focus();try{n.setSelectionRange(keep[0],keep[1]);}catch(e){}}}S.hqRender=false;return;}
   app.innerHTML=`
@@ -1798,6 +1799,10 @@ function bindBackup(){
     confirmBox(`세션 ${data.scenarios.length}개, 녹음 ${data.sessions.length}개를 가져올까요? 같은 녹음이 이미 있으면 덮어써요.`,"가져오기",()=>importAll(data,t=>pr.textContent=t));
   };
 }
+function homeSoft(){const box=document.querySelector(".hsearch"),list=$("#sesslist");if(!box||!list){render();return;}
+  const t=document.createElement("div");t.innerHTML=homeHTML();const nb=t.querySelector(".hsearch"),nl=t.querySelector("#sesslist");
+  box.querySelectorAll(".hq-n,.hq-drop").forEach(e=>e.remove());if(nb)nb.querySelectorAll(".hq-n,.hq-drop").forEach(e=>box.appendChild(e));
+  if(nl)list.replaceWith(nl);S.hqSoft=true;bindHome();S.hqSoft=false;}
 function bindHome(){
   bindPartEdit();renderAuth();
   document.querySelectorAll("[data-cmore]").forEach(b=>b.onclick=()=>{const id=b.dataset.cmore;S.campMore[id]=!S.campMore[id];render();});
@@ -1813,21 +1818,25 @@ function bindHome(){
       catch(e){row.textContent=`✗ ${f.name}: ${e.code||e.message}`;row.style.color="var(--bad)";}}
     S.bulkMsg=box.innerHTML;S.importing=false;render();
   }
-  {const hq=$("#hq");const again=pos=>{render();const n=$("#hq");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}};if(hq){
+  {const hq=$("#hq");const again=pos=>{S.hqFull=true;try{render();}finally{S.hqFull=false;}const n=$("#hq");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}};
+    // 입력칸은 그대로 두고 목록·드롭다운만 바꿔요 (한글 조합이 끊기지 않게)
+    const soft=homeSoft;
+    if(hq&&!S.hqSoft){
     {const ch=document.querySelector(".hq-chip");if(ch)hq.style.paddingLeft=(ch.offsetWidth+44)+"px";}
-    hq.oninput=()=>{S.homeQ=hq.value;S.hqOpen=true;S.hqSel=-1;S.hqMore={};again(hq.selectionStart);};
-    hq.onfocus=()=>{if(!S.hqOpen&&hq.value.trim()){S.hqOpen=true;again(hq.selectionStart);}};
-    hq.onblur=()=>{if(S.hqRender)return;setTimeout(()=>{if(S.hqOpen&&document.activeElement!==$("#hq")){S.hqOpen=false;render();}},150);};
+    hq.oninput=()=>{S.homeQ=hq.value;S.hqOpen=true;S.hqSel=-1;S.hqMore={};soft();};
+    hq.onfocus=()=>{if(!S.hqOpen&&hq.value.trim()){S.hqOpen=true;soft();}};
+    hq.onblur=()=>{if(S.hqRender)return;setTimeout(()=>{if(S.hqOpen&&document.activeElement!==$("#hq")){S.hqOpen=false;soft();}},150);};
     hq.onkeydown=e=>{const n=(S.hqItems||[]).length;
-      if(e.key==="ArrowDown"&&S.hqOpen&&n){e.preventDefault();S.hqSel=((S.hqSel??-1)+1)%n;again(hq.selectionStart);}
-      else if(e.key==="ArrowUp"&&S.hqOpen&&n){e.preventDefault();S.hqSel=((S.hqSel??0)-1+n)%n;again(hq.selectionStart);}
+      if(e.isComposing)return;
+      if(e.key==="ArrowDown"&&S.hqOpen&&n){e.preventDefault();S.hqSel=((S.hqSel??-1)+1)%n;soft();}
+      else if(e.key==="ArrowUp"&&S.hqOpen&&n){e.preventDefault();S.hqSel=((S.hqSel??0)-1+n)%n;soft();}
       else if(e.key==="Enter"){e.preventDefault();const el=S.hqOpen&&S.hqSel>=0?document.querySelector(`[data-hqi="${S.hqSel}"]`):null;if(el){el.dispatchEvent(new MouseEvent("mousedown",{bubbles:true}));return;}S.hqOpen=false;again(hq.selectionStart);}
       else if(e.key==="Escape"){if(S.hqOpen){S.hqOpen=false;again(hq.selectionStart);}else if(hq.value){S.homeQ="";render();}}
       else if(e.key==="Backspace"&&!hq.value&&S.homePerson){S.homePerson="";again(0);}};}
     document.querySelectorAll("[data-hqi]").forEach(el=>el.onmousedown=e=>{e.preventDefault();
       if(el.dataset.hqwho){S.homePerson=el.dataset.hqwho;S.homeQ="";S.hqOpen=false;S.hqSel=-1;again(0);}
       else{S.hqOpen=false;S.homeQ="";location.hash=el.getAttribute("href").slice(1);}});
-    document.querySelectorAll("[data-hqmore]").forEach(b=>b.onmousedown=e=>{e.preventDefault();S.hqMore={...(S.hqMore||{}),[b.dataset.hqmore]:true};again(($("#hq")||{}).selectionStart||0);});
+    document.querySelectorAll("[data-hqmore]").forEach(b=>b.onmousedown=e=>{e.preventDefault();S.hqMore={...(S.hqMore||{}),[b.dataset.hqmore]:true};soft();});
     const wx=$("#hq-who-x");if(wx)wx.onclick=()=>{S.homePerson="";render();};}
   document.querySelectorAll("[data-scen]").forEach(a=>a.onclick=ev=>{ev.preventDefault();gotoScen(a.dataset.scen);});
   const nb=$("#nscenb");if(nb){const ni=$("#nscen");const go=()=>{const v=ni.value.trim();if(!v)return;if(scenByName(v)){gotoScen(v);return;}gotoScen(v,true);};nb.onclick=go;ni.onkeydown=ev=>{if(ev.key==="Enter")go();};}
@@ -2760,9 +2769,9 @@ function campTagHTML(c){return c.system?`<span class="sys" data-th="${themeOf({s
 function campCardHTML(c){
   const es=campEps(c).slice().reverse(),last=campLast(c);
   // 일반 세션 카드와 같은 머리 모양: 제목 · 오른쪽에 룰 태그와 편 수 (캠페인인 건 '진행 중인 캠페인' 칸과 굵은 테두리로 보여요)
-  const head=`<div class="scen-h"><h3><a href="#g-${esc(c.id)}">${esc(c.name)} ›</a>${c.orig&&!isCamp(c)?`<span class="orig">${esc(c.orig)}</span>`:""}</h3>${campTagHTML(c)}<span class="d${c.done?" dstamp":""}">${isCamp(c)?`캠프 · ${campWhen(c)?esc(campWhen(c).replace(/ · 당일치기$/,"")):""}${campWhen(c)?" · ":""}${campCount(c)}`:`${campCount(c)}${last?` · 마지막 ${esc(fmtDay(last))}`:""}`}${stampHTML(c)}</span></div>`;
+  const head=`<div class="scen-h"><h3><a href="#g-${esc(c.id)}">${esc(c.name)} ›</a>${c.orig&&!isCamp(c)?`<span class="orig">${esc(c.orig)}</span>`:""}</h3>${campTagHTML(c)}<span class="d${c.done&&!isCamp(c)?" dstamp":""}">${isCamp(c)?`캠프 · ${campWhen(c)?esc(campWhen(c).replace(/ · 당일치기$/,"")):""}${campWhen(c)?" · ":""}${campCount(c)}`:`${campCount(c)}${last?` · 마지막 ${esc(fmtDay(last))}`:""}`}${isCamp(c)?"":stampHTML(c)}</span></div>`;
   const more=!!S.campMore[c.id],shown=more?es:es.slice(0,3);
-  return `<section class="scen camp${c.done?" done":""}">${head}${shown.map(e=>epRowHTML(c,e)).join("")||`<div class="tip" style="margin-top:8px">아직 ${isCamp(c)?"탁이":"편이"} 없어요</div>`}
+  return `<section class="scen camp${c.done&&!isCamp(c)?" done":""}">${head}${shown.map(e=>epRowHTML(c,e)).join("")||`<div class="tip" style="margin-top:8px">아직 ${isCamp(c)?"탁이":"편이"} 없어요</div>`}
     ${es.length>3?`<button class="cmore" data-cmore="${esc(c.id)}">${more?"▴ 접기":`▾ ${isCamp(c)?"탁":"이전 편"} ${es.length-3}개 더 보기`}</button>`:""}</section>`;
 }
 // 플레이어별 캐릭터: 같은 캐릭터로 이어진 편을 한 줄로
