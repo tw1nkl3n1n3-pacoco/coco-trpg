@@ -751,3 +751,11 @@ body[data-theme=deco][data-page=scen] :is(.sc-page,.rvpage)>.ldr{--ink:#f6e7c8;-
 .camp-k .cadd{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:-2px 0 18px}
 .camp-k .ctab .sum{font-size:13.5px;color:var(--dim);margin:-2px 0 10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap}
 .rvr.noav .nm{white-space:normal}.rvr.noav .nm small{display:block;margin:2px 0 0;line-height:1.4}
+/* 캠프 후기 줄: 이름·참여 탁은 왼쪽, 버튼은 오른쪽에 같은 간격 */
+.rvr.noav{padding:13px 2px;gap:6px;align-items:center}
+.rvr.noav .nm{padding-right:14px}
+.rvr.noav .nm b{font-size:15px}
+.rvr.noav .cp{width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.rvr.noav .ext,.rvr.noav .go,.rvr.noav .lpw{flex:none}
+.rvsec .rvr.noav:last-child{border-bottom:1px solid var(--line)}
+.rvsec .rvlist+.rv-btns{margin-top:14px}
