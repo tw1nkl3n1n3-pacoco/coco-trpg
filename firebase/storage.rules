@@ -1,4 +1,4 @@
-// 코코 로그 사이트 Storage(녹음 파일·사진·이모티콘) 보안 규칙 · 규칙 버전 3
+// TRPG 로그 사이트 Storage(녹음 파일·사진·이모티콘) 보안 규칙 · 규칙 버전 3
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {

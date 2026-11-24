@@ -1710,9 +1710,6 @@ function bindBackup(){
 function bindHome(){
   bindPartEdit();renderAuth();
   bindBackup();
-  {const nb=$("#newnolog");if(nb)nb.onclick=async()=>{const n=(prompt("시나리오 이름")||"").trim();if(!n)return;
-    if(findScen(n)){toast("이미 있는 세션이에요. 그 세션의 ✎ 수정에서 '녹음 없이 플레이한 날'을 넣어 주세요",4500);gotoScen(n,true);return;}
-    const sc=createScen(n,[]);sc.plays=[new Date(Date.now()+9*3600e3).toISOString().slice(0,10)];await saveScen(sc);S.pendingEdit=sc.id;location.hash="c-"+sc.id;};}
   async function bulkAudio(files){
     const box=$("#bulkres");
     const pairs=[],miss=[];
