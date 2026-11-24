@@ -2678,8 +2678,8 @@ function campTagHTML(c){return c.system?`<span class="sys" data-th="${themeOf({s
 function campCardHTML(c){
   const es=campEps(c).slice().reverse(),last=campLast(c);
   // 일반 세션 카드와 같은 머리 모양: 제목 · 오른쪽에 룰 태그와 편 수 (캠페인인 건 '진행 중인 캠페인' 칸과 굵은 테두리로 보여요)
-  const head=`<div class="scen-h"><h3><a href="#g-${esc(c.id)}">${esc(c.name)} ›</a>${c.orig?`<span class="orig">${esc(c.orig)}</span>`:""}</h3>${campTagHTML(c)}<span class="d">${campCount(c)}${last?` · 마지막 ${esc(fmtDay(last))}`:""}</span></div>`;
-  if(c.done)return `<section class="scen camp done">${stampHTML(c)}${head}<div class="mini">${es.map(e=>`${esc(epLabel(c,e))} ${esc(e.name)}`).join(" · ")}</div></section>`;
+  const head=`<div class="scen-h"><h3><a href="#g-${esc(c.id)}">${esc(c.name)} ›</a>${c.orig?`<span class="orig">${esc(c.orig)}</span>`:""}</h3>${campTagHTML(c)}<span class="d${c.done?" dstamp":""}">${campCount(c)}${last?` · 마지막 ${esc(fmtDay(last))}`:""}${stampHTML(c)}</span></div>`;
+  if(c.done)return `<section class="scen camp done">${head}<div class="mini">${es.map(e=>`${esc(epLabel(c,e))} ${esc(e.name)}`).join(" · ")}</div></section>`;
   const more=!!S.campMore[c.id],shown=more?es:es.slice(0,3);
   return `<section class="scen camp">${head}${shown.map(e=>epRowHTML(c,e)).join("")||`<div class="tip" style="margin-top:8px">아직 편이 없어요</div>`}
     ${es.length>3?`<button class="cmore" data-cmore="${esc(c.id)}">${more?"▴ 접기":`▾ 이전 편 ${es.length-3}개 더 보기`}</button>`:""}</section>`;
