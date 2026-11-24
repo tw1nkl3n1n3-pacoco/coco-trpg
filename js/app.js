@@ -845,7 +845,8 @@ function render(){
   if(S.gid&&!S.sid&&!S.cid){app.innerHTML=campPageHTML();bindCamp();return;}
   if(S.cid){app.innerHTML=scenHTML();bindScen();return;}
   if(!S.sid&&S.admin){app.innerHTML=adminHTML();bindAdmin();return;}
-  if(!S.sid){app.innerHTML=homeHTML();bindHome();return;}
+  if(!S.sid){const ae=document.activeElement,keep=ae&&ae.id==="hq"?[ae.selectionStart,ae.selectionEnd]:null;S.hqRender=true;
+    app.innerHTML=homeHTML();bindHome();if(keep){const n=$("#hq");if(n){n.focus();try{n.setSelectionRange(keep[0],keep[1]);}catch(e){}}}S.hqRender=false;return;}
   app.innerHTML=`
   <header id="hdr"></header>
   <div class="wrap ${S.canWrite?"":"ro"}">
@@ -1658,23 +1659,48 @@ function scenSecHTML(g){return `
         ${castHTML(g.sc)}
         ${g.sc&&!isOpen(g.sc.id)?"":daysHTML(g.days,false)}
       </section>`;}
+// 메인 검색 드롭다운: 시나리오 · 사람 · 캐릭터
+function hqSuggest(terms,nq){
+  const ok=t=>{const h=nq(t);return terms.every(x=>h.includes(x));};
+  const scen=[];S.camps.forEach(c=>{if(ok(c.name+"|"+(c.orig||"")))scen.push({href:"#g-"+c.id,t:c.name,tag:isCamp(c)?"캠프":"캠페인",sub:campCount(c),d:campKey(c)});});
+  S.scens.forEach(sc=>{if(ok(sc.name+"|"+(sc.orig||"")))scen.push({href:"#c-"+sc.id,t:sc.name,sys:effSys(sc),th:themeOf(sc),sub:sc.orig||"",d:sc.lastDay||""});});
+  scen.sort((a,b)=>(b.d||"").localeCompare(a.d||""));
+  const P=new Map(),C=[];
+  S.scens.forEach(sc=>{const g=gmKey(sc);(sc.sp||[]).forEach(p=>{if(/&/.test(p.name||"")||isAnon(p))return;const n=pcSplit(p.name||"").name;if(!n)return;
+    if(!P.has(n))P.set(n,{n,c:p.c,cnt:0,gm:0,ids:new Set()});const o=P.get(n);if(!o.ids.has(sc.id)){o.ids.add(sc.id);o.cnt++;if(p.k===g)o.gm++;}
+    if(p.ch&&ok(p.ch))C.push({href:"#c-"+sc.id,ch:p.ch,who:n,sc:sc.name,c:p.c,d:sc.lastDay||""});});});
+  const people=[...P.values()].filter(o=>ok(o.n)).sort((a,b)=>b.cnt-a.cnt);
+  C.sort((a,b)=>(b.d||"").localeCompare(a.d||""));
+  return {scen,people,chars:C};
+}
+function hqDropHTML(terms,nq){
+  const R=hqSuggest(terms,nq),more=S.hqMore||{};let i=0;const it=[];
+  const sec=(key,title,arr,f)=>{if(!arr.length)return "";const lim=more[key]?arr.length:5;
+    return `<div class="hq-sec"><div class="hq-h">${title}</div>${arr.slice(0,lim).map(x=>{const n=i++;it.push(x);return f(x,n);}).join("")}${arr.length>5&&!more[key]?`<button type="button" class="hq-more" data-hqmore="${key}">${arr.length-5}개 더 보기</button>`:""}</div>`;};
+  const html=sec("s","시나리오",R.scen,(x,n)=>`<a class="hq-it${S.hqSel===n?" on":""}" href="${esc(x.href)}" data-hqi="${n}"><b>${esc(x.t)}</b>${x.tag?`<span class="hq-tag">${x.tag}</span>`:x.sys?`<span class="sys" data-th="${x.th||"pa"}">${esc(sysLabel(x.sys))}</span>`:""}<small>${esc([x.sub,x.d?fmtDay(x.d):""].filter(Boolean).join(" · "))}</small></a>`)
+    +sec("p","사람",R.people,(x,n)=>`<button type="button" class="hq-it${S.hqSel===n?" on":""}" data-hqwho="${esc(x.n)}" data-hqi="${n}"><i class="hq-dot" style="--c:${fixC(x.c)}"></i><b>${esc(x.n)}</b><small>세션 ${x.cnt}개${x.gm?` · GM ${x.gm}번`:""}</small></button>`)
+    +sec("c","캐릭터",R.chars,(x,n)=>`<a class="hq-it${S.hqSel===n?" on":""}" href="${esc(x.href)}" data-hqi="${n}"><i class="hq-dot" style="--c:${fixC(x.c)}"></i><b>${esc(x.ch)}</b><small>${esc(x.who)} · ${esc(x.sc)}</small></a>`);
+  S.hqItems=it;
+  return `<div class="hq-drop">${html||`<div class="hq-none">맞는 시나리오·사람·캐릭터가 없어요</div>`}<div class="hq-foot">Enter: 아래 목록에서 '${esc(S.homeQ.trim())}' 전체 보기 · Esc: 닫기</div></div>`;
+}
 function homeHTML(){
   const can=S.db&&S.canWrite;
   const all=groups();
-  const NOSYS="룰 미정";
-  // 룰 탭은 판본을 합쳐서 보여요 (D&D 5e, 5.5e → D&D · 더블크로스 2nd, 3rd → 더블크로스)
-  const sysKey=sys=>{const t=themeOf({system:sys});if(t==="deco")return "D&D";if(t==="dx")return "더블크로스";if(t==="wa")return "인세인";return (sys||"").trim()||NOSYS;};
-  const sysOf=g=>sysKey(effSys(g.sc));
-  // 캠페인에 들어간 세션은 캠페인 카드 안에서만 보여요
+  // 캠페인·캠프에 들어간 세션은 그 카드 안에서만 보여요
   const plainGs=all.filter(g=>!(g.sc&&g.sc.camp&&campById(g.sc.camp)));
-  const systems={};plainGs.forEach(g=>{const k=sysOf(g);systems[k]=(systems[k]||0)+1;});S.camps.forEach(c=>{const ks=isCamp(c)?[...new Set(campEps(c).map(e=>sysKey(effSys(e))))]:[sysKey(c.system)];ks.forEach(k=>{systems[k]=(systems[k]||0)+1;});});
-  const sysKeys=Object.keys(systems).sort((a,b)=>(a===NOSYS)-(b===NOSYS)||systems[b]-systems[a]||a.localeCompare(b,"ko"));
-  if(S.sysFilter&&!systems[S.sysFilter])S.sysFilter=null;
-  const gs=S.sysFilter?plainGs.filter(g=>sysOf(g)===S.sysFilter):plainGs;
-  const cs=S.sysFilter?S.camps.filter(c=>isCamp(c)?campEps(c).some(e=>sysKey(effSys(e))===S.sysFilter):sysKey(c.system)===S.sysFilter):S.camps;
+  // 검색: 제목·원어 제목·룰·플레이어·캐릭터·캠페인/캠프 이름 (띄어쓰기·대소문자 무시)
+  const nq=x=>String(x||"").toLowerCase().replace(/\s+/g,"");
+  const terms=String(S.homeQ||"").trim().split(/\s+/).map(nq).filter(Boolean);
+  const hay=sc=>sc?nq([sc.name,sc.orig,effSys(sc),sysLabel(effSys(sc)),themeOf(sc)==="deco"?"D&D 디앤디":themeOf(sc)==="dx"?"더블크로스 DX":themeOf(sc)==="wa"?"인세인":"",...(sc.sp||[]).flatMap(p=>[pcSplit(p.name||"").name,p.ch])].join("|")):"";
+  const hit=h=>terms.every(t=>h.includes(t));
+  const campHay=c=>nq([c.name,c.orig,c.place,c.system,sysLabel(c.system||"")].join("|"))+"|"+campEps(c).map(hay).join("|");
+  const who=S.homePerson||"",hasWho=sc=>!who||(sc?.sp||[]).some(p=>pcSplit(p.name||"").name===who);
+  const gs=plainGs.filter(g=>(!terms.length||hit(g.sc?hay(g.sc):nq(g.scen)))&&hasWho(g.sc));
+  const cs=S.camps.filter(c=>(!terms.length||hit(campHay(c)))&&(!who||campEps(c).some(hasWho)));
   const live=cs.filter(c=>!c.done&&!isCamp(c)).sort((a,b)=>campLast(b).localeCompare(campLast(a)));
-  // 완주한 캠페인은 일반 세션 사이에 마지막 플레이 날짜 순으로
+  // 완주한 캠페인·캠프는 일반 세션 사이에 날짜 순으로 · 연도가 바뀌는 곳에 구분선
   const items=[...gs.map(g=>({k:g.last||"",html:scenSecHTML(g)})),...cs.filter(c=>c.done||isCamp(c)).map(c=>({k:campKey(c),html:campCardHTML(c)}))].sort((a,b)=>b.k.localeCompare(a.k));
+  let py="";const listHTML=items.map(x=>{const y=(x.k||"").slice(0,4);const sep=y&&y!==py?`<div class="hyear"><span>${esc(y)}</span></div>`:"";if(y)py=y;return sep+x.html;}).join("");
   return `<div class="home">
     <div class="hometop"><h2>${iconHTML(site().icon)}${esc(site().title)}</h2></div>
     <div class="tip" style="font-size:13.5px">${esc(site().sub).replace(/\n/g,"<br>")}</div>
@@ -1682,11 +1708,8 @@ function homeHTML(){
     ${!S.ready||(S.db&&!S.loaded)?loaderHTML():""}
     ${S.ready&&S.setupNeeded?`<div class="notice bad">아직 Firebase 설정이 비어 있어요. 저장소 <b>Settings → Secrets and variables → Actions → Variables</b>에 <b>FIREBASE_CONFIG</b>와 <b>OWNER_EMAIL</b>을 넣고 다시 배포해 주세요. 자세한 방법은 저장소의 README에 있어요. (지금은 txt 미리보기만 돼요)</div>`:""}
     ${S.ready&&S.db&&S.loaded&&!S.canAdmin&&S.scens.some(x=>!isOpen(x.id))?`<div class="notice">🔒 표시된 세션은 같이 플레이한 친구에게 받은 비밀번호를 넣어야 로그를 볼 수 있어요.</div>`:""}
-    ${sysKeys.length>1||(sysKeys.length===1&&sysKeys[0]!==NOSYS)?`<div class="systabs">
-      <button class="systab${S.sysFilter?"":" on"}" data-sys="">전체 <span>${plainGs.length+S.camps.length}</span></button>
-      ${sysKeys.map(k=>`<button class="systab${S.sysFilter===k?" on":""}" data-sys="${esc(k)}">${esc(k)} <span>${systems[k]}</span></button>`).join("")}
-    </div>`:""}
-    <div id="sesslist">${live.length?`<div class="hlab">진행 중인 캠페인</div>${live.map(campCardHTML).join("")}${items.length?`<div class="hlab">세션</div>`:""}`:""}${items.map(x=>x.html).join("")||(live.length?"":S.ready&&S.db&&S.loaded?`<div class="notice">아직 올린 세션이 없어요.${S.canAdmin?" 아래 ＋ 세션 올리기로 올려 주세요.":""}</div>`:"")}</div>
+    ${S.loaded&&plainGs.length+S.camps.length>0?`<div class="hsearch${who?" haschip":""}"><svg class="hq-ic" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>${who?`<span class="hq-chip">👤 ${esc(who)}<button type="button" id="hq-who-x" title="풀기">✕</button></span>`:""}<input type="search" id="hq" value="${esc(S.homeQ||"")}" placeholder="${who?"더 좁혀 보기":"세션 · 룰 · 플레이어 · 캐릭터 검색"}" autocomplete="off">${terms.length||who?`<span class="hq-n">${live.length+items.length}개</span>`:""}${S.hqOpen&&terms.length?hqDropHTML(terms,nq):""}</div>`:""}
+    <div id="sesslist">${live.length?`<div class="hlab">진행 중인 캠페인</div>${live.map(campCardHTML).join("")}`:""}${listHTML||(live.length?"":terms.length?`<div class="notice">'${esc(S.homeQ.trim())}'에 맞는 세션이 없어요.</div>`:S.ready&&S.db&&S.loaded?`<div class="notice">아직 올린 세션이 없어요.${S.canAdmin?" 아래 ＋ 세션 올리기로 올려 주세요.":""}</div>`:"")}</div>
     ${can?`<div class="upentry"><a class="btnlike pri upbtn" href="#up">＋ 세션 올리기</a><span class="tip">녹음 · 코코포리아 로그 · 녹음 없는 세션</span></div>`:""}
     ${!S.db?`<div class="card">
       <b>txt 미리보기</b>
@@ -1790,7 +1813,22 @@ function bindHome(){
       catch(e){row.textContent=`✗ ${f.name}: ${e.code||e.message}`;row.style.color="var(--bad)";}}
     S.bulkMsg=box.innerHTML;S.importing=false;render();
   }
-  document.querySelectorAll("[data-sys]").forEach(b=>b.onclick=()=>{S.sysFilter=b.dataset.sys||null;try{localStorage.setItem("trpg-sys",S.sysFilter||"");}catch(e){}render();});
+  {const hq=$("#hq");const again=pos=>{render();const n=$("#hq");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}};if(hq){
+    {const ch=document.querySelector(".hq-chip");if(ch)hq.style.paddingLeft=(ch.offsetWidth+44)+"px";}
+    hq.oninput=()=>{S.homeQ=hq.value;S.hqOpen=true;S.hqSel=-1;S.hqMore={};again(hq.selectionStart);};
+    hq.onfocus=()=>{if(!S.hqOpen&&hq.value.trim()){S.hqOpen=true;again(hq.selectionStart);}};
+    hq.onblur=()=>{if(S.hqRender)return;setTimeout(()=>{if(S.hqOpen&&document.activeElement!==$("#hq")){S.hqOpen=false;render();}},150);};
+    hq.onkeydown=e=>{const n=(S.hqItems||[]).length;
+      if(e.key==="ArrowDown"&&S.hqOpen&&n){e.preventDefault();S.hqSel=((S.hqSel??-1)+1)%n;again(hq.selectionStart);}
+      else if(e.key==="ArrowUp"&&S.hqOpen&&n){e.preventDefault();S.hqSel=((S.hqSel??0)-1+n)%n;again(hq.selectionStart);}
+      else if(e.key==="Enter"){e.preventDefault();const el=S.hqOpen&&S.hqSel>=0?document.querySelector(`[data-hqi="${S.hqSel}"]`):null;if(el){el.dispatchEvent(new MouseEvent("mousedown",{bubbles:true}));return;}S.hqOpen=false;again(hq.selectionStart);}
+      else if(e.key==="Escape"){if(S.hqOpen){S.hqOpen=false;again(hq.selectionStart);}else if(hq.value){S.homeQ="";render();}}
+      else if(e.key==="Backspace"&&!hq.value&&S.homePerson){S.homePerson="";again(0);}};}
+    document.querySelectorAll("[data-hqi]").forEach(el=>el.onmousedown=e=>{e.preventDefault();
+      if(el.dataset.hqwho){S.homePerson=el.dataset.hqwho;S.homeQ="";S.hqOpen=false;S.hqSel=-1;again(0);}
+      else{S.hqOpen=false;S.homeQ="";location.hash=el.getAttribute("href").slice(1);}});
+    document.querySelectorAll("[data-hqmore]").forEach(b=>b.onmousedown=e=>{e.preventDefault();S.hqMore={...(S.hqMore||{}),[b.dataset.hqmore]:true};again(($("#hq")||{}).selectionStart||0);});
+    const wx=$("#hq-who-x");if(wx)wx.onclick=()=>{S.homePerson="";render();};}
   document.querySelectorAll("[data-scen]").forEach(a=>a.onclick=ev=>{ev.preventDefault();gotoScen(a.dataset.scen);});
   const nb=$("#nscenb");if(nb){const ni=$("#nscen");const go=()=>{const v=ni.value.trim();if(!v)return;if(scenByName(v)){gotoScen(v);return;}gotoScen(v,true);};nb.onclick=go;ni.onkeydown=ev=>{if(ev.key==="Enter")go();};}
   if($("#tfile"))$("#tfile").onchange=ev=>takeFiles([...ev.target.files],{});
