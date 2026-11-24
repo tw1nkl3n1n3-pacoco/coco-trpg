@@ -1,4 +1,4 @@
-// 코코 로그방 Firestore 보안 규칙 · 규칙 버전 5
+// 코코 로그방 Firestore 보안 규칙 · 규칙 버전 6
 // 관리자 이메일 자리는 사이트 관리자 페이지에서 복사하면 자동으로 채워져요.
 rules_version = '2';
 service cloud.firestore {
@@ -41,7 +41,7 @@ service cloud.firestore {
     }
     // 규칙 버전 확인용 (사이트가 규칙이 최신인지 확인해요 · 숫자를 바꾸지 마세요)
     match /rulesv/{v} {
-      allow get: if v == "5";
+      allow get: if v == "6";
     }
     // 세션 후기 — 누구나 읽고, 시나리오를 연 사람이 써요. 쓴 브라우저(uid)와 주인만 고치고 지워요
     // (예전 후기는 그때 정한 '후기 비밀번호'를 한 번 넣으면 쓴 브라우저가 이 브라우저로 옮겨와요)
@@ -103,6 +103,16 @@ service cloud.firestore {
         && request.resource.data.get('gaiden', false) == resource.data.get('gaiden', false));
     }
     // 캠페인 — 누구나 볼 수 있고, 캠페인 비밀번호로 연 사람은 소개를 고칠 수 있어요
+    // 캠프 사진: 캠프 비밀번호로 연 사람이 올리고, 올린 사람·주인이 지워요
+    match /photos/{pid} {
+      allow read: if isOwner() || unlocked(resource.data.gid);
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && canRead(request.resource.data.gid)
+        && request.resource.data.size() <= 8
+        && request.resource.data.url is string && request.resource.data.url.size() <= 1000;
+      allow delete: if isOwner() || (request.auth != null && resource.data.uid == request.auth.uid);
+    }
     match /camps/{gid} {
       allow read: if true;
       allow create, delete: if isOwner();

@@ -146,7 +146,7 @@ function siteEdit(anchor){
   });
 }
 // ---------- 관리자 페이지 (#admin) ----------
-const RULES_VERSION="5"; // firebase/firestore.rules 의 rulesv 숫자와 같아야 해요
+const RULES_VERSION="6"; // firebase/firestore.rules 의 rulesv 숫자와 같아야 해요
 const ST_RULES_VERSION="4"; // firebase/storage.rules 의 rulesv 숫자
 S.chk={fs:"?",st:"?",build:null,newer:null,upstream:"",commits:null,err:""};
 const adminAlert=()=>S.chk.fs==="old"||S.chk.st==="old"||(S.chk.newer||0)>0;
@@ -2526,16 +2526,16 @@ function wedHTML(id,html){
     <div class="wbody" contenteditable="true" data-ph="후기를 적어 주세요. 저장하면 이 후기만 따로 볼 수 있는 링크가 생겨요.">${emoize(html||"")}</div></div>`;
 }
 function wedValue(root){return cleanHTML(root.querySelector(".wbody").innerHTML);}
-async function uploadPic(file,scid){
+async function uploadPic(file,scid,full,maxW){
   if(!S.storage)throw new Error("저장소를 쓸 수 없어요");
   if(!S.authUser)await S.auth.signInAnonymously();
   const img=await new Promise((ok,no)=>{const i=new Image(),u=URL.createObjectURL(file);i.onload=()=>{ok(i);};i.onerror=no;i.src=u;});
-  const r=Math.min(1,1200/img.width),w=Math.round(img.width*r),h=Math.round(img.height*r);
+  const r=Math.min(1,(maxW||1200)/img.width),w=Math.round(img.width*r),h=Math.round(img.height*r);
   const c=document.createElement("canvas");c.width=w;c.height=h;const cg=c.getContext("2d");cg.fillStyle="#fff";cg.fillRect(0,0,w,h);cg.drawImage(img,0,0,w,h);URL.revokeObjectURL(img.src);
   const blob=await new Promise(ok=>c.toBlob(ok,"image/jpeg",.86));
   const ref=S.storage.ref(`img/${scid}/${myUid()}/${Date.now().toString(36)}${rid4()}.jpg`);
   await ref.put(blob,{contentType:"image/jpeg",cacheControl:"public,max-age=31536000"});
-  return await ref.getDownloadURL();
+  const url=await ref.getDownloadURL();return full?{url,path:ref.fullPath,w,h}:url;
 }
 function emoPop(anchor,onPick){
   document.querySelectorAll(".emopop").forEach(e=>e.remove());
@@ -2799,6 +2799,39 @@ function campDays(c){const es=campEps(c);if(!c.start)return [{lab:"",eps:es.slic
 function campSc(c){const sp=[],seen=new Set();
   campEps(c).forEach(e=>{const g=gmKey(e);(e.sp||[]).forEach(p=>{if(/&/.test(p.name||"")||(isAnon(p)&&!p.ch&&p.k!==g))return;const n=pcSplit(p.name||"").name;if(!n||seen.has(n))return;seen.add(n);sp.push({k:"n_"+n,name:n,c:p.c,...(p.img?{img:p.img}:{})});});});
   return {id:c.id,name:c.name,sp,isCampSc:true,place:c.place||"",when:campWhen(c)};}
+// 캠프 사진: photos/{pid} {gid, uid, url, path, w, h, at} · 캠프 비밀번호로 연 사람이 올리고, 올린 사람·주인이 지워요
+S.pics={};
+function watchPics(gid){
+  if(!S.db||S.pics[gid]!==undefined)return;S.pics[gid]=null;
+  S.db.collection("photos").where("gid","==",gid).onSnapshot(snap=>{S.pics[gid]=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.at||0)-(b.at||0));if(S.gid===gid&&!S.campEdit&&!S.revForm)render();},()=>{S.pics[gid]=[];});
+}
+function campPicsHTML(c){watchPics(c.id);const list=S.pics[c.id]||[],can=canTalk(c.id)||S.canAdmin;
+  if(!list.length&&!can)return "";
+  return `<div class="sc-sec"><h4 data-en="PHOTOS">사진 <span class="tip" style="letter-spacing:0">· ${list.length?`${list.length}장`:"캠프 비밀번호로 들어온 사람만 보여요"}</span></h4>
+    ${list.length?`<div class="cpics">${list.map((p,i)=>`<button class="cpic" data-pic="${i}"><img src="${esc(p.url)}" alt="" loading="lazy"></button>`).join("")}</div>`:""}
+    ${can&&S.storage?`<label class="btnlike${list.length?"":" pri"} cpadd">＋ 사진 올리기<input type="file" id="cp-file" accept="image/*" multiple hidden></label><span class="tip" id="cp-msg" style="margin-left:8px"></span>`:""}</div>`;}
+function picView(c,i){const list=S.pics[c.id]||[];if(!list.length)return;
+  document.querySelectorAll(".picov").forEach(e=>e.remove());
+  const ov=document.createElement("div");ov.className="picov";document.body.appendChild(ov);
+  const show=()=>{const p=list[i];const mine=S.canAdmin||p.uid===myUid();
+    ov.innerHTML=`<img src="${esc(p.url)}" alt=""><div class="pv-bar"><span>${i+1} / ${list.length}</span>${mine?`<button class="ghost" data-pvdel>지우기</button>`:""}<button class="ghost" data-pvx>닫기 ✕</button></div>${list.length>1?`<button class="pv-nav l" data-pvp>‹</button><button class="pv-nav r" data-pvn>›</button>`:""}`;
+    const d=ov.querySelector("[data-pvdel]");if(d)d.onclick=async e=>{e.stopPropagation();if(!confirm("이 사진을 지울까요? 되돌릴 수 없어요."))return;
+      try{await S.db.doc("photos/"+p.id).delete();if(p.path)S.storage.ref(p.path).delete().catch(()=>{});close();}catch(err){writeFail(err);}};};
+  const close=()=>{ov.remove();document.removeEventListener("keydown",key);};
+  const go=n=>{i=(i+n+list.length)%list.length;show();};
+  const key=e=>{if(e.key==="Escape")close();else if(e.key==="ArrowLeft")go(-1);else if(e.key==="ArrowRight")go(1);};
+  ov.onclick=e=>{if(e.target.closest("[data-pvp]"))go(-1);else if(e.target.closest("[data-pvn]"))go(1);else if(e.target===ov||e.target.closest("[data-pvx]"))close();};
+  document.addEventListener("keydown",key);show();}
+function bindCampPics(c){
+  document.querySelectorAll("[data-pic]").forEach(b=>b.onclick=()=>picView(c,+b.dataset.pic));
+  const f=$("#cp-file");if(!f)return;
+  f.onchange=async()=>{const files=[...f.files].filter(x=>/^image\//.test(x.type));if(!files.length)return;const m=$("#cp-msg");let n=0;
+    for(const file of files){n++;if(m)m.textContent=`올리는 중… ${n}/${files.length}`;
+      try{const r=await uploadPic(file,c.id,true,1600);const pid="p"+Date.now().toString(36)+rid4();
+        await S.db.doc("photos/"+pid).set({gid:c.id,uid:myUid(),url:r.url,path:r.path,w:r.w,h:r.h,at:Date.now()});}
+      catch(e){toast("사진을 올리지 못했어요: "+(e.code==="permission-denied"||e.code==="storage/unauthorized"?"권한이 없어요 (보안 규칙을 새 버전으로 바꿔 주세요)":e.code||e.message),4500);break;}}
+    if(m)m.textContent="";f.value="";};
+}
 function campScById(id){const c=campById(id);return c&&isCamp(c)?campSc(c):null;}
 function campSelfK(id){const c=campById(id);if(!c||!isCamp(c))return "";for(const e of campEps(c)){const p=meSp(e.id);if(p)return "n_"+pcSplit(p.name||"").name;}return "";}
 function campPgHTML(c){
@@ -2809,7 +2842,6 @@ function campPgHTML(c){
       <label>장소 (선택)<input type="text" id="g-place" value="${esc(c.place||"")}" placeholder="예: 가평 펜션"></label>
       <div class="gdates"><label>시작일<input type="date" id="g-start" value="${esc(c.start||"")}"></label><span>–</span><label>끝나는 날<input type="date" id="g-end" value="${esc(c.end&&c.end!==c.start?c.end:"")}"></label></div><div class="tip" style="margin-top:-4px">당일치기면 끝나는 날은 비워 두세요</div>
     </div></div>
-    <div class="sc-sec"><h4 data-en="INTRO">소개</h4><textarea id="g-intro" placeholder="어떤 캠프였는지 적어 주세요 (선택)">${esc(c.intro||"")}</textarea></div>
     ${es.length?"":`<div class="sc-sec"><h4 data-en="DELETE">캠프 지우기</h4><div class="tip" style="margin-bottom:8px">탁이 하나도 없을 때만 지울 수 있어요.</div><button class="ghost" id="g-del">이 캠프 지우기</button></div>`}
     <div class="homefoot"><button class="ghost" onclick="location.hash=''">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div></div>`;
   const days=campDays(c),row=e=>`<div class="trow"><div class="tr-h"><a href="#c-${esc(e.id)}">${esc(e.name)} ›</a>${effSys(e)?`<span class="sys" data-th="${themeOf(e)}">${esc(sysLabel(effSys(e)))}</span>`:""}</div>${castHTML(e)||`<div class="tip">참가자를 아직 안 적었어요</div>`}</div>`;
@@ -2817,12 +2849,12 @@ function campPgHTML(c){
   return `<div class="sc-page campage camp-k">
     <div class="ckick"><span class="cbadge">캠프</span></div>
     <div class="sc-top"><h2>${esc(c.name)}</h2><span class="scmeta">${S.canAdmin?`<button id="g-edit" title="캠프 수정" aria-label="캠프 수정">✎<span class="lbl"> 수정</span></button>`:""}</span></div>
-    <div class="cwhen">${when?`<span>📅 ${esc(when)}</span>`:S.canAdmin?`<span class="tip">✎ 수정에서 날짜를 넣어 주세요</span>`:""}${c.place?`<span>📍 ${esc(c.place)}</span>`:""}<span>🎲 탁 ${es.length}개 · ${sc.sp.length}명</span></div>
-    ${c.intro?`<div class="sc-sec"><h4 data-en="INTRO">소개</h4><div class="sc-text">${emoize(esc(c.intro)).replace(/\n/g,"<br>")}</div></div>`:""}
+    <div class="cwhen">${when?`<span>📅 ${esc(when)}</span>`:S.canAdmin?`<span class="tip">✎ 수정에서 날짜를 넣어 주세요</span>`:""}${c.place?`<span>📍 ${esc(c.place)}</span>`:""}<span>🎲 탁 ${es.length}개</span></div>
     <div class="sc-sec"><h4 data-en="TABLES">탁 · 참가자</h4>${days.map(d=>`${d.lab?`<div class="cday"><b>${esc(d.lab)}</b>${d.day?`<span>${esc(fmtDay(d.day))}</span>`:""}</div>`:""}${d.eps.map(row).join("")||`<div class="tip cday-e">이날 탁 없음</div>`}`).join("")||`<div class="sc-text empty">아직 탁이 없어요.</div>`}
       ${S.canAdmin&&S.db?(()=>{const free=S.scens.filter(x=>!x.camp||!campById(x.camp)).sort((a,b)=>(b.lastDay||"").localeCompare(a.lastDay||""));
         return `<div class="gadd"><a class="btnlike pri" href="#up-${esc(c.id)}">＋ 탁 올리기</a>
           ${free.length?`<span class="gadd-ex"><select id="g-addsel"><option value="">이미 있는 세션 넣기…</option>${free.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}${x.system?` · ${esc(sysLabel(x.system))}`:""}</option>`).join("")}</select><button class="ghost" id="g-addgo">넣기</button></span>`:""}</div>`;})():""}</div>
+    ${S.db&&isOpen(c.id)?campPicsHTML(c):""}
     ${S.db?revSectionHTML(sc):""}
     ${S.canAdmin?`<div class="sc-sec"><h4 data-en="ACCESS">캠프 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
       <div class="tip">이 비밀번호 하나로 캠프의 모든 탁 로그가 열리고, 캠프 후기를 쓸 수 있어요. 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
@@ -2835,12 +2867,12 @@ function campPgHTML(c){
 function campLink(c){return location.href.split("#")[0]+"#g-"+c.id;}
 function bindCamp(){
   const c=campById(S.gid);renderAuth&&renderAuth();if(!c)return;
-  if(isCamp(c)&&!S.campEdit)bindRevs(campSc(c));
+  if(isCamp(c)&&!S.campEdit){bindRevs(campSc(c));bindCampPics(c);}
   const e=$("#g-edit");if(e)e.onclick=()=>{S.campEdit=true;render();};
   const x=$("#g-x");if(x)x.onclick=()=>{S.campEdit=false;render();};
   const sv=$("#g-save");if(sv)sv.onclick=async()=>{const name=$("#g-name").value.trim();if(!name){toast("이름을 넣어 주세요");return;}
     const cm=isCamp(c);let v;
-    if(cm){const a=$("#g-start").value,b=$("#g-end").value||a;if(a&&b<a){toast("끝나는 날이 시작일보다 빨라요");return;}v={name,place:$("#g-place").value.trim(),start:a,end:b,intro:$("#g-intro").value.trim()};}
+    if(cm){const a=$("#g-start").value,b=$("#g-end").value||a;if(a&&b<a){toast("끝나는 날이 시작일보다 빨라요");return;}v={name,place:$("#g-place").value.trim(),start:a,end:b};}
     else{v={name,orig:$("#g-orig").value.trim(),system:$("#g-sys").value.trim(),intro:$("#g-intro").value.trim(),done:$("#g-done").checked};}const done=!cm&&v.done;if(done&&!c.done)v.doneAt=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
     try{await S.db.doc("camps/"+c.id).update(v);S.campEdit=false;Object.assign(c,v);
       if(done){const es=campEps(c);if(es.length)await closePrevEps(c.id,"__all");}
