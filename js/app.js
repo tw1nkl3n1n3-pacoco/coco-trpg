@@ -1714,7 +1714,7 @@ function homeHTML(){
     ${S.loaded&&plainGs.length+S.camps.length>0?`<div class="hsearch${who?" haschip":""}"><svg class="hq-ic" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>${who?`<span class="hq-chip">👤 ${esc(who)}<button type="button" id="hq-who-x" title="풀기">✕</button></span>`:""}<input type="search" id="hq" value="${esc(S.homeQ||"")}" placeholder="${who?"더 좁혀 보기":"세션 · 룰 · 플레이어 · 캐릭터 검색"}" autocomplete="off">${terms.length||who?`<span class="hq-n">${live.length+items.length}개</span>`:""}${S.hqOpen&&tterms.length?hqDropHTML(tterms,nq):""}</div>`:""}
     <div id="sesslist">${live.length?`<div class="hlab">진행 중인 캠페인</div>${live.map(campCardHTML).join("")}`:""}${listHTML||(live.length?"":terms.length?`<div class="notice">'${esc(String(S.homeQc||"").trim())}'에 맞는 세션이 없어요.</div>`:S.ready&&S.db&&S.loaded?`<div class="notice">아직 올린 세션이 없어요.${S.canAdmin?" 아래 ＋ 세션 올리기로 올려 주세요.":""}</div>`:"")}</div>
     ${can?`<div class="upentry"><a class="btnlike pri upbtn" href="#up">＋ 세션 올리기</a><span class="tip">녹음 · 코코포리아 로그 · 녹음 없는 세션</span></div>`:""}
-    ${!S.db?`<div class="card">
+    ${S.ready&&!S.db?`<div class="card">
       <b>txt 미리보기</b>
       <div class="tip" style="margin:4px 0 10px">클로바노트에서 내보낸 <b>대사 파일(.txt)</b>과 <b>녹음 파일(.m4a 등)</b>을 한꺼번에 골라요. 이름이 같은 txt와 녹음은 알아서 짝지어요. 예: <code>261114 세션 1.txt</code> + <code>261114 세션 1.m4a</code><br>
       녹음 파일만 고르면 이미 올린 녹음에 이름으로 짝지어 넣어요(있던 녹음은 새 파일로 바뀌어요). 한 번 플레이가 여러 개로 나뉘었으면 같은 시나리오·같은 날짜로 올리면 1부, 2부로 묶여요.<br>녹음 없는 온라인 세션은 코코포리아 방 메뉴의 <b>로그 출력</b>으로 받은 html을 고르면 회차별로 나눠서 올라가요.</div>
