@@ -2717,7 +2717,7 @@ function campPageHTML(){
       <div class="sc-sec"><h4 data-en="INTRO">소개</h4><textarea id="g-intro" placeholder="어떤 캠페인인지 적어 주세요 (선택)">${esc(c.intro||"")}</textarea></div>
       ${es.length?"":`<div class="sc-sec"><h4 data-en="DELETE">캠페인 지우기</h4><div class="tip" style="margin-bottom:8px">편이 하나도 없을 때만 지울 수 있어요.</div><button class="ghost" id="g-del">이 캠페인 지우기</button></div>`}`
       :`<div class="ckick"><span class="cbadge">캠페인</span></div>
-      <div class="sc-top"><h2>${esc(c.name)}${c.orig?`<span class="orig">${esc(c.orig)}</span>`:""}</h2><span class="scmeta">${campTagHTML(c)}${S.canAdmin?`<button id="g-edit" title="캠페인 수정" aria-label="캠페인 수정">✎<span class="lbl"> 수정</span></button>`:""}</span>${c.done?stampHTML(c):""}</div>`}
+      <div class="sc-top"><h2>${esc(c.name)}${c.orig?`<span class="orig">${esc(c.orig)}</span>`:""}</h2><span class="scmeta">${campTagHTML(c)}${S.canAdmin?`<button id="g-edit" title="캠페인 수정" aria-label="캠페인 수정">✎<span class="lbl"> 수정</span></button>`:""}</span></div>`}
     ${!ed&&c.intro?`<div class="sc-sec"><h4 data-en="INTRO">소개</h4><div class="sc-text">${emoize(esc(c.intro)).replace(/\n/g,"<br>")}</div></div>`:""}
     ${ed?"":`<div class="sc-sec"><h4 data-en="EPISODES">편</h4>${es.slice().reverse().map(e=>epRowHTML(c,e)).join("")||`<div class="sc-text empty">아직 편이 없어요.</div>`}
       ${S.canAdmin&&S.db?(()=>{const free=S.scens.filter(x=>!x.camp||!campById(x.camp)).sort((a,b)=>(b.lastDay||"").localeCompare(a.lastDay||""));
