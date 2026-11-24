@@ -689,3 +689,5 @@ body[data-theme=deco][data-page=scen] :is(.sc-page,.rvpage)>.ldr{--ink:#f6e7c8;-
 .campage .ckick{margin:0 0 6px}
 .campage .sc-top{position:relative}
 .campage .ckick .cbadge{background:var(--acc);color:#fff}
+.scen.camp .scen-h h3 .cbadge{display:inline-block;vertical-align:.18em;margin-right:7px;font-family:"Noto Sans KR",system-ui,sans-serif;font-size:11.5px;line-height:1.5}
+.scen.camp .scen-h+.cep{margin-top:6px}
