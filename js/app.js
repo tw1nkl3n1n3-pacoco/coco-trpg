@@ -2723,7 +2723,7 @@ function campPageHTML(){
       ${S.canAdmin&&S.db?(()=>{const free=S.scens.filter(x=>!x.camp||!campById(x.camp)).sort((a,b)=>(b.lastDay||"").localeCompare(a.lastDay||""));
         return `<div class="gadd">${c.done?"":`<a class="btnlike pri" href="#up-${esc(c.id)}">＋ 다음 시나리오 올리기</a>`}
           ${free.length?`<span class="gadd-ex"><select id="g-addsel"><option value="">이미 있는 세션 넣기…</option>${free.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}${x.system?` · ${esc(sysLabel(x.system))}`:""}</option>`).join("")}</select><label class="chk"><input type="checkbox" id="g-addgai"> 외전</label><button class="ghost" id="g-addgo">넣기</button></span>`:""}</div>
-          <div class="tip" style="margin-top:6px">넣은 세션은 맨 뒤 편으로 붙어요. 순서는 그 세션의 ✎ 수정 → 캠페인 칸에서 바꿔요.</div>`;})():""}</div>
+          <div class="tip" style="margin-top:6px">넣은 세션은 마지막 플레이 날짜 순서에 맞춰 들어가요. 순서는 그 세션의 ✎ 수정 → 캠페인 칸에서 바꿔요.</div>`;})():""}</div>
     ${rows.length?`<div class="sc-sec"><h4 data-en="CAST">플레이어별 캐릭터</h4>${rows.map(r=>`<div class="prow"><b>${esc(r.who)}</b><div class="runs">${r.runs.map(x=>`<div class="run"><span class="rc" style="--c:${x.c}">${x.ch?esc(x.ch):`<span class="tip">캐릭터 미정</span>`}</span><span class="rr">${esc(x.r)}</span>${x.pc&&r.who!=="GM"?`<span class="rp">${esc(x.pc)}</span>`:""}</div>`).join("")}${r.miss?`<div class="run off"><span class="rr">${esc(r.miss)} 불참</span></div>`:""}</div></div>`).join("")}</div>`:""}
     ${S.canAdmin?`<div class="sc-sec"><h4 data-en="ACCESS">캠페인 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
       <div class="tip">이 비밀번호 하나로 캠페인의 모든 편이 열려요. 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
@@ -2755,7 +2755,9 @@ async function setEpCamp(scid,gid,afterId,gaiden){
   await S.db.doc("scenarios/"+scid).update(gid?{camp:gid,gaiden:!!gaiden}:{camp:FV.delete(),gaiden:FV.delete()});
   if(old&&old!==gid){const oc=campById(old);if(oc)await S.db.doc("camps/"+old).update({eps:(oc.eps||[]).filter(x=>x!==scid)});}
   if(gid){const nc=campById(gid);const cur=campEps(nc).map(e=>e.id).filter(x=>x!==scid);
-    let at=afterId==="__first"?0:afterId?cur.indexOf(afterId)+1:cur.length;if(at<0)at=cur.length;cur.splice(at,0,scid);
+    // 자리를 정하지 않으면 마지막 플레이 날짜 순서에 맞는 자리로 넣어요
+    const byDay=()=>{const d=sc.lastDay||"";if(!d)return cur.length;let k=0;cur.forEach((id,i)=>{const x=scenById(id);if(x&&(x.lastDay||"")<=d)k=i+1;});return k;};
+    let at=afterId==="__first"?0:afterId?cur.indexOf(afterId)+1:byDay();if(at<0)at=cur.length;cur.splice(at,0,scid);
     await S.db.doc("camps/"+gid).update({eps:cur});}
 }
 // 캠페인에 새 편(외전 말고)이 올라오면 그 앞의 편은 자동으로 완주 처리 (완주한 날 = 그 편 마지막 플레이 날)
