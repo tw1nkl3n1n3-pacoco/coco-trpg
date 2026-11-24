@@ -2703,19 +2703,24 @@ function campPageHTML(){
   const es=campEps(c),open=campOpen(c),ed=S.campEdit&&S.canAdmin;
   const rows=campRuns(c);
   return `<div class="sc-page campage">
-    <div class="sc-top"><div class="ctop"><span class="cbadge">캠페인</span></div>
-      ${ed?`<div class="fields"><label>캠페인 이름<input type="text" id="g-name" value="${esc(c.name)}"></label><label>캠페인 룰<input type="text" id="g-sys" value="${esc(c.system||"")}" placeholder="예: 더블크로스 3rd"></label>
-        <label>소개<textarea id="g-intro" rows="4">${esc(c.intro||"")}</textarea></label><label class="chk"><input type="checkbox" id="g-done"${c.done?" checked":""}> 캠페인 완주 · 첫 화면에 캠페인 완주 도장이 찍혀요</label>
-        <div class="rv-btns"><button class="pri" id="g-save">저장</button><button class="ghost" id="g-x">취소</button>${es.length?"":`<button class="ghost" id="g-del" style="margin-left:auto">캠페인 지우기</button>`}</div></div>`
-      :`<div class="sctitle"><h2>${esc(c.name)}</h2><div class="scmeta">${campTagHTML(c)}${S.canAdmin?`<button class="ghost" id="g-edit" title="캠페인 수정">✎</button>`:""}</div></div>${c.done?stampHTML(c):""}`}</div>
+    ${ed?`<div class="sc-top"><h2>캠페인 수정</h2><button class="ghost" id="g-x">취소</button><button class="pri" id="g-save">저장</button></div>
+      <div class="sc-sec"><div class="fields" style="margin:0">
+        <label>캠페인 이름<input type="text" id="g-name" value="${esc(c.name)}"></label>
+        <label>캠페인 룰 <span class="tip" style="display:inline">· 각 편은 룰을 비워 두면 이 룰을 따라가요</span><input type="text" id="g-sys" value="${esc(c.system||"")}" placeholder="예: 더블크로스 3rd, 인세인, D&D 5.5e" list="g-syslist"></label>
+        <datalist id="g-syslist">${[...new Set(S.scens.map(x=>(x.system||"").trim()).filter(Boolean))].map(x=>`<option value="${esc(x)}">`).join("")}</datalist>
+        <div class="donerow"><label class="chk"><input type="checkbox" id="g-done"${c.done?" checked":""}> 캠페인 완주</label><span class="tip">첫 화면에 캠페인 완주 도장이 찍히고, 진행 중인 캠페인 칸에서 빠져요</span></div>
+      </div></div>
+      <div class="sc-sec"><h4 data-en="INTRO">소개</h4><textarea id="g-intro" placeholder="어떤 캠페인인지 적어 주세요 (선택)">${esc(c.intro||"")}</textarea></div>
+      ${es.length?"":`<div class="sc-sec"><h4 data-en="DELETE">캠페인 지우기</h4><div class="tip" style="margin-bottom:8px">편이 하나도 없을 때만 지울 수 있어요.</div><button class="ghost" id="g-del">이 캠페인 지우기</button></div>`}`
+      :`<div class="sc-top"><div class="ctop"><span class="cbadge">캠페인</span></div><div class="sctitle"><h2>${esc(c.name)}</h2><div class="scmeta">${campTagHTML(c)}${S.canAdmin?`<button id="g-edit" title="캠페인 수정" aria-label="캠페인 수정">✎<span class="lbl"> 수정</span></button>`:""}</div></div>${c.done?stampHTML(c):""}</div>`}
     ${!ed&&c.intro?`<div class="sc-sec"><h4 data-en="INTRO">소개</h4><div class="sc-text">${emoize(esc(c.intro)).replace(/\n/g,"<br>")}</div></div>`:""}
-    <div class="sc-sec"><h4 data-en="EPISODES">편</h4>${es.slice().reverse().map(e=>epRowHTML(c,e)).join("")||`<div class="sc-text empty">아직 편이 없어요. 세션 수정 화면이나 세션 올리기에서 이 캠페인에 넣을 수 있어요.</div>`}</div>
+    ${ed?"":`<div class="sc-sec"><h4 data-en="EPISODES">편</h4>${es.slice().reverse().map(e=>epRowHTML(c,e)).join("")||`<div class="sc-text empty">아직 편이 없어요. 세션 수정 화면이나 세션 올리기에서 이 캠페인에 넣을 수 있어요.</div>`}</div>
     ${rows.length?`<div class="sc-sec"><h4 data-en="CAST">플레이어별 캐릭터</h4>${rows.map(r=>`<div class="prow"><b>${esc(r.who)}</b><div class="runs">${r.runs.map(x=>`<div class="run"><span class="rc" style="--c:${x.c}">${x.ch?esc(x.ch):`<span class="tip">캐릭터 미정</span>`}</span><span class="rr">${esc(x.r)}</span>${x.pc&&r.who!=="GM"?`<span class="rp">${esc(x.pc)}</span>`:""}</div>`).join("")}${r.miss?`<div class="run off"><span class="rr">${esc(r.miss)} 불참</span></div>`:""}</div></div>`).join("")}</div>`:""}
     ${S.canAdmin?`<div class="sc-sec"><h4 data-en="ACCESS">캠페인 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
       <div class="tip">이 비밀번호 하나로 캠페인의 모든 편이 열려요. 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
       <div class="pwrow"><code class="pw">${esc(S.secrets?.[c.id]||"…")}</code><button class="pri" id="g-copy">링크+비밀번호 복사</button><button class="ghost" id="g-newpw">새로 만들기</button></div></div>`
       :!open?`<div class="sc-sec"><h4 data-en="ACCESS">캠페인 열기</h4><div class="tip">같이 플레이한 친구에게 받은 캠페인 비밀번호를 넣으면 모든 편의 로그가 열려요.</div>
-      <form id="g-unlock" class="pwrow"><input type="text" id="g-pw" placeholder="캠페인 비밀번호" autocomplete="off"><button class="pri">열기</button></form><div class="tip" id="g-msg"></div></div>`:""}
+      <form id="g-unlock" class="pwrow"><input type="text" id="g-pw" placeholder="캠페인 비밀번호" autocomplete="off"><button class="pri">열기</button></form><div class="tip" id="g-msg"></div></div>`:""}`}
     <div class="homefoot"><button class="ghost" onclick="location.hash=''">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
   </div>`;
 }

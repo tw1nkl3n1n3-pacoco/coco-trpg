@@ -682,3 +682,7 @@ body[data-theme=deco][data-page=scen] :is(.sc-page,.rvpage)>.ldr{--ink:#f6e7c8;-
 .run.off .rr{background:none;color:var(--faint);padding:0}
 .campage .ctop{margin-bottom:6px}
 .campage .sc-top{position:relative}
+.campage textarea#g-intro{width:100%;min-height:120px;box-sizing:border-box}
+.campage .donerow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.campage .donerow .chk{display:inline-flex!important;flex-direction:row!important;align-items:center;gap:6px;margin:0;font-weight:700;white-space:nowrap}
+.campage .donerow .chk input{width:auto;margin:0}
