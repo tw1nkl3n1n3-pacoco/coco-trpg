@@ -764,7 +764,6 @@ body[data-theme=deco][data-page=scen] :is(.sc-page,.rvpage)>.ldr{--ink:#f6e7c8;-
 .zchk .tip{display:inline!important}
 .bkhead button{white-space:nowrap;flex:none}
 @media (max-width:640px){
-  .dstamp{display:block;width:100%;box-sizing:border-box;padding-right:56px}
   .camp-k h2 .hsub{display:flex;flex-wrap:wrap;column-gap:12px;row-gap:2px}
   .camp-k h2 .hsub .dot{display:none}
   .camp-k .hsub span{white-space:nowrap}
