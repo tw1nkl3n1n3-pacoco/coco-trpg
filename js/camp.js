@@ -108,20 +108,13 @@ function campSc(c){const sp=[],by=new Map();
 function campScById(id){const c=campById(id);return c&&isCamp(c)?campSc(c):null;}
 function campSelfK(id){const c=campById(id);if(!c||!isCamp(c))return "";for(const e of campEps(c)){const p=meSp(e.id);if(p)return "n_"+pcSplit(p.name||"").name;}return "";}
 // 캠프는 들어올 때부터 잠겨 있어요: 이름을 고르고 캠프 비밀번호 → 모든 탁 로그가 열려요
-function campLockHTML(c){const sc=campSc(c),pick=S.lockPick;
-  const nm=pick&&pick!=="ext"?(sc.sp.find(p=>p.k===pick)||{}).name:"";
+function campLockHTML(c){
   return `<div class="sc-page lockpage"><div class="lkwrap"><div class="lkbox">
     <div class="lockicon">🔒</div><h2>${esc(c.name)}</h2><div class="tip">잠긴 캠프예요${campWhen(c)?` · ${esc(campWhen(c))}`:""}</div>
-    <div class="q">누구로 들어갈까요?</div><div class="lklist">${sc.sp.map(p=>`<button type="button" class="lkc${p.k===pick?" mine":""}" data-mek="${esc(p.k)}" style="--c:${fixC(p.c)}"><i></i><span class="nm">${esc(p.name)}</span></button>`).join("")}
-    <button type="button" class="lkout${pick==="ext"?" on":""}" data-mek="ext">외부인으로 보기</button></div>
-    ${pick?`<div class="lkpw"><div class="who">${pick==="ext"?`외부인은 로그를 <span class="me">읽기만</span> 할 수 있어요`:`<span class="me">${esc(nm)}</span>(으)로 들어가요`}</div>
-      <form id="g-unlock"><input type="text" id="g-pw" placeholder="캠프 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form>
-      <div class="tip" id="g-msg" style="margin-top:8px"></div></div>`:`<div class="guest">같이 간 사람에게 받은 캠프 비밀번호가 필요해요</div>`}
+    <div class="lkpw"><form id="g-unlock"><input type="text" id="g-pw" placeholder="캠프 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form>
+      <div class="tip" id="g-msg" style="margin-top:8px">같이 간 사람에게 받은 캠프 비밀번호를 넣어 주세요</div></div>
     <div class="homefoot"><button class="ghost" onclick="location.hash=''">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
   </div></div></div>`;}
-// 캠프에서 고른 '나'를 각 탁에도: 같은 이름의 플레이어로
-function setCampMe(c,k){setMe(c.id,k);const n=k&&k!=="ext"?k.replace(/^n_/,""):"";
-  campEps(c).forEach(e=>{if(k==="ext"){setMe(e.id,"ext");return;}const p=(e.sp||[]).find(p=>pcSplit(p.name||"").name===n);if(p)setMe(e.id,p.k);});}
 function campPgHTML(c){
   if(!campOpen(c))return campLockHTML(c);
   const ed=S.campEdit&&S.canAdmin,es=campEps(c),open=campOpen(c),when=campWhen(c);
@@ -162,7 +155,7 @@ function campPgHTML(c){
 function campLink(c){return shareUrl(c.id);}
 function bindCamp(){
   const c=campById(S.gid);renderAuth&&renderAuth();if(!c)return;
-  if(isCamp(c)&&!campOpen(c)){document.querySelectorAll(".lkwrap [data-mek]").forEach(b=>b.onclick=()=>{S.lockPick=b.dataset.mek;render();});const inp=$("#g-pw");if(inp)setTimeout(()=>inp.focus(),0);}
+  if(isCamp(c)&&!campOpen(c)){const inp=$("#g-pw");if(inp)setTimeout(()=>inp.focus(),0);}
   if(isCamp(c)&&!S.campEdit&&campOpen(c))bindRevs(campSc(c));
   const e=$("#g-edit");if(e)e.onclick=()=>{S.campEdit=true;render();};
   const x=$("#g-x");if(x)x.onclick=()=>{S.campEdit=false;S.campOg=undefined;render();};
@@ -183,8 +176,7 @@ function bindCamp(){
   const ag=$("#g-addgo");if(ag)ag.onclick=async()=>{const id=$("#g-addsel").value;if(!id){toast("넣을 세션을 골라 주세요");return;}
     ag.disabled=true;try{await setEpCamp(id,c.id,"",!!$("#g-addgai")?.checked);toast(isCamp(c)?"캠프에 넣었어요":"캠페인에 넣었어요");}catch(err){ag.disabled=false;writeFail(err);}};
   const uf=$("#g-unlock");if(uf)uf.onsubmit=async ev=>{ev.preventDefault();const pw=$("#g-pw").value.trim();if(!pw)return;const m=$("#g-msg");m.textContent="확인하는 중…";
-    const pick=S.lockPick;
-    try{await unlockScen(c.id,pw);if(isCamp(c)&&pick)setCampMe(c,pick);S.lockPick=null;m.textContent="열렸어요!";refreshCanWrite();render();}catch(err){m.textContent=err&&err.code==="permission-denied"?"비밀번호가 틀렸어요.":"열지 못했어요: "+(err.code||err.message);}};
+    try{await unlockScen(c.id,pw);m.textContent="열렸어요!";refreshCanWrite();render();}catch(err){m.textContent=err&&err.code==="permission-denied"?"비밀번호가 틀렸어요.":"열지 못했어요: "+(err.code||err.message);}};
 }
 // 세션을 캠페인에 넣기·빼기·순서 (주인)
 async function setEpCamp(scid,gid,afterId,gaiden){
