@@ -208,7 +208,7 @@ function adminHTML(){
           <input type="file" id="s-file" accept="image/*" style="display:none"></div>
         <label>내 닉네임 · 여러 개면 쉼표로 (예: AA, BB) · 세션마다 이 이름의 플레이어가 자동으로 '나'가 돼요</label>
         <input type="text" id="s-nicks" value="${esc((st.nicks||[]).join(", "))}" placeholder="AA, BB">
-        ${S.storage?`<label class="chk" style="flex-direction:row;align-items:center;gap:6px;margin-top:6px"><input type="checkbox" id="s-z"${S.site&&S.site.noz?"":" checked"} style="width:auto"> 녹음을 올릴 때 용량 줄이기 <span class="tip" style="display:inline">· 말소리용 opus로 바꿔 보통 1/2~1/3 크기 · 크롬·엣지 권장</span></label>`:""}
+        ${S.storage?`<label class="zchk"><input type="checkbox" id="s-z"${S.site&&S.site.noz?"":" checked"} style="width:auto"> 녹음을 올릴 때 용량 줄이기 <span class="tip" style="display:inline">· 말소리용 opus로 바꿔 보통 1/2~1/3 크기 · 크롬·엣지 권장</span></label>`:""}
         <div class="btns"><button class="pri" id="s-ok">저장</button></div>
       </div></div>
     ${S.db&&S.storage?`<div class="card"><b>저장 공간</b> <span class="tip">· 녹음·이모티콘 파일 (US 지역 무료 범위 기준)</span><div id="stuse">${storeUseHTML()}</div></div>`:""}
@@ -1996,8 +1996,8 @@ function scenHTML(){
     <div class="sc-sec"><h4 data-en="CAST">플레이어 · 등장인물</h4>${sc.sp.length?`${(()=>{const m=meSp(sc.id),k=myK(sc.id);return k==="ext"&&!S.canAdmin?`<div class="meline">외부인으로 보는 중 · <button class="lnk" id="mepick">바꾸기</button></div>`:m?`<div class="meline" style="--c:${fixC(m.c)}"><span class="me"><i></i>나: ${esc(pcSplit(m.name).name)}</span>${m.ch?` · ${esc(m.ch)}`:""} · <button class="lnk" id="mepick">바꾸기</button></div>`:`<div class="meline"><button class="lnk" id="mepick">나는 누구? 고르기</button></div>`;})()}<div class="castrow">${gmFirst(sc.sp.filter(p=>p.k===gmKey(sc)||!isAnon(p)&&!/&/.test(p.name)||p.ch),gmKey(sc)).map(p=>{const gm=p.k===gmKey(sc),q=pcSplit(p.name);return `<div class="cc${gm?" gm":""}${p.k===myK(sc.id)?" mine":""}" style="--c:${fixC(p.c)}"><div class="av">${avHTML(p,gm)}</div><div class="cn">${esc(gm?(p.ch||gmWord(sc)):(p.ch||q.name))}</div><div class="cp">${gm?gmTag:q.n?`<span class="pcn">${q.n}</span>`:""}${p.ch||gm?esc(q.name):""}</div></div>`;}).join("")}</div>`:`<div class="sc-text empty">녹음을 올리면 화자가 여기 모여요.</div>`}</div>
     <div class="sc-sec"><h4 data-en="SESSIONS">${days.length&&days.every(x=>x.nolog)?"회차":"녹음"}</h4>${days.length?daysHTML(days):`<div class="sc-text empty">아직 올린 회차가 없어요.</div>`}${S.db&&S.canWrite&&!sc.done?`<div class="upadd"><a class="btnlike" href="#up-${esc(sc.id)}">＋ 회차 올리기</a></div>`:""}</div>
     ${S.db?revSectionHTML(sc):""}
-    ${S.canAdmin?`    <div class="sc-sec"><h4 data-en="ACCESS">${campOf(sc)?"캠페인 비밀번호":"세션 비밀번호"} <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
-      <div class="tip" style="margin-bottom:10px">${campOf(sc)?`이 비밀번호 하나로 ${esc(campOf(sc).name)}의 모든 편이 열려요.`:"링크와 비밀번호를 같이 받은 사람만 이 세션을 보고 고칠 수 있어요."} 비밀번호를 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
+    ${S.canAdmin?`    <div class="sc-sec"><h4 data-en="ACCESS">${campOf(sc)?campWord(campOf(sc))+" 비밀번호":"세션 비밀번호"} <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
+      <div class="tip" style="margin-bottom:10px">${campOf(sc)?`이 비밀번호 하나로 ${esc(campOf(sc).name)}의 모든 ${isCamp(campOf(sc))?"탁이":"편이"} 열려요.`:"링크와 비밀번호를 같이 받은 사람만 이 세션을 보고 고칠 수 있어요."} 비밀번호를 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
       ${S.secrets&&S.secrets[pwOf(sc)]?`<div class="pwrow"><code class="pw">${esc(S.secrets[pwOf(sc)])}</code>
         <button id="copyshare" class="pri">링크+비밀번호 복사</button><button id="regenpw" class="ghost">새로 만들기</button></div>
         <div class="tip" style="margin-top:8px;word-break:break-all">${esc(shareUrl(sc.id))}</div>`:`<div class="tip">비밀번호를 만드는 중…</div>`}
@@ -2842,7 +2842,7 @@ function campPgHTML(c){
     ${es.length?"":`<div class="sc-sec"><h4 data-en="DELETE">캠프 지우기</h4><div class="tip" style="margin-bottom:8px">탁이 하나도 없을 때만 지울 수 있어요.</div><button class="ghost" id="g-del">이 캠프 지우기</button></div>`}
     <div class="homefoot"><button class="ghost" onclick="location.hash=''">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div></div>`;
   const days=campDays(c).filter(d=>d.eps.length),sc=campSc(c);
-  const sub=[when,c.place,`탁 ${es.length}개`].filter(Boolean).map(esc).join('<i class="dot">·</i>');
+  const sub=[when,c.place,`탁 ${es.length}개`].filter(Boolean).map(x=>`<span>${esc(x)}</span>`).join('<i class="dot">·</i>');
   const row=e=>`<div class="ctab"><div class="ct-h"><a href="#c-${esc(e.id)}">${esc(e.name)}</a>${effSys(e)?`<span class="sys" data-th="${themeOf(e)}">${esc(sysLabel(effSys(e)))}</span>`:""}</div>${e.summary?`<div class="sum">${esc(e.summary)}</div>`:""}${castHTML(e)||`<div class="tip">참가자를 아직 안 적었어요</div>`}</div>`;
   const edb=S.canAdmin?`<button id="g-edit" title="캠프 수정" aria-label="캠프 수정">✎<span class="lbl"> 수정</span></button>`:"";
   const add=S.canAdmin&&S.db?(()=>{const free=S.scens.filter(x=>!x.camp||!campById(x.camp)).sort((a,b)=>(b.lastDay||"").localeCompare(a.lastDay||""));
@@ -2883,7 +2883,7 @@ function bindCamp(){
       render();toast("저장했어요");}catch(err){writeFail(err);}};
   const dl=$("#g-del");if(dl)dl.onclick=()=>confirmBox(`'${c.name}' ${campWord(c)}을(를) 지울까요?`,"삭제",async()=>{try{await S.db.doc("camps/"+c.id).delete();S.db.doc("secrets/"+c.id).delete().catch(()=>{});location.hash="";}catch(err){writeFail(err);}});
   const cp=$("#g-copy");if(cp)cp.onclick=()=>copyText(`${c.name}\n${campLink(c)}\n비밀번호: ${S.secrets?.[c.id]||""}`,"링크와 비밀번호를 복사했어요");
-  const np=$("#g-newpw");if(np)np.onclick=()=>confirmBox("캠페인 비밀번호를 새로 만들까요? 예전 비밀번호로 연 사람은 다시 잠겨요.","새로 만들기",async()=>{try{await S.db.doc("secrets/"+c.id).set({pw:genPw()});}catch(err){writeFail(err);}});
+  const np=$("#g-newpw");if(np)np.onclick=()=>confirmBox(campWord(c)+" 비밀번호를 새로 만들까요? 예전 비밀번호로 연 사람은 다시 잠겨요.","새로 만들기",async()=>{try{await S.db.doc("secrets/"+c.id).set({pw:genPw()});}catch(err){writeFail(err);}});
   const ag=$("#g-addgo");if(ag)ag.onclick=async()=>{const id=$("#g-addsel").value;if(!id){toast("넣을 세션을 골라 주세요");return;}
     ag.disabled=true;try{await setEpCamp(id,c.id,"",!!$("#g-addgai")?.checked);toast(isCamp(c)?"캠프에 넣었어요":"캠페인에 넣었어요");}catch(err){ag.disabled=false;writeFail(err);}};
   const uf=$("#g-unlock");if(uf)uf.onsubmit=async ev=>{ev.preventDefault();const pw=$("#g-pw").value.trim();if(!pw)return;const m=$("#g-msg");m.textContent="확인하는 중…";

@@ -758,3 +758,14 @@ body[data-theme=deco][data-page=scen] :is(.sc-page,.rvpage)>.ldr{--ink:#f6e7c8;-
 .bkhead{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13.5px;margin-bottom:6px}
 .bkrows{border-top:1px solid var(--line);margin:4px 0 12px;max-height:220px;overflow:auto}
 .bkrow{display:flex;justify-content:space-between;align-items:center;padding:6px 2px;border-bottom:1px solid var(--line);font-size:13px;color:var(--dim)}
+/* 녹음 줄이기 설정 줄 */
+.zchk{display:block!important;margin-top:8px;font-size:13px;line-height:1.5}
+.zchk input{width:auto!important;margin:0 6px 0 0;vertical-align:-2px}
+.zchk .tip{display:inline!important}
+.bkhead button{white-space:nowrap;flex:none}
+@media (max-width:640px){
+  .dstamp{display:block;width:100%;box-sizing:border-box;padding-right:56px}
+  .camp-k h2 .hsub{display:flex;flex-wrap:wrap;column-gap:12px;row-gap:2px}
+  .camp-k h2 .hsub .dot{display:none}
+  .camp-k .hsub span{white-space:nowrap}
+}
