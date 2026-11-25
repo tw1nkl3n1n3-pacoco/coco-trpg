@@ -27,10 +27,10 @@ fs.writeFileSync(path.join(OUT, "firebase-config.js"),
 // 3) DB에서 시나리오를 읽어 공유 페이지(p/) + 메인 탭 제목
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const val = v => v == null ? undefined : v.stringValue ?? v.integerValue ?? v.doubleValue ?? v.booleanValue;
-async function list() {
+async function list(col = "scenarios") {
   const out = []; let token = "";
   do {
-    const u = `https://firestore.googleapis.com/v1/projects/${cfg.projectId}/databases/(default)/documents/scenarios?pageSize=100&key=${cfg.apiKey}${token ? "&pageToken=" + token : ""}`;
+    const u = `https://firestore.googleapis.com/v1/projects/${cfg.projectId}/databases/(default)/documents/${col}?pageSize=100&key=${cfg.apiKey}${token ? "&pageToken=" + token : ""}`;
     const r = await fetch(u);
     if (!r.ok) throw new Error("Firestore " + r.status + " " + (await r.text()).slice(0, 200));
     const j = await r.json();
@@ -47,9 +47,20 @@ if (cfg && cfg.projectId && cfg.apiKey) {
     siteTitle = (site && val(site.f.title)) || siteTitle;
     fs.mkdirSync(path.join(OUT, "p"), { recursive: true });
     let n = 0;
-    for (const { id, f } of docs) {
-      if (id.startsWith("_")) continue;
-      const name = val(f.name) || "시나리오", system = val(f.system) || "", og = val(f.og) || "";
+    const pages = docs.filter(d => !d.id.startsWith("_")).map(({ id, f }) => ({ id, f, name: val(f.name) || "시나리오", desc: val(f.system) || "", target: `../#c-${id}` }));
+    // 캠페인·캠프 페이지도 (camps는 누구나 읽을 수 있어요)
+    let camps = [];
+    try { camps = await list("camps"); } catch (e) { console.log("::warning::캠페인·캠프를 읽지 못했어요: " + e.message); }
+    const md = s => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ""); return m ? `${+m[2]}월 ${+m[3]}일` : ""; };
+    for (const { id, f } of camps) {
+      const camp = val(f.kind) === "camp", eps = (f.eps && f.eps.arrayValue && f.eps.arrayValue.values || []).length;
+      const a = val(f.start), b = val(f.end) || a;
+      const when = camp && a ? (a === b ? md(a) : `${md(a)} – ${md(b).replace(a.slice(0, 7) === b.slice(0, 7) ? /^\d+월 / : /^$/, "")}`) : "";
+      const desc = camp ? ["캠프", when, val(f.place), eps ? `탁 ${eps}개` : ""].filter(Boolean).join(" · ") : ["캠페인", val(f.system), eps ? `${eps}편` : ""].filter(Boolean).join(" · ");
+      pages.push({ id, f, name: val(f.name) || (camp ? "캠프" : "캠페인"), desc, target: `../#g-${id}` });
+    }
+    for (const { id, f, name, desc, target } of pages) {
+      const system = desc, og = val(f.og) || "";
       let img = "";
       if (og.startsWith("data:image/")) {
         const buf = Buffer.from(og.split(",")[1], "base64");
@@ -57,7 +68,6 @@ if (cfg && cfg.projectId && cfg.apiKey) {
         fs.writeFileSync(path.join(OUT, file), buf);
         img = `${BASE}${file}?v=${crypto.createHash("md5").update(buf).digest("hex").slice(0, 8)}`;
       }
-      const target = `../#c-${id}`;
       fs.writeFileSync(path.join(OUT, `p/${id}.html`), `<!DOCTYPE html>
 <html lang="ko"><head><meta charset="utf-8">
 <title>${esc(name)} · ${esc(siteTitle)}</title>

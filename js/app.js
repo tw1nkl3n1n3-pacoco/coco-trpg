@@ -2864,7 +2864,8 @@ function campPgHTML(c){
     <div class="homefoot"><button class="ghost" onclick="location.hash=''">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
   </div>`;
 }
-function campLink(c){return location.href.split("#")[0]+"#g-"+c.id;}
+// 배포 때 만드는 미리보기 페이지(p/{id}.html)로 보내야 카톡·디스코드에 대표 이미지가 떠요
+function campLink(c){return shareUrl(c.id);}
 function bindCamp(){
   const c=campById(S.gid);renderAuth&&renderAuth();if(!c)return;
   if(isCamp(c)&&!S.campEdit)bindRevs(campSc(c));
