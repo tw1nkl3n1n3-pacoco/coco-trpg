@@ -119,7 +119,7 @@ function applySite(){
 }
 // ---------- 관리자 페이지 (#admin) ----------
 const RULES_VERSION="5"; // firebase/firestore.rules 의 rulesv 숫자와 같아야 해요
-const ST_RULES_VERSION="4"; // firebase/storage.rules 의 rulesv 숫자
+const ST_RULES_VERSION="5"; // firebase/storage.rules 의 rulesv 숫자
 S.chk={fs:"?",st:"?",build:null,newer:null,upstream:"",commits:null,err:""};
 const adminAlert=()=>S.chk.fs==="old"||S.chk.st==="old"||(S.chk.newer||0)>0;
 const projId=()=>(window.FIREBASE_CONFIG||{}).projectId||"";
@@ -208,6 +208,7 @@ function adminHTML(){
           <input type="file" id="s-file" accept="image/*" style="display:none"></div>
         <label>내 닉네임 · 여러 개면 쉼표로 (예: AA, BB) · 세션마다 이 이름의 플레이어가 자동으로 '나'가 돼요</label>
         <input type="text" id="s-nicks" value="${esc((st.nicks||[]).join(", "))}" placeholder="AA, BB">
+        ${S.storage?`<label class="chk" style="flex-direction:row;align-items:center;gap:6px;margin-top:6px"><input type="checkbox" id="s-z"${S.site&&S.site.noz?"":" checked"} style="width:auto"> 녹음을 올릴 때 용량 줄이기 <span class="tip" style="display:inline">· 말소리용 opus로 바꿔 보통 1/2~1/3 크기 · 크롬·엣지 권장</span></label>`:""}
         <div class="btns"><button class="pri" id="s-ok">저장</button></div>
       </div></div>
     ${S.db&&S.storage?`<div class="card"><b>저장 공간</b> <span class="tip">· 녹음·이모티콘 파일 (US 지역 무료 범위 기준)</span><div id="stuse">${storeUseHTML()}</div></div>`:""}
@@ -219,7 +220,8 @@ function adminHTML(){
     <div class="card"><b>보안 규칙 점검</b> <span class="tip">· 규칙 버전 ${RULES_VERSION}</span><div id="rules" style="margin-top:6px">${rulesBlockHTML()}</div></div>
     ${S.db?`    <div class="card">
       <b>백업 · 옮기기</b>
-      <div class="tip" style="margin:4px 0 10px">전체 데이터를 JSON 파일로 받아 두거나, 받아 둔 JSON을 다시 가져와요. 가져오면 같은 녹음은 덮어써요.</div>
+      <div class="tip" style="margin:4px 0 10px">전체 데이터(세션·대사·캠페인·캠프·후기·댓글·비밀번호)를 JSON 파일로 받아 두거나, 받아 둔 JSON을 다시 가져와요. 가져오면 같은 것은 덮어써요. 녹음 파일은 들어가지 않아요.</div>
+      ${S.storage?`<div id="bklist">${bkListHTML()}</div>`:""}
       <button id="exportb">⬇ JSON으로 내보내기</button>
       <span class="filebtn"><button>⬆ JSON 가져오기</button><input type="file" id="importf" accept=".json,application/json"></span>
       <span class="tip" id="exprog">${esc(S.impMsg||"")}</span>
@@ -239,7 +241,7 @@ function bindAdmin(){
   $("#s-up").onclick=()=>$("#s-file").click();
   $("#s-file").onchange=async ev=>{const f=ev.target.files[0];if(!f)return;try{icon=await shrinkImage(f,128,"image/png");$("#s-icon").value="";prev();}catch(e){toast("이미지를 읽지 못했어요");}};
   $("#s-ok").onclick=async()=>{
-    const v={title:$("#s-title").value.trim(),sub:$("#s-sub").value.trim(),icon:icon||"",nicks:[...new Set($("#s-nicks").value.split(/[,，、\n]/).map(x=>x.trim()).filter(Boolean))]};
+    const v={title:$("#s-title").value.trim(),sub:$("#s-sub").value.trim(),icon:icon||"",nicks:[...new Set($("#s-nicks").value.split(/[,，、\n]/).map(x=>x.trim()).filter(Boolean))],...($("#s-z")?{noz:!$("#s-z").checked}:{})};
     S.site={...S.site,...v};applySite();
     try{await S.db.doc("scenarios/_site").set(v,{merge:true});toast("저장했어요");}catch(e){writeFail(e);}
     render();
@@ -807,7 +809,7 @@ function applyTheme(){
   if((document.body.dataset.theme||"")!==t){if(t)document.body.dataset.theme=t;else delete document.body.dataset.theme;}
   document.body.dataset.page=S.revPage?"scen":S.cid?"scen":S.sid?"log":"home";
 }
-function render(){
+function render(){try{bkAuto();}catch(e){}
   const app=$("#app");
   refreshCanWrite();applyTheme();if(typeof setTitle==="function")setTitle();
   if(S.revPage){app.innerHTML=revPageHTML();return;}
@@ -1425,7 +1427,7 @@ function bindHeader(){
   $("#help").onclick=helpBox;
   const aa=$("#addaudio");if(aa)aa.onclick=audioBox;
   const ua=$("#upaudio");if(ua)ua.onchange=async ev=>{const f=ev.target.files[0];if(!f)return;const s=S.sessions.find(x=>x.id===S.sid)||{id:S.sid,...S.meta};
-    try{await uploadAudio(s,f,pct=>{const c=document.querySelector(".player .filebtn button");if(c)c.textContent=`올리는 중 ${pct}%`;});toast("녹음을 올렸어요");}catch(e){toast("올리지 못했어요: "+(e.code||e.message),4000);renderHeader();}};
+    try{await uploadAudio(s,f,(pct,st)=>{const c=document.querySelector(".player .filebtn button");if(c)c.textContent=`${st==="zip"?"줄이는 중":"올리는 중"} ${pct}%`;});toast("녹음을 올렸어요");}catch(e){toast("올리지 못했어요: "+(e.code||e.message),4000);renderHeader();}};
   if($("#afile"))$("#afile").onchange=ev=>{const f=ev.target.files[0];if(!f)return;if(S.audioUrl&&!S.audioCloud)URL.revokeObjectURL(S.audioUrl);S.audioCloud=false;S.audioUrl=URL.createObjectURL(f);const a=$("#aud");a.src=S.audioUrl;renderHeader();toast("녹음을 열었어요. 시간을 누르면 거기서 재생돼요");};
   $("#pp").onclick=togglePlay;
   $("#bk").onclick=()=>{const a=$("#aud");a.currentTime=Math.max(0,a.currentTime-5);};
@@ -1565,17 +1567,25 @@ async function loadCloudAudio(){
   }catch(e){toast("녹음을 불러오지 못했어요: "+(e.code||e.message),4000);}
   S.audioLoading=false;renderHeader();
 }
-function uploadAudio(sess,file,onPct){
+// 올리기 전에 녹음을 opus로 줄여요(js/audio.js) · 안 되면 원본 그대로
+async function uploadAudio(sess,file,onPct){
+  let body=file,ext=(file.name.match(/\.([a-z0-9]+)$/i)||[,"m4a"])[1].toLowerCase(),type=file.type||(ext==="m4a"?"audio/mp4":"audio/"+ext),orig=0;
+  if(S.storage&&typeof compressAudio==="function"&&!(S.site&&S.site.noz)){
+    try{onPct&&onPct(0,"zip");const r=await compressAudio(file,f=>onPct&&onPct(Math.min(99,Math.floor(f*100)),"zip"));
+      if(r){body=r.blob;ext="webm";type="audio/webm";orig=file.size;}}catch(e){console.warn(e);}
+  }
+  return putAudio(sess,file,body,ext,type,orig,onPct);
+}
+function putAudio(sess,file,body,ext,type,orig,onPct){
   return new Promise((ok,fail)=>{
     if(!S.storage){fail(new Error("Storage가 설정되지 않았어요"));return;}
     const scid=sess.scid||findScen(info(sess).scen)?.id;if(!scid){fail(new Error("세션을 찾을 수 없어요"));return;}
-    const ext=(file.name.match(/\.([a-z0-9]+)$/i)||[,"m4a"])[1].toLowerCase();
     const path=`audio/${scid}/${sess.id}.${ext}`;
-    const task=S.storage.ref(path).put(file,{contentType:file.type||(ext==="m4a"?"audio/mp4":"audio/"+ext)});
+    const task=S.storage.ref(path).put(body,{contentType:type});
     task.on("state_changed",sn=>onPct&&onPct(Math.floor(sn.bytesTransferred/sn.totalBytes*100)),fail,async()=>{
       try{
         if(sess.audioPath&&sess.audioPath!==path){try{await S.storage.ref(sess.audioPath).delete();}catch(e){}}
-        await S.db.doc("sessions/"+sess.id).update({audioPath:path,audioName:file.name,audioSize:file.size});ok(path);
+        await S.db.doc("sessions/"+sess.id).update({audioPath:path,audioName:file.name,audioSize:body.size,...(orig?{audioOrig:orig}:{audioOrig:firebase.firestore.FieldValue.delete()})});ok(path);
       }catch(e){fail(e);}
     });
   });
@@ -1609,7 +1619,7 @@ function editSessionBox(id){
   m.querySelector("[data-x]").onclick=()=>m.remove();
   m.onclick=ev=>{if(ev.target===m)m.remove();};
   const sba=m.querySelector("#sb-audio");if(sba)sba.onchange=async ev=>{const f=ev.target.files[0];if(!f)return;const pr=m.querySelector("#sb-aprog");
-    try{await uploadAudio(s,f,p=>pr.textContent=`올리는 중… ${p}%`);pr.textContent="올렸어요 ✓";}catch(e){pr.textContent="올리지 못했어요: "+(e.code||e.message);}};
+    try{await uploadAudio(s,f,(p,st)=>pr.textContent=`${st==="zip"?"녹음 줄이는 중":"올리는 중"}… ${p}%`);pr.textContent="올렸어요 ✓";}catch(e){pr.textContent="올리지 못했어요: "+(e.code||e.message);}};
   const sbd=m.querySelector("#sb-audiodel");if(sbd)sbd.onclick=()=>{m.remove();confirmBox("이 녹음 파일을 지울까요? 로그는 그대로 남아요.","지우기",async()=>{try{await removeAudio(s);toast("녹음 파일을 지웠어요");}catch(e){toast("지우지 못했어요");}});};
   m.querySelector("[data-ok]").onclick=async()=>{
     const f=readFields();m.remove();
@@ -1690,10 +1700,11 @@ function homeHTML(){
 async function importAll(data,prog){
   S.importing=true;
   try{
-    let n=0;const total=data.scenarios.length+data.sessions.reduce((a,s)=>a+1+(s.chunks||[]).length,0);
+    let n=0;const total=data.scenarios.length+BK_COLS.reduce((a,c)=>a+(data[c]||[]).length,0)+data.sessions.reduce((a,s)=>a+1+(s.chunks||[]).length,0);
     let batch=S.db.batch(),inBatch=0;
     const put=async(path,body)=>{batch.set(S.db.doc(path),body);inBatch++;n++;if(inBatch>=400){prog(`가져오는 중… ${n}/${total}`);await retry(()=>batch.commit());batch=S.db.batch();inBatch=0;}};
     for(const sc of data.scenarios){const {id,...b}=sc;await put("scenarios/"+id,b);}
+    for(const col of BK_COLS)for(const d of data[col]||[]){const {id,...b}=d;await put(col+"/"+id,b);}
     for(const se of data.sessions){
       const {id,chunks,...b}=se;await put("sessions/"+id,b);
       for(const c of chunks||[]){const {id:cid,...cb}=c;await put(`sessions/${id}/chunks/${cid}`,cb);}
@@ -1703,8 +1714,11 @@ async function importAll(data,prog){
   }catch(e){S.impMsg="가져오다가 멈췄어요: "+(e.code||e.message)+" · 다시 가져오면 처음부터 덮어써요";}
   S.importing=false;render();
 }
+const BK_COLS=["camps","reviews","revkeys","comments","secrets"];
 async function exportAll(prog){
-  const out={format:"trpg-log",version:1,exported:new Date().toISOString(),scenarios:[],sessions:[]};
+  const out={format:"trpg-log",version:2,exported:new Date().toISOString(),scenarios:[],sessions:[]};
+  // 캠페인·캠프, 후기, 댓글, 비밀번호도 같이 (읽을 수 없는 건 건너뛰어요)
+  for(const col of BK_COLS){try{const q=await S.db.collection(col).get();out[col]=q.docs.map(d=>({id:d.id,...d.data()}));}catch(e){}}
   const scs=await S.db.collection("scenarios").get();
   scs.docs.forEach(d=>out.scenarios.push({id:d.id,...d.data()}));
   const ss=await S.db.collection("sessions").get();
@@ -1744,7 +1758,40 @@ async function gotoScen(name,edit){
   }
   if(edit)S.pendingEdit=sc.id;location.hash="c-"+sc.id;
 }
+// ---------- 자동 백업: 주인이 들어올 때 일주일에 한 번, Storage backups/에 JSON으로 · 최근 BK_KEEP개만 남겨요 ----------
+const BK_DAYS=7,BK_KEEP=8;
+async function bkList(){const r=await S.storage.ref("backups").listAll();return r.items.map(x=>({name:x.name,path:x.fullPath})).sort((a,b)=>b.name.localeCompare(a.name));}
+async function bkRun(why){
+  if(S.bkRunning||!S.canAdmin||!S.storage)return;S.bkRunning=true;
+  try{
+    const data=await exportAll();const json=JSON.stringify(data);
+    const d=new Date(Date.now()+9*3600e3).toISOString();const name=`trpg-log-${d.slice(0,10)}_${d.slice(11,16).replace(":","")}.json`;
+    await S.storage.ref("backups/"+name).put(new Blob([json],{type:"application/json"}),{contentType:"application/json"});
+    await S.db.doc("scenarios/_site").set({bk:Date.now()},{merge:true});
+    try{const ls=await bkList();for(const x of ls.slice(BK_KEEP))await S.storage.ref(x.path).delete().catch(()=>{});S.bk=ls.slice(0,BK_KEEP);}catch(e){}
+    if(why!=="auto")toast("백업했어요");
+  }catch(e){console.warn("백업 실패",e);if(why!=="auto")toast("백업하지 못했어요: "+(e.code||e.message),4000);else S.bkErr=e.code||e.message;}
+  S.bkRunning=false;const el=$("#bklist");if(el){el.innerHTML=bkListHTML();bindBkList();}
+}
+// 주인이 들어오고 데이터가 다 불러와지면 한 번 확인
+function bkAuto(){
+  if(S.bkChecked||!S.canAdmin||!S.storage||!S.loaded||!S.site)return;S.bkChecked=true;
+  if(Date.now()-(S.site.bk||0)>BK_DAYS*864e5)setTimeout(()=>bkRun("auto"),4000);
+}
+function bkListHTML(){
+  const last=S.site&&S.site.bk;
+  const head=`<div class="bkhead"><span>자동 백업 <b>${last?esc(fmtDay(new Date(last+9*3600e3).toISOString().slice(0,10))):"아직 없음"}</b> · 일주일마다 · 최근 ${BK_KEEP}개 보관</span>
+    <button class="ghost" id="bknow"${S.bkRunning?" disabled":""}>${S.bkRunning?"백업하는 중…":"지금 백업"}</button></div>${S.bkErr?`<div class="tip" style="color:var(--bad)">지난 자동 백업 실패: ${esc(S.bkErr)} · 저장소 규칙을 새 버전으로 바꿨는지 확인해 주세요</div>`:""}`;
+  if(S.bk===undefined){S.bk=null;bkList().then(l=>{S.bk=l;const el=$("#bklist");if(el){el.innerHTML=bkListHTML();bindBkList();}}).catch(e=>{S.bk=[];S.bkErr=S.bkErr||(e.code==="storage/unauthorized"?"권한 없음":"");});}
+  const list=S.bk||[];
+  return head+(list.length?`<div class="bkrows">${list.map(x=>`<div class="bkrow"><span>${esc(x.name.replace(/^trpg-log-|\.json$/g,"").replace("_"," ").replace(/(\d\d)(\d\d)$/,"$1:$2"))}</span><button class="lnk" data-bkget="${esc(x.path)}">받기</button></div>`).join("")}</div>`:"");
+}
+function bindBkList(){
+  const n=$("#bknow");if(n)n.onclick=()=>{bkRun("now");const el=$("#bklist");if(el){el.innerHTML=bkListHTML();bindBkList();}};
+  document.querySelectorAll("[data-bkget]").forEach(b=>b.onclick=async()=>{try{const u=await S.storage.ref(b.dataset.bkget).getDownloadURL();window.open(u,"_blank");}catch(e){toast("받지 못했어요: "+(e.code||e.message));}});
+}
 function bindBackup(){
+  bindBkList();
   const eb=$("#exportb");if(eb)eb.onclick=async()=>{
     const pr=$("#exprog");eb.disabled=true;
     try{
@@ -1778,7 +1825,7 @@ function bindHome(){
     box.innerHTML=`${pairs.map(([f,s],i)=>`<div id="ba${i}">⏳ ${esc(f.name)} → ${esc(info(s).scen)} ${info(s).part}부</div>`).join("")}${miss.length?`<div style="color:var(--bad)">짝을 못 찾음: ${miss.map(esc).join(", ")} (⚙에서 하나씩 올릴 수 있어요)</div>`:""}`;
     S.importing=true;
     for(let i=0;i<pairs.length;i++){const [f,s]=pairs[i];const row=$("#ba"+i);
-      try{await uploadAudio(s,f,p=>row.textContent=`⬆ ${f.name} → ${info(s).scen} ${info(s).part}부 · ${p}%`);row.textContent=`✓ ${f.name} → ${info(s).scen} ${info(s).part}부`;}
+      try{await uploadAudio(s,f,(p,st)=>row.textContent=`⬆ ${f.name} → ${info(s).scen} ${info(s).part}부 · ${st==="zip"?"줄이는 중 ":""}${p}%`);row.textContent=`✓ ${f.name} → ${info(s).scen} ${info(s).part}부`;}
       catch(e){row.textContent=`✗ ${f.name}: ${e.code||e.message}`;row.style.color="var(--bad)";}}
     S.bulkMsg=box.innerHTML;S.importing=false;render();
   }
@@ -1841,7 +1888,7 @@ async function takeFiles(all,opt){
         const sid=await importSession(items[i],inf,`(${i+1}/${items.length}) `,{system:opt.system||"",orig:opt.orig||"",camp:opt.camp||"",gaiden:!!opt.gaiden});if(!sid)return;first=first||sid;
         const au=audioFor(items[i]);
         if(au&&S.storage){const pr=$("#iprog");const sc=findScen(inf.scen);
-          try{await uploadAudio({id:sid,scid:sc&&sc.id,title:items[i].title,scen:inf.scen},au,p=>setProg(pr,`(${i+1}/${items.length}) 녹음 올리는 중…`,p/100));}
+          try{await uploadAudio({id:sid,scid:sc&&sc.id,title:items[i].title,scen:inf.scen},au,(p,st)=>setProg(pr,`(${i+1}/${items.length}) 녹음 ${st==="zip"?"줄이는":"올리는"} 중…`,p/100));}
           catch(e){toast(`${au.name} 녹음을 올리지 못했어요: ${e.code||e.message}`,5000);}}
       }}
       finally{S.importing=false;}

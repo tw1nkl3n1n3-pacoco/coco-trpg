@@ -754,3 +754,7 @@ body[data-theme=deco][data-page=scen] :is(.sc-page,.rvpage)>.ldr{--ink:#f6e7c8;-
 .hq-none{padding:14px 16px;color:var(--faint);font-size:13.5px}
 .hq-foot{border-top:1px solid var(--line);margin-top:6px;padding:8px 16px 4px;font-size:11.5px;color:var(--faint)}
 .donestamp.end{border-color:#1f8a4c;box-shadow:inset 0 0 0 3px transparent,inset 0 0 0 4px #1f8a4c;color:#1f8a4c}
+/* 자동 백업 목록 */
+.bkhead{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13.5px;margin-bottom:6px}
+.bkrows{border-top:1px solid var(--line);margin:4px 0 12px;max-height:220px;overflow:auto}
+.bkrow{display:flex;justify-content:space-between;align-items:center;padding:6px 2px;border-bottom:1px solid var(--line);font-size:13px;color:var(--dim)}
