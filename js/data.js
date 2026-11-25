@@ -126,7 +126,7 @@ function route(){
   const cid=h.startsWith("c-")?h.slice(2):null;
   const rid=h.startsWith("r-")?h.slice(2):null;
   const gid=h.startsWith("g-")?h.slice(2):null;
-  if(gid){if(S.gid!==gid){S.gid=gid;S.campEdit=false;S.up=null;S.admin=false;if(S.sid||S.cid){S.cid=null;openSession(null);}else render();window.scrollTo(0,0);}return;}
+  if(gid){if(S.gid!==gid||S.revPage){S.revPage=null;S.gid=gid;S.campEdit=false;S.up=null;S.admin=false;if(S.sid||S.cid){S.cid=null;openSession(null);}else render();window.scrollTo(0,0);}return;}
   if(S.gid){S.gid=null;if(!sid&&!cid&&!h)render();}
   if(rid){if(!S.revPage||S.revPage.rid!==rid){S.cid=null;openSession(null);openRevPage(rid);}return;}
   if(S.revPage){S.revPage=null;if(!sid&&!cid){render();}}

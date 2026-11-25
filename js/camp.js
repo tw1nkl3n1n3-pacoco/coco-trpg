@@ -17,7 +17,7 @@ function epLabel(c,sc){if(isCamp(c))return "";if(sc.gaiden)return "외전";let n
 function campCount(c){if(isCamp(c))return `탁 ${campEps(c).length}개`;const es=campEps(c),g=es.filter(e=>e.gaiden).length;return `${es.length-g}편${g?` + 외전 ${g}`:""}`;}
 function campLast(c){return campEps(c).map(e=>e.lastDay||"").sort().pop()||"";}
 function effSys(sc){return (sc&&(sc.system||campOf(sc)?.system))||"";}
-function campOpen(c){return S.canAdmin||campEps(c).some(e=>!!SUB.sessData[e.id]);}
+function campOpen(c){return S.canAdmin||_unlockIds.includes(c.id)||campEps(c).some(e=>!!SUB.sessData[e.id]);}
 function epStatus(sc){const n=groups().find(g=>g.scen===sc.name)?.days.length||sc.nDays||0;return sc.done||campOf(sc)?.done?`<span class="st">완주</span>`:`<span class="st now">진행 중${n?` · ${n}회차`:""}</span>`;}
 function epRowHTML(c,sc){const cm=isCamp(c),diff=sc.system&&(cm||sysLabel(sc.system)!==sysLabel(c.system||""));
   return `<div class="cep"><span class="en${sc.gaiden&&!cm?" gai":""}">${cm?esc((sc.lastDay||"").slice(5).replace("-","/")):esc(epLabel(c,sc))}</span><a href="#c-${esc(sc.id)}" class="et">${esc(sc.name)}</a>${diff?`<span class="sys" data-th="${themeOf(sc)}">${esc(sysLabel(sc.system))}</span>`:""}${epStatus(sc)}</div>`;}
@@ -107,7 +107,23 @@ function campSc(c){const sp=[],by=new Map();
   return {id:c.id,name:c.name,sp,isCampSc:true,place:c.place||"",when:campWhen(c)};}
 function campScById(id){const c=campById(id);return c&&isCamp(c)?campSc(c):null;}
 function campSelfK(id){const c=campById(id);if(!c||!isCamp(c))return "";for(const e of campEps(c)){const p=meSp(e.id);if(p)return "n_"+pcSplit(p.name||"").name;}return "";}
+// 캠프는 들어올 때부터 잠겨 있어요: 이름을 고르고 캠프 비밀번호 → 모든 탁 로그가 열려요
+function campLockHTML(c){const sc=campSc(c),pick=S.lockPick;
+  const nm=pick&&pick!=="ext"?(sc.sp.find(p=>p.k===pick)||{}).name:"";
+  return `<div class="sc-page lockpage"><div class="lkwrap"><div class="lkbox">
+    <div class="lockicon">🔒</div><h2>${esc(c.name)}</h2><div class="tip">잠긴 캠프예요${campWhen(c)?` · ${esc(campWhen(c))}`:""}</div>
+    <div class="q">누구로 들어갈까요?</div><div class="lklist">${sc.sp.map(p=>`<button type="button" class="lkc${p.k===pick?" mine":""}" data-mek="${esc(p.k)}" style="--c:${fixC(p.c)}"><i></i><span class="nm">${esc(p.name)}</span></button>`).join("")}
+    <button type="button" class="lkout${pick==="ext"?" on":""}" data-mek="ext">외부인으로 보기</button></div>
+    ${pick?`<div class="lkpw"><div class="who">${pick==="ext"?`외부인은 로그를 <span class="me">읽기만</span> 할 수 있어요`:`<span class="me">${esc(nm)}</span>(으)로 들어가요`}</div>
+      <form id="g-unlock"><input type="text" id="g-pw" placeholder="캠프 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form>
+      <div class="tip" id="g-msg" style="margin-top:8px"></div></div>`:`<div class="guest">같이 간 사람에게 받은 캠프 비밀번호가 필요해요</div>`}
+    <div class="homefoot"><button class="ghost" onclick="location.hash=''">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
+  </div></div></div>`;}
+// 캠프에서 고른 '나'를 각 탁에도: 같은 이름의 플레이어로
+function setCampMe(c,k){setMe(c.id,k);const n=k&&k!=="ext"?k.replace(/^n_/,""):"";
+  campEps(c).forEach(e=>{if(k==="ext"){setMe(e.id,"ext");return;}const p=(e.sp||[]).find(p=>pcSplit(p.name||"").name===n);if(p)setMe(e.id,p.k);});}
 function campPgHTML(c){
+  if(!campOpen(c))return campLockHTML(c);
   const ed=S.campEdit&&S.canAdmin,es=campEps(c),open=campOpen(c),when=campWhen(c);
   if(ed)return `<div class="sc-page campage"><div class="sc-top"><h2>캠프 수정</h2><button class="ghost" id="g-x">취소</button><button class="pri" id="g-save">저장</button></div>
     <div class="sc-sec"><div class="fields" style="margin:0">
@@ -138,8 +154,7 @@ function campPgHTML(c){
     ${S.canAdmin?`<div class="sc-sec"><h4 data-en="ACCESS">캠프 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
       <div class="tip">이 비밀번호 하나로 캠프의 모든 탁 로그가 열리고, 캠프 후기를 쓸 수 있어요. 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
       <div class="pwrow"><code class="pw">${esc(S.secrets?.[c.id]||"…")}</code><button class="pri" id="g-copy">링크+비밀번호 복사</button><button class="ghost" id="g-newpw">새로 만들기</button></div></div>`
-      :!open?`<div class="sc-sec"><h4 data-en="ACCESS">캠프 열기</h4><div class="tip">같이 간 사람에게 받은 캠프 비밀번호를 넣으면 모든 탁의 로그가 열려요.</div>
-      <form id="g-unlock" class="pwrow"><input type="text" id="g-pw" placeholder="캠프 비밀번호" autocomplete="off"><button class="pri">열기</button></form><div class="tip" id="g-msg"></div></div>`:""}
+      :""}
     <div class="homefoot"><button class="ghost" onclick="location.hash=''">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
   </div>`;
 }
@@ -147,7 +162,8 @@ function campPgHTML(c){
 function campLink(c){return shareUrl(c.id);}
 function bindCamp(){
   const c=campById(S.gid);renderAuth&&renderAuth();if(!c)return;
-  if(isCamp(c)&&!S.campEdit)bindRevs(campSc(c));
+  if(isCamp(c)&&!campOpen(c)){document.querySelectorAll(".lkwrap [data-mek]").forEach(b=>b.onclick=()=>{S.lockPick=b.dataset.mek;render();});const inp=$("#g-pw");if(inp)setTimeout(()=>inp.focus(),0);}
+  if(isCamp(c)&&!S.campEdit&&campOpen(c))bindRevs(campSc(c));
   const e=$("#g-edit");if(e)e.onclick=()=>{S.campEdit=true;render();};
   const x=$("#g-x");if(x)x.onclick=()=>{S.campEdit=false;S.campOg=undefined;render();};
   {const up=$("#g-ogup"),fi=$("#g-ogfile"),pv=$("#g-ogprev"),dl=$("#g-ogdel");
@@ -167,7 +183,8 @@ function bindCamp(){
   const ag=$("#g-addgo");if(ag)ag.onclick=async()=>{const id=$("#g-addsel").value;if(!id){toast("넣을 세션을 골라 주세요");return;}
     ag.disabled=true;try{await setEpCamp(id,c.id,"",!!$("#g-addgai")?.checked);toast(isCamp(c)?"캠프에 넣었어요":"캠페인에 넣었어요");}catch(err){ag.disabled=false;writeFail(err);}};
   const uf=$("#g-unlock");if(uf)uf.onsubmit=async ev=>{ev.preventDefault();const pw=$("#g-pw").value.trim();if(!pw)return;const m=$("#g-msg");m.textContent="확인하는 중…";
-    try{await unlockScen(c.id,pw);m.textContent="열렸어요!";}catch(err){m.textContent=err&&err.code==="permission-denied"?"비밀번호가 틀렸어요.":"열지 못했어요: "+(err.code||err.message);}};
+    const pick=S.lockPick;
+    try{await unlockScen(c.id,pw);if(isCamp(c)&&pick)setCampMe(c,pick);S.lockPick=null;m.textContent="열렸어요!";refreshCanWrite();render();}catch(err){m.textContent=err&&err.code==="permission-denied"?"비밀번호가 틀렸어요.":"열지 못했어요: "+(err.code||err.message);}};
 }
 // 세션을 캠페인에 넣기·빼기·순서 (주인)
 async function setEpCamp(scid,gid,afterId,gaiden){
