@@ -53,7 +53,7 @@ function bookBlocks(sc,edit){
   const out=[];let n=0;
   PRE.book=new Set();
   const nouns=nounGroupsOf(sc).filter(g=>g.d),noted=new Set();
-  const noteFor=txt=>{const r=[];nouns.forEach(g=>{if(noted.has(g.n))return;if([g.n,...g.a].some(w=>w&&(txt||"").includes(w))){noted.add(g.n);r.push({k:"note",n:g.n,d:g.d});}});return r;};
+  const noteFor=txt=>{const r=[];nouns.forEach(g=>{if(noted.has(g.n))return;if([g.n,...g.a].some(w=>nounIn(txt,w))){noted.add(g.n);r.push({k:"note",n:g.n,d:g.d});}});return r;};
   B.parts.forEach(P=>{
     const multi=B.parts.filter(q=>q.day===P.day).length>1,day=P.day;
     if(edit)out.push({k:"day",text:fmtDay(P.day)+(multi?` · ${P.part}부`:""),day});

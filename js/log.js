@@ -169,10 +169,13 @@ function renderSideCounts(){const c=counts();document.querySelectorAll("[data-cn
 
 // 등록된 고유명사는 로그 화면에서만 블럭으로 표시 (HTML로 받을 땐 안 보여요)
 let _nre={k:null,re:null};
+const NOUN_PRE="(?<![가-힣ㄱ-ㅎA-Za-z0-9])";
+const nounIn=(txt,w)=>!!w&&new RegExp(NOUN_PRE+w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).test(txt||"");
 function nounRe(){
   const list=S.meta?[...new Set(nouns())].filter(Boolean).sort((a,b)=>b.length-a.length):[];
   const k=list.join("\u0001");
-  if(_nre.k!==k)_nre={k,re:list.length?new RegExp(list.map(w=>w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|"),"g"):null};
+  // 낱말 앞이 한글·영문·숫자면 다른 낱말의 일부로 봐요 (예: '록'이 '초록색' 안에서 잡히지 않게) · 뒤에 붙는 조사는 괜찮아요
+  if(_nre.k!==k)_nre={k,re:list.length?new RegExp(NOUN_PRE+"(?:"+list.map(w=>w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|")+")","g"):null};
   return _nre.re;
 }
 function hlq(h){
