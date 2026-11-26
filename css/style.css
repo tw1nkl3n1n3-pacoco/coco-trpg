@@ -822,8 +822,9 @@ body.booking #hdr,body.booking .topbar{display:none}
 .bln.gm .sp{color:#555}
 .bln .bq{color:#1c1c1b}.bln .ba{color:#8a857b;font-size:.92em}
 .bln.same{margin-top:.08em}
-.bln.ooc{display:block;color:#9a9a96;font-size:.86em;margin:.2em 0 .2em 6.5em}
-.bln.ooc .sp{display:inline;text-align:left;font-size:1em;color:#9a9a96;margin-right:.6em;font-weight:500}
+/* 잡담: 롤플 속 행동 묘사처럼 작은 회색 · 고딕 */
+.bln.ooc{display:block;color:#7a7a7a;font-family:"Pretendard","Noto Sans KR",sans-serif;font-size:1.2em;line-height:1.7;margin:.2em 0 .2em 5.42em}
+.bln.ooc .sp{display:inline;text-align:left;font-size:.95em;line-height:inherit;color:#7a7a7a;margin-right:.6em;font-weight:600}
 .bdice{display:flex;align-items:center;gap:.7em;margin:.6em 0 .6em 6.5em;padding:.35em .7em;border:1px solid #ddd;border-radius:3px;font:.86em/1.5 "Pretendard",sans-serif}
 .bdice .t{color:var(--acc);font-size:.9em}.bdice .r{margin-left:auto;font-weight:700}
 .bhand{margin:.9em 0;padding:.8em 1em;background:#f4efe3;border-radius:3px}
@@ -866,7 +867,7 @@ body.booking #hdr,body.booking .topbar{display:none}
 .bkkeys kbd{display:inline-block;min-width:16px;text-align:center;border:1px solid #bbb;border-bottom-width:2px;border-radius:4px;padding:0 4px;margin-right:4px;font:600 11px/1.5 monospace;background:#fff}
 .bksheet{background:#fffdf8;border-radius:8px;box-shadow:0 1px 6px rgba(0,0,0,.1);padding:24px 40px 40px;font-family:"Noto Serif CJK KR","Noto Serif KR",serif;font-size:14px;line-height:1.7;user-select:none}
 .bksheet .bln{grid-template-columns:7em 1fr}
-.bksheet .bln.ooc,.bksheet .bdice{margin-left:7.9em}
+.bksheet .bdice{margin-left:7.9em}.bksheet .bln.ooc{margin-left:6.58em}
 .bksheet [data-bid]{position:relative;cursor:pointer;border-radius:4px;padding-right:46px}
 .bksheet [data-bid]:hover{background:#f3efe6}
 .bksheet [data-bid].sel{background:#fbe7d8;outline:1px solid #e8b893}
@@ -919,7 +920,7 @@ body.booking #hdr,body.booking .topbar{display:none}
 .bpg:not(.bcover) .bln.gm .sp{color:#1c1c1b}
 .bpg:not(.bcover) .bln .sp small{color:#8c8c8c}
 .bpg:not(.bcover) .bln .ba{color:#7a7a7a}
-.bpg:not(.bcover) .bln.ooc,.bpg:not(.bcover) .bln.ooc .sp{color:#8c8c8c}
+.bpg:not(.bcover) .bln.ooc,.bpg:not(.bcover) .bln.ooc .sp{color:#7a7a7a}
 .bpg:not(.bcover) .bnar{border-left-color:#bdbdbd;color:#333}
 .bpg:not(.bcover) .bhand{background:#efefef}.bpg:not(.bcover) .bhand b{color:#555}
 .bpg:not(.bcover) .bmemo{background:#fff;border-left-color:#1c1c1b;color:#555}
@@ -933,3 +934,7 @@ body.booking #hdr,body.booking .topbar{display:none}
 .row.bstart::before{content:"▶ 본세션 시작 · 리플레이북은 여기서부터";position:absolute;left:0;right:0;top:-22px;padding-top:4px;border-top:2px solid var(--acc,#b0101a);font:700 11px/1.4 "Pretendard",sans-serif;color:var(--acc,#b0101a);letter-spacing:.04em;pointer-events:none}
 .bstartmk{margin:14px 0 10px;padding-top:5px;border-top:2px solid var(--acc);font:700 12px "Pretendard",sans-serif;color:var(--acc)}
 .t0fix{margin:10px 0;font-size:12px}.t0fix button{margin-top:6px;font-size:12px;white-space:normal;text-align:left}
+.bln.ooc .tx{font:inherit;color:inherit;line-height:inherit}
+/* 로그 페이지의 .tx 스타일이 책에 섞이지 않게: 크기는 판형 글자 크기에 맞춰 비율로 */
+.bln .tx{font-size:1.38em;line-height:1.8;color:#1c1c1b;max-width:none}
+.bln.ooc .tx{font-size:1em;line-height:inherit;color:inherit}
