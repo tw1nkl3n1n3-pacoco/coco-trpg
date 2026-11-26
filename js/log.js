@@ -37,7 +37,8 @@ function render(){try{bkAuto();}catch(e){}
   const app=$("#app");
   refreshCanWrite();applyTheme();if(typeof setTitle==="function")setTitle();
   if(document.body.classList.contains("booking")!==!!S.book){document.body.classList.toggle("booking",!!S.book);document.documentElement.classList.toggle("booking",!!S.book);}
-  if(S.book){app.innerHTML=bookHTML();bindBook();return;}
+  if(S.book){const ae=document.activeElement;if(S.book.mode==="edit"&&ae&&ae.closest&&ae.closest("#bksheet")&&$("#bksheet"))return;
+    app.innerHTML=bookHTML();bindBook();return;}
   if(S.revPage){app.innerHTML=revPageHTML();return;}
   if(S.up&&!S.sid&&!S.cid){app.innerHTML=upHTML();bindUp();return;}
   if(S.gid&&!S.sid&&!S.cid){app.innerHTML=campPageHTML();bindCamp();return;}

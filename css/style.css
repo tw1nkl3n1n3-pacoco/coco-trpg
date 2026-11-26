@@ -882,7 +882,7 @@ body.booking #hdr,body.booking .topbar{display:none}
 .bselpop button.on,.bselpop button:hover{background:var(--acc)}
 .bked{width:100%;font:inherit;padding:4px 6px;border:1px solid var(--acc);border-radius:4px;resize:none;background:#fff;user-select:text}
 .bkhint{font:11px "Pretendard";color:#999;margin-top:2px}
-@media(max-width:640px){.bksheet{padding:16px 14px}.bksheet .bln{grid-template-columns:5em 1fr}.bksheet .bln.ooc,.bksheet .bdice{margin-left:0}
+@media screen and (max-width:640px){.bksheet{padding:16px 14px}.bksheet .bln{grid-template-columns:5em 1fr}.bksheet .bln.ooc,.bksheet .bdice{margin-left:0}
   /* 작은 화면은 확대·축소(zoom) 대신 그림처럼 줄여서 보여요 · 쪽 나눔이 바뀌지 않게 */
   .bkpages{--sc:.64;overflow:hidden;gap:10px}.bkpages .bpg{transform:scale(var(--sc));transform-origin:top center;margin:0 calc(var(--pw)*(var(--sc) - 1)/2) calc(var(--ph)*(var(--sc) - 1))}}
 @media print{
@@ -890,7 +890,13 @@ body.booking #hdr,body.booking .topbar{display:none}
   body.booking .bkbar,body.booking .toast,body.booking #auth,body.booking footer{display:none!important}
   body.booking .bookwrap{padding:0;max-width:none}
   body.booking .bkpages{display:block;zoom:1}
-  body.booking .bpg{box-shadow:none;break-after:page;page-break-after:always;margin:0}
+  html.booking,body.booking,body.booking #app,body.booking .bookwrap,body.booking .bkpages{display:block!important;overflow:visible!important;height:auto!important;min-height:0!important;padding:0!important;margin:0!important;transform:none!important}
+  body.booking .bpg{box-shadow:none;break-after:page;page-break-after:always;break-inside:avoid;margin:0!important;transform:none!important}
+  body.booking .bpg:last-child{break-after:auto;page-break-after:auto}
+  body.booking [data-size="a5"] .bpg{width:148mm;height:210mm}
+  body.booking [data-size="b6"] .bpg{width:128mm;height:182mm}
+  body.booking [data-size="a6"] .bpg{width:105mm;height:148mm}
+  body.booking .bkmeasure{display:none}
   body.booking .bcover .art,body.booking .bcover{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   body.booking .bmemo,body.booking .bhand{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }

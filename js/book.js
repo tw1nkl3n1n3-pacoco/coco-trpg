@@ -38,7 +38,7 @@ async function bookSet(changes){
 }
 
 // ---------- 책 내용 → 블록 ----------
-function bookSp(sc,k){return (sc.sp||[]).find(p=>p.k===k)||null;}
+function bookSp(sc,k){if(k===ALL)return ALLSP;return (sc.sp||[]).find(p=>p.k===k)||null;}
 function bookTxt(x,inQ){
   // 「」 안은 대사, 밖은 행동 묘사(옅게) · 쪽이 나뉘어 「 가 앞쪽에 있으면 inQ
   x=x||"";if(!/「/.test(x)&&!inQ)return esc(x).replace(/\n/g,"<br>");
@@ -57,7 +57,6 @@ function bookBlocks(sc,edit){
   B.parts.forEach(P=>{
     const multi=B.parts.filter(q=>q.day===P.day).length>1,day=P.day;
     if(edit)out.push({k:"day",text:fmtDay(P.day)+(multi?` · ${P.part}부`:""),day});
-    // 본세션 시작 줄 앞은 책에 안 들어가요 (책 고치기에선 접어서 보여요)
     // 본세션 시작 줄 앞은 따로 고르지 않으면 빼기로 (1·2로 책에 넣을 수 있어요)
     const its=bookItems(P),st=startIdOf(its.map(e=>e.b));preIds(its.map(e=>e.b)).forEach(id=>PRE.book.add(id));
     its.forEach(e=>{const b=e.b,bk=bkOf(b);if(st&&b.id===st&&edit)out.push({k:"start",sid:P.sid,day});
@@ -301,6 +300,6 @@ document.addEventListener("keydown",e=>{
   const B=S.book;if(!B||B.mode!=="edit"||B.editing)return;if(/INPUT|TEXTAREA|SELECT/.test((e.target.tagName||"")))return;
   if(["1","2","3"].includes(e.key)&&B.sel.size){e.preventDefault();bookSetBk(+e.key-1);return;}
   if(e.key==="Escape"&&B.sel.size){B.sel=new Set();document.querySelectorAll("#bksheet .sel").forEach(n=>n.classList.remove("sel"));bookSelPop();return;}
-  if((e.key==="ArrowDown"||e.key==="ArrowUp")&&B.flat&&B.flat.length){e.preventDefault();const order=B.flat.map(x=>x.id);let i=order.indexOf(B.anchor);i=i<0?0:Math.max(0,Math.min(order.length-1,i+(e.key==="ArrowDown"?1:-1)));
+  if((e.key==="ArrowDown"||e.key==="ArrowUp")&&B.sel.size&&B.flat&&B.flat.length){e.preventDefault();const order=B.flat.map(x=>x.id);let i=order.indexOf(B.anchor);i=i<0?0:Math.max(0,Math.min(order.length-1,i+(e.key==="ArrowDown"?1:-1)));
     B.anchor=order[i];B.sel=new Set([order[i]]);document.querySelectorAll("#bksheet [data-bid]").forEach(n=>n.classList.toggle("sel",B.sel.has(n.dataset.bid)));const el=document.querySelector(`#bksheet [data-bid="${CSS.escape(order[i])}"]`);if(el)el.scrollIntoView({block:"nearest"});bookSelPop();}
 });
