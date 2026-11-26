@@ -78,7 +78,7 @@ function bindPartEdit(){document.querySelectorAll("[data-edit]").forEach(b=>b.on
 // ---------- home & import ----------
 function pwOf(sc){return sc&&sc.camp&&campById(sc.camp)?sc.camp:sc&&sc.id;}
 function scenSecHTML(g){return `
-      <section class="scen">
+      <section class="scen">${g.sc?.og?`<div class="ogtop"><img src="${esc(g.sc.og)}" alt="" loading="lazy"></div>`:""}
         <div class="scen-h"><h3><a href="#" data-scen="${esc(g.scen)}" title="개요 보기">${esc(g.scen)} ›</a>${g.sc?.orig?`<span class="orig">${esc(g.sc.orig)}</span>`:""}</h3>${g.sc?.system?`<span class="sys" data-th="${themeOf(g.sc)||"pa"}">${esc(sysLabel(g.sc.system))}</span>`:""}<span class="d${g.sc?.done?" dstamp":""}">${g.sc&&!isOpen(g.sc.id)?(g.sc.lastDay?`${g.sc.nDays||1}회차 · 마지막 ${esc(fmtDay(g.sc.lastDay))} 🔒`:"🔒"):g.days.length?`${g.days.length}회차 · 마지막 ${esc(fmtDay(g.last))}`:"아직 녹음 없음"}${stampHTML(g.sc)}</span></div>
         ${g.sc?.summary?`<div class="sum">${esc(g.sc.summary)}</div>`:""}
         ${castHTML(g.sc)}
@@ -128,7 +128,7 @@ function homeHTML(){
   // 완주한 캠페인·캠프는 일반 세션 사이에 날짜 순으로 · 연도가 바뀌는 곳에 구분선
   const items=[...gs.map(g=>({k:g.last||"",html:scenSecHTML(g)})),...cs.filter(c=>c.done||isCamp(c)).map(c=>({k:campKey(c),html:campCardHTML(c)}))].sort((a,b)=>b.k.localeCompare(a.k));
   let py="";const listHTML=items.map(x=>{const y=(x.k||"").slice(0,4);const sep=y&&y!==py?`<div class="hyear"><span>${esc(y)}</span></div>`:"";if(y)py=y;return sep+x.html;}).join("");
-  return `<div class="home">
+  return `<div class="home hmain">
     <div class="hometop"><h2>${iconHTML(site().icon)}${esc(site().title)}</h2></div>
     <div class="tip" style="font-size:13.5px">${esc(site().sub).replace(/\n/g,"<br>")}</div>
     ${S.err?`<div class="notice bad">${esc(S.err)}</div>`:""}
@@ -258,8 +258,18 @@ function homeSoft(){const box=document.querySelector(".hsearch"),list=$("#sessli
   const t=document.createElement("div");t.innerHTML=homeHTML();const nb=t.querySelector(".hsearch"),nl=t.querySelector("#sesslist");
   box.querySelectorAll(".hq-n,.hq-drop").forEach(e=>e.remove());if(nb)nb.querySelectorAll(".hq-n,.hq-drop").forEach(e=>box.appendChild(e));
   if(nl)list.replaceWith(nl);S.hqSoft=true;bindHome();S.hqSoft=false;}
+// 홈 카드 두 줄: 연도·제목 줄 사이의 카드들을 키가 낮은 쪽 줄에 차례로 넣어요 (빈칸 없이 지그재그)
+const HM_TWO=matchMedia("(min-width:720px)");
+function homeMasonry(){const L=$("#sesslist");if(!L)return;
+  L.querySelectorAll(":scope>.mrow").forEach(r=>{const cs=[...r.querySelectorAll(":scope>.mcol>*")].sort((a,b)=>a._hm-b._hm);r.replaceWith(...cs);});
+  if(!HM_TWO.matches)return;
+  const kids=[...L.children];kids.forEach((k,i)=>k._hm=i);let cols=null;
+  for(const k of kids){if(!k.matches(".scen"))  {cols=null;continue;}
+    if(!cols){const row=document.createElement("div");row.className="mrow";cols=[0,1].map(()=>{const c=document.createElement("div");c.className="mcol";row.appendChild(c);return c;});k.before(row);}
+    (cols[0].offsetHeight<=cols[1].offsetHeight?cols[0]:cols[1]).appendChild(k);}}
+HM_TWO.addEventListener("change",homeMasonry);
 function bindHome(){
-  bindPartEdit();renderAuth();
+  homeMasonry();bindPartEdit();renderAuth();
   document.querySelectorAll("[data-cmore]").forEach(b=>b.onclick=()=>{const id=b.dataset.cmore;S.campMore[id]=!S.campMore[id];render();});
   bindBackup();
   async function bulkAudio(files){
