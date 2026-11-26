@@ -1,0 +1,240 @@
+// 코코 로그방 · 리플레이북 (#b-세션id): 로그를 책처럼 · 표지·등장인물·차례·본문·후기 · 책 고치기(본문/잡담/빼기)
+// (js/ 파일들은 한 덩어리처럼 이어서 읽어요 · 순서는 index.html)
+// 줄마다 bk 값으로 책에 어떻게 들어갈지 정해요: 0 본문 · 1 잡담(플레이어 이름으로 작게) · 2 빼기 (bkOf, log.js)
+const BOOK_SIZES={a5:{n:"A5",w:559,h:794,lab:"A5 (148×210)"},b6:{n:"B6",w:484,h:688,lab:"B6 (128×182)"},a6:{n:"A6",w:397,h:559,lab:"A6 문고 (105×148)"}};
+const BOOK_ACC={wa:"#b0101a",deco:"#8a2a12",dx:"#e0263d",plain:"#1c1c1b"};
+
+function bookCan(sc){return !!sc&&(S.canAdmin||isOpen(sc.id)&&!isExt(sc.id));}
+function bookOpen(scid){
+  S.book={scid,mode:"view",size:(()=>{try{return localStorage.getItem("trpg-booksize")||"a5";}catch(e){return "a5";}})(),parts:null,sel:new Set(),anchor:null,editing:null,err:""};
+  render();bookLoad();
+}
+// 세션의 모든 회차·부 로그를 순서대로 불러와요
+async function bookLoad(){
+  const B=S.book;if(!B)return;const sc=scenById(B.scid);
+  if(!sc||!S.db||!S.loaded){B.tries=(B.tries||0)+1;if(B.tries<60)setTimeout(bookLoad,400);else render();return;}
+  if(!bookCan(sc)){render();return;}
+  const g=groups().find(x=>x.scen===sc.name);const parts=[];
+  try{
+    for(const d of g?g.days:[])for(const s of d.parts){
+      const snap=await S.db.collection(`sessions/${s.id}/chunks`).get();
+      const chunks={};snap.docs.forEach(x=>{chunks[x.data().i]=x.data().b||[];});
+      parts.push({sid:s.id,day:d.day,part:s.part,chunks});
+    }
+  }catch(e){B.err=e.code==="permission-denied"?"로그가 잠겨 있어요. 세션 비밀번호로 들어와 주세요.":"로그를 불러오지 못했어요: "+(e.code||e.message);render();return;}
+  if(S.book!==B)return;
+  B.parts=parts;watchRevs(sc.id);render();
+}
+function bookItems(P){const out=[];Object.keys(P.chunks).map(Number).sort((a,b)=>a-b).forEach(ci=>P.chunks[ci].forEach(b=>out.push({b,ci,sid:P.sid})));return out;}
+// 고친 내용은 세션 로그(chunks)에 바로 저장해요 · 같은 줄을 로그 페이지에서도 보게 돼요
+async function bookSet(changes){
+  const B=S.book;if(!B||!B.parts)return;const by={};
+  changes.forEach(c=>{const P=B.parts.find(p=>p.sid===c.sid);if(!P)return;const arr=P.chunks[c.ci];const b=arr&&arr.find(x=>x.id===c.id);if(!b)return;
+    Object.keys(c.f).forEach(k=>{if(c.f[k]===undefined)delete b[k];else b[k]=c.f[k];});(by[c.sid+"|"+c.ci]=by[c.sid+"|"+c.ci]||[]).push({t:"set",id:c.id,f:c.f});});
+  bookRender();
+  try{for(const key of Object.keys(by)){const [sid,ci]=key.split("|");const ref=S.db.doc(`sessions/${sid}/chunks/${ckey(+ci)}`);
+    await S.db.runTransaction(async tx=>{const d=await tx.get(ref);const arr=d.exists?clone(d.data().b||[]):[];by[key].forEach(op=>applyOp(arr,op));tx.set(ref,{i:+ci,b:arr});});}
+  }catch(e){writeFail(e);}
+}
+
+// ---------- 책 내용 → 블록 ----------
+function bookSp(sc,k){return (sc.sp||[]).find(p=>p.k===k)||null;}
+function bookTxt(x){
+  const t=esc(x||"").replace(/\n/g,"<br>");
+  if(!/「/.test(x||""))return t;
+  return t.replace(/(「[^」]*」?)/g,'<span class="q">$1</span>').replace(/(^|<\/span>)([^<]+?)(?=<span class="q">|$)/g,(m,a,b)=>a+(b.trim()?`<span class="act">${b}</span>`:b));
+}
+function bookBlocks(sc,edit){
+  const B=S.book,th=themeOf(sc)||"plain",gk=gmKey(sc),gmw=th==="deco"?"DM":"GM";
+  const days=[...new Set(B.parts.map(p=>p.day))];
+  const byDay=days.length>1,out=[];let n=0;
+  const nouns=nounGroupsOf(sc).filter(g=>g.d),noted=new Set();
+  const noteFor=txt=>{const r=[];nouns.forEach(g=>{if(noted.has(g.n))return;if([g.n,...g.a].some(w=>w&&(txt||"").includes(w))){noted.add(g.n);r.push({k:"note",n:g.n,d:g.d});}});return r;};
+  B.parts.forEach((P,pi)=>{
+    // 회차가 장 · 한 회차가 여러 부면 부마다 장
+    const multi=B.parts.filter(q=>q.day===P.day).length>1;
+    let items=bookItems(P);
+    {n++;let title=byDay?fmtDay(P.day)+(multi?` · 제${P.part}부`:""):(multi?`제${P.part}부`:fmtDay(P.day));
+      const f=items.find(e=>bkOf(e.b)!==2||edit);
+      if(f&&f.b.s===SEC&&secLv(f.b)===1&&f.b.x){title=f.b.x;items=items.filter(e=>e!==f);}
+      out.push({k:"chap",label:(!byDay&&B.parts.length>1?"PART ":"CHAPTER ")+n,title,id:"ch"+pi});}
+    items.forEach(e=>{const b=e.b,bk=bkOf(b);if(bk===2&&!edit)return;const base={id:b.id,ci:e.ci,sid:e.sid,bk};
+      if(b.s===SEC){out.push({...base,k:"scene",text:b.x||"",lv:secLv(b)});return;}
+      if(b.s===NOTE){if(!b.x)return;out.push({...base,k:"nar",text:b.x});out.push(...(edit?[]:noteFor(b.x)));return;}
+      if(b.s===HAND){out.push({...base,k:"hand",title:b.ti||"핸드아웃",text:b.x||""});return;}
+      if(b.s===DICE){const p=b.w?bookSp(sc,b.w):null;out.push({...base,k:"dice",who:b.a||(p?(p.ch||pcSplit(p.name).name):""),text:b.x||"",res:b.r||"",sec:!!b.sec});return;}
+      const p=bookSp(sc,b.s)||{name:"?",c:"#888"},gm=p.k===gk,q=pcSplit(p.name||""),ch=b.a||p.ch||"";
+      out.push({...base,k:"line",gm,ooc:bk===1,c:p.c,pc:q.n,player:gm?gmw:q.name,char:gm?(b.a||gmw):(ch||q.name),sub:gm||!ch?"":q.name,text:b.x||""});
+      if(!edit&&bk!==1)out.push(...noteFor(b.x));
+    });
+  });
+  return out;
+}
+function blockHTML(x,edit){
+  const B=S.book,sel=edit&&B.sel.has(x.id)?" sel":"",cut=x.bk===2?" cut":"",dat=edit&&x.id?` data-bid="${esc(x.id)}"`:"";
+  const tag=edit?(x.bk===1?'<span class="btag ooc">잡담</span>':x.bk===2?'<span class="btag cut">빼기</span>':""):"";
+  const editing=edit&&B.editing===x.id;
+  const tbox=editing?`<textarea class="bked" id="bked">${esc(x.text)}</textarea><div class="bkhint">Enter 저장 · Shift+Enter 줄바꿈 · Esc 취소 · 로그에도 그대로 반영돼요</div>`:null;
+  switch(x.k){
+    case "chap":return `<div class="bchap"><small>${esc(x.label)}</small><b>${esc(x.title)}</b></div>`;
+    case "scene":return edit?"":`<div class="bscene l${x.lv}">${esc(x.text||"")}</div>`;
+    case "nar":return `<p class="bnar${sel}${cut}"${dat}>${tbox||esc(x.text).replace(/\n/g,"<br>")}${tag}</p>`;
+    case "hand":return `<div class="bhand${sel}${cut}"${dat}><b>HANDOUT · ${esc(x.title)}</b>${tbox||esc(x.text).replace(/\n/g,"<br>")}${tag}</div>`;
+    case "dice":return `<div class="bdice${sel}${cut}"${dat}><b class="t">판정</b><span>${esc([x.who,x.text].filter(Boolean).join(" · "))}</span>${x.sec?'<span class="r">Secret Dice</span>':x.res?`<span class="r">${esc(x.res)}</span>`:""}${tag}</div>`;
+    case "note":return `<div class="bmemo"><b>${esc(x.n)}</b>${esc(x.d)}</div>`;
+    case "line":
+      if(x.ooc)return `<div class="bln ooc${sel}${cut}"${dat}><span class="sp">${esc(x.player)}</span><span class="tx">${tbox||esc(x.text).replace(/\n/g,"<br>")}</span>${tag}</div>`;
+      return `<div class="bln${x.gm?" gm":""}${sel}${cut}"${dat} style="--c:${fixC(x.c)}"><span class="sp">${esc(x.char)}${x.sub?`<small>${esc(x.sub)}</small>`:""}</span><span class="tx">${tbox||bookTxt(x.text)}</span>${tag}</div>`;
+  }
+  return "";
+}
+
+// ---------- 쪽 나누기: 실제 크기의 빈 쪽에 블록을 채워 보며 넘치면 다음 쪽으로 ----------
+function bookPaginate(blocks,host,startNo,folio){
+  const pages=[];let cur=null,body=null,chapTitle="";
+  const newPage=()=>{cur=document.createElement("div");cur.className="bpg";cur.innerHTML=`<div class="bbody"></div><div class="bfolio"><span></span><span></span></div>`;host.appendChild(cur);body=cur.firstChild;pages.push({el:cur,ids:[],chap:chapTitle});};
+  newPage();
+  blocks.forEach(x=>{
+    if(x.k==="chap"){chapTitle=x.title;if(body.children.length)newPage();pages[pages.length-1].chap=chapTitle;}
+    const tmp=document.createElement("div");tmp.innerHTML=blockHTML(x,false);const el=tmp.firstElementChild;if(!el)return;
+    body.appendChild(el);
+    if(body.scrollHeight>body.clientHeight+1&&body.children.length>1){body.removeChild(el);newPage();body.appendChild(el);}
+    if(x.id)pages[pages.length-1].ids.push(x.id);
+  });
+  pages.forEach((p,i)=>{const f=p.el.querySelector(".bfolio");f.firstChild.textContent=folio(p.chap);f.lastChild.textContent=startNo+i;});
+  return pages;
+}
+
+// ---------- 화면 ----------
+function bookHTML(){
+  const B=S.book,sc=scenById(B.scid);
+  if(!sc)return `<div class="bookwrap">${loaderHTML()}</div>`;
+  if(!bookCan(sc))return `<div class="sc-page"><div class="notice">리플레이북은 세션 비밀번호로 들어온 사람만 볼 수 있어요.</div><button class="ghost" onclick="location.hash='c-${esc(sc.id)}'">← 세션 페이지</button></div>`;
+  const th=themeOf(sc)||"plain",acc=BOOK_ACC[th]||BOOK_ACC.plain,Z=BOOK_SIZES[B.size]||BOOK_SIZES.a5;
+  const bar=`<div class="bkbar"><a class="ghost" href="#c-${esc(sc.id)}">← 세션 페이지</a><b>📖 ${esc(sc.name)}</b>
+    <span class="seg"><button data-bmode="view" class="${B.mode==="view"?"on":""}">완성본</button><button data-bmode="edit" class="${B.mode==="edit"?"on":""}">책 고치기</button></span>
+    <select id="bksize">${Object.entries(BOOK_SIZES).map(([k,v])=>`<option value="${k}"${k===B.size?" selected":""}>${v.lab}</option>`).join("")}</select>
+    <span class="sp"></span><span class="cnt" id="bkcnt"></span>${B.mode==="view"?`<button class="pri" id="bkprint">PDF로 저장 · 인쇄</button>`:""}</div>`;
+  if(B.err)return `<div class="bookwrap" style="--acc:${acc}">${bar}<div class="notice">${esc(B.err)}</div></div>`;
+  if(!B.parts)return `<div class="bookwrap" style="--acc:${acc}">${bar}${loaderHTML()}</div>`;
+  if(!B.parts.length)return `<div class="bookwrap" style="--acc:${acc}">${bar}<div class="notice">이 세션에는 아직 로그가 없어요.</div></div>`;
+  return `<div class="bookwrap mode-${B.mode}" style="--acc:${acc};--pw:${Z.w}px;--ph:${Z.h}px" data-size="${B.size}" data-th="${th}">${bar}
+    ${B.mode==="edit"?`<div class="bkedit"><div class="bkkeys"><span><kbd>1</kbd>본문</span><span><kbd>2</kbd>잡담</span><span><kbd>3</kbd>빼기</span><span>Shift+클릭 여러 줄</span><span>두 번 눌러 글 고치기</span></div><div class="bksheet" id="bksheet"></div></div>`:`<div class="bkpages" id="bkpages"></div>`}
+    <div class="bkmeasure" id="bkmeasure"></div></div>`;
+}
+function bookFront(sc){
+  const th=themeOf(sc)||"plain",gk=gmKey(sc),gmw=th==="deco"?"DM":"GM",days=[...new Set(S.book.parts.map(p=>p.day))];
+  const cast=gmFirst((sc.sp||[]).filter(p=>p.k!==ALL&&(p.k===gk||!isAnon(p)&&!/&/.test(p.name)||p.ch)),gk);
+  const pcn=p=>+(pcSplit(p.name).n||"").replace(/\D/g,"")||99;
+  const gm=cast.find(p=>p.k===gk),pcs=cast.filter(p=>p.k!==gk).sort((a,b)=>pcn(a)-pcn(b));
+  const sys=effSys(sc)?sysLabel(effSys(sc)):"";
+  const cover=`<div class="bpg bcover"${sc.og?` style="--og:url('${sc.og}')"`:""}><div class="art${sc.og?" img":""}"></div><div class="band"></div><div class="in">
+    <div class="series">${sys?`<b>${esc(sys)}</b>`:""}REPLAY BOOK</div><h1>${esc(sc.name)}</h1>${sc.orig?`<div class="orig">${esc(sc.orig)}</div>`:""}
+    ${sc.summary?`<div class="sub">${esc(sc.summary.split("\n").filter(Boolean).slice(0,2).join(" "))}</div>`:""}
+    <div class="who">${gm?`<div><b>${gmw}</b>${esc(pcSplit(gm.name).name)}</div>`:""}<div><b>PL</b>${pcs.map(p=>esc(pcSplit(p.name).name)).join(" · ")}</div></div>
+    <div class="pub"><span>${site().title===SITE_UNSET?"":esc(site().title)}</span><span>${days.length?esc(days[0].replace(/-/g,". ")):""}${days.length>1?` – ${esc(days[days.length-1].slice(5).replace(/-/g,". "))}`:""}${campOf(sc)?` · ${esc(campOf(sc).name)}`:""}</span></div></div></div>`;
+  const castP=`<div class="bpg"><div class="bbody"><h2 class="ph">CHARACTERS</h2><h3 class="pt">등장인물</h3><div class="bcast">${pcs.map(p=>{const q=pcSplit(p.name);return `<div class="bpc" style="--c:${fixC(p.c)}"><span class="av">${p.img?`<img src="${esc(p.img)}" alt="">`:`<em>${esc((p.ch||q.name).slice(0,1))}</em>`}${q.n?`<i>${q.n}</i>`:""}</span><div><b>${esc(p.ch||q.name)}</b><div class="pl">플레이어 · ${esc(q.name)}</div>${p.memo?`<p>${esc(p.memo)}</p>`:""}</div></div>`;}).join("")}</div>
+    ${gm?`<div class="bgm"><b>${gmw}</b>${esc(pcSplit(gm.name).name)}${gm.ch?` · ${esc(gm.ch)}`:""} — 이 이야기의 진행자</div>`:""}</div><div class="bfolio"><span>${esc(sc.name)}</span><span>2</span></div></div>`;
+  return {cover,castP};
+}
+function bookRender(){
+  const B=S.book;if(!B||!B.parts)return;const sc=scenById(B.scid);if(!sc)return;
+  const m=$("#bkmeasure");if(!m)return;
+  const blocks=bookBlocks(sc,false);
+  // 쪽 나누기는 항상 완성본 기준으로 (책 고치기 화면의 쪽 경계 표시에도 써요)
+  m.innerHTML="";const pages=bookPaginate(blocks,m,4,c=>c||sc.name);
+  const pageOf={};pages.forEach((p,i)=>p.ids.forEach(id=>pageOf[id]=4+i));
+  const revs=(S.revs[sc.id]||[]).filter(r=>r.html||r.text);
+  const cnt=$("#bkcnt");const all=B.parts.flatMap(bookItems),nO=all.filter(e=>bkOf(e.b)===1).length,nC=all.filter(e=>bkOf(e.b)===2).length;
+  if(cnt)cnt.textContent=`${all.length.toLocaleString()}줄 · 잡담 ${nO} · 빼기 ${nC} · ${BOOK_SIZES[B.size].n} 약 ${pages.length+3+(revs.length?1:0)}쪽`;
+  if(B.mode==="view"){
+    const host=$("#bkpages");const {cover,castP}=bookFront(sc);
+    // 차례: 장·단락 제목과 쪽
+    const toc=[];blocks.forEach(x=>{if(x.k==="chap")toc.push({t:x.title,ch:1,id:x.id});else if(x.k==="scene"&&x.lv===1&&x.text)toc.push({t:x.text,id:x.id});});
+    const chapPage={};pages.forEach((p,i)=>{if(p.el.querySelector(".bchap"))chapPage[p.chap]=chapPage[p.chap]||4+i;});
+    const revStart=4+pages.length;
+    const tocP=`<div class="bpg"><div class="bbody"><h2 class="ph">CONTENTS</h2><h3 class="pt">차례</h3><ul class="btoc"><li class="ch">등장인물<span class="p">2</span></li>
+      ${toc.map(t=>`<li class="${t.ch?"ch":"sc"}">${esc(t.t)}<span class="p">${t.ch?(chapPage[t.t]||""):(pageOf[t.id]||"")}</span></li>`).join("")}
+      ${revs.length?`<li class="ch">플레이어 후기<span class="p">${revStart}</span></li>`:""}</ul></div><div class="bfolio"><span>${esc(sc.name)}</span><span>3</span></div></div>`;
+    host.innerHTML=cover+castP+tocP;pages.forEach(p=>host.appendChild(p.el));
+    if(revs.length){
+      const pgs=[];let page=null;const np=()=>{page=document.createElement("div");page.className="bpg";page.innerHTML=`<div class="bbody"></div><div class="bfolio"><span>${esc(sc.name)}</span><span>${revStart+pgs.length}</span></div>`;host.appendChild(page);pgs.push(page);return page.firstChild;};
+      let body=np();body.innerHTML=`<h2 class="ph">AFTERWORD</h2><h3 class="pt">플레이어 후기</h3>`;
+      revs.forEach(r=>{const w=revWho(sc,r);const el=document.createElement("div");el.className="brv";el.innerHTML=`<b>${esc(w.name)}</b><small>${esc(w.gm?(themeOf(sc)==="deco"?"DM":"GM"):w.ch?w.ch+" 역":"")}</small><div class="rb">${r.html?richView(r.html):esc(r.text||"").replace(/\n/g,"<br>")}</div>`;
+        body.appendChild(el);if(body.scrollHeight>body.clientHeight+1&&body.children.length>1){body.removeChild(el);body=np();body.appendChild(el);}});}
+    m.innerHTML="";
+  }else{
+    const sh=$("#bksheet");const eb=bookBlocks(sc,true);let lastPg=0,html="",secIds=[];
+    // 단락별로 묶어 '통째로 빼기' · 다 뺀 단락은 접어 둬요
+    const groupsArr=[];let g={head:null,items:[]};eb.forEach(x=>{if(x.k==="chap"||x.k==="scene"){groupsArr.push(g);g={head:x,items:[]};}else g.items.push(x);});groupsArr.push(g);
+    groupsArr.forEach((G,gi)=>{if(!G.head&&!G.items.length)return;
+      const ids=G.items.filter(x=>x.id).map(x=>x.id),allCut=ids.length&&G.items.every(x=>!x.id||x.bk===2),open=B.unfold&&B.unfold[gi];
+      if(G.head){const h=G.head;const pg=G.items.map(x=>pageOf[x.id]).filter(Boolean);
+        html+=`<div class="bsec${h.k==="chap"?" chap":""}${allCut?" cut":""}"><b>${h.k==="chap"?esc(h.label)+" · ":""}${esc(h.k==="chap"?h.title:(h.text||"단락"))}</b><small>${allCut?`뺀 단락 · ${ids.length}줄`:pg.length?`완성본 ${Math.min(...pg)}${Math.max(...pg)>Math.min(...pg)?"–"+Math.max(...pg):""}쪽`:""}</small>${ids.length?`<button class="ghost" data-bsec="${gi}">${allCut?"다시 넣기":"이 단락 통째로 빼기"}</button>`:""}</div>`;}
+      if(allCut&&!open){html+=`<button class="bfold" data-bfold="${gi}">뺀 단락 ${ids.length}줄은 접혀 있어요 · 펼치기 ▾</button>`;return;}
+      G.items.forEach(x=>{const p=pageOf[x.id];if(p&&p!==lastPg){if(lastPg)html+=`<div class="bpbreak">완성본 ${p}쪽</div>`;lastPg=p;}html+=blockHTML(x,true);});
+      secIds[gi]=ids;});
+    // 책 앞부분 정보: 등장인물 한 줄 소개 · 고유명사 설명(처음 나오는 쪽에 메모)
+    const gk=gmKey(sc),pcs=(sc.sp||[]).filter(p=>p.k!==ALL&&p.k!==gk&&(!isAnon(p)&&!/&/.test(p.name)||p.ch));
+    const ng=nounGroupsOf(sc);
+    html=`<details class="bkinfo"${B.infoOpen?" open":""}><summary>등장인물 소개 · 고유명사 설명</summary>
+      <div class="bki-h">등장인물 한 줄 소개</div>${pcs.map(p=>`<label class="bki"><span style="color:${fixC(p.c)}">${esc(p.ch||pcSplit(p.name).name)}</span><input type="text" data-bkmemo="${esc(p.k)}" value="${esc(p.memo||"")}" placeholder="예: 안개 속에서 길을 잃은 약초꾼"></label>`).join("")||'<div class="bki-e">플레이어가 없어요.</div>'}
+      <div class="bki-h">고유명사 설명 <small>설명이 있는 낱말만 처음 나오는 쪽 여백에 메모로 붙어요</small></div>${ng.map(g=>`<label class="bki"><span>${esc(g.n)}</span><input type="text" data-bknoun="${esc(g.n)}" value="${esc(g.d||"")}" placeholder="(설명 없음)"></label>`).join("")||'<div class="bki-e">로그 페이지의 고유명사 목록에서 낱말을 먼저 묶어 주세요.</div>'}
+    </details>`+html;
+    sh.innerHTML=html;B.secIds=secIds;
+    const det=sh.querySelector(".bkinfo");det.ontoggle=()=>{B.infoOpen=det.open;};
+    sh.querySelectorAll("[data-bkmemo]").forEach(i=>{i.onkeydown=e=>{e.stopPropagation();if(e.key==="Enter")i.blur();};i.onchange=()=>{const k=i.dataset.bkmemo,v=i.value.trim();
+      mutateScen(sc.id,d=>{const p=(d.sp||[]).find(x=>x.k===k);if(!p)return false;if(v)p.memo=v;else delete p.memo;});};});
+    sh.querySelectorAll("[data-bknoun]").forEach(i=>{i.onkeydown=e=>{e.stopPropagation();if(e.key==="Enter")i.blur();};i.onchange=()=>{const g=nounGroupsOf(sc).find(x=>x.n===i.dataset.bknoun);if(g)saveNoun(g.n,{n:g.n,a:g.a,d:i.value},sc);};});B.flat=eb.filter(x=>x.id&&x.k!=="scene"&&x.k!=="chap");
+    m.innerHTML="";bindBookEdit(sc);
+  }
+}
+function bookSelPop(){
+  document.querySelectorAll(".bselpop").forEach(e=>e.remove());const B=S.book;if(!B||!B.sel.size||B.editing)return;
+  const els=[...document.querySelectorAll("#bksheet [data-bid].sel")];if(!els.length)return;
+  const xs=B.flat.filter(x=>B.sel.has(x.id)),speech=xs.every(x=>x.k==="line"),cur=xs.every(x=>x.bk===xs[0].bk)?xs[0].bk:-1;
+  const pop=document.createElement("div");pop.className="bselpop";
+  pop.innerHTML=`${xs.length>1?`<em>${xs.length}줄</em>`:""}<button data-bk="0" class="${cur===0?"on":""}">1 본문</button>${speech?`<button data-bk="1" class="${cur===1?"on":""}">2 잡담</button>`:""}<button data-bk="2" class="${cur===2?"on":""}">3 빼기</button>`;
+  const first=els[0];first.style.position="relative";first.appendChild(pop);
+  pop.onmousedown=e=>{const b=e.target.closest("[data-bk]");if(!b)return;e.preventDefault();e.stopPropagation();bookSetBk(+b.dataset.bk);};
+}
+function bookSetBk(v){
+  const B=S.book;const xs=B.flat.filter(x=>B.sel.has(x.id));if(!xs.length)return;
+  const changes=xs.filter(x=>!(v===1&&x.k!=="line")).map(x=>{const P=B.parts.find(p=>p.sid===x.sid),b=P.chunks[x.ci].find(y=>y.id===x.id);
+    // 코코포리아 잡담 채널 줄을 본문으로 되돌릴 땐 0을 적어 둬요
+    const def=b.tab&&CHAT_TAB.test(b.tab)&&x.k==="line"?1:0;return {sid:x.sid,ci:x.ci,id:x.id,f:{bk:v===def?undefined:v}};});
+  bookSet(changes);
+}
+function bindBookEdit(sc){
+  const B=S.book,sh=$("#bksheet");if(!sh)return;
+  sh.onclick=e=>{
+    const sb=e.target.closest("[data-bsec]");if(sb){const ids=B.secIds[+sb.dataset.bsec]||[];const xs=B.flat.filter(x=>ids.includes(x.id));const allCut=xs.every(x=>x.bk===2);
+      B.sel=new Set(ids);bookSetBk(allCut?0:2);B.sel=new Set();return;}
+    const fb=e.target.closest("[data-bfold]");if(fb){B.unfold={...(B.unfold||{}),[fb.dataset.bfold]:true};bookRender();return;}
+    const el=e.target.closest("[data-bid]");if(!el||B.editing)return;const id=el.dataset.bid;
+    if(e.shiftKey&&B.anchor){const order=B.flat.map(x=>x.id),a=order.indexOf(B.anchor),z=order.indexOf(id);const [i,j]=a<z?[a,z]:[z,a];B.sel=new Set(order.slice(i,j+1));}
+    else{B.sel=new Set([id]);B.anchor=id;}
+    sh.querySelectorAll("[data-bid]").forEach(n=>n.classList.toggle("sel",B.sel.has(n.dataset.bid)));bookSelPop();
+  };
+  sh.ondblclick=e=>{const el=e.target.closest("[data-bid]");if(!el)return;const x=B.flat.find(y=>y.id===el.dataset.bid);if(!x||x.k==="dice")return;
+    B.editing=x.id;B.sel=new Set([x.id]);bookRender();const t=$("#bked");if(t){t.focus();t.setSelectionRange(t.value.length,t.value.length);t.style.height=t.scrollHeight+"px";
+      t.oninput=()=>{t.style.height="auto";t.style.height=t.scrollHeight+"px";};
+      t.onkeydown=ev=>{ev.stopPropagation();if(ev.key==="Escape"){B.editing=null;bookRender();}
+        else if(ev.key==="Enter"&&!ev.shiftKey&&!ev.isComposing){ev.preventDefault();const v=t.value.replace(/\s+$/,"");B.editing=null;if(v!==x.text)bookSet([{sid:x.sid,ci:x.ci,id:x.id,f:{x:v}}]);else bookRender();}};}};
+  bookSelPop();
+}
+function bindBook(){
+  const B=S.book;renderAuth&&renderAuth();
+  document.querySelectorAll("[data-bmode]").forEach(b=>b.onclick=()=>{B.mode=b.dataset.bmode;B.sel=new Set();B.editing=null;render();});
+  const sz=$("#bksize");if(sz)sz.onchange=()=>{B.size=sz.value;try{localStorage.setItem("trpg-booksize",B.size);}catch(e){}render();};
+  const pr=$("#bkprint");if(pr)pr.onclick=()=>{const st=document.getElementById("bkpage-style")||document.head.appendChild(Object.assign(document.createElement("style"),{id:"bkpage-style"}));const Z=BOOK_SIZES[B.size];st.textContent=`@page{size:${Z.w/559*148}mm ${Z.h/794*210}mm;margin:0}`;window.print();};
+  if(B.parts)setTimeout(bookRender,0);
+}
+// 책 고치기 단축키: 1 본문 · 2 잡담 · 3 빼기 · ↑↓ 줄 옮기기 · Esc 고르기 풀기
+document.addEventListener("keydown",e=>{
+  const B=S.book;if(!B||B.mode!=="edit"||B.editing)return;if(/INPUT|TEXTAREA|SELECT/.test((e.target.tagName||"")))return;
+  if(["1","2","3"].includes(e.key)&&B.sel.size){e.preventDefault();bookSetBk(+e.key-1);return;}
+  if(e.key==="Escape"&&B.sel.size){B.sel=new Set();document.querySelectorAll("#bksheet .sel").forEach(n=>n.classList.remove("sel"));bookSelPop();return;}
+  if((e.key==="ArrowDown"||e.key==="ArrowUp")&&B.flat&&B.flat.length){e.preventDefault();const order=B.flat.map(x=>x.id);let i=order.indexOf(B.anchor);i=i<0?0:Math.max(0,Math.min(order.length-1,i+(e.key==="ArrowDown"?1:-1)));
+    B.anchor=order[i];B.sel=new Set([order[i]]);document.querySelectorAll("#bksheet [data-bid]").forEach(n=>n.classList.toggle("sel",B.sel.has(n.dataset.bid)));const el=document.querySelector(`#bksheet [data-bid="${CSS.escape(order[i])}"]`);if(el)el.scrollIntoView({block:"nearest"});bookSelPop();}
+});

@@ -86,7 +86,7 @@ function scenHTML(){
   }
   return `<div class="sc-page">
     ${campOf(sc)?isCamp(campOf(sc))?`<div class="campline">캠프 · <a href="#g-${esc(sc.camp)}">${esc(campOf(sc).name)}</a></div>`:`<div class="campline">📚 <a href="#g-${esc(sc.camp)}">${esc(campOf(sc).name)}</a> · ${esc(epLabel(campOf(sc),sc))}${sc.gaiden?"":` <span class="tip">(전체 ${campCount(campOf(sc))})</span>`}</div>`:""}
-    ${(()=>{const t=`<h2>${esc(sc.name)}${sc.orig?`<span class="orig">${esc(sc.orig)}</span>`:""}</h2>`,m=`${effSys(sc)?`<span class="sys" data-th="${themeOf(sc)||"pa"}">${esc(sysLabel(effSys(sc)))}</span>`:""}${S.canWrite?`<button id="scedit" title="세션 수정" aria-label="세션 수정">✎<span class="lbl"> 수정</span></button>`:""}`;
+    ${(()=>{const t=`<h2>${esc(sc.name)}${sc.orig?`<span class="orig">${esc(sc.orig)}</span>`:""}</h2>`,m=`${effSys(sc)?`<span class="sys" data-th="${themeOf(sc)||"pa"}">${esc(sysLabel(effSys(sc)))}</span>`:""}${bookCan(sc)?`<a class="bookbtn" href="#b-${esc(sc.id)}" title="리플레이북">📖<span class="lbl"> 리플레이북</span></a>`:""}${S.canWrite?`<button id="scedit" title="세션 수정" aria-label="세션 수정">✎<span class="lbl"> 수정</span></button>`:""}`;
       return sc.og?`<div class="schero"><img src="${sc.og}" alt=""><div class="schero-t">${t}<span class="scmeta">${m}</span></div></div>`
         :`<div class="sc-top">${t}<span class="scmeta">${m}</span></div>`;})()}
     <div class="sc-sec"><h4 data-en="SUMMARY">개요</h4>${txt(sc.summary,"아직 개요가 없어요."+(S.canWrite?" ✎ 수정을 눌러 써 주세요.":""))}</div>

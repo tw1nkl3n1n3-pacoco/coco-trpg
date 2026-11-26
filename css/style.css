@@ -768,3 +768,133 @@ body[data-theme=deco][data-page=scen] :is(.sc-page,.rvpage)>.ldr{--ink:#f6e7c8;-
   .camp-k h2 .hsub .dot{display:none}
   .camp-k .hsub span{white-space:nowrap}
 }
+/* 리플레이북 표시가 로그에 은근히 보이게: 잡담은 이름과 한 줄 · 회색, 빼기는 흐리게 */
+.row.bk-ooc{--c:#9a9a96!important}
+.row.bk-ooc .body{display:flex;align-items:baseline;gap:8px;border-left-color:#c9c9c5!important}
+.row.bk-ooc .who{font-size:.85em;color:#8a8a86!important;white-space:nowrap;flex:none;margin:0}
+.row.bk-ooc .who .pcn{background:#a6a6a2!important}
+.row.bk-ooc .who small{display:none!important}
+.row.bk-ooc .tx{font-size:.86em;color:#777}
+.row.bk-cut .body{opacity:.42}
+.nedit textarea{width:100%;font:inherit;font-size:13px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;resize:vertical}
+
+/* ===== 리플레이북 ===== */
+.bookbtn{display:inline-flex;align-items:center;gap:2px;padding:4px 10px;border:1px solid var(--line);border-radius:999px;font-size:13px;color:inherit;text-decoration:none;background:var(--card,#fff)}
+.bookbtn:hover{border-color:currentColor}
+.schero-t .bookbtn{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.45)}
+@media(max-width:640px){.scmeta .bookbtn{padding:2px 7px}.scmeta .bookbtn .lbl{display:none}}
+body.booking{background:#e9e7e2}
+body.booking #hdr,body.booking .topbar{display:none}
+.bookwrap{--acc:#b0101a;max-width:1100px;margin:0 auto;padding:0 16px 60px;font-family:"Pretendard",system-ui,sans-serif;color:#1c1c1b}
+.bkbar{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 0;background:#e9e7e2;border-bottom:1px solid #d6d3cc;margin-bottom:22px;font-size:13px}
+.bkbar>b{font-size:15px}.bkbar .sp{flex:1}.bkbar .cnt{color:#6f6c66}
+.bkbar a.ghost{text-decoration:none;color:#555}
+.bkbar .seg{display:inline-flex;border:1px solid #c9c5bc;border-radius:8px;overflow:hidden}
+.bkbar .seg button{border:0;background:#fff;padding:5px 12px;font:inherit;cursor:pointer;color:#555}
+.bkbar .seg button.on{background:#1c1c1b;color:#fff}
+.bkbar select{font:inherit;padding:4px 6px;border:1px solid #c9c5bc;border-radius:8px;background:#fff}
+.bkbar .pri{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:6px 14px;font:inherit;font-weight:600;cursor:pointer}
+.bookwrap .notice{background:#fff;border-radius:10px;padding:18px;margin:20px 0}
+.bkmeasure{position:absolute;left:-9999px;top:0;visibility:hidden}
+.bkpages{display:flex;flex-wrap:wrap;gap:22px;justify-content:center}
+/* 쪽 */
+.bpg{width:var(--pw);height:var(--ph);background:#fffdf8;box-shadow:0 2px 10px rgba(0,0,0,.14);position:relative;overflow:hidden;flex:none;font-family:"Noto Serif CJK KR","Noto Serif KR","Nanum Myeongjo",serif;font-size:11.2px;line-height:1.72;color:#222}
+[data-size="b6"] .bpg{font-size:10.4px}[data-size="a6"] .bpg{font-size:9.4px;line-height:1.66}
+.bbody{position:absolute;inset:7.5% 10% 9% 10%;overflow:hidden}
+.bfolio{position:absolute;left:10%;right:10%;bottom:4%;display:flex;justify-content:space-between;font:9px/1 "Pretendard",sans-serif;color:#999;letter-spacing:.04em}
+.bpg .ph{font:700 9px/1 "Pretendard",sans-serif;letter-spacing:.24em;color:var(--acc);margin:0 0 6px}
+.bpg .pt{font-size:20px;margin:0 0 18px;font-weight:700}
+.bchap{margin:18% 0 10%;text-align:left;border-bottom:1px solid #ddd;padding-bottom:12px}
+.bchap small{display:block;font:700 9px/1 "Pretendard",sans-serif;letter-spacing:.24em;color:var(--acc);margin-bottom:8px}
+.bchap b{font-size:1.9em;line-height:1.3}
+.bscene{font:700 .92em/1.4 "Pretendard",sans-serif;margin:1.6em 0 .8em;display:flex;align-items:center;gap:8px}
+.bscene::before{content:"";width:14px;height:2px;background:var(--acc)}
+.bscene.l2{font-weight:600;color:#555}.bscene.l2::before{width:8px;background:#bbb}
+.bnar{margin:.7em 0;padding-left:.9em;border-left:2px solid #d9d4c8;color:#3b3934}
+.bln{display:grid;grid-template-columns:5.6em 1fr;gap:0 .9em;margin:.32em 0}
+.bln .sp{text-align:right;font:600 .86em/1.9 "Pretendard",sans-serif;color:var(--c,#333)}
+.bln .sp small{display:block;font-weight:400;font-size:.82em;line-height:1.2;color:#999}
+.bln.gm .sp{color:#555}
+.bln .q{color:#1c1c1b}.bln .act{color:#77736b}
+.bln.ooc{display:block;color:#9a9a96;font-size:.86em;margin:.2em 0 .2em 6.5em}
+.bln.ooc .sp{display:inline;text-align:left;font-size:1em;color:#9a9a96;margin-right:.6em;font-weight:500}
+.bdice{display:flex;align-items:center;gap:.7em;margin:.6em 0 .6em 6.5em;padding:.35em .7em;border:1px solid #ddd;border-radius:3px;font:.86em/1.5 "Pretendard",sans-serif}
+.bdice .t{color:var(--acc);font-size:.9em}.bdice .r{margin-left:auto;font-weight:700}
+.bhand{margin:.9em 0;padding:.8em 1em;background:#f4efe3;border-radius:3px}
+.bhand b{display:block;font:700 .78em/1.4 "Pretendard",sans-serif;letter-spacing:.12em;color:#8a6b2c;margin-bottom:.3em}
+.bmemo{float:right;clear:right;width:34%;margin:.2em 0 .5em .9em;padding:.4em .6em;border-top:2px solid var(--acc);background:#f6f3ec;font:.78em/1.5 "Pretendard",sans-serif;color:#555}
+.bmemo b{display:block;color:#222;margin-bottom:2px}
+/* 표지 */
+.bcover{background:#1c1c1b;color:#fff}
+.bcover .art{position:absolute;inset:0;background:radial-gradient(120% 80% at 70% 20%,color-mix(in srgb,var(--acc) 55%,#000),#111)}
+.bcover .art.img{background:var(--og) center/cover;filter:brightness(.62)}
+.bcover .band{position:absolute;left:0;right:0;bottom:0;height:42%;background:linear-gradient(transparent,rgba(0,0,0,.82))}
+.bcover .in{position:absolute;inset:9% 10% 7%;display:flex;flex-direction:column}
+.bcover .series{font:700 9px/1 "Pretendard",sans-serif;letter-spacing:.28em;opacity:.85}
+.bcover .series b{background:var(--acc);padding:3px 6px;margin-right:8px;letter-spacing:.1em}
+.bcover h1{color:#fff;font-size:2.8em;line-height:1.2;margin:auto 0 .3em;font-weight:800;text-shadow:0 2px 12px rgba(0,0,0,.5)}
+.bcover .orig{font:.9em "Pretendard",sans-serif;opacity:.8}
+.bcover .sub{margin-top:1em;font-size:.95em;opacity:.9;max-width:90%}
+.bcover .who{margin-top:1.6em;font:.86em/1.7 "Pretendard",sans-serif}
+.bcover .who b{display:inline-block;width:2.6em;color:color-mix(in srgb,var(--acc) 40%,#fff)}
+.bcover .pub{margin-top:1.4em;padding-top:.8em;border-top:1px solid rgba(255,255,255,.3);display:flex;justify-content:space-between;font:9px "Pretendard",sans-serif;opacity:.75}
+/* 등장인물 · 차례 · 후기 */
+.bcast{display:flex;flex-direction:column;gap:1.1em}
+.bpc{display:grid;grid-template-columns:4.6em 1fr;gap:1em;align-items:start}
+.bpc .av{position:relative;width:4.6em;height:4.6em;border-radius:50%;background:var(--c);color:#fff;display:grid;place-items:center;font-family:"Pretendard",sans-serif}
+.bpc .av em{font-style:normal;font-weight:700;font-size:1.6em}
+.bpc .av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.bpc .av i{position:absolute;right:-4px;bottom:-2px;font:700 9px/1 "Pretendard";font-style:normal;background:#1c1c1b;color:#fff;border-radius:999px;padding:3px 5px}
+.bpc b{font-size:1.2em}.bpc .pl{font:.82em "Pretendard",sans-serif;color:#888}.bpc p{margin:.3em 0 0;color:#444}
+.bgm{margin-top:1.6em;padding-top:.9em;border-top:1px solid #ddd;font:.88em "Pretendard",sans-serif;color:#666}.bgm b{color:var(--acc);margin-right:.6em}
+.btoc{list-style:none;margin:0;padding:0}
+.btoc li{display:flex;gap:.5em;align-items:baseline;padding:.25em 0}
+.btoc li::after{content:"";order:1;flex:1;border-bottom:1px dotted #bbb}
+.btoc li .p{order:2;font:.9em "Pretendard";color:#666}
+.btoc li.ch{font-weight:700;margin-top:.5em}.btoc li.sc{padding-left:1.2em;font-size:.92em;color:#444}
+.brv{margin:0 0 1.4em}.brv b{font-size:1.1em}.brv small{margin-left:.6em;font:.82em "Pretendard";color:#999}
+.brv .rb{margin-top:.4em;color:#333}.brv .rb img{max-width:100%}
+/* 책 고치기 */
+.bkedit{max-width:760px;margin:0 auto}
+.bkkeys{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:#666;margin-bottom:12px}
+.bkkeys kbd{display:inline-block;min-width:16px;text-align:center;border:1px solid #bbb;border-bottom-width:2px;border-radius:4px;padding:0 4px;margin-right:4px;font:600 11px/1.5 monospace;background:#fff}
+.bksheet{background:#fffdf8;border-radius:8px;box-shadow:0 1px 6px rgba(0,0,0,.1);padding:24px 40px 40px;font-family:"Noto Serif CJK KR","Noto Serif KR",serif;font-size:14px;line-height:1.7;user-select:none}
+.bksheet .bln{grid-template-columns:7em 1fr}
+.bksheet .bln.ooc,.bksheet .bdice{margin-left:7.9em}
+.bksheet [data-bid]{position:relative;cursor:pointer;border-radius:4px;padding-right:46px}
+.bksheet [data-bid]:hover{background:#f3efe6}
+.bksheet [data-bid].sel{background:#fbe7d8;outline:1px solid #e8b893}
+.bksheet .cut{opacity:.38;text-decoration:line-through;text-decoration-color:rgba(0,0,0,.25)}
+.bksheet .btag{position:absolute;right:4px;top:4px;font:600 10px/1 "Pretendard";padding:3px 5px;border-radius:4px;text-decoration:none}
+.btag.ooc{background:#eee;color:#888}.btag.cut{background:#f3d4d4;color:#a33}
+.bsec{display:flex;align-items:center;gap:10px;margin:28px -16px 10px;padding:8px 16px;background:#f1ede4;border-radius:6px;font-family:"Pretendard",sans-serif;font-size:13px}
+.bsec.chap{background:#1c1c1b;color:#fff}.bsec.chap .ghost{color:#fff;border-color:rgba(255,255,255,.4)}
+.bsec small{color:#999;flex:1}.bsec.cut b{text-decoration:line-through;opacity:.6}
+.bsec .ghost{font:inherit;font-size:12px;padding:3px 9px;border:1px solid #c9c5bc;border-radius:6px;background:transparent;cursor:pointer}
+.bfold{display:block;width:100%;margin:4px 0;padding:8px;border:1px dashed #ccc;border-radius:6px;background:none;font:12px "Pretendard";color:#888;cursor:pointer}
+.bpbreak{display:flex;align-items:center;gap:8px;margin:10px 0;font:10px "Pretendard";color:#b3aea4;letter-spacing:.06em}
+.bpbreak::before,.bpbreak::after{content:"";flex:1;border-top:1px dashed #d6d1c6}
+.bselpop{position:absolute;right:0;top:calc(100% + 4px);z-index:5;display:flex;gap:4px;align-items:center;background:#1c1c1b;padding:4px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.25);font-family:"Pretendard",sans-serif}
+.bselpop em{color:#bbb;font-size:11px;font-style:normal;padding:0 6px}
+.bselpop button{border:0;background:#333;color:#fff;border-radius:6px;padding:4px 10px;font:12px "Pretendard";cursor:pointer}
+.bselpop button.on,.bselpop button:hover{background:var(--acc)}
+.bked{width:100%;font:inherit;padding:4px 6px;border:1px solid var(--acc);border-radius:4px;resize:none;background:#fff;user-select:text}
+.bkhint{font:11px "Pretendard";color:#999;margin-top:2px}
+@media(max-width:640px){.bksheet{padding:16px 14px}.bksheet .bln{grid-template-columns:5em 1fr}.bksheet .bln.ooc,.bksheet .bdice{margin-left:0}.bkpages{zoom:.62}}
+@media print{
+  body.booking{background:#fff}
+  body.booking .bkbar,body.booking .toast,body.booking #auth,body.booking footer{display:none!important}
+  body.booking .bookwrap{padding:0;max-width:none}
+  body.booking .bkpages{display:block;zoom:1}
+  body.booking .bpg{box-shadow:none;break-after:page;page-break-after:always;margin:0}
+  body.booking .bcover .art,body.booking .bcover{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body.booking .bmemo,body.booking .bhand{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+.bkinfo{margin:0 -16px 18px;padding:10px 16px;background:#f6f3ec;border-radius:8px;font:13px "Pretendard",sans-serif}
+.bkinfo summary{cursor:pointer;font-weight:600}
+.bki-h{margin:14px 0 6px;font-weight:700;font-size:12px;color:#555}.bki-h small{font-weight:400;color:#999;margin-left:6px}
+.bki{display:grid;grid-template-columns:8em 1fr;gap:10px;align-items:center;margin:4px 0}
+.bki span{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bki input{font:inherit;padding:5px 8px;border:1px solid #d6d1c6;border-radius:6px;background:#fff;user-select:text}
+.bki-e{color:#999;font-size:12px}
+.row.bk-ooc .who .gmtag,.row.bk-ooc .who [class*="gm"]{filter:grayscale(1);opacity:.55}

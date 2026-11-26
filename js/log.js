@@ -36,6 +36,8 @@ function applyTheme(){
 function render(){try{bkAuto();}catch(e){}
   const app=$("#app");
   refreshCanWrite();applyTheme();if(typeof setTitle==="function")setTitle();
+  document.body.classList.toggle("booking",!!S.book);
+  if(S.book){app.innerHTML=bookHTML();bindBook();return;}
   if(S.revPage){app.innerHTML=revPageHTML();return;}
   if(S.up&&!S.sid&&!S.cid){app.innerHTML=upHTML();bindUp();return;}
   if(S.gid&&!S.sid&&!S.cid){app.innerHTML=campPageHTML();bindCamp();return;}
@@ -188,6 +190,9 @@ function hl0(text){
   return h;
 }
 const NOTE="__note",DICE="__dice",HAND="__hand",SEC="__sec";
+// 리플레이북 표시: bk 0=본문 1=잡담 2=빼기 · 코코포리아 잡담 채널은 따로 안 고르면 잡담
+const CHAT_TAB=/잡담|雑談|chat|other/i;
+function bkOf(b){if(!b)return 0;if(b.bk!=null)return b.bk;return b.tab&&CHAT_TAB.test(b.tab)&&![NOTE,DICE,HAND,SEC].includes(b.s)?1:0;}
 const OUT={success:"Success",failure:"Failure",critical:"Critical",fumble:"Fumble"};
 // 룰에 맞춘 표기: 인세인은 크리티컬 대신 스페셜
 const outLabel=(o,sc)=>o==="critical"&&themeOf(sc===undefined?curScen():sc)==="wa"?"Special":OUT[o];
@@ -216,7 +221,7 @@ function rowHTML(e,prev){
       <button class="w" data-act="del" title="단락 나누기 지우기">🗑</button>
     </div></div>`;}
   if(e.b.s===HAND){const b=e.b;
-    return `<div class="row hand${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}">
+    return `<div class="row${bkOf(b)===2?" bk-cut":""} hand${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
     <div class="body"><div class="hlab">📜 ${b.ti?`<b class="hti">${esc(b.ti)}</b>`:"핸드아웃"}</div><div class="tx">${b.x?`<span>${b.x.split("\n").map(l=>`<span class="ln">${handLine(l)}</span>`).join("<br>")}</span>`:'<span class="ph">핸드아웃 내용 · [정보] / [비밀]로 시작하는 줄은 라벨이 붙어요</span>'}</div></div>
     <div class="act">${cmBtn()}
@@ -227,7 +232,7 @@ function rowHTML(e,prev){
       <button class="w" data-act="del" title="삭제">🗑</button>
     </div></div>`;}
   if(e.b.s===DICE){const b=e.b,p=b.w?spBy(b.w):null;
-    return `<div class="row dice${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}" style="--c:${p?fixC(p.c):"#8a8178"}">
+    return `<div class="row${bkOf(b)===2?" bk-cut":""} dice${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}" style="--c:${p?fixC(p.c):"#8a8178"}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
     <div class="body"><div class="tx">${diceInner(b)}</div></div>
     <div class="act">${cmBtn()}
@@ -237,7 +242,7 @@ function rowHTML(e,prev){
       <button class="w" data-act="del" title="삭제">🗑</button>
     </div></div>`;}
   if(e.b.s===NOTE){const b=e.b;
-    return `<div class="row note${b.st?" stat":""}${b.tab?" tabbed":""}${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}">
+    return `<div class="row${bkOf(b)===2?" bk-cut":""} note${b.st?" stat":""}${b.tab?" tabbed":""}${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
     <div class="body"><div class="tx">${b.x?`<span>${b.x.split("\n").map(l=>`<span class="ln">${hl(l)}</span>`).join("<br>")}</span>`:'<span class="ph">상황 묘사</span>'}</div></div>
     <div class="act">${cmBtn()}
@@ -247,11 +252,12 @@ function rowHTML(e,prev){
       <button class="w" data-act="edit" title="글 수정 (Enter)">✎</button>
       <button class="w" data-act="del" title="삭제">🗑</button>
     </div></div>`;}
-  const b=e.b,s=spBy(b.s),lines=b.x.split("\n"),gm=isGM(s.k);
-  const first=!prev||prev.b.s!==b.s||(prev.b.a||"")!==(b.a||"")||(prev.b.tab||"")!==(b.tab||"")||b.t-prev.b.t>120;
+  const b=e.b,s=spBy(b.s),lines=b.x.split("\n"),gm=isGM(s.k),bk=bkOf(b);
+  // 잡담은 이름과 한 줄로(캐릭터 이름 없이), 매 줄 이름을 보여요
+  const first=bk===1||!prev||bkOf(prev.b)===1||prev.b.s!==b.s||(prev.b.a||"")!==(b.a||"")||(prev.b.tab||"")!==(b.tab||"")||b.t-prev.b.t>120;
   const tx=lines.map((l,i)=>(i?`<button class="cut" data-act="cut" data-line="${i}" tabindex="-1" title="여기서 나눠서 다른 화자로 지정할 수 있게 해요">✂</button>`:"")+`<span class="ln">${hl(l)}</span>`).join(" ");
-  const q=pcSplit(s.name),label=(gm?gmTag:q.n?`<span class="pcn">${q.n}</span>`:"")+esc(q.name),sub=(b.a?esc(b.a):s.ch?esc(s.ch):"")+(b.tab?`<span class="tabchip">${esc(b.tab)}</span>`:"");
-  return `<div class="row${first?" first":""}${gm?" gm":""}${b.tab?" tabbed":""}${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}" style="--c:${fixC(s.c)}">
+  const q=pcSplit(s.name),label=(gm?gmTag:q.n?`<span class="pcn">${q.n}</span>`:"")+esc(q.name),sub=bk===1?"":(b.a?esc(b.a):s.ch?esc(s.ch):"")+(b.tab&&!CHAT_TAB.test(b.tab)?`<span class="tabchip">${esc(b.tab)}</span>`:"");
+  return `<div class="row${first?" first":""}${gm?" gm":""}${b.tab?" tabbed":""}${bk===1?" bk-ooc":bk===2?" bk-cut":""}${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}" style="--c:${fixC(s.c)}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
     <div class="body">
       ${first?`<button class="who" data-act="who" title="클릭해서 화자 바꾸기">${label}${sub?`<small>${sub}</small>`:""}</button>`:""}
@@ -526,30 +532,32 @@ function addSec(lv=1){
 
 // ---------- 고유명사: 드래그한 글자를 등록된 이름으로 바꾸기 ----------
 // 고유명사 묶음: {n:풀네임, a:[유의어...]} · PC 캐릭터 이름은 자동으로 들어가요
-const normNoun=x=>typeof x==="string"?{n:x,a:[]}:{n:x.n,a:x.a||[]};
-function nounGroups(){
-  const sc=curScen();if(!sc)return [];
+const normNoun=x=>typeof x==="string"?{n:x,a:[]}:{n:x.n,a:x.a||[],...(x.d?{d:x.d}:{})};
+function nounGroups(){return nounGroupsOf(curScen());}
+// 고유명사 묶음 {n, a:[유의어], d:설명(리플레이북 메모)}
+function nounGroupsOf(sc){
+  if(!sc)return [];
   const st=(sc.nouns||[]).map(normNoun);
   const pcs=[...new Set((sc.sp||[]).filter(p=>p.ch&&p.k!==ALL).map(p=>p.ch.trim()).filter(Boolean))];
   return [...pcs.map(n=>({...(st.find(g=>g.n===n)||{n,a:[]}),pc:true})),...st.filter(g=>!pcs.includes(g.n))];
 }
 const nouns=()=>nounGroups().flatMap(g=>[g.n,...g.a]);
 // oldN의 묶음을 g로 바꾸기 (g=null이면 지우기, oldN=null이면 새로 추가)
-function saveNoun(oldN,g){
-  const sc=curScen();if(!sc)return;
-  if(g){g={n:g.n.trim(),a:[...new Set(g.a.map(x=>x.trim()).filter(x=>x&&x!==g.n.trim()))]};if(!g.n)return;}
+function saveNoun(oldN,g,sc0){
+  const sc=sc0||curScen();if(!sc)return;
+  if(g){g={n:g.n.trim(),a:[...new Set(g.a.map(x=>x.trim()).filter(x=>x&&x!==g.n.trim()))],...((g.d||"").trim()?{d:g.d.trim()}:{})};if(!g.n)return;}
   mutateScen(sc.id,d=>{
     const arr=(d.nouns||[]).map(normNoun);const i=oldN==null?-1:arr.findIndex(x=>x.n===oldN);
     if(!g){if(i>=0)arr.splice(i,1);}
     else{const j=arr.findIndex(x=>x.n===g.n);
       if(i>=0){arr[i]=g;if(j>=0&&j!==i)arr.splice(j,1);}
-      else if(j>=0)arr[j]={n:g.n,a:[...new Set([...arr[j].a,...g.a])]};
+      else if(j>=0)arr[j]={n:g.n,a:[...new Set([...arr[j].a,...g.a])],...(g.d||arr[j].d?{d:g.d||arr[j].d}:{})};
       else arr.push(g);}
-    d.nouns=arr.filter(x=>x.a.length||!(d.sp||[]).some(p=>p.ch&&p.ch.trim()===x.n));
+    d.nouns=arr.filter(x=>x.a.length||x.d||!(d.sp||[]).some(p=>p.ch&&p.ch.trim()===x.n));
   });
   renderSide();renderAllRows(true);
 }
-function addAlias(full,word){const g=nounGroups().find(x=>x.n===full);if(!g)return;saveNoun(g.n,{n:g.n,a:[...g.a,word]});}
+function addAlias(full,word){const g=nounGroups().find(x=>x.n===full);if(!g)return;saveNoun(g.n,{n:g.n,a:[...g.a,word],d:g.d||""});}
 function nounEdit(anchor,full){
   const g=full==null?{n:"",a:[]}:nounGroups().find(x=>x.n===full);if(!g)return;
   popAt(anchor,`<div class="nedit">
@@ -557,12 +565,15 @@ function nounEdit(anchor,full){
     <input type="text" id="nfull" value="${esc(g.n)}" ${g.pc?"disabled":""} placeholder="예: 등장인물 풀네임">
     <label>유의어 · 쉼표로 구분</label>
     <input type="text" id="nalt" value="${esc(g.a.join(", "))}" placeholder="예: 줄여 부르는 이름, 별명">
+    <label>설명 · 리플레이북에서 처음 나오는 곳에 메모로 붙어요</label>
+    <textarea id="ndesc" rows="3" placeholder="예: 이 시나리오의 무대. 일 년 내내 안개가 걷히지 않는 산골 마을.">${esc(g.d||"")}</textarea>
     <div class="btns">${full!=null&&!g.pc?'<button data-a="del" style="color:var(--bad)">지우기</button>':""}<button class="pri" data-a="ok">저장</button></div></div>`,p=>{
-    const f=$("#nfull",p),a=$("#nalt",p);
+    const f=$("#nfull",p),a=$("#nalt",p),dz=$("#ndesc",p);
     const ok=()=>{const n=g.pc?g.n:f.value.trim();if(!n){toast("풀네임을 넣어 주세요");return;}
       if(full==null&&nounGroups().some(x=>x.n===n)){toast("이미 있는 고유명사예요");return;}
-      saveNoun(full,{n,a:a.value.split(/[,，]/)});closePop();};
+      saveNoun(full,{n,a:a.value.split(/[,，]/),d:dz.value});closePop();};
     [f,a].forEach(i=>i.onkeydown=ev=>{ev.stopPropagation();if(ev.key==="Enter")ok();if(ev.key==="Escape")closePop();});
+    dz.onkeydown=ev=>{ev.stopPropagation();if(ev.key==="Escape")closePop();if(ev.key==="Enter"&&(ev.ctrlKey||ev.metaKey))ok();};
     p.querySelector("[data-a=ok]").onclick=ok;
     const d=p.querySelector("[data-a=del]");if(d)d.onclick=()=>{closePop();confirmBox(`'${g.n}' 묶음을 지울까요?`,"지우기",()=>saveNoun(g.n,null));};
     setTimeout(()=>(g.pc?a:f).focus(),0);
