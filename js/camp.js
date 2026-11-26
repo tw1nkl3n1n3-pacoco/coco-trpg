@@ -22,11 +22,35 @@ function epStatus(sc){const n=groups().find(g=>g.scen===sc.name)?.days.length||s
 function epRowHTML(c,sc){const cm=isCamp(c),diff=sc.system&&(cm||sysLabel(sc.system)!==sysLabel(c.system||""));
   return `<div class="cep"><span class="en${sc.gaiden&&!cm?" gai":""}">${cm?esc((sc.lastDay||"").slice(5).replace("-","/")):esc(epLabel(c,sc))}</span><a href="#c-${esc(sc.id)}" class="et">${esc(sc.name)}</a>${diff?`<span class="sys" data-th="${themeOf(sc)}">${esc(sysLabel(sc.system))}</span>`:""}${epStatus(sc)}</div>`;}
 // 고정탁: 같은 인선으로 쭉 이어가는 탁에 붙이는 이름 (시나리오·캠페인에 붙여요) · 누르면 첫 화면에서 그 고정탁만
-function fixLineHTML(f,cls="fixline"){return `<div class="${cls}"><a href="#" data-fix="${esc(f)}" title="고정탁 ${esc(f)}">${esc(f)}</a></div>`;}
+function fixLineHTML(f,cls="fixline"){return `<div class="${cls}"><a href="#f-${encodeURIComponent(f)}" title="고정탁 ${esc(f)}">${esc(f)}</a></div>`;}
 function allFixes(){return [...new Set([...S.scens.map(x=>x.fix),...S.camps.map(x=>x.fix)].map(x=>(x||"").trim()).filter(Boolean))];}
 function fixListHTML(){return `<datalist id="fixlist">${allFixes().map(x=>`<option value="${esc(x)}">`).join("")}</datalist>`;}
-document.addEventListener("click",ev=>{const a=ev.target.closest("[data-fix]");if(!a)return;ev.preventDefault();ev.stopPropagation();
-  S.homeQc=S.homeQ=a.dataset.fix;S.homePerson=null;if(location.hash&&location.hash!=="#")location.hash="";else render();scrollTo(0,0);},true);
+// 아카이브 카드 안의 고정탁 태그(카드 링크 안이라 따로 잡아요) → 고정탁 페이지
+document.addEventListener("click",ev=>{const a=ev.target.closest("[data-fix]");if(!a)return;ev.preventDefault();ev.stopPropagation();location.hash="f-"+encodeURIComponent(a.dataset.fix);},true);
+// 고정탁 페이지: 이 고정탁의 시나리오·캠페인 카드(첫 화면과 같은 카드)와 멤버·기간
+function fixPageHTML(f){
+  const gs=groups().filter(g=>g.sc&&(g.sc.fix||"")===f&&!(g.sc.camp&&campById(g.sc.camp)&&campById(g.sc.camp).fix===f)),cs=S.camps.filter(c=>!isCamp(c)&&(c.fix||"")===f);
+  const hx=isHX();
+  const items=[...gs.map(g=>({k:g.last||"",h:hx?hxScCard(g):scenSecHTML(g)})),...cs.map(c=>({k:campKey(c),h:hx?hxCampCard(c):campCardHTML(c)}))].sort((a,b)=>a.k.localeCompare(b.k));
+  const allG=[...gs,...cs.flatMap(c=>campEps(c).map(e=>groups().find(g=>g.sc&&g.sc.id===e.id)).filter(Boolean))];
+  const days=allG.flatMap(g=>g.days.map(d=>d.day)).filter(Boolean).sort();
+  const ppl={};allG.forEach(g=>(g.sc.sp||[]).forEach(p=>{if(p.chr&&!p.ch||isAnon(p)||/&/.test(p.name||""))return;const n=pcSplit(p.name).name;const o=ppl[n]=ppl[n]||{n,c:p.c,ch:new Set(),cnt:new Set()};o.cnt.add(g.sc.id);if(p.ch)o.ch.add(p.ch);}));
+  const P=Object.values(ppl).sort((a,b)=>b.cnt.size-a.cnt.size);
+  const intro=(site().fixes||{})[f]||"";
+  const dot=d=>d.replace(/-/g,".");
+  return `<div class="home hmain fxpage${hx?" hx":""}"><a class="ghost" href="#" style="font-size:13px">← 첫 화면</a>
+    <div class="fxk">고정탁</div><h2 class="fxh">${esc(f)}</h2>
+    <div class="fxmeta">${days.length?`${esc(dot(days[0]))} – ${esc(dot(days.at(-1)))} · `:""}<b>${gs.length+cs.reduce((a,c)=>a+campEps(c).length,0)}</b>시나리오 · <b>${days.length}</b>세션${cs.length?` · <b>${cs.length}</b>캠페인`:""}</div>
+    ${P.length?`<div class="fxppl">${P.map(p=>`<span class="fxp" style="--c:${fixC(p.c)}"><i></i><b>${esc(p.n)}</b><small>${[...p.ch].map(esc).join(" · ")}${p.ch.size?" · ":""}${p.cnt.size}탁</small></span>`).join("")}</div>`:""}
+    ${intro||S.canAdmin?`<div class="fxintro${intro?"":" empty"}" id="fxintro">${intro?esc(intro).replace(/\n/g,"<br>"):"고정탁 소개 (선택) — 언제부터 어떤 멤버로 굴리는 탁인지 적어 둘 수 있어요"}${S.canAdmin?` <button class="ghost" id="fxedit" type="button">✎</button>`:""}</div>`:""}
+    <div id="sesslist" class="fxlist">${items.map(x=>x.h).join("")||`<div class="notice">아직 이 고정탁으로 묶인 세션이 없어요</div>`}</div></div>`;}
+function bindFixPage(){homeMasonry();bindPartEdit&&bindPartEdit();if(isHX())bindHX();
+  document.querySelectorAll(".fxpage [data-scen]").forEach(a=>a.onclick=ev=>{ev.preventDefault();gotoScen(a.dataset.scen);});
+  const e=$("#fxedit");if(e)e.onclick=()=>{const f=S.fix,cur=(site().fixes||{})[f]||"";const box=$("#fxintro");
+    box.innerHTML=`<textarea id="fxta" rows="3" style="width:100%">${esc(cur)}</textarea><div style="display:flex;gap:6px;justify-content:flex-end;margin-top:6px"><button class="ghost" id="fxx" type="button">취소</button><button class="pri" id="fxok" type="button">저장</button></div>`;
+    $("#fxx").onclick=()=>render();
+    $("#fxok").onclick=async()=>{const v=$("#fxta").value.trim();const fx={...(site().fixes||{})};if(v)fx[f]=v;else delete fx[f];
+      try{await S.db.doc("scenarios/_site").update({fixes:fx});S.site={...S.site,fixes:fx};toast("저장했어요");}catch(err){toast("저장하지 못했어요");}render();};};}
 function campTagHTML(c){return c.system?`<span class="sys" data-th="${themeOf({system:c.system})}">${esc(sysLabel(c.system))}</span>`:"";}
 function campCardHTML(c){
   const es=campEps(c).slice().reverse(),last=campLast(c);

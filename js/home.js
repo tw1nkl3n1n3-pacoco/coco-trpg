@@ -203,7 +203,7 @@ function daysHTML(days,gear=true){
     // 녹음을 여러 조각으로 나눠 올렸어도 한 회차는 한 줄 · 대사 수는 합쳐서 · 조각 ①②는 세션 페이지에서만
     const tot=d.parts.reduce((a,p)=>a+(+p.n||0),0),one=d.parts.length===1;
     return `<div class="day oday"><a class="oline" href="#s-${esc(d.parts[0].id)}"><span class="nth">${i+1}회차</span><span class="odate">${esc(fmtDay(d.day))}</span><span class="ocnt">${tot?tot.toLocaleString()+"개 대사":""}</span>${one||!gear?'<span class="ogo">›</span>':""}</a>
-    ${one||!gear?(one?set(d.parts[0]):""):`<span class="pieces">${d.parts.map((p,j)=>`<span class="partw"><a class="piece" href="#s-${esc(p.id)}" title="녹음 조각 ${j+1}${p.n?" · "+p.n+"개 대사":""}">${pieceNo(j+1)}</a>${set(p)}</span>`).join("")}</span>`}${exp(d)}</div>`;  }).join("")+(days.some(d=>d.parts.length)&&days.every(d=>!d.parts.length||d.parts.length===1&&d.parts[0].src==="ccfolia")&&S.db?`<div class="allexp"><button class="ghost dexp all" data-exps="${esc((days.find(d=>d.parts.length)||{parts:[{}]}).parts[0].scen)}" data-expd="*" title="모든 회차를 HTML 파일 하나로 받기">⬇ 전체 HTML</button></div>`:"");
+    ${one||!gear?(one?set(d.parts[0]):""):`<span class="pieces">${d.parts.map((p,j)=>`<span class="partw"><a class="piece" href="#s-${esc(p.id)}" title="녹음 조각 ${j+1}${p.n?" · "+p.n+"개 대사":""}">${pieceNo(j+1)}</a>${set(p)}</span>`).join("")}</span>`}${exp(d)}</div>`;  }).join("")+(days.some(d=>d.parts.length)&&days.every(d=>!d.parts.length||d.parts.length===1&&(d.parts[0].src==="ccfolia"||d.parts[0].src==="roll20"))&&S.db?`<div class="allexp"><button class="ghost dexp all" data-exps="${esc((days.find(d=>d.parts.length)||{parts:[{}]}).parts[0].scen)}" data-expd="*" title="모든 회차를 HTML 파일 하나로 받기">⬇ 전체 HTML</button></div>`:"");
 }
 async function gotoScen(name,edit){
   let sc=findScen(name);

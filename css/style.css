@@ -1117,3 +1117,16 @@ html.hxhome,body.hxhome{background:#f2f3f0!important}
 .fixline{font-size:12px;color:var(--dim);margin:-2px 0 4px;letter-spacing:.02em}
 .fixline a,.campline a[data-fix]{color:var(--ink);font-weight:700;text-decoration:none;border-bottom:1px dotted currentColor}
 .hx-fix{cursor:pointer;--c:var(--hx-tx)}.hx-fix:hover{background:var(--hx-acc);color:var(--hx-tx);border-color:var(--hx-tx)}
+
+/* 고정탁 페이지 */
+.fxpage .fxk{margin-top:14px;font-size:12px;color:var(--dim);letter-spacing:.06em}
+.fxpage .fxh{font:700 34px/1.2 "Gowun Batang",serif;margin:6px 0 4px}
+.fxmeta{color:var(--dim);font-size:13.5px}.fxmeta b{font:700 16px "Gowun Batang",serif;color:var(--ink);margin:0 2px}
+.fxppl{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0 4px}
+.fxp{display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px 12px 4px 6px;font-size:13px}
+.fxp i{width:10px;height:10px;border-radius:50%;background:var(--c)}.fxp small{color:var(--faint)}
+.fxintro{margin:14px 0 0;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);font-size:13.5px;line-height:1.7}
+.fxintro.empty{border-style:dashed;background:none;color:var(--faint)}
+.fxlist{margin-top:20px}
+.hx.fxpage{max-width:1180px;padding:20px 28px 60px}.hx.fxpage .fxh{font-family:var(--hx-sans)}.hx.fxpage .fxp,.hx.fxpage .fxintro{border-radius:0}
+.fxpage .fixline,.fxpage .hx-fix{display:none}

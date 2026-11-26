@@ -42,6 +42,7 @@ function render(){try{bkAuto();}catch(e){}
     app.innerHTML=bookHTML();bindBook();return;}
   if(S.revPage){app.innerHTML=revPageHTML();return;}
   if(S.up&&!S.sid&&!S.cid){app.innerHTML=upHTML();bindUp();return;}
+  if(S.fix&&!S.sid&&!S.cid){app.innerHTML=fixPageHTML(S.fix);bindFixPage();return;}
   if(S.gid&&!S.sid&&!S.cid){app.innerHTML=campPageHTML();bindCamp();return;}
   if(S.cid){app.innerHTML=scenHTML();bindScen();return;}
   if(!S.sid&&S.admin){app.innerHTML=adminHTML();bindAdmin();return;}
