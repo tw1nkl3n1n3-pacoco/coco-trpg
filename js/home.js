@@ -76,9 +76,12 @@ function editSessionBox(id){
 function bindPartEdit(){document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=ev=>{ev.preventDefault();ev.stopPropagation();editSessionBox(b.dataset.edit);});}
 
 // ---------- home & import ----------
+// 카드 이미지: 대표 이미지(갤러리에서 고른 것 · cover) 또는 공유 이미지(og) · 원래 비율, 4:3보다 길면 고른 위치로 잘라요
+function coverOf(x){if(!x)return null;const c=x.cover;if(c&&c.og)return x.og?{u:x.og,y:c.y}:null;if(c&&c.u)return c;return x.og?{u:x.og,y:50}:null;}
+function coverHTML(x,cls){const c=coverOf(x);return c?`<div class="${cls} cv"><img src="${esc(c.u)}" alt="" loading="lazy" decoding="async" style="object-position:50% ${+c.y>=0?+c.y:50}%"></div>`:"";}
 function pwOf(sc){return sc&&sc.camp&&campById(sc.camp)?sc.camp:sc&&sc.id;}
 function scenSecHTML(g){return `
-      <section class="scen">${g.sc?.og?`<div class="ogtop"><img src="${esc(g.sc.og)}" alt="" loading="lazy"></div>`:""}
+      <section class="scen">${coverHTML(g.sc,"ogtop")}
         ${g.sc?.fix?fixLineHTML(g.sc.fix):""}<div class="scen-h"><h3><a href="#" data-scen="${esc(g.scen)}" title="개요 보기">${esc(g.scen)} ›</a>${g.sc?.orig?`<span class="orig">${esc(g.sc.orig)}</span>`:""}</h3>${g.sc?.system?`<span class="sys" data-th="${themeOf(g.sc)||"pa"}">${esc(sysLabel(g.sc.system))}</span>`:""}<span class="d${g.sc?.done?" dstamp":""}">${g.sc&&!isOpen(g.sc.id)?(g.sc.lastDay?`${g.sc.nDays||1}회차 · 마지막 ${esc(fmtDay(g.sc.lastDay))} 🔒`:"🔒"):g.days.length?`${g.days.length}회차 · 마지막 ${esc(fmtDay(g.last))}`:"아직 녹음 없음"}${stampHTML(g.sc)}</span></div>
         ${g.sc?.summary?`<div class="sum">${esc(g.sc.summary)}</div>`:""}
         ${castHTML(g.sc)}

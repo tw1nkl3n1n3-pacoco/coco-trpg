@@ -43,7 +43,7 @@ function fixLockHTML(f){const W=fixWord(f);const ns=[...S.scens.filter(x=>(x.fix
     <div class="lockicon">🔒</div><div class="tip fxk">${W}</div><h2>${esc(f)}</h2>${ns.length?`<div class="tip">${ns.map(esc).join(" · ")}</div>`:""}
     <div class="lkpw"><form id="fxunlock"><input type="text" id="fxpw" placeholder="${W} 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form>
     <div class="tip" id="fxmsg" style="margin-top:8px">이 비밀번호 하나로 ${W} 안의 모든 세션이 열려요</div></div>
-    <div class="homefoot"><a class="ghost" href="#" style="text-decoration:none">← 목록</a><span style="flex:1"></span><span class="authbox"></span></div></div></div></div>`;}
+    <div class="homefoot"><a class="ghost ownonly" href="#" style="text-decoration:none">← 목록</a><span style="flex:1"></span><span class="authbox"></span></div></div></div></div>`;}
 function bindFixLock(){const f=S.fix,form=$("#fxunlock");if(!form)return;const inp=$("#fxpw");setTimeout(()=>inp.focus(),0);
   form.onsubmit=async ev=>{ev.preventDefault();const pw=inp.value.trim();if(!pw)return;const m=$("#fxmsg");m.textContent="확인하는 중…";const ids=fixPwIds(f);
     try{await unlockScen(ids[0],pw);await Promise.all(ids.slice(1).map(id=>unlockScen(id,pw).catch(()=>{})));
@@ -59,7 +59,7 @@ function fixPageHTML(f){
   const P=Object.values(ppl).sort((a,b)=>b.cnt.size-a.cnt.size);
   const intro=(site().fixes||{})[f]||"";
   const dot=d=>d.replace(/-/g,".");
-  return `<div class="home hmain fxpage${hx?" hx":""}"><a class="ghost" href="#" style="font-size:13px">← 첫 화면</a>
+  return `<div class="home hmain fxpage${hx?" hx":""}"><a class="ghost ownonly" href="#" style="font-size:13px">← 첫 화면</a>
     <div class="fxk">${fixWord(f)}</div><h2 class="fxh">${esc(f)}</h2>
     <div class="fxmeta">${days.length?`${esc(dot(days[0]))} – ${esc(dot(days.at(-1)))} · `:""}<b>${gs.length+cs.reduce((a,c)=>a+campEps(c).length,0)}</b>시나리오 · <b>${days.length}</b>세션${cs.length?` · <b>${cs.length}</b>캠페인`:""}</div>
     ${P.length?`<div class="fxppl">${P.map(p=>`<span class="fxp" style="--c:${fixC(p.c)}"><i></i><b>${esc(p.n)}</b><small>${[...p.ch].map(esc).join(" · ")}${p.ch.size?" · ":""}${p.cnt.size}탁</small></span>`).join("")}</div>`:""}
@@ -84,7 +84,7 @@ function campCardHTML(c){
   // 일반 세션 카드와 같은 머리 모양: 제목 · 오른쪽에 룰 태그와 편 수 (캠페인인 건 '진행 중인 캠페인' 칸과 굵은 테두리로 보여요)
   const head=(!isCamp(c)&&c.fix?fixLineHTML(c.fix):"")+`<div class="scen-h"><h3><a href="#g-${esc(c.id)}">${esc(c.name)} ›</a>${c.orig&&!isCamp(c)?`<span class="orig">${esc(c.orig)}</span>`:""}</h3>${campTagHTML(c)}<span class="d${c.done&&!isCamp(c)||isCamp(c)&&campEnded(c)?" dstamp":""}">${isCamp(c)?`캠프 · ${campWhen(c)?esc(campWhen(c).replace(/ · 당일치기$/,"")):""}${campWhen(c)?" · ":""}${campCount(c)}`:`${campCount(c)}${last?` · 마지막 ${esc(fmtDay(last))}`:""}`}${isCamp(c)?(campEnded(c)?stampHTML(c,"종료"):""):stampHTML(c)}</span></div>`;
   const more=!!S.campMore[c.id],shown=more?es:es.slice(0,3);
-  return `<section class="scen camp${c.done&&!isCamp(c)?" done":""}">${c.og?`<div class="ogtop"><img src="${esc(c.og)}" alt="" loading="lazy"></div>`:""}${head}${shown.map(e=>epRowHTML(c,e)).join("")||`<div class="tip" style="margin-top:8px">아직 ${isCamp(c)?"탁이":"편이"} 없어요</div>`}
+  return `<section class="scen camp${c.done&&!isCamp(c)?" done":""}">${coverHTML(c,"ogtop")}${head}${shown.map(e=>epRowHTML(c,e)).join("")||`<div class="tip" style="margin-top:8px">아직 ${isCamp(c)?"탁이":"편이"} 없어요</div>`}
     ${es.length>3?`<button class="cmore" data-cmore="${esc(c.id)}">${more?"▴ 접기":`▾ ${isCamp(c)?"탁":"이전 편"} ${es.length-3}개 더 보기`}</button>`:""}</section>`;
 }
 // 플레이어별 캐릭터: 같은 캐릭터로 이어진 편을 한 줄로
@@ -106,7 +106,7 @@ function campRuns(c){
 function campPageHTML(){
   const c=campById(S.gid);
   if(c&&isCamp(c))return campPgHTML(c);
-  if(!c)return S.loaded?`<div class="sc-page"><div class="notice">캠페인·캠프를 찾을 수 없어요.</div><button class="ghost" onclick="location.hash=''">← 목록</button></div>`:`<div class="sc-page">${loaderHTML()}</div>`;
+  if(!c)return S.loaded?`<div class="sc-page"><div class="notice">캠페인·캠프를 찾을 수 없어요.</div><button class="ghost ownonly" onclick="location.hash=''">← 목록</button></div>`:`<div class="sc-page">${loaderHTML()}</div>`;
   const cm=isCamp(c),W=campWord(c),es=campEps(c),open=campOpen(c),ed=S.campEdit&&S.canAdmin;
   const rows=cm?[]:campRuns(c);
   // 캠프 목록은 날짜 최신순 (같은 날이면 이름순)
@@ -137,7 +137,7 @@ function campPageHTML(){
       <div class="pwrow"><code class="pw">${esc(S.secrets?.[c.id]||"…")}</code><button class="pri" id="g-copy">링크+비밀번호 복사</button><button class="ghost" id="g-newpw">새로 만들기</button></div></div>`
       :!open?`<div class="sc-sec"><h4 data-en="ACCESS">${W} 열기</h4><div class="tip">같이 플레이한 친구에게 받은 ${W} 비밀번호를 넣으면 모든 ${cm?"탁":"편"}의 로그가 열려요.</div>
       <form id="g-unlock" class="pwrow"><input type="text" id="g-pw" placeholder="${W} 비밀번호" autocomplete="off"><button class="pri">열기</button></form><div class="tip" id="g-msg"></div></div>`:""}`}
-    <div class="homefoot"><button class="ghost" onclick="location.hash=''">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
+    <div class="homefoot"><button class="ghost ownonly" onclick="location.hash=''">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
   </div>`;
 }
 // ---------- 캠프: 날짜가 정해진 모임 (당일치기·며칠) · 여러 탁 · 캠프 후기 ----------
@@ -171,7 +171,7 @@ function campLockHTML(c){
     <div class="lockicon">🔒</div><h2>${esc(c.name)}</h2><div class="tip">잠긴 캠프예요${campWhen(c)?` · ${esc(campWhen(c))}`:""}</div>
     <div class="lkpw"><form id="g-unlock"><input type="text" id="g-pw" placeholder="캠프 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form>
       <div class="tip" id="g-msg" style="margin-top:8px">같이 간 사람에게 받은 캠프 비밀번호를 넣어 주세요</div></div>
-    <div class="homefoot"><button class="ghost" onclick="location.hash=''">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
+    <div class="homefoot"><button class="ghost ownonly" onclick="location.hash=''">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
   </div></div></div>`;}
 function campPgHTML(c){
   if(!campOpen(c))return campLockHTML(c);
@@ -186,7 +186,7 @@ function campPgHTML(c){
       ${(()=>{const og=S.campOg!==undefined?S.campOg:c.og||"";return `<div class="ogcard${og?"":" empty"}" id="g-ogprev">${og?`<img src="${og}" alt="">`:`<span>아직 이미지가 없어요</span>`}</div>
       <div style="display:flex;gap:6px;margin-top:8px"><button type="button" id="g-ogup">이미지 올리기</button><button type="button" class="ghost" id="g-ogdel"${og?"":' style="display:none"'}>지우기</button><input type="file" id="g-ogfile" accept="image/*" style="display:none"></div>`;})()}</div>
     ${es.length?"":`<div class="sc-sec"><h4 data-en="DELETE">캠프 지우기</h4><div class="tip" style="margin-bottom:8px">탁이 하나도 없을 때만 지울 수 있어요.</div><button class="ghost" id="g-del">이 캠프 지우기</button></div>`}
-    <div class="homefoot"><button class="ghost" onclick="location.hash=''">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div></div>`;
+    <div class="homefoot"><button class="ghost ownonly" onclick="location.hash=''">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div></div>`;
   const days=campDays(c).filter(d=>d.eps.length),sc=campSc(c);
   const sub=[when,c.place,`탁 ${es.length}개`].filter(Boolean).map(x=>`<span>${esc(x)}</span>`).join('<i class="dot">·</i>');
   const row=e=>`<div class="ctab"><div class="ct-h"><a href="#c-${esc(e.id)}">${esc(e.name)}</a>${effSys(e)?`<span class="sys" data-th="${themeOf(e)}">${esc(sysLabel(effSys(e)))}</span>`:""}</div>${e.summary?`<div class="sum">${esc(e.summary)}</div>`:""}${castHTML(e)||`<div class="tip">참가자를 아직 안 적었어요</div>`}</div>`;
@@ -206,7 +206,7 @@ function campPgHTML(c){
       <div class="tip">이 비밀번호 하나로 캠프의 모든 탁 로그가 열리고, 캠프 후기를 쓸 수 있어요. 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
       <div class="pwrow"><code class="pw">${esc(S.secrets?.[c.id]||"…")}</code><button class="pri" id="g-copy">링크+비밀번호 복사</button><button class="ghost" id="g-newpw">새로 만들기</button></div></div>`
       :""}
-    <div class="homefoot"><button class="ghost" onclick="location.hash=''">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
+    <div class="homefoot"><button class="ghost ownonly" onclick="location.hash=''">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
   </div>`;
 }
 // 배포 때 만드는 미리보기 페이지(p/{id}.html)로 보내야 카톡·디스코드에 대표 이미지가 떠요

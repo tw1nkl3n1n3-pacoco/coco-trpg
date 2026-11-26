@@ -38,7 +38,7 @@ function galHTML(srcs,o={}){
   return `<div class="sc-sec galsec"><h4 data-en="GALLERY">${o.title||"세션 갤러리"}${items.length?`<span class="gcnt">${n2(items.length)}</span>`:""}</h4>
     ${addH}<div class="gm">
     ${items.map((p,i)=>`<figure data-gal="${esc(p.id)}"><div class="im" style="--r:${p.w&&p.h?p.w+"/"+p.h:"4/3"}"><img src="${esc(p.u||p.o)}" alt="${esc(p.cap||"")}" loading="lazy" decoding="async"${p.w?` width="${p.w}" height="${p.h}"`:""}><span class="no">${n2(i+1)}</span>${p.label?`<span class="from">${esc(p.label)}</span>`:""}</div>
-      <figcaption><span class="t${p.cap?"":" empty"}">${p.cap?esc(p.cap):"설명 없음"}</span><span class="c" data-galc="${esc(p.id)}"></span><span class="m">${esc(p.by||"")}${p.by?" · ":""}${galDate(p.at)}</span></figcaption></figure>`).join("")}</div></div>`;
+      <figcaption><span class="t">${esc(p.cap||"")}</span><span class="c" data-galc="${esc(p.id)}"></span><span class="m">${esc(p.by||"")}${p.by?" · ":""}${galDate(p.at)}</span></figcaption></figure>`).join("")}</div></div>`;
 }
 function galCountsRefresh(){document.querySelectorAll("[data-galc]").forEach(e=>{const it=S.galItems.find(x=>x.id===e.dataset.galc);const n=it?galCmsOf(it).length:0;e.textContent=n?"◦"+n:"";});}
 function bindGal(srcs){
@@ -93,7 +93,8 @@ async function galMutate(it,fn){
 }
 function galCur(){const L=S.galItems;const i=L.findIndex(p=>p.id===S.galOpen);return {L,i,p:L[i]};}
 function galCanUp(it){return it.kind==="fx"?(S.canAdmin||(S.fix&&fixOpen(S.fix))):(canWriteScen(it.src)||S.canAdmin);}
-function galOpenAt(id){S.galOpen=id;S.galEditCap=false;galLBRefresh(true);}
+const galYmd=t=>{const d=new Date(t||Date.now()),z=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`;};
+function galOpenAt(id){S.galOpen=id;S.galEditCap=false;S.galEditAt=false;galLBRefresh(true);}
 function galClose(){S.galOpen=null;S.galEditCap=false;document.querySelector(".glb")?.remove();document.body.classList.remove("glbon");}
 function galLBRefresh(force){
   if(!S.galOpen)return;
@@ -101,7 +102,7 @@ function galLBRefresh(force){
   if(!p){if(force||!document.querySelector(".galsec"))galClose();return;}
   let ov=document.querySelector(".glb");
   const ta=ov&&ov.querySelector("#glbnew"),draft=ta?ta.value:"",focused=ta&&document.activeElement===ta;
-  if(ov&&!force&&S.galEditCap)return;
+  if(ov&&!force&&(S.galEditCap||S.galEditAt))return;
   if(!ov){ov=document.createElement("div");ov.className="glb";document.body.appendChild(ov);document.body.classList.add("glbon");}
   const cms=galCmsOf(p),can=galCanUp(p),ed=galCanEdit(p),sc=p.kind==="sc"?scenById(p.src):null;
   ov.innerHTML=`<div class="top"><span class="ac">GALLERY</span><span>${n2(i+1)} / ${n2(L.length)}</span><span class="sp"></span>
@@ -110,9 +111,10 @@ function galLBRefresh(force){
       ${L.length>1?`<button type="button" class="nv l" data-glb="prev">‹</button><button type="button" class="nv r" data-glb="next">›</button>`:""}</div>
     <div class="side"><div class="meta"><div class="k">#${n2(i+1)}${p.label?` · <a href="#c-${esc(p.src)}">${esc(p.label)}</a>`:""}</div>
       ${S.galEditCap?`<div class="capf"><input type="text" id="glbcap" maxlength="80" value="${esc(p.cap||"")}" placeholder="한 줄 설명"><button type="button" class="pri" data-glb="capok">저장</button><button type="button" class="ghost" data-glb="capx">취소</button></div>`
-        :`<h3 class="${p.cap?"":"empty"}">${p.cap?esc(p.cap):"설명 없음"}</h3>`}
+        :p.cap?`<h3>${esc(p.cap)}</h3>`:""}
       <div class="by">${esc(p.by||"")}${p.by?" 올림 · ":""}${p.at?new Date(p.at).toLocaleDateString("ko-KR"):""}${p.w?` · ${p.w}×${p.h}`:""}</div>
-      ${ed&&!S.galEditCap?`<div class="tools"><button type="button" data-glb="cap">✎ 설명</button><button type="button" data-glb="del">지우기</button></div>`:""}</div>
+      ${S.galEditAt?`<div class="capf"><input type="date" id="glbat" value="${galYmd(p.at)}"><button type="button" class="pri" data-glb="atok">저장</button><button type="button" class="ghost" data-glb="atx">취소</button></div>`:""}
+      ${ed&&!S.galEditCap&&!S.galEditAt?`<div class="tools"><button type="button" data-glb="cap">✎ 설명</button>${S.canAdmin?`<button type="button" data-glb="at">📅 날짜</button>`:""}${S.canAdmin&&p.kind==="sc"?`<button type="button" data-glb="cover" class="${sc?.cover?.id===p.id?"on":""}">${sc?.cover?.id===p.id?"★ 카드 이미지":"☆ 카드 이미지로"}</button>`:""}<button type="button" data-glb="del">지우기</button></div>`:""}</div>
       <div class="ch">COMMENTS · ${cms.length}</div>
       <div class="cl">${cms.map(c=>{const sp=(sc?.sp||[]).find(x=>x.k===c.k);return `<div class="cm"><span class="av" style="--c:${sp?.c||"#888"}">${esc((c.name||"?").slice(0,1))}</span><div><b>${esc(c.name||"")}</b><i>${galTime(c.created)}</i>${S.canAdmin||c.uid===myUid()?`<button type="button" class="cmx" data-glbcx="${esc(c.id)}" title="지우기">✕</button>`:""}<p>${esc(c.text||"")}</p></div></div>`;}).join("")||`<div class="tip" style="padding:10px 0">아직 댓글이 없어요</div>`}</div>
       ${can?`<form class="cin" id="glbf"><input type="text" id="glbnew" maxlength="2000" placeholder="댓글 달기" autocomplete="off"><button class="pri">등록</button></form>`:""}</div>
@@ -129,10 +131,20 @@ function galLBRefresh(force){
     else if(act==="prev")galStep(-1);else if(act==="next")galStep(1);
     else if(act==="cap"){S.galEditCap=true;galLBRefresh(true);}
     else if(act==="capx"){S.galEditCap=false;galLBRefresh(true);}
+    else if(act==="at"){S.galEditAt=true;galLBRefresh(true);}
+    else if(act==="atx"){S.galEditAt=false;galLBRefresh(true);}
+    else if(act==="atok"){const v=ov.querySelector("#glbat").value;S.galEditAt=false;
+      if(/^\d{4}-\d\d-\d\d$/.test(v)){const [y,m,d]=v.split("-").map(Number),old=new Date(p.at||Date.now());const t=new Date(y,m-1,d,old.getHours(),old.getMinutes(),old.getSeconds()).getTime();
+        try{await galMutate(p,g=>g.map(x=>x.id===p.id?{...x,at:t}:x));}catch(err){toast("저장하지 못했어요");}}
+      galLBRefresh(true);}
+    else if(act==="cover"&&sc){const on=sc.cover?.id===p.id;
+      await mutateScen(sc.id,L=>{if(on)delete L.cover;else L.cover={id:p.id,u:p.u||p.o,w:p.w||0,h:p.h||0,y:50};});
+      toast(on?"카드 이미지를 공유 이미지로 되돌렸어요":"카드 이미지로 정했어요 · 보여줄 위치는 시나리오 수정에서 고를 수 있어요",3200);render();galLBRefresh(true);}
     else if(act==="capok"){const v=(ov.querySelector("#glbcap").value||"").trim().slice(0,80);S.galEditCap=false;
       try{await galMutate(p,g=>g.map(x=>x.id===p.id?{...x,cap:v}:x));}catch(err){toast("저장하지 못했어요");}galLBRefresh(true);}
     else if(act==="del")confirmBox("이 사진을 지울까요? 원본 파일과 사진에 달린 댓글도 같이 사라져요.","지우기",async()=>{
       try{await galMutate(p,g=>g.filter(x=>x.id!==p.id));
+        if(sc&&sc.cover?.id===p.id)await mutateScen(sc.id,L=>{delete L.cover;});
         [p.p,p.op].filter(Boolean).forEach(x=>S.storage?.ref(x).delete().catch(()=>{}));
         cms.filter(c=>S.canAdmin||c.uid===myUid()).forEach(c=>S.db.doc("comments/"+c.id).delete().catch(()=>{}));
         toast("지웠어요");}catch(err){toast("지우지 못했어요");}});

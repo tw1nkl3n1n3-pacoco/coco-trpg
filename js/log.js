@@ -25,7 +25,7 @@ function themeOf(sc){
   if(/더블크로스|doublecross|덥크|^dx(\d|$)|^dx3/.test(r))return "dx";
   return "plain";
 }
-function applyTheme(){
+function applyTheme(){document.body.classList.toggle("own",!!S.canAdmin);
   {const hx=!S.gid&&!S.cid&&!S.sid&&!S.revPage&&!S.admin&&!S.up&&!S.book&&isHX();if(document.body.classList.contains("hxhome")!==hx){document.body.classList.toggle("hxhome",hx);document.documentElement.classList.toggle("hxhome",hx);}}
   if(S.gid&&!S.sid&&!S.cid){const c=campById(S.gid);const t=c&&c.system?themeOf({system:c.system}):"plain";if((document.body.dataset.theme||"")!==t)document.body.dataset.theme=t;document.body.dataset.page="scen";return;}
   const sc=S.revPage?S.revPage.sc:S.cid?(S.scEdit&&S.scDraft?S.scDraft:scenById(S.cid)):(S.sid&&S.meta?curScen():null);
@@ -163,7 +163,7 @@ function renderSide(){
       <kbd>N</kbd> 묘사 · <kbd>D</kbd> 주사위 · <kbd>H</kbd> 핸드아웃 · <kbd>S</kbd> 단락 · <kbd>M</kbd> 위와 합치기 · <kbd>Del</kbd> 지우기<br>
       글자를 드래그하면 떼어내기·고유명사 메뉴 · <kbd>Ctrl</kbd>+<kbd>Z</kbd> 되돌리기
     </div>
-    <div class="homefoot sidefoot"><button class="ghost" id="back" title="세션 목록">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>`;
+    <div class="homefoot sidefoot"><button class="ghost ownonly" id="back" title="세션 목록">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>`;
   bindSide();
 }
 // 같은 날 녹음 조각이 여럿일 때만 ①② 표시

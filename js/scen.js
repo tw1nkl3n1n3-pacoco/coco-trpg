@@ -21,7 +21,7 @@ function scenHTML(){
   const sc=scenById(S.cid);
   if(!sc){
     if(!S.loaded||!S.authUser)return `<div class="sc-page">${loaderHTML()}</div>`;
-    return `<div class="sc-page"><button class="ghost" id="scback">← 목록</button><div class="notice">이 세션을 찾을 수 없어요.</div></div>`;
+    return `<div class="sc-page"><button class="ghost ownonly" id="scback">← 목록</button><div class="notice">이 세션을 찾을 수 없어요.</div></div>`;
   }
   // 비밀번호를 넣기 전에는 시나리오 페이지 대신 잠금 화면만: 누구로 들어갈지 고르고 비밀번호
   if(!isOpen(sc.id))return `<div class="sc-page lockpage"><div class="lkwrap"><div class="lkbox">
@@ -30,7 +30,7 @@ function scenHTML(){
       ${S.lockPick?`<div class="lkpw"><div class="who">${S.lockPick==="ext"?`외부인은 로그를 <span class="me">읽기만</span> 할 수 있어요`:`<span class="me">${esc(meName(sc,S.lockPick))}</span>(으)로 들어가요`}</div>
         <form id="unlockf"><input type="text" id="unlockpw" placeholder="열람 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form>
         <div class="tip" id="unlockmsg" style="margin-top:8px"></div></div>`:`<div class="guest">같이 플레이한 친구에게 받은 비밀번호가 필요해요</div>`}
-      <div class="homefoot"><button class="ghost" id="scback">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
+      <div class="homefoot"><button class="ghost ownonly" id="scback">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
     </div></div></div>`;
   const days=(groups().find(g=>g.scen===sc.name)||{days:[]}).days;
   const txt=(v,ph)=>v?`<div class="sc-text">${esc(v)}</div>`:`<div class="sc-text empty">${ph}</div>`;
@@ -51,6 +51,7 @@ function scenHTML(){
         <div class="ogcard${d.og?"":" empty"}" id="e-ogprev">${d.og?`<img src="${d.og}" alt="">`:`<span>아직 이미지가 없어요</span>`}</div>
         <div style="display:flex;gap:6px;margin-top:8px"><button type="button" id="e-ogup">이미지 올리기</button>${d.og?`<button type="button" class="ghost" id="e-ogdel">지우기</button>`:""}<input type="file" id="e-ogfile" accept="image/*" style="display:none"></div>
       </div>
+      ${cvEditHTML(d,sc)}
       <div class="sc-sec"><h4 data-en="NO-LOG DAYS">녹음 없이 플레이한 날 <span class="tip" style="letter-spacing:0">· 녹음이 금지된 세션 · 로그 없이 회차로만 보여요</span></h4>
         <div class="plays">${(d.plays||[]).map((v,i)=>`<span class="playd"><input type="date" data-play="${i}" value="${esc(v)}"><button type="button" class="ghost" data-playdel="${i}" title="빼기">✕</button></span>`).join("")}<button type="button" id="e-playadd">＋ 날짜 추가</button></div>
       </div>
@@ -104,7 +105,7 @@ function scenHTML(){
     </div>`:""}
     ${(()=>{const c=campOf(sc);if(!c)return "";const es=campEps(c),i=es.findIndex(e=>e.id===sc.id),pv=es[i-1],nx=es[i+1];
       return pv||nx?`<div class="epnav">${pv?`<a href="#c-${esc(pv.id)}">◀ ${esc(epLabel(c,pv)||"이전 탁")}<small>${esc(pv.name)}</small></a>`:"<span></span>"}${nx?`<a class="r" href="#c-${esc(nx.id)}">${esc(epLabel(c,nx)||"다음 탁")} ▶<small>${esc(nx.name)}</small></a>`:"<span></span>"}</div>`:"";})()}
-    <div class="homefoot"><button class="ghost" id="scback">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
+    <div class="homefoot"><button class="ghost ownonly" id="scback">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
   </div>`;
 }
 // 시나리오 페이지에서 플레이어 순서 바꾸기·안 쓰는 플레이어 지우기
@@ -120,7 +121,24 @@ async function loadScenCounts(sc){
 // 녹음 목록을 다 받아온 뒤에만 대사 수를 세요 (빈 목록으로 세면 모두 0이 돼요)
 function sessionsReady(id){return S.canAdmin?!!SUB.sessData.all:!!SUB.sessData[id];}
 // 수정 창에서 바꾼 부분만 최신 시나리오에 적용 (다른 사람이 그 사이에 바꾼 건 그대로 둬요)
+// 카드 이미지 고르기 (공유 이미지 또는 갤러리 사진) + 보여줄 위치
+function cvEditHTML(d,sc){const G=galRaw(sc),opts=[...(d.og?[{id:"og",u:d.og,lb:"공유 이미지"}]:[]),...G.slice().sort((a,b)=>(a.at||0)-(b.at||0)).map((p,i)=>({id:p.id,u:p.u||p.o,w:p.w,h:p.h,lb:"갤러리 "+String(i+1).padStart(2,"0")}))];
+  if(!opts.length)return "";const c=d.cover||{},cur=c.og?"og":c.id||(d.og?"og":""),y=+c.y>=0?+c.y:50,cu=coverOf(d);
+  return `<div class="sc-sec cvsec"><h4 data-en="CARD IMAGE">카드 이미지 <span class="tip" style="letter-spacing:0">· 첫 화면 카드 위 그림 · 원래 비율, 4:3보다 길면 잘려요</span></h4>
+    <div class="cvpick">${opts.map(o=>`<button type="button" class="${o.id===cur?"on":""}" data-cvpick="${esc(o.id)}"><img src="${esc(o.u)}" alt="" loading="lazy"><small>${esc(o.lb)}</small></button>`).join("")}</div>
+    ${cu?`<div class="cvprev cv" id="e-cvprev"><img src="${esc(cu.u)}" alt="" style="object-position:50% ${y}%" draggable="false"></div>
+    <div class="cvrng">위 <input type="range" id="e-cvy" min="0" max="100" value="${y}"> 아래</div><div class="tip">그림을 위아래로 끌거나 막대를 움직여서 보여줄 부분을 골라요 (4:3보다 긴 그림만 움직여요)</div>`:""}</div>`;}
+function bindCvEdit(){const d=S.scDraft;if(!d)return;const sc=scenById(S.cid);
+  document.querySelectorAll("[data-cvpick]").forEach(b=>b.onclick=()=>{const pl=window.__scPull;pl&&pl();const id=b.dataset.cvpick,y=+(d.cover&&d.cover.y)>=0?+d.cover.y:50;
+    if(id==="og")d.cover={og:1,y};else{const p=galRaw(sc).find(x=>x.id===id);if(p)d.cover={id:p.id,u:p.u||p.o,w:p.w||0,h:p.h||0,y};}render();});
+  const r=$("#e-cvy"),pv=$("#e-cvprev"),im=pv&&pv.querySelector("img");if(!r||!im)return;
+  const setY=v=>{v=Math.max(0,Math.min(100,Math.round(v)));r.value=v;im.style.objectPosition=`50% ${v}%`;if(!d.cover)d.cover={og:1,y:v};else d.cover={...d.cover,y:v};};
+  r.oninput=()=>setY(+r.value);
+  let sy=null,s0=0;pv.onpointerdown=e=>{sy=e.clientY;s0=+r.value;pv.setPointerCapture(e.pointerId);};
+  pv.onpointermove=e=>{if(sy==null)return;const ex=im.naturalHeight&&im.naturalWidth?im.clientWidth*im.naturalHeight/im.naturalWidth-im.clientHeight:0;if(ex<=0)return;setY(s0-(e.clientY-sy)/ex*100);};
+  pv.onpointerup=pv.onpointercancel=()=>{sy=null;};}
 function mergeScenEdit(L,base,d){
+  if(JSON.stringify(d.cover||null)!==JSON.stringify(base.cover||null)){if(d.cover)L.cover=d.cover;else delete L.cover;}
   ["name","system","summary","orig","doneAt"].forEach(f=>{if((d[f]||"")!==(base[f]||""))L[f]=d[f];});
   if(!!d.done!==!!base.done)L.done=!!d.done;
   if((d.theme||"")!==(base.theme||"")){if(d.theme)L.theme=d.theme;else delete L.theme;}
@@ -182,7 +200,7 @@ function bindScen(){
   document.querySelectorAll("[data-playdel]").forEach(b=>b.onclick=()=>{pull();d.plays.splice(+b.dataset.playdel,1);render();});
   {const sa=$("#e-spadd");if(sa)sa.onclick=()=>{pull();d.sp.push({k:"k"+rid(),name:"",c:COLORS[d.sp.length%COLORS.length]});render();setTimeout(()=>{const i=document.querySelector(`[data-nm="${d.sp.length-1}"]`);i&&i.focus();},0);};}
   document.querySelectorAll("[data-sw]").forEach(btn=>btn.onclick=()=>{pull();const p=d.sp[+btn.dataset.sw];p.c=COLORS[(COLORS.indexOf(p.c)+1)%COLORS.length];render();});
-  window.__scPull=pull;
+  window.__scPull=pull;bindCvEdit();
   {const fi=$("#e-avfile");let at=-1;
     document.querySelectorAll("[data-av]").forEach(btn=>btn.onclick=ev=>{if(ev.target.closest("[data-avx]")){pull();delete d.sp[+btn.dataset.av].img;render();return;}at=+btn.dataset.av;if(fi){fi.value="";fi.click();}});
     if(fi)fi.onchange=async ev=>{const f=ev.target.files[0];if(!f||at<0)return;try{pull();d.sp[at].img=await shrinkImage(f,160,"image/jpeg");render();toast("저장을 눌러야 적용돼요");}catch(e){toast("이미지를 읽지 못했어요");}};}
