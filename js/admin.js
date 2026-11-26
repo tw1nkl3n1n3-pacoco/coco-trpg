@@ -128,14 +128,15 @@ function ruleRows(){const R=siteRules().map((r,i)=>({...r,i}));const raw=[...new
 function ruleAdmHTML(){const R=ruleRows();S.ruleRowsCache=R;
   return `<div class="card rulecard" data-t="rule"><b>룰</b> <span class="tip">· 룰 이름을 어떻게 묶고 보여줄지, 무슨 말로 검색되게 할지 정해요</span>
     <div class="rltest">🔍 검색 시험 <input type="text" id="rl-q" placeholder="예: ㄷㅁㄷ" value="${esc(S.rlQ||"")}"><span id="rl-hit" class="tip"></span></div>
-    ${R.map((r,j)=>`<div class="rlrow${r.tmp?" tmp":""}" data-rj="${j}"><div class="rlnm"><input type="text" value="${esc(r.n)}" data-rlname="${j}"><small>세션 ${r.cnt}개${r.tmp?" · 아직 따로 정하지 않았어요":""}</small>${r.tmp?"":`<button type="button" class="ghost rldel" data-rldel="${j}" title="이 룰 설정 지우기">설정 지우기</button>`}</div>
+    ${R.map((r,j)=>`<div class="rlrow${r.tmp?" tmp":""}" data-rj="${j}"><div class="rlnm"><input type="text" value="${esc(r.n)}" data-rlname="${j}"><small>${r.ed?"묶음 이름 · ":""}세션 ${r.cnt}개${r.tmp?" · 아직 따로 정하지 않았어요":""}</small>${r.tmp?"":`<button type="button" class="ghost rldel" data-rldel="${j}" title="이 룰 설정 지우기">설정 지우기</button>`}</div>
       <div class="rlf"><div><b>묶을 이름</b>${(r.m||[]).map((x,k)=>`<span class="rlchip">${esc(x)}<i data-rlx="${j}:m:${k}">✕</i></span>`).join("")}<input type="text" class="rladd" data-rladd="${j}:m" placeholder="＋ 이름"></div>
         <div><b>검색 별명</b>${(r.a||[]).map((x,k)=>`<span class="rlchip al">${esc(x)}<i data-rlx="${j}:a:${k}">✕</i></span>`).join("")}<input type="text" class="rladd" data-rladd="${j}:a" placeholder="＋ 별명"></div>
+        <div><b>보이기</b><label class="chk"><input type="checkbox" data-rled="${j}"${r.ed?" checked":""} style="width:auto"> 세션·카드에는 적힌 이름 그대로 (판 표시) · 검색·테마·묶음만 같이</label></div>
         <div><b>테마</b><select data-rlth="${j}">${RULE_TH.map(([v,n])=>`<option value="${v}"${(r.th||"")===v?" selected":""}>${n}</option>`).join("")}</select></div></div></div>`).join("")||`<div class="tip">아직 룰이 적힌 세션이 없어요</div>`}
     <div class="tip" style="margin-top:8px;line-height:1.7">· 묶을 이름: 세션에 이렇게 적혀 있어도 같은 룰로 쳐요 (다른 줄의 이름을 여기 넣으면 그 줄이 이 룰로 합쳐져요)<br>· 검색 별명: 검색창에 이 말을 쳐도 그 룰 세션이 나와요 (카드에는 안 보여요)<br>· 테마: 비워 두면 룰 이름으로 자동으로 골라요</div></div>`;}
-async function ruleSave(fn){const R=S.ruleRowsCache||ruleRows();const list=R.map(r=>({n:r.n,m:[...(r.m||[])],a:[...(r.a||[])],th:r.th||"",tmp:r.tmp}));
+async function ruleSave(fn){const R=S.ruleRowsCache||ruleRows();const list=R.map(r=>({n:r.n,m:[...(r.m||[])],a:[...(r.a||[])],th:r.th||"",ed:!!r.ed,tmp:r.tmp}));
   fn(list);
-  const out=list.filter(r=>!r.del&&r.n&&(!r.tmp||r.touched)).map(r=>{const o={n:r.n.trim(),m:[...new Set(r.m.map(x=>x.trim()).filter(Boolean))],a:[...new Set(r.a.map(x=>x.trim()).filter(Boolean))]};if(r.th)o.th=r.th;return o;});
+  const out=list.filter(r=>!r.del&&r.n&&(!r.tmp||r.touched)).map(r=>{const o={n:r.n.trim(),m:[...new Set(r.m.map(x=>x.trim()).filter(Boolean))],a:[...new Set(r.a.map(x=>x.trim()).filter(Boolean))]};if(r.th)o.th=r.th;if(r.ed)o.ed=1;return o;});
   // 다른 룰에 묶인 이름은 한 곳에만
   const seen=new Set();out.forEach(r=>{r.m=r.m.filter(x=>{const k=rnorm(x);if(seen.has(k))return false;seen.add(k);return true;});});
   S.site={...S.site,rules:out};render();
@@ -150,6 +151,7 @@ function bindRuleAdm(){
   document.querySelectorAll("[data-rladd]").forEach(i=>i.onkeydown=e=>{if(e.key!=="Enter"||e.isComposing)return;e.preventDefault();const [j,f]=i.dataset.rladd.split(":"),v=i.value.trim();if(!v)return;
     ruleSave(L=>{L[+j][f].push(v);L[+j].touched=1;if(f==="m")L.forEach((r,x)=>{if(x!==+j&&r.tmp&&r.m.some(y=>rnorm(y)===rnorm(v)))r.del=1;});});setTimeout(()=>{const n=document.querySelector(`[data-rladd="${j}:${f}"]`);n&&n.focus();},50);});
   document.querySelectorAll("[data-rlx]").forEach(b=>b.onclick=()=>{const [j,f,k]=b.dataset.rlx.split(":");ruleSave(L=>{L[+j][f].splice(+k,1);L[+j].touched=1;});});
+  document.querySelectorAll("[data-rled]").forEach(c=>c.onchange=()=>{const j=+c.dataset.rled;ruleSave(L=>{L[j].ed=c.checked;L[j].touched=1;});});
   document.querySelectorAll("[data-rlth]").forEach(sl=>sl.onchange=()=>{const j=+sl.dataset.rlth;ruleSave(L=>{L[j].th=sl.value;L[j].touched=1;});});
   document.querySelectorAll("[data-rldel]").forEach(b=>b.onclick=()=>confirmBox("이 룰 설정을 지울까요? 세션에 적힌 룰 이름은 그대로 남아요.","지우기",()=>ruleSave(L=>{L[+b.dataset.rldel].del=1;})));
 }

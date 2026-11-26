@@ -1249,3 +1249,4 @@ body:not(.own) .ownonly{display:none!important}
 .glb .idots{position:absolute;left:0;right:0;bottom:6px;display:flex;justify-content:center;gap:6px}
 .glb .idots button{width:8px;height:8px;border-radius:50%;padding:0;border:0;background:var(--line)}.glb .idots button.on{background:var(--acc)}
 .glb .strip button{position:relative}.glb .strip button i{position:absolute;right:2px;top:2px;font-style:normal;font-size:9px;font-weight:700;color:#fff;background:rgba(0,0,0,.55);border-radius:3px;padding:0 3px}
+.fxp[data-fxme]{cursor:pointer}.fxp.me{outline:2px solid var(--acc);outline-offset:1px}.fxp.me b::after{content:" · 나";font-weight:500;color:var(--acc)}

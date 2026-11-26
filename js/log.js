@@ -14,7 +14,7 @@ const avHTML=(p,gm)=>p.img?`<img src="${p.img}" alt="">`:gm?`<span class="gmav">
 function siteRules(){const r=(typeof site==="function"?site():{}).rules;return Array.isArray(r)?r:[];}
 const rnorm=v=>String(v||"").toLowerCase().replace(/\s+/g,"");
 function ruleOf(v){const k=rnorm(v);if(!k)return null;return siteRules().find(r=>rnorm(r.n)===k||(r.m||[]).some(x=>rnorm(x)===k))||null;}
-function sysLabel(v){const r=ruleOf(v);return r?r.n:String(v||"").replace(/\bD\s*(n|＆)\s*D\b/gi,"D&D");}
+function sysLabel(v){const r=ruleOf(v),raw=String(v||"").replace(/\bD\s*(n|＆)\s*D\b/gi,"D&D");return r&&!r.ed?r.n:raw;}
 function ruleWords(v){const r=ruleOf(v);return r?[r.n,...(r.m||[]),...(r.a||[])].join("|"):"";}
 // 완주 도장: 시나리오 이름으로 각도·위치·잉크를 정해요 (항상 같은 모양)
 function stampHTML(sc,word){
