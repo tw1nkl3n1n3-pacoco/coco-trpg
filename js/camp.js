@@ -27,7 +27,7 @@ function campCardHTML(c){
   // 일반 세션 카드와 같은 머리 모양: 제목 · 오른쪽에 룰 태그와 편 수 (캠페인인 건 '진행 중인 캠페인' 칸과 굵은 테두리로 보여요)
   const head=`<div class="scen-h"><h3><a href="#g-${esc(c.id)}">${esc(c.name)} ›</a>${c.orig&&!isCamp(c)?`<span class="orig">${esc(c.orig)}</span>`:""}</h3>${campTagHTML(c)}<span class="d${c.done&&!isCamp(c)||isCamp(c)&&campEnded(c)?" dstamp":""}">${isCamp(c)?`캠프 · ${campWhen(c)?esc(campWhen(c).replace(/ · 당일치기$/,"")):""}${campWhen(c)?" · ":""}${campCount(c)}`:`${campCount(c)}${last?` · 마지막 ${esc(fmtDay(last))}`:""}`}${isCamp(c)?(campEnded(c)?stampHTML(c,"종료"):""):stampHTML(c)}</span></div>`;
   const more=!!S.campMore[c.id],shown=more?es:es.slice(0,3);
-  return `<section class="scen camp${c.done&&!isCamp(c)?" done":""}">${head}${shown.map(e=>epRowHTML(c,e)).join("")||`<div class="tip" style="margin-top:8px">아직 ${isCamp(c)?"탁이":"편이"} 없어요</div>`}
+  return `<section class="scen camp${c.done&&!isCamp(c)?" done":""}">${c.og?`<div class="ogtop"><img src="${esc(c.og)}" alt="" loading="lazy"></div>`:""}${head}${shown.map(e=>epRowHTML(c,e)).join("")||`<div class="tip" style="margin-top:8px">아직 ${isCamp(c)?"탁이":"편이"} 없어요</div>`}
     ${es.length>3?`<button class="cmore" data-cmore="${esc(c.id)}">${more?"▴ 접기":`▾ ${isCamp(c)?"탁":"이전 편"} ${es.length-3}개 더 보기`}</button>`:""}</section>`;
 }
 // 플레이어별 캐릭터: 같은 캐릭터로 이어진 편을 한 줄로
