@@ -122,15 +122,15 @@ async function loadScenCounts(sc){
 function sessionsReady(id){return S.canAdmin?!!SUB.sessData.all:!!SUB.sessData[id];}
 // 수정 창에서 바꾼 부분만 최신 시나리오에 적용 (다른 사람이 그 사이에 바꾼 건 그대로 둬요)
 // 카드 이미지 고르기 (공유 이미지 또는 갤러리 사진) + 보여줄 위치
-function cvEditHTML(d,sc){const G=galRaw(sc),opts=[...(d.og?[{id:"og",u:d.og,lb:"공유 이미지"}]:[]),...G.slice().sort((a,b)=>(a.at||0)-(b.at||0)).map((p,i)=>({id:p.id,u:p.u||p.o,w:p.w,h:p.h,lb:"갤러리 "+String(i+1).padStart(2,"0")}))];
-  if(!opts.length)return "";const c=d.cover||{},cur=c.og?"og":c.id||(d.og?"og":""),y=+c.y>=0?+c.y:50,cu=coverOf(d);
+function cvEditHTML(d,sc){const G=galRaw(sc),opts=[...(d.og?[{id:"og",u:d.og,lb:"공유 이미지"}]:[]),...G.slice().sort((a,b)=>(a.at||0)-(b.at||0)).flatMap((p,i)=>{const im=galImgs(p);return im.map((q,k)=>({id:p.id+"|"+k,u:q.u||q.o,lb:"갤러리 "+String(i+1).padStart(2,"0")+(im.length>1?"-"+(k+1):"")}));})];
+  if(!opts.length)return "";const c=d.cover||{},cur=c.og?"og":c.id?c.id+"|"+(c.k||0):(d.og?"og":""),y=+c.y>=0?+c.y:50,cu=coverOf(d);
   return `<div class="sc-sec cvsec"><h4 data-en="CARD IMAGE">카드 이미지 <span class="tip" style="letter-spacing:0">· 첫 화면 카드 위 그림 · 원래 비율, 4:3보다 길면 잘려요</span></h4>
     <div class="cvpick">${opts.map(o=>`<button type="button" class="${o.id===cur?"on":""}" data-cvpick="${esc(o.id)}"><img src="${esc(o.u)}" alt="" loading="lazy"><small>${esc(o.lb)}</small></button>`).join("")}</div>
     ${cu?`<div class="cvprev cv" id="e-cvprev"><img src="${esc(cu.u)}" alt="" style="object-position:50% ${y}%" draggable="false"></div>
     <div class="cvrng">위 <input type="range" id="e-cvy" min="0" max="100" value="${y}"> 아래</div><div class="tip">그림을 위아래로 끌거나 막대를 움직여서 보여줄 부분을 골라요 (4:3보다 긴 그림만 움직여요)</div>`:""}</div>`;}
 function bindCvEdit(){const d=S.scDraft;if(!d)return;const sc=scenById(S.cid);
   document.querySelectorAll("[data-cvpick]").forEach(b=>b.onclick=()=>{const pl=window.__scPull;pl&&pl();const id=b.dataset.cvpick,y=+(d.cover&&d.cover.y)>=0?+d.cover.y:50;
-    if(id==="og")d.cover={og:1,y};else{const p=galRaw(sc).find(x=>x.id===id);if(p)d.cover={id:p.id,u:p.u||p.o,w:p.w||0,h:p.h||0,y};}render();});
+    if(id==="og")d.cover={og:1,y};else{const [pid,k]=id.split("|");const p=galRaw(sc).find(x=>x.id===pid);const q=p&&galImgs(p)[+k||0];if(q)d.cover={id:pid,k:+k||0,u:q.u||q.o,w:q.w||0,h:q.h||0,y};}render();});
   const r=$("#e-cvy"),pv=$("#e-cvprev"),im=pv&&pv.querySelector("img");if(!r||!im)return;
   const setY=v=>{v=Math.max(0,Math.min(100,Math.round(v)));r.value=v;im.style.objectPosition=`50% ${v}%`;if(!d.cover)d.cover={og:1,y:v};else d.cover={...d.cover,y:v};};
   r.oninput=()=>setY(+r.value);

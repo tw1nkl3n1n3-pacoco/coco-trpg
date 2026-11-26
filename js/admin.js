@@ -80,7 +80,10 @@ function adminHTML(){
   const st=site();
   return `<div class="home admin">
     <div class="hometop"><h2><a href="#" class="back" title="목록으로">←</a> ⚙ 관리</h2><span class="authbox"></span></div>
-    <div class="card"><b>사이트 설정</b>
+    <div class="admtabs">${[["site","사이트"],["rule","룰"],["emo","이모티콘"],["bk","백업"],["chk","점검"]].map(([k,n])=>`<button type="button" data-admtab="${k}" class="${(S.admTab||"site")===k?"on":""}">${n}</button>`).join("")}</div>
+    <div class="admbody" data-tab="${S.admTab||"site"}">
+    ${S.db?ruleAdmHTML():""}
+    <div class="card" data-t="site"><b>사이트 설정</b>
       <div class="nedit" style="padding:6px 0 0">
         <label>사이트 이름</label><input type="text" id="s-title" value="${esc((S.site&&S.site.title)||"")}" placeholder="${esc(SITE_UNSET)}">
         <label>설명 문구</label><textarea id="s-sub" rows="2" style="resize:vertical">${esc(st.sub)}</textarea>
@@ -96,14 +99,14 @@ function adminHTML(){
         ${S.storage?`<label class="zchk"><input type="checkbox" id="s-z"${S.site&&S.site.noz?"":" checked"} style="width:auto"> 녹음을 올릴 때 용량 줄이기 <span class="tip" style="display:inline">· 말소리용 opus로 바꿔 보통 1/2~1/3 크기 · 크롬·엣지 권장</span></label>`:""}
         <div class="btns"><button class="pri" id="s-ok">저장</button></div>
       </div></div>
-    ${S.db&&S.storage?`<div class="card"><b>저장 공간</b> <span class="tip">· 녹음·이모티콘 파일 (US 지역 무료 범위 기준)</span><div id="stuse">${storeUseHTML()}</div></div>`:""}
-    ${S.db?`<div class="card emadm"><b>이모티콘</b> <span class="tip">· 사이트 어디서든 :이름: 으로 써요 (후기·댓글) · 주인만 등록</span>
+    ${S.db&&S.storage?`<div class="card" data-t="site"><b>저장 공간</b> <span class="tip">· 녹음·이모티콘 파일 (US 지역 무료 범위 기준)</span><div id="stuse">${storeUseHTML()}</div></div>`:""}
+    ${S.db?`<div class="card emadm" data-t="emo"><b>이모티콘</b> <span class="tip">· 사이트 어디서든 :이름: 으로 써요 (후기·댓글) · 주인만 등록</span>
       <div class="emrow">${(st.emo||[]).map(e=>`<div class="it" title=":${esc(e.n)}:"><button class="x" data-emdel="${esc(e.n)}" title="지우기">✕</button><img src="${esc(e.u)}" alt=""><span>:${esc(e.n)}:</span></div>`).join("")||`<span class="tip">아직 없어요.</span>`}</div>
       <div class="emadd"><button type="button" class="up" id="em-pick" title="이미지 고르기">${S.emPrev?`<img src="${S.emPrev}" alt="">`:"＋"}</button><input type="text" id="em-n" placeholder="이름 (예: 하하)" maxlength="20" style="width:140px"><button class="pri" id="em-add">등록</button><span class="tip">정사각형 이미지 · 128px로 줄여서 저장 · 움직이는 GIF도 돼요</span>
         <input type="file" id="em-file" accept="image/*" style="display:none"></div></div>`:""}
-    <div class="card"><b>업데이트</b><div id="upd">${updateBlockHTML()}</div></div>
-    <div class="card"><b>보안 규칙 점검</b> <span class="tip">· 규칙 버전 ${RULES_VERSION}</span><div id="rules" style="margin-top:6px">${rulesBlockHTML()}</div></div>
-    ${S.db?`    <div class="card">
+    <div class="card" data-t="chk"><b>업데이트</b><div id="upd">${updateBlockHTML()}</div></div>
+    <div class="card" data-t="chk"><b>보안 규칙 점검</b> <span class="tip">· 규칙 버전 ${RULES_VERSION}</span><div id="rules" style="margin-top:6px">${rulesBlockHTML()}</div></div>
+    ${S.db?`    <div class="card" data-t="bk">
       <b>백업 · 옮기기</b>
       <div class="tip" style="margin:4px 0 10px">전체 데이터(세션·대사·캠페인·캠프·후기·댓글·비밀번호)를 JSON 파일로 받아 두거나, 받아 둔 JSON을 다시 가져와요. 가져오면 같은 것은 덮어써요. 녹음 파일은 들어가지 않아요.</div>
       ${S.storage?`<div id="bklist">${bkListHTML()}</div>`:""}
@@ -112,10 +115,45 @@ function adminHTML(){
       <span class="tip" id="exprog">${esc(S.impMsg||"")}</span>
     </div>
     `:""}
-
+  </div>
   </div>`;
 }
-function bindAdmin(){
+// ---------- 룰 관리 ----------
+const RULE_TH=[["","자동 (룰 이름으로)"],["plain","기본 (흰색)"],["deco","D&D (양피지)"],["dx","더블크로스 (검정·빨강)"],["wa","인세인 (흑백·빨강)"]];
+// 저장된 룰 + 아직 룰로 안 묶인 시스템 이름(임시 줄)
+function ruleRows(){const R=siteRules().map((r,i)=>({...r,i}));const raw=[...new Set([...S.scens,...S.camps].map(x=>(x.system||"").trim()).filter(Boolean))];
+  raw.forEach(v=>{if(!ruleOf(v))R.push({n:sysLabel(v),m:[v],a:[],th:"",tmp:1});});
+  const cnt=r=>[...S.scens,...S.camps].filter(x=>{const v=(x.system||"").trim();if(!v)return false;const k=rnorm(v);return rnorm(r.n)===k||(r.m||[]).some(y=>rnorm(y)===k);}).length;
+  return R.map(r=>({...r,cnt:cnt(r)})).sort((a,b)=>b.cnt-a.cnt||a.n.localeCompare(b.n,"ko"));}
+function ruleAdmHTML(){const R=ruleRows();S.ruleRowsCache=R;
+  return `<div class="card rulecard" data-t="rule"><b>룰</b> <span class="tip">· 룰 이름을 어떻게 묶고 보여줄지, 무슨 말로 검색되게 할지 정해요</span>
+    <div class="rltest">🔍 검색 시험 <input type="text" id="rl-q" placeholder="예: ㄷㅁㄷ" value="${esc(S.rlQ||"")}"><span id="rl-hit" class="tip"></span></div>
+    ${R.map((r,j)=>`<div class="rlrow${r.tmp?" tmp":""}" data-rj="${j}"><div class="rlnm"><input type="text" value="${esc(r.n)}" data-rlname="${j}"><small>세션 ${r.cnt}개${r.tmp?" · 아직 따로 정하지 않았어요":""}</small>${r.tmp?"":`<button type="button" class="ghost rldel" data-rldel="${j}" title="이 룰 설정 지우기">설정 지우기</button>`}</div>
+      <div class="rlf"><div><b>묶을 이름</b>${(r.m||[]).map((x,k)=>`<span class="rlchip">${esc(x)}<i data-rlx="${j}:m:${k}">✕</i></span>`).join("")}<input type="text" class="rladd" data-rladd="${j}:m" placeholder="＋ 이름"></div>
+        <div><b>검색 별명</b>${(r.a||[]).map((x,k)=>`<span class="rlchip al">${esc(x)}<i data-rlx="${j}:a:${k}">✕</i></span>`).join("")}<input type="text" class="rladd" data-rladd="${j}:a" placeholder="＋ 별명"></div>
+        <div><b>테마</b><select data-rlth="${j}">${RULE_TH.map(([v,n])=>`<option value="${v}"${(r.th||"")===v?" selected":""}>${n}</option>`).join("")}</select></div></div></div>`).join("")||`<div class="tip">아직 룰이 적힌 세션이 없어요</div>`}
+    <div class="tip" style="margin-top:8px;line-height:1.7">· 묶을 이름: 세션에 이렇게 적혀 있어도 같은 룰로 쳐요 (다른 줄의 이름을 여기 넣으면 그 줄이 이 룰로 합쳐져요)<br>· 검색 별명: 검색창에 이 말을 쳐도 그 룰 세션이 나와요 (카드에는 안 보여요)<br>· 테마: 비워 두면 룰 이름으로 자동으로 골라요</div></div>`;}
+async function ruleSave(fn){const R=S.ruleRowsCache||ruleRows();const list=R.map(r=>({n:r.n,m:[...(r.m||[])],a:[...(r.a||[])],th:r.th||"",tmp:r.tmp}));
+  fn(list);
+  const out=list.filter(r=>!r.del&&r.n&&(!r.tmp||r.touched)).map(r=>{const o={n:r.n.trim(),m:[...new Set(r.m.map(x=>x.trim()).filter(Boolean))],a:[...new Set(r.a.map(x=>x.trim()).filter(Boolean))]};if(r.th)o.th=r.th;return o;});
+  // 다른 룰에 묶인 이름은 한 곳에만
+  const seen=new Set();out.forEach(r=>{r.m=r.m.filter(x=>{const k=rnorm(x);if(seen.has(k))return false;seen.add(k);return true;});});
+  S.site={...S.site,rules:out};render();
+  try{await S.db.doc("scenarios/_site").set({rules:out},{merge:true});}catch(e){writeFail(e);}}
+function rlTest(){const q=rnorm($("#rl-q")?.value||""),h=$("#rl-hit");if(!h)return;S.rlQ=$("#rl-q").value;if(!q){h.textContent="";return;}
+  const R=S.ruleRowsCache||[];const hits=R.filter(r=>[r.n,...(r.m||[]),...(r.a||[])].some(x=>rnorm(x).includes(q)));
+  h.innerHTML=hits.length?"→ "+hits.map(r=>`<b>${esc(r.n)}</b> · 세션 ${r.cnt}개`).join(" / "):"→ 맞는 룰이 없어요";}
+function bindRuleAdm(){
+  document.querySelectorAll("[data-admtab]").forEach(b=>b.onclick=()=>{S.admTab=b.dataset.admtab;document.querySelector(".admbody").dataset.tab=S.admTab;document.querySelectorAll("[data-admtab]").forEach(x=>x.classList.toggle("on",x===b));});
+  const q=$("#rl-q");if(q){q.oninput=rlTest;rlTest();}
+  document.querySelectorAll("[data-rlname]").forEach(i=>i.onchange=()=>{const j=+i.dataset.rlname,v=i.value.trim();if(!v){i.value=S.ruleRowsCache[j].n;return;}ruleSave(L=>{L[j].n=v;L[j].touched=1;});});
+  document.querySelectorAll("[data-rladd]").forEach(i=>i.onkeydown=e=>{if(e.key!=="Enter"||e.isComposing)return;e.preventDefault();const [j,f]=i.dataset.rladd.split(":"),v=i.value.trim();if(!v)return;
+    ruleSave(L=>{L[+j][f].push(v);L[+j].touched=1;if(f==="m")L.forEach((r,x)=>{if(x!==+j&&r.tmp&&r.m.some(y=>rnorm(y)===rnorm(v)))r.del=1;});});setTimeout(()=>{const n=document.querySelector(`[data-rladd="${j}:${f}"]`);n&&n.focus();},50);});
+  document.querySelectorAll("[data-rlx]").forEach(b=>b.onclick=()=>{const [j,f,k]=b.dataset.rlx.split(":");ruleSave(L=>{L[+j][f].splice(+k,1);L[+j].touched=1;});});
+  document.querySelectorAll("[data-rlth]").forEach(sl=>sl.onchange=()=>{const j=+sl.dataset.rlth;ruleSave(L=>{L[j].th=sl.value;L[j].touched=1;});});
+  document.querySelectorAll("[data-rldel]").forEach(b=>b.onclick=()=>confirmBox("이 룰 설정을 지울까요? 세션에 적힌 룰 이름은 그대로 남아요.","지우기",()=>ruleSave(L=>{L[+b.dataset.rldel].del=1;})));
+}
+function bindAdmin(){bindRuleAdm();
   renderAuth();bindBackup();
   document.querySelectorAll("[data-copy]").forEach(b=>b.onclick=()=>copyRules(b.dataset.copy,b));
   const t=$("#s-title");if(!t)return;

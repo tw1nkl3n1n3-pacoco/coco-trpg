@@ -10,7 +10,12 @@ const spName=p=>esc(pcSplit(p.name).name);
 // 인장(동그란 캐릭터 이미지): 올린 그림 → 없으면 GM은 GM 그림, 나머지는 캐릭터 이름 첫 글자
 const avHTML=(p,gm)=>p.img?`<img src="${p.img}" alt="">`:gm?`<span class="gmav"><span class="gmw">GM</span></span>`:`<span class="ini">${esc((p.ch||pcSplit(p.name).name||"?").trim().slice(0,1))}</span>`;
 // 룰 이름 표기: DnD·D＆D → D&D
-const sysLabel=v=>String(v||"").replace(/\bD\s*(n|＆)\s*D\b/gi,"D&D");
+// 룰 관리(관리 > 룰): site().rules = [{n:표시 이름, m:[묶을 이름], a:[검색 별명], th:테마}]
+function siteRules(){const r=(typeof site==="function"?site():{}).rules;return Array.isArray(r)?r:[];}
+const rnorm=v=>String(v||"").toLowerCase().replace(/\s+/g,"");
+function ruleOf(v){const k=rnorm(v);if(!k)return null;return siteRules().find(r=>rnorm(r.n)===k||(r.m||[]).some(x=>rnorm(x)===k))||null;}
+function sysLabel(v){const r=ruleOf(v);return r?r.n:String(v||"").replace(/\bD\s*(n|＆)\s*D\b/gi,"D&D");}
+function ruleWords(v){const r=ruleOf(v);return r?[r.n,...(r.m||[]),...(r.a||[])].join("|"):"";}
 // 완주 도장: 시나리오 이름으로 각도·위치·잉크를 정해요 (항상 같은 모양)
 function stampHTML(sc,word){
   if(!sc||!sc.done&&!word)return "";
@@ -19,6 +24,7 @@ function stampHTML(sc,word){
   return `<span class="donestamp${word==="종료"?" end":""}" style="${st}" title="${word||"완주"}${sc.doneAt?" · "+esc(sc.doneAt):""}">${word||"완주"}</span>`;
 }
 function themeOf(sc){
+  {const ru=ruleOf(typeof effSys==="function"?effSys(sc):sc&&sc.system);if(ru&&ru.th)return ru.th;}
   const r=String(effSys(sc)).toLowerCase().replace(/\s+/g,"");
   if(/인세인|insane/.test(r))return "wa";
   if(/d&d|dnd|d＆d|디앤디|던전앤드래곤|던전&드래곤|dungeons/.test(r))return "deco";

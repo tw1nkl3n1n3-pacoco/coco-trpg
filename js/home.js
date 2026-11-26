@@ -121,9 +121,9 @@ function homeHTML(){
   // 목록은 Enter로 확정한 검색어(homeQc)로, 드롭다운은 치는 중인 글자(homeQ)로
   const toTerms=v=>String(v||"").trim().split(/\s+/).map(nq).filter(Boolean);
   const terms=toTerms(S.homeQc),tterms=toTerms(S.homeQ);
-  const hay=sc=>sc?nq([sc.name,sc.orig,sc.fix,effSys(sc),sysLabel(effSys(sc)),themeOf(sc)==="deco"?"D&D 디앤디":themeOf(sc)==="dx"?"더블크로스 DX":themeOf(sc)==="wa"?"인세인":"",...(sc.sp||[]).flatMap(p=>[pcSplit(p.name||"").name,p.ch])].join("|")):"";
+  const hay=sc=>sc?nq([sc.name,sc.orig,sc.fix,effSys(sc),sysLabel(effSys(sc)),ruleWords(effSys(sc)),themeOf(sc)==="deco"?"D&D 디앤디":themeOf(sc)==="dx"?"더블크로스 DX":themeOf(sc)==="wa"?"인세인":"",...(sc.sp||[]).flatMap(p=>[pcSplit(p.name||"").name,p.ch])].join("|")):"";
   const hit=h=>terms.every(t=>h.includes(t));
-  const campHay=c=>nq([c.name,c.orig,c.place,c.fix,c.system,sysLabel(c.system||"")].join("|"))+"|"+campEps(c).map(hay).join("|");
+  const campHay=c=>nq([c.name,c.orig,c.place,c.fix,c.system,sysLabel(c.system||""),ruleWords(c.system||"")].join("|"))+"|"+campEps(c).map(hay).join("|");
   const who=S.homePerson||"",hasWho=sc=>!who||(sc?.sp||[]).some(p=>pcSplit(p.name||"").name===who);
   const gs=plainGs.filter(g=>(!terms.length||hit(g.sc?hay(g.sc):nq(g.scen)))&&hasWho(g.sc));
   const cs=S.camps.filter(c=>(!terms.length||hit(campHay(c)))&&(!who||campEps(c).some(hasWho)));
