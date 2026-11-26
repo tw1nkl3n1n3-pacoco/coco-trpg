@@ -198,7 +198,10 @@ function startIdOf(list){
   const e=list.find(b=>b.bstart);if(e)return e.id;
   if(!list.length||!(list[0].t<0))return null;
   const f=list.find(b=>b.t>=0);return f?f.id:null;}
-function bkOf(b){if(!b)return 0;if(b.bk!=null)return b.bk;return b.tab&&CHAT_TAB.test(b.tab)&&![NOTE,DICE,HAND,SEC].includes(b.s)?1:0;}
+// 본세션 시작 줄 앞은 따로 안 고르면 빼기 (로그 페이지·리플레이북이 각자 채워요)
+const PRE={log:new Set(),book:new Set()};
+function preIds(list){const st=startIdOf(list),out=new Set();if(!st)return out;for(const b of list){if(b.id===st)break;out.add(b.id);}return out;}
+function bkOf(b){if(!b)return 0;if(b.bk!=null)return b.bk;if(PRE.log.has(b.id)||PRE.book.has(b.id))return 2;return b.tab&&CHAT_TAB.test(b.tab)&&![NOTE,DICE,HAND,SEC].includes(b.s)?1:0;}
 const OUT={success:"Success",failure:"Failure",critical:"Critical",fumble:"Fumble"};
 // 룰에 맞춘 표기: 인세인은 크리티컬 대신 스페셜
 const outLabel=(o,sc)=>o==="critical"&&themeOf(sc===undefined?curScen():sc)==="wa"?"Special":OUT[o];
@@ -314,7 +317,7 @@ function renderAllRows(keepScroll){
     log.innerHTML=S.local||!S.db||(S.loaded&&S.chunksLoaded)?`<div class="notice">아직 대사가 없어요.</div>`:loaderHTML();
     $("#qcount")&&($("#qcount").textContent="");return;
   }
-  const vis=S.flat.filter(visible);S.startId=startIdOf(S.flat.map(e=>e.b));
+  const vis=S.flat.filter(visible);{const all=S.flat.map(e=>e.b);S.startId=startIdOf(all);PRE.log=preIds(all);}
   // 고치는 중인 줄은 다시 그리지 않고 그대로 둬요 (다른 사람 수정이 들어와도 입력이 안 날아가게)
   const ed=log.querySelector(".row.editing"),fa=ed&&ed.contains(document.activeElement)?document.activeElement:null;
   const sel=fa&&"selectionStart" in fa?[fa.selectionStart,fa.selectionEnd]:null;
