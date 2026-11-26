@@ -22,7 +22,7 @@ function epStatus(sc){const n=groups().find(g=>g.scen===sc.name)?.days.length||s
 function epRowHTML(c,sc){const cm=isCamp(c),diff=sc.system&&(cm||sysLabel(sc.system)!==sysLabel(c.system||""));
   return `<div class="cep"><span class="en${sc.gaiden&&!cm?" gai":""}">${cm?esc((sc.lastDay||"").slice(5).replace("-","/")):esc(epLabel(c,sc))}</span><a href="#c-${esc(sc.id)}" class="et">${esc(sc.name)}</a>${diff?`<span class="sys" data-th="${themeOf(sc)}">${esc(sysLabel(sc.system))}</span>`:""}${epStatus(sc)}</div>`;}
 // 고정탁: 같은 인선으로 쭉 이어가는 탁에 붙이는 이름 (시나리오·캠페인에 붙여요) · 누르면 첫 화면에서 그 고정탁만
-function fixLineHTML(f,cls="fixline"){return `<div class="${cls}">고정탁 · <a href="#" data-fix="${esc(f)}">${esc(f)}</a></div>`;}
+function fixLineHTML(f,cls="fixline"){return `<div class="${cls}"><a href="#" data-fix="${esc(f)}" title="고정탁 ${esc(f)}">${esc(f)}</a></div>`;}
 function allFixes(){return [...new Set([...S.scens.map(x=>x.fix),...S.camps.map(x=>x.fix)].map(x=>(x||"").trim()).filter(Boolean))];}
 function fixListHTML(){return `<datalist id="fixlist">${allFixes().map(x=>`<option value="${esc(x)}">`).join("")}</datalist>`;}
 document.addEventListener("click",ev=>{const a=ev.target.closest("[data-fix]");if(!a)return;ev.preventDefault();ev.stopPropagation();
