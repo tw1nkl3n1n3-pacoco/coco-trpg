@@ -256,7 +256,7 @@ function bookSelPop(){
   const els=[...document.querySelectorAll("#bksheet [data-bid].sel")];if(!els.length)return;
   const xs=B.flat.filter(x=>B.sel.has(x.id)),speech=xs.every(x=>x.k==="line"),cur=xs.every(x=>x.bk===xs[0].bk)?xs[0].bk:-1;
   const pop=document.createElement("div");pop.className="bselpop";
-  pop.innerHTML=`${xs.length>1?`<em>${xs.length}줄</em>`:""}<button data-bk="0" class="${cur===0?"on":""}">본문</button>${speech||xs.some(x=>x.k==="line")?`<button data-bk="1" class="${cur===1?"on":""}"><kbd>C</kbd> 잡담</button>`:""}<button data-bk="2" class="${cur===2?"on":""}"><kbd>X</kbd> 빼기</button>${xs.length===1&&xs[0].k!=="dice"?`<button data-bst="1" title="이 줄부터 본세션 · 앞은 빼기로"><kbd>B</kbd> 여기서 시작</button>`:""}`;
+  pop.innerHTML=`${xs.length>1?`<em>${xs.length}줄</em>`:""}<button data-bk="0" class="${cur===0?"on":""}">본문</button>${speech||xs.some(x=>x.k==="line")?`<button data-bk="1" class="${cur===1?"on":""}"><kbd>C</kbd> 잡담</button>`:""}<button data-bk="2" class="${cur===2?"on":""}"><kbd>X</kbd> 빼기</button>`;
   // 고른 줄 안에 넣으면 빼기 줄의 흐림이 같이 먹어서, 시트 위에 따로 띄워요
   const first=els[0],sh=$("#bksheet");pop.style.top=(first.offsetTop+first.offsetHeight+4)+"px";sh.appendChild(pop);
   pop.onmousedown=e=>{const st=e.target.closest("[data-bst]");if(st){e.preventDefault();e.stopPropagation();bookSetStart(xs[0]);return;}
