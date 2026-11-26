@@ -6,6 +6,8 @@ function hxCol(sc){return HX_COL[themeOf(sc)]||"#8892a0";}
 function hxDot(d){return d?d.replace(/-/g,"."):"";}
 function hxRng(a,b){return !a?"":a===b||!b?hxDot(a):hxDot(a)+" — "+(a.slice(0,4)===b.slice(0,4)?b.slice(5).replace("-","."):hxDot(b));}
 function hxCast(sc){const gk=gmKey(sc);const sp=(sc.sp||[]).filter(p=>!/&/.test(p.name||"")&&!isAnon(p));
+  // 타이만: 메인 캐릭터만, 캐릭터 이름을 굵게 · 맡은 사람은 회색
+  if(sp.some(p=>p.chr)){const m=sp.filter(p=>p.chr&&p.ch);return m.length?`<div class="hx-cast">${m.map(p=>`<span class="hx-pc"><i style="--a:${fixC(p.c)}">${esc([...p.ch][0])}</i><b>${esc(p.ch)}</b><small>${esc(pcSplit(p.name).name)}</small></span>`).join("")}</div>`:"";}
   const gm=sp.find(p=>p.k===gk),pcs=sp.filter(p=>p.k!==gk);if(!sp.length)return "";
   const one=(p,g)=>{const q=pcSplit(p.name||""),n=q.name||"?";return `<span class="hx-pc">${g?`<i class="gm">${themeOf(sc)==="deco"?"DM":"GM"}</i>`:q.n?`<i class="no" style="--a:${fixC(p.c)}">PC${esc(q.n)}</i>`:`<i style="--a:${fixC(p.c)}">${esc([...n][0])}</i>`}<b>${esc(n)}</b>${!g&&p.ch?`<small>${esc(p.ch)}</small>`:""}</span>`;};
   return `<div class="hx-cast">${gm?one(gm,true):""}${pcs.map(p=>one(p,false)).join("")}</div>`;}
@@ -39,7 +41,7 @@ function hxLive(c){const es=campEps(c),cc=c.system?hxCol({system:c.system}):"#f0
 // 홈 숫자 (두 테마 같이 써요) · 같은 시나리오를 다시 돌려도 한 번 · 캠프의 탁은 시나리오·세션에 들어가 있어서 캠페인만 따로 · 함께한 사람에서 내 닉네임은 빼요
 function homeStats(all){
   const ns=new Set((site().nicks||[]).map(x=>String(x).trim().toLowerCase()).filter(Boolean)),P=new Set();
-  S.scens.forEach(sc=>(sc.sp||[]).forEach(p=>{if(p.chr||/&/.test(p.name||"")||isAnon(p))return;const n=pcSplit(p.name||"").name;if(n&&!ns.has(n.toLowerCase()))P.add(n);}));
+  S.scens.forEach(sc=>(sc.sp||[]).forEach(p=>{if(p.chr&&!p.ch||/&/.test(p.name||"")||isAnon(p))return;const n=pcSplit(p.name||"").name;if(n&&!ns.has(n.toLowerCase()))P.add(n);}));
   const cps=S.camps.filter(c=>!isCamp(c));
   return {scen:new Set(S.scens.map(sc=>String(sc.name||"").toLowerCase().replace(/\s+/g,"")).filter(Boolean)).size,
     ses:all.reduce((a,g)=>a+(g.days.length||(g.sc?.nDays||0)),0),cpn:cps.length,live:cps.filter(c=>!c.done).length,ppl:P.size};}

@@ -71,7 +71,9 @@ function bookBlocks(sc,edit){
       const p=bookSp(sc,b.s)||{name:"?",c:"#888"},gm=p.k===gk,q=pcSplit(p.name||""),ch=b.a||p.ch||"";
       // GM 줄은 늘 'GM'을 캐릭터 이름처럼, 아래 회색으로 닉네임
       const gn=q.name&&!isAnon(p)?q.name:gmw;
-      out.push({...base,k:"line",gm,ooc:bk===1,c:p.c,pc:q.n,player:gm?gn:q.name,char:gm?gmw:(ch||q.name),sub:gm?(gn!==gmw?gn:""):(!ch?"":q.name),text:b.x||""});
+      // 타이만 캐릭터: 본문은 캐릭터 이름만 (잡담은 맡은 사람 이름)
+      if(p.chr)out.push({...base,k:"line",gm:false,ooc:bk===1,c:p.c,pc:"",player:q.name,char:bk===1?q.name:(ch||q.name),sub:"",text:b.x||""});
+      else out.push({...base,k:"line",gm,ooc:bk===1,c:p.c,pc:q.n,player:gm?gn:q.name,char:gm?gmw:(ch||q.name),sub:gm?(gn!==gmw?gn:""):(!ch?"":q.name),text:b.x||""});
       if(!edit&&bk!==1)out.push(...noteFor(b.x));
     });
     // 책 고치기: 본세션 끝 줄 바로 뒤에 표시
@@ -180,7 +182,7 @@ function bookFront(sc){
   const cover=`<div class="bpg bcover"${sc.og?` style="--og:url('${sc.og}')"`:""}><div class="art${sc.og?" img":""}"></div><div class="band"></div><div class="in">
     <div class="series">${sys?`<b>${esc(sys)}</b>`:""}REPLAY BOOK</div><h1>${esc(sc.name)}</h1>${sc.orig?`<div class="bcorig">${esc(sc.orig)}</div>`:""}
     ${sc.summary?`<div class="bcsub">${esc(sc.summary.split("\n").filter(Boolean).slice(0,2).join(" "))}</div>`:""}
-    <div class="bcwho">${gm?`<div><b>${gmw}</b>${esc(pcSplit(gm.name).name)}</div>`:""}${pcs.some(p=>p.chr)?`<div><b>PL</b>${pcs.filter(p=>!p.chr).map(p=>esc(pcSplit(p.name).name)).join(" · ")}</div><div><b>PC</b>${pcs.filter(p=>p.chr).map(p=>esc(p.name)).join(" · ")}</div>`:`<div><b>PL</b>${pcs.map(p=>esc(pcSplit(p.name).name)).join(" · ")}</div>`}</div>
+    <div class="bcwho">${gm?`<div><b>${gmw}</b>${esc(pcSplit(gm.name).name)}</div>`:""}${(sc.sp||[]).some(p=>p.chr)?(sc.sp||[]).filter(p=>p.chr&&p.ch).map(p=>`<div><b>${esc(p.ch)}</b>${esc(pcSplit(p.name).name)}</div>`).join(""):`<div><b>PL</b>${pcs.map(p=>esc(pcSplit(p.name).name)).join(" · ")}</div>`}</div>
     <div class="bcpub"><span>${site().title===SITE_UNSET?"":esc(site().title)}</span><span>${days.length?esc(days[0].replace(/-/g,". ")):""}${days.length>1?` – ${esc(days[days.length-1].slice(5).replace(/-/g,". "))}`:""}${campOf(sc)?` · ${esc(campOf(sc).name)}`:""}</span></div></div></div>`;
   const castP=`<div class="bpg"><div class="bbody"><h2 class="ph">CHARACTERS</h2><h3 class="pt">등장인물</h3><div class="bcast">${pcs.map(p=>{const q=pcSplit(p.name);return `<div class="bpc" style="--c:${fixC(p.c)}"><span class="av">${p.img?`<img src="${esc(p.img)}" alt="">`:`<em>${esc((p.ch||q.name).slice(0,1))}</em>`}${q.n?`<i>${q.n}</i>`:""}</span><div><b>${esc(p.ch||q.name)}</b><div class="pl">플레이어 · ${esc(q.name)}</div>${p.memo?`<p>${esc(p.memo)}</p>`:""}</div></div>`;}).join("")}</div>
     ${gm?`<div class="bgm"><b>${gmw}</b>${esc(pcSplit(gm.name).name)}${gm.ch?` · ${esc(gm.ch)}`:""} — 이 이야기의 진행자</div>`:""}</div><div class="bfolio"><span>${esc(sc.name)}</span><span>2</span></div></div>`;

@@ -123,7 +123,7 @@ function renderSide(){
     <div id="splist">${sp.map((s,i)=>`${tai&&i===firstPl?`<div class="spsub">플레이어 · 잡담</div>`:""}
       <div class="spk ${S.spFilter===s.k?"on":""}" data-k="${s.k}" style="--c:${fixC(s.c)}">
         <span class="key">${i<9?i+1:""}</span>${spDot(s)}
-        <span class="nm" data-act="filter" title="${esc(s.name)}">${isGM(s.k)?gmTag+" ":""}${spName(s)}${s.ch?` <small>${esc(s.ch)}</small>`:""}</span>
+        <span class="nm" data-act="filter" title="${esc(s.name)}">${s.chr&&s.ch?`${esc(s.ch)} <small>${spName(s)}</small>`:`${isGM(s.k)?gmTag+" ":""}${spName(s)}${s.ch?` <small>${esc(s.ch)}</small>`:""}`}</span>
         <span class="cnt" data-cnt="${s.k}">${c[s.k]||0}</span>
         ${S.canWrite?`<button class="ghost more" data-act="menu" title="이름 바꾸기·합치기">⋯</button>`:""}
       </div>`).join("")}
@@ -294,7 +294,9 @@ function rowHTML(e,prev){
   // 잡담은 잡담끼리, 본문은 본문끼리 이어지는지 봐요
   const pbk=prev?bkOf(prev.b):-1,first=!prev||(pbk===1)!==(bk===1)||prev.b.s!==b.s||(bk!==1&&(prev.b.a||"")!==(b.a||""))||(bk!==1&&(prev.b.tab||"")!==(b.tab||""))||b.t-prev.b.t>120;
   const tx=lines.map((l,i)=>(i?`<button class="cut" data-act="cut" data-line="${i}" tabindex="-1" title="여기서 나눠서 다른 화자로 지정할 수 있게 해요">✂</button>`:"")+`<span class="ln">${hl(l)}</span>`).join(" ");
-  const q=pcSplit(s.name),label=(gm?gmTag:q.n?`<span class="pcn">${q.n}</span>`:"")+esc(q.name),sub=bk===1?"":(b.a?esc(b.a):s.ch?esc(s.ch):"")+(b.tab&&!CHAT_TAB.test(b.tab)?`<span class="tabchip">${esc(b.tab)}</span>`:"");
+  // 타이만 캐릭터: 본문은 캐릭터 이름만, 잡담은 맡은 사람 이름
+  const tch=s.chr&&s.ch&&bk!==1;
+  const q=pcSplit(s.name),label=tch?esc(s.ch):(gm&&!s.chr?gmTag:q.n?`<span class="pcn">${q.n}</span>`:"")+esc(q.name),sub=bk===1||tch?"":(b.a?esc(b.a):s.ch?esc(s.ch):"")+(b.tab&&!CHAT_TAB.test(b.tab)?`<span class="tabchip">${esc(b.tab)}</span>`:"");
   return `<div class="row${first?" first":""}${gm?" gm":""}${b.tab?" tabbed":""}${bk===1?" bk-ooc":bk===2?" bk-cut":""}${S.startId===b.id?" bstart":""}${S.endId===b.id?" bend":""}${isSel(b.id)?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}" style="--c:${fixC(s.c)}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmtLog(b.t)}</button>
     <div class="body">

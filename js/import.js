@@ -106,7 +106,10 @@ function parseRoll20(text){
   const sys=ccGuessSys(msgs,title)||(doc.querySelector('[class*="rolltemplate-coc"]')&&/극단적\s*성공|어려운\s*성공/.test(text)?"크툴루의 부름 7판":"");
   // 크툴루에 PC가 둘 이하이면 타이만(1:1)으로 짐작
   const tai=/크툴루|cthulhu|coc/i.test(sys+" "+title)&&pcs.length<=2;
-  return {title,days,pcs,cnt,gmName,gms,ooc,plOf,system:sys,src:"roll20",tai};
+  // 타이만: 메인 캐릭터마다 그 캐릭터를 맡은 사람 · 내 캐릭터는 내가 가장 많이 쓴 본인 이름, 상대 캐릭터는 GM 닉네임
+  const taiPl={};if(tai){const gmN=String(gmName||"").replace(/\s*\(?\bGM\b\)?\s*/gi," ").trim(),myO=ooc.filter(mine).sort((a,b)=>cnt[b]-cnt[a])[0]||"";
+    pcs.forEach(n=>{taiPl[n]=mine(n)?(myO||plOf[n]||""):iAmGM?(plOf[n]||ooc.filter(o=>!mine(o))[0]||""):gmN;});}
+  return {title,days,pcs,cnt,gmName,gms,ooc,plOf,taiPl,system:sys,src:"roll20",tai};
 }
 const CC_TABLE=/^[◎「『《【◆▶]|\d*D\d+|이벤트표|정보\s*조사|주의사항|트레일러/;
 function ccRole(cc,name){if(cc.gms&&cc.gms.includes(name))return "gm";if(cc.ooc&&cc.ooc.includes(name))return "ooc";if(name===cc.gmName||/^\W*GM\W*$/i.test(name))return "gm";if(cc.pcs.includes(name))return "pc";if(cc.src!=="roll20"&&CC_TABLE.test(name))return "hand";return "npc";}
@@ -117,13 +120,20 @@ const kst=t=>{const d=new Date(t+9*3600e3);return d.toISOString().slice(0,10);};
 function ccBuild(day,cfg){
   const keyOf={},sp=[];
   const spk=(name,ch)=>{const id=name+"\u0001"+(ch||"");if(!keyOf[id]){const k="k"+rid();keyOf[id]=k;sp.push({k,name,...(ch?{ch}:{}),c:COLORS[sp.length%COLORS.length]});}return keyOf[id];};
-  const gmK=spk(cfg.gmNick||"GM");
+  // 타이만(1:1 자캐): 메인 캐릭터는 '맡은 사람 + 캐릭터'(chr) 화자 하나, 엑스트라는 캐릭터 이름만(chr)
+  // 맡은 사람이 본인 이름이나 GM 이름으로 한 말(잡담)도 그 화자로 모아요 → 한 사람은 화자 하나
+  const tai=cfg.tai,mainBy={};
+  const chrK=(name,ch)=>{const k=spk(name,ch);const o=sp.find(x=>x.k===k);if(o)o.chr=1;return k;};
+  if(tai)Object.keys(cfg.players).forEach(c=>{const p=cfg.players[c];if(p&&(cfg.roles[c]||"npc")==="npc")mainBy[p]=chrK(p,c);});
+  const plChars=Object.keys(mainBy).filter(p=>p!==cfg.gmNick);
+  let gmK0=null;const gmK=()=>gmK0||(gmK0=tai&&mainBy[cfg.gmNick]?mainBy[cfg.gmNick]:spk(cfg.gmNick||"GM"));
+  if(!tai)gmK();
+  const oocK=name=>mainBy[name]||(plChars.length===1?mainBy[plChars[0]]:spk(name));
   const who=name=>{const r=cfg.roles[name]||"npc";
-    // 타이만(1:1 자캐): 캐릭터는 플레이어 없이 캐릭터 이름만
-    if(cfg.tai&&r!=="gm"&&r!=="ooc"){const k=spk(name);const o=sp.find(x=>x.k===k);if(o)o.chr=1;return {k};}
+    if(tai&&r!=="gm"&&r!=="ooc"){const p=cfg.players[name];return {k:p?mainBy[p]:chrK(name)};}
     if(r==="pc")return {k:spk(cfg.players[name]||name,name)};
-    if(r==="gm")return {k:gmK};
-    return {k:gmK,a:name};};
+    if(r==="gm")return {k:gmK()};
+    return {k:gmK(),a:name};};
   const main0=day.find(m=>m.ch==="main"&&!m.sys)||day[0];
   const t0=main0.t,out=[];
   for(const m of day){
@@ -133,9 +143,9 @@ function ccBuild(day,cfg){
     if(m.sys){out.push({id:rid(),s:NOTE,t,x:m.x,...(m.r20?{}:{st:1}),...extra});continue;}
     const role=cfg.roles[m.sp]||"npc";
     // 롤20: 플레이어 이름으로 한 말은 잡담 탭으로
-    if(role==="ooc"&&m.rr===null){if(m.x)out.push({id:rid(),s:spk(m.sp),t,x:m.x,tab:"잡담"});continue;}
-    // 타이만: GM 본인 이름으로 한 말도 잡담
-    if(cfg.tai&&role==="gm"&&m.rr===null){if(m.x)out.push({id:rid(),s:gmK,t,x:m.x,tab:"잡담"});continue;}
+    if(role==="ooc"&&m.rr===null){if(m.x)out.push({id:rid(),s:tai?oocK(m.sp):spk(m.sp),t,x:m.x,tab:"잡담"});continue;}
+    // 타이만: GM 본인 이름으로 한 말도 잡담 (GM이 맡은 캐릭터 화자로)
+    if(tai&&role==="gm"&&m.rr===null){if(m.x)out.push({id:rid(),s:gmK(),t,x:m.x,tab:"잡담"});continue;}
     if(m.rr!==null){const w=who(m.sp),o=ccOutcome(m);
       out.push({id:rid(),s:DICE,t,w:w.k,...(w.a?{a:w.a}:{}),x:m.x,r:ccResult(m.rr),...(o?{o}:{}),...extra});continue;}
     if(role==="hand"){const p=out.at(-1);
@@ -144,7 +154,7 @@ function ccBuild(day,cfg){
     const w=who(m.sp);out.push({id:rid(),s:w.k,t,x:m.x,...(w.a?{a:w.a}:{}),...extra});
   }
   const chunks=[];for(let i=0;i<out.length;i+=CHUNK)chunks.push(out.slice(i,i+CHUNK));
-  return {meta:{title:`${cfg.scen} ${kst(t0)}`,date:kst(t0),t0,created:Date.now(),n:out.length,sp,src:cfg.src||"ccfolia",scen:cfg.scen,day:kst(t0),part:cfg.part||1},chunks,gmName:cfg.gmNick||"GM"};
+  return {meta:{title:`${cfg.scen} ${kst(t0)}`,date:kst(t0),t0,created:Date.now(),n:out.length,sp,src:cfg.src||"ccfolia",scen:cfg.scen,day:kst(t0),part:cfg.part||1},chunks,gmName:tai&&mainBy[cfg.gmNick]?"":(cfg.gmNick||"GM")};
 }
 function ccForm(cc,box,opt={}){
   const ex=findScen(opt.scen||cc.title);
@@ -172,8 +182,8 @@ function ccForm(cc,box,opt={}){
     <div class="cc-step"><div class="cc-h"><i>2</i>올릴 회차<span class="tip">3시간 넘게 비는 곳에서 나눴어요</span></div>
       <div class="cc-days">${days.map(x=>`<label class="cc-day"><input type="checkbox" data-day="${x.i}" ${x.n>=30?"checked":""}><span class="cc-dd"><b>${esc(fmtDay(x.date))}</b><small>${x.from}–${x.to} · ${x.n.toLocaleString()}줄</small><em>${esc(x.first.slice(0,60))}</em></span></label>`).join("")}</div></div>
     <div class="cc-step"><div class="cc-h"><i>3</i>등장인물<span class="tip" id="cc-tip"></span></div>
-      <label class="cc-tai"><input type="checkbox" id="cc-tai"${cc.tai?" checked":""}><span><b>타이만 (1:1 자캐 세션)</b><small>모든 대사를 캐릭터 이름으로만 보여주고, 플레이어·GM 본인 이름으로 한 말은 모두 잡담으로 넣어요</small></span></label>
-      <div class="cc-roles">${names.map(n=>{const g=ccRole(cc,n),pc=exSp.find(x=>x.ch===n),pl=pc?pc.name:(cc.plOf&&cc.plOf[n])||"";
+      <label class="cc-tai"><input type="checkbox" id="cc-tai"${cc.tai?" checked":""}><span><b>타이만 (1:1 자캐 세션)</b><small>대사는 캐릭터 이름으로만 보여요 · 메인 캐릭터 둘은 맡은 사람과 짝지어 등장인물 칸에 캐릭터 이름을 크게 · 플레이어·GM 본인 이름으로 한 말은 모두 잡담</small></span></label>
+      <div class="cc-roles">${names.map(n=>{const g=ccRole(cc,n),pc=exSp.find(x=>x.ch===n),pl=pc?pc.name:(cc.tai&&cc.taiPl&&cc.taiPl[n])||(cc.plOf&&cc.plOf[n])||"";
         const hd=g!==lastG?`<div class="cc-g">${roleName[g]}</div>`:"";lastG=g;
         return hd+`<div class="cc-r"><div class="cc-nm"><span class="cc-n" title="${esc(n)}">${esc(n)}</span><small>${cc.cnt[n].toLocaleString()}줄${said[n]?` · ${esc(said[n].slice(0,40))}`:""}</small></div>${roleSel(n)}<input type="text" data-pl="${esc(n)}" value="${esc(pl)}" placeholder="플레이어 닉네임" list="cc-pls"></div>`;}).join("")}</div>
       <datalist id="cc-pls">${[...new Set([...(cc.ooc||[]),...S.scens.flatMap(s=>(s.sp||[]).map(x=>x.name))])].map(x=>`<option value="${esc(x)}">`).join("")}</datalist></div>
@@ -182,11 +192,12 @@ function ccForm(cc,box,opt={}){
   if(opt.system&&!$("#cc-sys").value)$("#cc-sys").value=opt.system;
   // 타이만이면 고를 것은 '캐릭터 / 잡담' 둘뿐: 나머지 선택지는 숨기고 PC 플레이어 칸도 숨겨요
   const sync=()=>{const tai=$("#cc-tai").checked;box.classList.toggle("cc-istai",tai);
-    $("#cc-tip").textContent=tai?"캐릭터는 이름만 보여요 · 플레이어·GM 본인 이름은 잡담으로 골라 주세요":'PC는 플레이어 닉네임을 넣어 주세요 · GM 캐릭터는 "GM 닉네임 · 캐릭터 이름"으로 보여요';
+    $("#cc-tip").textContent=tai?"메인 캐릭터 둘만 맡은 사람을 넣어 주세요 · 비워 두면 엑스트라(이름만) · 본인 이름은 잡담":'PC는 플레이어 닉네임을 넣어 주세요 · GM 캐릭터는 "GM 닉네임 · 캐릭터 이름"으로 보여요';
     box.querySelectorAll(".cc-r").forEach(r=>{const sel=r.querySelector("select");
       [...sel.options].forEach(o=>{o.hidden=tai&&!["npc","ooc","gm"].includes(o.value);o.textContent=tai?{npc:"캐릭터",ooc:"잡담 (PL 본인)",gm:"잡담 (GM 본인)"}[o.value]||o.textContent:o.dataset.l;});
       if(tai&&(sel.value==="pc"||sel.value==="hand"))sel.value="npc";
-      r.querySelector("input").style.visibility=!tai&&sel.value==="pc"?"visible":"hidden";});};
+      const inp=r.querySelector("input");inp.placeholder=tai?"맡은 사람 (비우면 엑스트라)":"플레이어 닉네임";
+      inp.style.visibility=(tai?sel.value==="npc":sel.value==="pc")?"visible":"hidden";});};
   box.querySelectorAll("[data-role] option").forEach(o=>o.dataset.l=o.textContent);
   $("#cc-tai").onchange=()=>{if(!$("#cc-tai").checked)box.querySelectorAll("[data-role]").forEach(sel=>{const n=sel.dataset.role,r=ccRole(cc,n);if(sel.value==="npc")sel.value=r;});sync();};
   box.querySelectorAll("[data-role]").forEach(s=>s.onchange=sync);sync();
