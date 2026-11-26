@@ -36,7 +36,7 @@ function galHTML(srcs,o={}){
   const items=srcs.flatMap(s=>s.list.map(p=>({...p,src:s.id,kind:s.kind,label:s.label}))).sort((a,b)=>o.newest?(b.at||0)-(a.at||0):(a.at||0)-(b.at||0));
   S.galItems=items;const up=srcs.find(s=>s.up);
   if(!items.length&&!up)return "";
-  const addH=up?`<label class="gadd"><input type="file" accept="image/*" multiple hidden id="galfile" data-src="${esc(up.id)}" data-kind="${up.kind}"><i>＋</i><span id="galmsg">사진 올리기 <small>· 원본 그대로 · 여러 장</small></span></label>`:"";
+  const addH=up?`<label class="galadd"><input type="file" accept="image/*" multiple hidden id="galfile" data-src="${esc(up.id)}" data-kind="${up.kind}"><i>＋</i><span id="galmsg">사진 올리기 <small>· 원본 그대로 · 여러 장</small></span></label>`:"";
   return `<div class="sc-sec galsec"><h4 data-en="GALLERY">${o.title||"세션 갤러리"}${items.length?`<span class="gcnt">${n2(items.length)}</span>`:""}</h4>
     ${addH}<div class="galg">
     ${items.map((p,i)=>{const im=galImgs(p);return `<figure data-gal="${esc(p.id)}"><div class="im">${im.length>1?`<div class="sl">${im.map(q=>`<img src="${esc(q.u||q.o)}" alt="" loading="lazy" decoding="async">`).join("")}</div><span class="pg"><b>1</b>/${im.length}</span><span class="dots">${im.map((_,k)=>`<i class="${k?"":"on"}"></i>`).join("")}</span>`:`<img src="${esc(im[0].u||im[0].o)}" alt="${esc(p.cap||"")}" loading="lazy" decoding="async">`}${p.label?`<span class="from">${esc(p.label)}</span>`:""}</div>
