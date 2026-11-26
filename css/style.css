@@ -816,7 +816,7 @@ body.booking #hdr,body.booking .topbar{display:none}
 .bln .sp{word-break:keep-all;text-align:right;font:600 .86em/1.9 "Pretendard",sans-serif;color:var(--c,#333)}
 .bln .sp small{display:block;font-weight:400;font-size:.82em;line-height:1.2;color:#999}
 .bln.gm .sp{color:#555}
-.bln .q{color:#1c1c1b}.bln .act{color:#8a857b;font-size:.93em}
+.bln .bq{color:#1c1c1b}.bln .ba{color:#8a857b;font-size:.92em}
 .bln.same{margin-top:.08em}
 .bln.ooc{display:block;color:#9a9a96;font-size:.86em;margin:.2em 0 .2em 6.5em}
 .bln.ooc .sp{display:inline;text-align:left;font-size:1em;color:#9a9a96;margin-right:.6em;font-weight:500}
@@ -908,7 +908,7 @@ body.booking #hdr,body.booking .topbar{display:none}
 .bpg:not(.bcover) .bln .sp{color:#1c1c1b}
 .bpg:not(.bcover) .bln.gm .sp{color:#1c1c1b}
 .bpg:not(.bcover) .bln .sp small{color:#8c8c8c}
-.bpg:not(.bcover) .bln .act{color:#7a7a7a}
+.bpg:not(.bcover) .bln .ba{color:#7a7a7a}
 .bpg:not(.bcover) .bln.ooc,.bpg:not(.bcover) .bln.ooc .sp{color:#8c8c8c}
 .bpg:not(.bcover) .bnar{border-left-color:#bdbdbd;color:#333}
 .bpg:not(.bcover) .bhand{background:#efefef}.bpg:not(.bcover) .bhand b{color:#555}

@@ -43,8 +43,8 @@ function bookTxt(x,inQ){
   // 「」 안은 대사, 밖은 행동 묘사(옅게) · 쪽이 나뉘어 「 가 앞쪽에 있으면 inQ
   x=x||"";if(!/「/.test(x)&&!inQ)return esc(x).replace(/\n/g,"<br>");
   let pre="";
-  if(inQ){const i=x.indexOf("」");const h=i<0?x:x.slice(0,i+1);pre=`<span class="q">${esc(h)}</span>`;x=i<0?"":x.slice(i+1);}
-  const out=esc(x).replace(/(「[^」]*」?)/g,'\u0001$1\u0002').split(/(\u0001[^\u0002]*\u0002)/).map(t=>!t?"":t[0]==="\u0001"?`<span class="q">${t.slice(1,-1)}</span>`:t.trim()?`<span class="act">${t}</span>`:t).join("");
+  if(inQ){const i=x.indexOf("」");const h=i<0?x:x.slice(0,i+1);pre=`<span class="bq">${esc(h)}</span>`;x=i<0?"":x.slice(i+1);}
+  const out=esc(x).replace(/(「[^」]*」?)/g,'\u0001$1\u0002').split(/(\u0001[^\u0002]*\u0002)/).map(t=>!t?"":t[0]==="\u0001"?`<span class="bq">${t.slice(1,-1)}</span>`:t.trim()?`<span class="ba">${t}</span>`:t).join("");
   return (pre+out).replace(/\n/g,"<br>");
 }
 function bookBlocks(sc,edit){
@@ -62,9 +62,9 @@ function bookBlocks(sc,edit){
       if(b.s===HAND){out.push({...base,k:"hand",title:b.ti||"핸드아웃",text:b.x||""});return;}
       if(b.s===DICE){const p=b.w?bookSp(sc,b.w):null;out.push({...base,k:"dice",who:b.a||(p?(p.ch||pcSplit(p.name).name):""),text:b.x||"",res:b.r||"",sec:!!b.sec});return;}
       const p=bookSp(sc,b.s)||{name:"?",c:"#888"},gm=p.k===gk,q=pcSplit(p.name||""),ch=b.a||p.ch||"";
-      // GM도 닉네임으로 · NPC 대사면 NPC 이름 아래 닉네임
+      // GM 줄은 'GM'(NPC 대사면 NPC 이름) 아래 회색 닉네임
       const gn=q.name&&!isAnon(p)?q.name:gmw;
-      out.push({...base,k:"line",gm,ooc:bk===1,c:p.c,pc:q.n,player:gm?gn:q.name,char:gm?(b.a||gn):(ch||q.name),sub:gm?(b.a&&b.a!==gn?gn:""):(!ch?"":q.name),text:b.x||""});
+      out.push({...base,k:"line",gm,ooc:bk===1,c:p.c,pc:q.n,player:gm?gn:q.name,char:gm?(b.a||gmw):(ch||q.name),sub:gm?(gn!==gmw?gn:""):(!ch?"":q.name),text:b.x||""});
       if(!edit&&bk!==1)out.push(...noteFor(b.x));
     });
   });
