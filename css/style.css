@@ -1268,3 +1268,22 @@ body:not(.own) .ownonly{display:none!important}
 .gerow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .gefoot{display:flex;gap:6px;align-items:center;margin-top:16px}.gefoot .danger{color:var(--bad)}
 .gebox select{width:100%}
+/* 테마 맞추기 — 아카이브 고정탁 페이지: 각진 플랫 카드에 맞춰요 */
+.hx.fxpage .sc-sec{border-radius:0;box-shadow:none;border:1px solid var(--hx-ln);background:var(--hx-p1);padding:16px 18px}
+.hx.fxpage .sc-sec h4{font:600 11px var(--hx-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--hx-tx)!important;border-bottom:1px solid var(--hx-ln)}
+.hx.fxpage .sc-sec h4 .gcnt,.hx.fxpage .sc-sec h4 .tip{font-family:var(--hx-mono);text-transform:none}
+.hx.fxpage .galg .im,.hx.fxpage .galadd,.hx.fxpage .pwrow .pw{border-radius:0}
+.hx.fxpage .galg .no,.hx.fxpage .galg .pg{font-family:var(--hx-mono);border-radius:0}
+.hx.fxpage .galg .from{border-radius:0;font-family:var(--hx-mono);font-size:10.5px}
+.hx.fxpage .galg figcaption .m{font-family:var(--hx-mono)}
+.hx.fxpage .galadd i{color:var(--hx-acck)}
+/* 각진 테마(더블크로스·인세인): 수정창·카드 이미지 고르기도 각지게 */
+body[data-theme=dx] :is(.gebox,.gei,.geadd,.cvpick button img,.cvprev,.glb .strip button,.glb .nv,.glb .top a),
+body[data-theme=wa] :is(.gebox,.gei,.geadd,.cvpick button img,.cvprev,.glb .strip button,.glb .top a,.galadd){border-radius:0}
+body[data-theme=wa] .gebox{border:1px solid #111;box-shadow:6px 6px 0 #111}
+body[data-theme=wa] .galadd{border-color:#111}
+body[data-theme=dx] .gebox{box-shadow:0 0 0 1px #0f1113,0 20px 50px -20px rgba(0,0,0,.4)}
+body[data-theme=dx] .gelab,body[data-theme=dx] .geh b{font-family:"Chakra Petch",ui-monospace,monospace;letter-spacing:.04em}
+/* D&D: 수정창 제목도 명조 */
+body[data-theme=deco] .geh b{font-family:"Gowun Batang",serif}
+.hx .fxtags a{border-radius:0;font-family:var(--hx-mono);border-color:var(--hx-ln);background:var(--hx-p1);color:var(--hx-tx)}.hx .fxtags a small{color:var(--hx-faint)}
