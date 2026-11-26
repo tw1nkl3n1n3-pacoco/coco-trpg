@@ -26,6 +26,7 @@ function themeOf(sc){
   return "plain";
 }
 function applyTheme(){
+  {const hx=!S.gid&&!S.cid&&!S.sid&&!S.revPage&&!S.admin&&!S.up&&!S.book&&isHX();if(document.body.classList.contains("hxhome")!==hx){document.body.classList.toggle("hxhome",hx);document.documentElement.classList.toggle("hxhome",hx);}}
   if(S.gid&&!S.sid&&!S.cid){const c=campById(S.gid);const t=c&&c.system?themeOf({system:c.system}):"plain";if((document.body.dataset.theme||"")!==t)document.body.dataset.theme=t;document.body.dataset.page="scen";return;}
   const sc=S.revPage?S.revPage.sc:S.cid?(S.scEdit&&S.scDraft?S.scDraft:scenById(S.cid)):(S.sid&&S.meta?curScen():null);
   // 시나리오 정보가 아직 안 왔으면 양피지 대신 메인 화면 색으로 기다려요

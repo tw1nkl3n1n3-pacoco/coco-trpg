@@ -126,16 +126,24 @@ function homeHTML(){
   const cs=S.camps.filter(c=>(!terms.length||hit(campHay(c)))&&(!who||campEps(c).some(hasWho)));
   const live=cs.filter(c=>!c.done&&!isCamp(c)).sort((a,b)=>campLast(b).localeCompare(campLast(a)));
   // 완주한 캠페인·캠프는 일반 세션 사이에 날짜 순으로 · 연도가 바뀌는 곳에 구분선
-  const items=[...gs.map(g=>({k:g.last||"",html:scenSecHTML(g)})),...cs.filter(c=>c.done||isCamp(c)).map(c=>({k:campKey(c),html:campCardHTML(c)}))].sort((a,b)=>b.k.localeCompare(a.k));
-  let py="";const listHTML=items.map(x=>{const y=(x.k||"").slice(0,4);const sep=y&&y!==py?`<div class="hyear"><span>${esc(y)}</span></div>`:"";if(y)py=y;return sep+x.html;}).join("");
+  const hx=isHX();
+  const items=[...gs.map(g=>({k:g.last||"",html:hx?hxScCard(g):scenSecHTML(g)})),...cs.filter(c=>c.done||isCamp(c)).map(c=>({k:campKey(c),html:hx?hxCampCard(c):campCardHTML(c)}))].sort((a,b)=>b.k.localeCompare(a.k));
+  const ycnt={};items.forEach(x=>{const y=(x.k||"").slice(0,4);ycnt[y]=(ycnt[y]||0)+1;});
+  let py="";const listHTML=items.map(x=>{const y=(x.k||"").slice(0,4);const sep=y&&y!==py?`<div class="hyear"><span>${esc(y)}</span>${hx?`<small class="hx-m">${ycnt[y]} records</small>`:""}</div>`:"";if(y)py=y;return sep+x.html;}).join("");
+  const notices=`    ${S.err?`<div class="notice bad">${esc(S.err)}</div>`:""}
+    ${!S.ready||(S.db&&!S.loaded)?loaderHTML():""}
+    ${S.ready&&S.setupNeeded?`<div class="notice bad">아직 Firebase 설정이 비어 있어요. 저장소 <b>Settings → Secrets and variables → Actions → Variables</b>에 <b>FIREBASE_CONFIG</b>와 <b>OWNER_EMAIL</b>을 넣고 다시 배포해 주세요. 자세한 방법은 저장소의 README에 있어요. </div>`:""}
+    ${S.ready&&S.db&&S.loaded&&!S.canAdmin&&S.scens.some(x=>!isOpen(x.id))?`<div class="notice">🔒 표시된 세션은 같이 플레이한 친구에게 받은 비밀번호를 넣어야 로그를 볼 수 있어요.</div>`:""}`;
+  const search=`${S.loaded&&plainGs.length+S.camps.length>0?`<div class="hsearch${who?" haschip":""}"><svg class="hq-ic" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>${who?`<span class="hq-chip">👤 ${esc(who)}<button type="button" id="hq-who-x" title="풀기">✕</button></span>`:""}<input type="search" id="hq" value="${esc(S.homeQ||"")}" placeholder="${who?"더 좁혀 보기":"세션 · 룰 · 플레이어 · 캐릭터 검색"}" autocomplete="off">${terms.length||who?`<span class="hq-n">${live.length+items.length}개</span>`:""}${S.hqOpen&&tterms.length?hqDropHTML(tterms,nq):""}</div>`:""}`;
+  const emptyMsg=terms.length?`<div class="notice">'${esc(String(S.homeQc||"").trim())}'에 맞는 세션이 없어요.</div>`:S.ready&&S.db&&S.loaded?`<div class="notice">아직 올린 세션이 없어요.${S.canAdmin?" ＋ 세션 올리기로 올려 주세요.":""}</div>`:"";
+  const adminBtn=S.canAdmin&&S.db?`<a class="ghost adminbtn" href="#admin" title="관리자 페이지">⚙ 관리${adminAlert()?'<i class="dot-alert"></i>':""}</a>`:"";
+  if(hx)return hxHomeHTML({all,live,can,notices,search,list:listHTML||(live.length?"":emptyMsg),n:items.length,adminBtn});
   return `<div class="home hmain">
     <div class="hometop"><h2>${iconHTML(site().icon)}${esc(site().title)}</h2></div>
     <div class="tip" style="font-size:13.5px">${esc(site().sub).replace(/\n/g,"<br>")}</div>
-    ${S.err?`<div class="notice bad">${esc(S.err)}</div>`:""}
-    ${!S.ready||(S.db&&!S.loaded)?loaderHTML():""}
-    ${S.ready&&S.setupNeeded?`<div class="notice bad">아직 Firebase 설정이 비어 있어요. 저장소 <b>Settings → Secrets and variables → Actions → Variables</b>에 <b>FIREBASE_CONFIG</b>와 <b>OWNER_EMAIL</b>을 넣고 다시 배포해 주세요. 자세한 방법은 저장소의 README에 있어요. </div>`:""}
-    ${S.ready&&S.db&&S.loaded&&!S.canAdmin&&S.scens.some(x=>!isOpen(x.id))?`<div class="notice">🔒 표시된 세션은 같이 플레이한 친구에게 받은 비밀번호를 넣어야 로그를 볼 수 있어요.</div>`:""}
-    ${S.loaded&&plainGs.length+S.camps.length>0?`<div class="hsearch${who?" haschip":""}"><svg class="hq-ic" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>${who?`<span class="hq-chip">👤 ${esc(who)}<button type="button" id="hq-who-x" title="풀기">✕</button></span>`:""}<input type="search" id="hq" value="${esc(S.homeQ||"")}" placeholder="${who?"더 좁혀 보기":"세션 · 룰 · 플레이어 · 캐릭터 검색"}" autocomplete="off">${terms.length||who?`<span class="hq-n">${live.length+items.length}개</span>`:""}${S.hqOpen&&tterms.length?hqDropHTML(tterms,nq):""}</div>`:""}
+    ${S.loaded&&S.scens.length?(t=>`<div class="hstats"><span><b>${t.scen}</b>시나리오</span><span><b>${t.ses}</b>세션</span>${t.cpn?`<span><b>${t.cpn}</b>캠페인</span>`:""}<span><b>${t.ppl}</b>함께한 사람</span></div>`)(homeStats(all)):""}
+    ${notices}
+    ${search}
     <div id="sesslist">${live.length?`<div class="hlab">진행 중인 캠페인</div>${live.map(campCardHTML).join("")}`:""}${listHTML||(live.length?"":terms.length?`<div class="notice">'${esc(String(S.homeQc||"").trim())}'에 맞는 세션이 없어요.</div>`:S.ready&&S.db&&S.loaded?`<div class="notice">아직 올린 세션이 없어요.${S.canAdmin?" 아래 ＋ 세션 올리기로 올려 주세요.":""}</div>`:"")}</div>
     ${can?`<div class="upentry"><a class="btnlike pri upbtn" href="#up">＋ 세션 올리기</a><span class="tip">녹음 · 코코포리아 로그 · 녹음 없는 세션</span></div>`:""}
     <div class="homefoot"><span class="hright">${S.canAdmin&&S.db?`<a class="ghost adminbtn" href="#admin" title="관리자 페이지">⚙ 관리${adminAlert()?'<i class="dot-alert"></i>':""}</a>`:""}<span class="authbox"></span></span></div>
@@ -257,19 +265,23 @@ function bindBackup(){
 function homeSoft(){const box=document.querySelector(".hsearch"),list=$("#sesslist");if(!box||!list){render();return;}
   const t=document.createElement("div");t.innerHTML=homeHTML();const nb=t.querySelector(".hsearch"),nl=t.querySelector("#sesslist");
   box.querySelectorAll(".hq-n,.hq-drop").forEach(e=>e.remove());if(nb)nb.querySelectorAll(".hq-n,.hq-drop").forEach(e=>box.appendChild(e));
+  {const a=document.querySelector(".hx-cnt"),b=t.querySelector(".hx-cnt");if(a&&b)a.textContent=b.textContent;}
   if(nl)list.replaceWith(nl);S.hqSoft=true;bindHome();S.hqSoft=false;}
 // 홈 카드 두 줄: 연도·제목 줄 사이의 카드들을 키가 낮은 쪽 줄에 차례로 넣어요 (빈칸 없이 지그재그)
-const HM_TWO=matchMedia("(min-width:720px)");
+const HM_TWO=matchMedia("(min-width:720px)"),HM_THREE=matchMedia("(min-width:1000px)"),HM_HX2=matchMedia("(min-width:641px)");
 function homeMasonry(){const L=$("#sesslist");if(!L)return;
   L.querySelectorAll(":scope>.mrow").forEach(r=>{const cs=[...r.querySelectorAll(":scope>.mcol>*")].sort((a,b)=>a._hm-b._hm);r.replaceWith(...cs);});
-  if(!HM_TWO.matches)return;
+  // 기본: 넓으면 2줄 · 아카이브: 넓으면 3줄, 중간이면 2줄
+  const n=isHX()?(HM_THREE.matches?3:HM_HX2.matches?2:1):(HM_TWO.matches?2:1);if(n<2)return;
   const kids=[...L.children];kids.forEach((k,i)=>k._hm=i);let cols=null;
-  for(const k of kids){if(!k.matches(".scen"))  {cols=null;continue;}
-    if(!cols){const row=document.createElement("div");row.className="mrow";cols=[0,1].map(()=>{const c=document.createElement("div");c.className="mcol";row.appendChild(c);return c;});k.before(row);}
-    (cols[0].offsetHeight<=cols[1].offsetHeight?cols[0]:cols[1]).appendChild(k);}}
-HM_TWO.addEventListener("change",homeMasonry);
+  for(const k of kids){if(!k.matches(".scen,.hxc")){cols=null;continue;}
+    if(!cols){const row=document.createElement("div");row.className="mrow";row.style.gridTemplateColumns=`repeat(${n},minmax(0,1fr))`;cols=[...Array(n)].map(()=>{const c=document.createElement("div");c.className="mcol";row.appendChild(c);return c;});k.before(row);}
+    cols.reduce((m,c)=>c.offsetHeight<m.offsetHeight?c:m,cols[0]).appendChild(k);}
+  // 이미지가 늦게 뜨면 키가 바뀌니까 한 번 더 맞춰요
+  L.querySelectorAll("img:not([data-hm])").forEach(im=>{im.dataset.hm=1;if(!im.complete)im.addEventListener("load",()=>{clearTimeout(homeMasonry._t);homeMasonry._t=setTimeout(homeMasonry,80);},{once:true});});}
+[HM_TWO,HM_THREE,HM_HX2].forEach(m=>m.addEventListener("change",homeMasonry));
 function bindHome(){
-  homeMasonry();bindPartEdit();renderAuth();
+  homeMasonry();bindPartEdit();renderAuth();if(isHX())bindHX();
   document.querySelectorAll("[data-cmore]").forEach(b=>b.onclick=()=>{const id=b.dataset.cmore;S.campMore[id]=!S.campMore[id];render();});
   bindBackup();
   async function bulkAudio(files){
