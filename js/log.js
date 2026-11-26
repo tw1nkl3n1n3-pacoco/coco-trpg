@@ -201,7 +201,11 @@ function startIdOf(list){
   const f=list.find(b=>b.t>=0);return f?f.id:null;}
 // 본세션 시작 줄 앞은 따로 안 고르면 빼기 (로그 페이지·리플레이북이 각자 채워요)
 const PRE={log:new Set(),book:new Set()};
-function preIds(list){const st=startIdOf(list),out=new Set();if(!st)return out;for(const b of list){if(b.id===st)break;out.add(b.id);}return out;}
+function preIds(list){const st=startIdOf(list),out=new Set();if(!st)return out;
+  const i=list.findIndex(b=>b.id===st),keep=new Set();
+  // 시작 줄 바로 위의 단락 제목은 본세션 쪽으로 (책에 같이 들어가요) · 사이에 낀 잡담 채널 줄은 건너뛰고 봐요
+  for(let j=i-1;j>=0;j--){const b=list[j];if(b.s===SEC){keep.add(b.id);continue;}if(b.tab&&CHAT_TAB.test(b.tab))continue;break;}
+  for(let k=0;k<i;k++)if(!keep.has(list[k].id))out.add(list[k].id);return out;}
 function bkOf(b){if(!b)return 0;if(b.bk!=null)return b.bk;if(PRE.log.has(b.id)||PRE.book.has(b.id))return 2;return b.tab&&CHAT_TAB.test(b.tab)&&![NOTE,DICE,HAND,SEC].includes(b.s)?1:0;}
 const OUT={success:"Success",failure:"Failure",critical:"Critical",fumble:"Fumble"};
 // 룰에 맞춘 표기: 인세인은 크리티컬 대신 스페셜

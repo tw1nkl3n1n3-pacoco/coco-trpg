@@ -76,7 +76,8 @@ function bookBlocks(sc,edit){
   // 내용이 다 빠진 장·단락 제목은 책에서 빼요
   const keep=out.map(()=>true);
   out.forEach((x,i)=>{if(x.k!=="chap"&&x.k!=="scene")return;let has=false;
-    for(let j=i+1;j<out.length;j++){const y=out[j];if(y.k==="chap"||(x.k==="scene"&&y.k==="scene"))break;if(y.k!=="note"&&y.k!=="scene"){has=true;break;}}
+    // 아래 단계 단락 제목은 건너뛰고, 같은·위 단계 제목이 나오기 전에 내용이 있는지 봐요
+    for(let j=i+1;j<out.length;j++){const y=out[j];if(y.k==="chap"||(x.k==="scene"&&y.k==="scene"&&y.lv<=x.lv))break;if(y.k!=="note"&&y.k!=="scene"){has=true;break;}}
     keep[i]=has;});
   return out.filter((x,i)=>keep[i]);
 }
@@ -170,10 +171,10 @@ function bookFront(sc){
   const gm=cast.find(p=>p.k===gk),pcs=cast.filter(p=>p.k!==gk).sort((a,b)=>pcn(a)-pcn(b));
   const sys=effSys(sc)?sysLabel(effSys(sc)):"";
   const cover=`<div class="bpg bcover"${sc.og?` style="--og:url('${sc.og}')"`:""}><div class="art${sc.og?" img":""}"></div><div class="band"></div><div class="in">
-    <div class="series">${sys?`<b>${esc(sys)}</b>`:""}REPLAY BOOK</div><h1>${esc(sc.name)}</h1>${sc.orig?`<div class="orig">${esc(sc.orig)}</div>`:""}
-    ${sc.summary?`<div class="sub">${esc(sc.summary.split("\n").filter(Boolean).slice(0,2).join(" "))}</div>`:""}
-    <div class="who">${gm?`<div><b>${gmw}</b>${esc(pcSplit(gm.name).name)}</div>`:""}<div><b>PL</b>${pcs.map(p=>esc(pcSplit(p.name).name)).join(" · ")}</div></div>
-    <div class="pub"><span>${site().title===SITE_UNSET?"":esc(site().title)}</span><span>${days.length?esc(days[0].replace(/-/g,". ")):""}${days.length>1?` – ${esc(days[days.length-1].slice(5).replace(/-/g,". "))}`:""}${campOf(sc)?` · ${esc(campOf(sc).name)}`:""}</span></div></div></div>`;
+    <div class="series">${sys?`<b>${esc(sys)}</b>`:""}REPLAY BOOK</div><h1>${esc(sc.name)}</h1>${sc.orig?`<div class="bcorig">${esc(sc.orig)}</div>`:""}
+    ${sc.summary?`<div class="bcsub">${esc(sc.summary.split("\n").filter(Boolean).slice(0,2).join(" "))}</div>`:""}
+    <div class="bcwho">${gm?`<div><b>${gmw}</b>${esc(pcSplit(gm.name).name)}</div>`:""}<div><b>PL</b>${pcs.map(p=>esc(pcSplit(p.name).name)).join(" · ")}</div></div>
+    <div class="bcpub"><span>${site().title===SITE_UNSET?"":esc(site().title)}</span><span>${days.length?esc(days[0].replace(/-/g,". ")):""}${days.length>1?` – ${esc(days[days.length-1].slice(5).replace(/-/g,". "))}`:""}${campOf(sc)?` · ${esc(campOf(sc).name)}`:""}</span></div></div></div>`;
   const castP=`<div class="bpg"><div class="bbody"><h2 class="ph">CHARACTERS</h2><h3 class="pt">등장인물</h3><div class="bcast">${pcs.map(p=>{const q=pcSplit(p.name);return `<div class="bpc" style="--c:${fixC(p.c)}"><span class="av">${p.img?`<img src="${esc(p.img)}" alt="">`:`<em>${esc((p.ch||q.name).slice(0,1))}</em>`}${q.n?`<i>${q.n}</i>`:""}</span><div><b>${esc(p.ch||q.name)}</b><div class="pl">플레이어 · ${esc(q.name)}</div>${p.memo?`<p>${esc(p.memo)}</p>`:""}</div></div>`;}).join("")}</div>
     ${gm?`<div class="bgm"><b>${gmw}</b>${esc(pcSplit(gm.name).name)}${gm.ch?` · ${esc(gm.ch)}`:""} — 이 이야기의 진행자</div>`:""}</div><div class="bfolio"><span>${esc(sc.name)}</span><span>2</span></div></div>`;
   return {cover,castP};

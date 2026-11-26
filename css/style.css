@@ -810,7 +810,7 @@ body.booking #hdr,body.booking .topbar{display:none}
 .bchap b{font-size:1.9em;line-height:1.3}
 .bscene{font:700 .92em/1.4 "Pretendard",sans-serif;margin:1.6em 0 .8em;display:flex;align-items:center;gap:8px}
 .bscene::before{content:"";width:14px;height:2px;background:var(--acc)}
-.bscene.l2{font-weight:600;color:#555}.bscene.l2::before{width:8px;background:#bbb}
+.bscene.l2{font-size:1.04em;font-weight:700;color:#1c1c1b;margin-top:1.8em}.bscene.l3{font-size:.9em;font-weight:600;color:#555}.bscene.l3::before{width:8px;background:#bbb}
 .bnar{font:inherit;margin:.7em 0;padding-left:.9em;border-left:2px solid #d9d4c8;color:#3b3934}
 .bln{display:grid;grid-template-columns:5.6em 1fr;gap:0 .9em;margin:.32em 0}
 .bln .sp{word-break:keep-all;text-align:right;font:600 .86em/1.9 "Pretendard",sans-serif;color:var(--c,#333)}
@@ -835,11 +835,11 @@ body.booking #hdr,body.booking .topbar{display:none}
 .bcover .series{font:700 9px/1 "Pretendard",sans-serif;letter-spacing:.28em;opacity:.85}
 .bcover .series b{background:var(--acc);padding:3px 6px;margin-right:8px;letter-spacing:.1em}
 .bcover h1{color:#fff!important;font-size:2.8em;line-height:1.2;margin:auto 0 .3em;font-weight:800;text-shadow:0 2px 12px rgba(0,0,0,.5)}
-.bcover .orig{font:.9em "Pretendard",sans-serif;opacity:.8}
-.bcover .sub{margin-top:1em;font-size:.95em;opacity:.9;max-width:90%}
-.bcover .who{margin-top:1.6em;font:.86em/1.7 "Pretendard",sans-serif}
-.bcover .who b{display:inline-block;width:2.6em;color:color-mix(in srgb,var(--acc) 40%,#fff)}
-.bcover .pub{margin-top:1.4em;padding-top:.8em;border-top:1px solid rgba(255,255,255,.3);display:flex;justify-content:space-between;font:9px "Pretendard",sans-serif;opacity:.75}
+.bcover .bcorig{font:.9em "Pretendard",sans-serif;opacity:.8}
+.bcover .bcsub{margin-top:1em;font-size:.95em;opacity:.9;max-width:90%}
+.bcover .bcwho{margin-top:1.6em;font:.86em/1.7 "Pretendard",sans-serif}
+.bcover .bcwho b{display:inline-block;width:2.6em;color:color-mix(in srgb,var(--acc) 40%,#fff)}
+.bcover .bcpub{margin-top:1.4em;padding-top:.8em;border-top:1px solid rgba(255,255,255,.3);display:flex;justify-content:space-between;font:9px "Pretendard",sans-serif;opacity:.75}
 /* 등장인물 · 차례 · 후기 */
 .bcast{display:flex;flex-direction:column;gap:1.1em}
 .bpc{display:grid;grid-template-columns:4.6em 1fr;gap:1em;align-items:start}
@@ -920,7 +920,7 @@ body.booking #hdr,body.booking .topbar{display:none}
 .bpg:not(.bcover) .bhand{background:#efefef}.bpg:not(.bcover) .bhand b{color:#555}
 .bpg:not(.bcover) .bmemo{background:#f2f2f2;border-top-color:#1c1c1b;color:#555}
 .bpg:not(.bcover) .bdice{border-color:#bdbdbd}
-.bpg:not(.bcover) .bscene.l2::before{background:#9e9e9e}
+.bpg:not(.bcover) .bscene.l3::before{background:#9e9e9e}
 .bpg:not(.bcover) .bpc .av{background:#5a5a5a}
 .bpg:not(.bcover) img{filter:grayscale(1)}
 .bpg:not(.bcover) .brv .rb{filter:grayscale(1)}
