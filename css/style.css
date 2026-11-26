@@ -941,3 +941,12 @@ body.booking #hdr,body.booking .topbar{display:none}
 .bln.ooc .tx{font-size:1em;line-height:inherit;color:inherit}
 /* 책 고치기 화면은 화면용 크기 그대로 (완성본의 판형 비율 적용 안 함) */
 .bksheet .bln .tx{font-size:1em;line-height:1.7}
+.tsplit{display:flex;gap:4px;padding:0 4px 2px}.tsplit button{flex:1}
+.kbhelp{max-width:640px}
+.kbgrid{display:grid;grid-template-columns:7.5em 1fr;gap:8px 12px;font-size:13.5px;line-height:1.9;align-items:baseline}
+.kbgrid h4{margin:0;font-size:12.5px;color:var(--dim)}
+.kbgrid kbd,.usage kbd{white-space:nowrap}
+.ghost.tiny{font-size:11px;padding:1px 6px;margin-left:6px;vertical-align:1px}
+@media(max-width:560px){.kbgrid{grid-template-columns:1fr}.kbgrid h4{margin-top:6px}}
+.kbgrid kbd,.bselpop kbd,.tsplit kbd,#layer kbd{display:inline-block;min-width:14px;text-align:center;background:var(--panel2,#f3f3f3);border:1px solid var(--line,#ccc);border-bottom-width:2px;border-radius:4px;padding:0 4px;font:600 11px/1.5 ui-monospace,monospace;color:var(--ink,#333)}
+.bselpop kbd{background:#444;border-color:#666;color:#fff;margin-right:2px}

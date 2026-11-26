@@ -27,10 +27,12 @@ async function bookLoad(){
 }
 function bookItems(P){const out=[];Object.keys(P.chunks).map(Number).sort((a,b)=>a-b).forEach(ci=>P.chunks[ci].forEach(b=>out.push({b,ci,sid:P.sid})));return out;}
 // 고친 내용은 세션 로그(chunks)에 바로 저장해요 · 같은 줄을 로그 페이지에서도 보게 돼요
-async function bookSet(changes){
-  const B=S.book;if(!B||!B.parts)return;const by={};
+async function bookSet(changes,noUndo){
+  const B=S.book;if(!B||!B.parts)return;const by={},inv=[];
   changes.forEach(c=>{const P=B.parts.find(p=>p.sid===c.sid);if(!P)return;const arr=P.chunks[c.ci];const b=arr&&arr.find(x=>x.id===c.id);if(!b)return;
+    const f0={};Object.keys(c.f).forEach(k=>{f0[k]=b[k];});inv.push({sid:c.sid,ci:c.ci,id:c.id,f:f0});
     Object.keys(c.f).forEach(k=>{if(c.f[k]===undefined)delete b[k];else b[k]=c.f[k];});B.ver=(B.ver||0)+1;(by[c.sid+"|"+c.ci]=by[c.sid+"|"+c.ci]||[]).push({t:"set",id:c.id,f:c.f});});
+  if(!noUndo&&inv.length){(B.undo=B.undo||[]).push(inv);if(B.undo.length>100)B.undo.shift();}
   bookRender();
   try{for(const key of Object.keys(by)){const [sid,ci]=key.split("|");const ref=S.db.doc(`sessions/${sid}/chunks/${ckey(+ci)}`);
     await S.db.runTransaction(async tx=>{const d=await tx.get(ref);const arr=d.exists?clone(d.data().b||[]):[];by[key].forEach(op=>applyOp(arr,op));tx.set(ref,{i:+ci,b:arr});});}
@@ -162,7 +164,7 @@ function bookHTML(){
   if(!B.parts)return `<div class="bookwrap" style="--acc:${acc}">${bar}${loaderHTML()}</div>`;
   if(!B.parts.length)return `<div class="bookwrap" style="--acc:${acc}">${bar}<div class="notice">이 세션에는 아직 로그가 없어요.</div></div>`;
   return `<div class="bookwrap mode-${B.mode}" style="--acc:${acc};--pw:${Z.w}px;--ph:${Z.h}px" data-size="${B.size}" data-th="${th}">${bar}
-    ${B.mode==="edit"?`<div class="bkedit"><div class="bkkeys"><span><kbd>1</kbd>본문</span><span><kbd>2</kbd>잡담</span><span><kbd>3</kbd>빼기</span><span>Shift+클릭 여러 줄</span><span>두 번 눌러 글 고치기</span></div><div class="bksheet" id="bksheet"></div></div>`:`<div class="bkpages" id="bkpages"></div>`}
+    ${B.mode==="edit"?`<div class="bkedit"><div class="bkkeys"><span>클릭 고르기 · <kbd>Shift</kbd>+클릭/드래그 여러 줄</span><span><kbd>C</kbd>잡담</span><span><kbd>X</kbd>빼기</span><span><kbd>B</kbd>본세션 시작</span><span>더블클릭·<kbd>Enter</kbd> 고치기</span><span><kbd>Ctrl</kbd>+<kbd>Z</kbd> 되돌리기</span><span><kbd>?</kbd> 전체 조작</span></div><div class="bksheet" id="bksheet"></div></div>`:`<div class="bkpages" id="bkpages"></div>`}
     <div class="bkmeasure" id="bkmeasure"></div></div>`;
 }
 function bookFront(sc){
@@ -254,7 +256,7 @@ function bookSelPop(){
   const els=[...document.querySelectorAll("#bksheet [data-bid].sel")];if(!els.length)return;
   const xs=B.flat.filter(x=>B.sel.has(x.id)),speech=xs.every(x=>x.k==="line"),cur=xs.every(x=>x.bk===xs[0].bk)?xs[0].bk:-1;
   const pop=document.createElement("div");pop.className="bselpop";
-  pop.innerHTML=`${xs.length>1?`<em>${xs.length}줄</em>`:""}<button data-bk="0" class="${cur===0?"on":""}">1 본문</button>${speech?`<button data-bk="1" class="${cur===1?"on":""}">2 잡담</button>`:""}<button data-bk="2" class="${cur===2?"on":""}">3 빼기</button>${xs.length===1&&xs[0].k!=="dice"?`<button data-bst="1" title="이 줄부터 본세션 · 앞은 빼기로">▶ 여기서 시작</button>`:""}`;
+  pop.innerHTML=`${xs.length>1?`<em>${xs.length}줄</em>`:""}<button data-bk="0" class="${cur===0?"on":""}">본문</button>${speech||xs.some(x=>x.k==="line")?`<button data-bk="1" class="${cur===1?"on":""}"><kbd>C</kbd> 잡담</button>`:""}<button data-bk="2" class="${cur===2?"on":""}"><kbd>X</kbd> 빼기</button>${xs.length===1&&xs[0].k!=="dice"?`<button data-bst="1" title="이 줄부터 본세션 · 앞은 빼기로"><kbd>B</kbd> 여기서 시작</button>`:""}`;
   // 고른 줄 안에 넣으면 빼기 줄의 흐림이 같이 먹어서, 시트 위에 따로 띄워요
   const first=els[0],sh=$("#bksheet");pop.style.top=(first.offsetTop+first.offsetHeight+4)+"px";sh.appendChild(pop);
   pop.onmousedown=e=>{const st=e.target.closest("[data-bst]");if(st){e.preventDefault();e.stopPropagation();bookSetStart(xs[0]);return;}
@@ -266,9 +268,11 @@ function bookSetStart(x){
   const cur=bookItems(P).find(e=>e.b.id===x.id);if(cur&&!cur.b.bstart)ch.push({sid:x.sid,ci:x.ci,id:x.id,f:{bstart:1}});
   B.sel=new Set();if(ch.length)bookSet(ch);toast("이 줄부터 본세션 · 앞은 빼기로 돼요");
 }
-function bookSetBk(v){
-  const B=S.book;const xs=B.flat.filter(x=>B.sel.has(x.id));if(!xs.length)return;
-  const changes=xs.filter(x=>!(v===1&&x.k!=="line")).map(x=>{const P=B.parts.find(p=>p.sid===x.sid),b=P.chunks[x.ci].find(y=>y.id===x.id);
+// v: 0 본문 · 1 잡담(C) · 2 빼기(X) · toggle이면 이미 다 그 상태일 때 본문으로
+function bookSetBk(v,toggle){
+  const B=S.book;let xs=B.flat.filter(x=>B.sel.has(x.id));if(v===1)xs=xs.filter(x=>x.k==="line");if(!xs.length)return;
+  if(toggle&&xs.every(x=>x.bk===v))v=0;
+  const changes=xs.map(x=>{const P=B.parts.find(p=>p.sid===x.sid),b=P.chunks[x.ci].find(y=>y.id===x.id);
     // 따로 안 고른 값(시작 줄 앞은 빼기, 코코포리아 잡담 채널은 잡담)과 같으면 표시를 지워 둬요
     const def=PRE.book.has(b.id)?2:b.tab&&CHAT_TAB.test(b.tab)&&x.k==="line"?1:0;return {sid:x.sid,ci:x.ci,id:x.id,f:{bk:v===def?undefined:v}};});
   bookSet(changes);
@@ -280,10 +284,15 @@ function bindBookEdit(sc){
       B.sel=new Set(ids);bookSetBk(allCut?0:2);B.sel=new Set();return;}
     const fb=e.target.closest("[data-bfold]");if(fb){B.unfold={...(B.unfold||{}),[fb.dataset.bfold]:true};bookRender();return;}
     const el=e.target.closest("[data-bid]");if(!el||B.editing)return;const id=el.dataset.bid;
-    if(e.shiftKey&&B.anchor){const order=B.flat.map(x=>x.id),a=order.indexOf(B.anchor),z=order.indexOf(id);const [i,j]=a<z?[a,z]:[z,a];B.sel=new Set(order.slice(i,j+1));}
-    else{B.sel=new Set([id]);B.anchor=id;}
-    sh.querySelectorAll("[data-bid]").forEach(n=>n.classList.toggle("sel",B.sel.has(n.dataset.bid)));bookSelPop();
+    if(B.dragged){B.dragged=false;return;}
+    if(e.shiftKey&&B.anchor)bookRangeTo(id);else{B.sel=new Set([id]);B.anchor=id;B.cur=id;}
+    bookPaint();
   };
+  // 줄 위로 드래그하면 여러 줄 고르기 (로그 페이지와 같아요)
+  sh.onmousedown=e=>{if(e.button!==0||B.editing||e.target.closest("input,textarea,button,summary"))return;const el=e.target.closest("[data-bid]");B.dragFrom=el?el.dataset.bid:null;B.dragged=false;if(e.shiftKey)e.preventDefault();};
+  sh.onmouseover=e=>{if(!B.dragFrom||!(e.buttons&1))return;const el=e.target.closest("[data-bid]");if(!el||el.dataset.bid===(B.cur||B.dragFrom)&&!B.dragged)return;
+    if(!B.dragged){B.anchor=B.dragFrom;B.dragged=true;}bookRangeTo(el.dataset.bid);document.querySelectorAll("#bksheet [data-bid]").forEach(n=>n.classList.toggle("sel",B.sel.has(n.dataset.bid)));document.querySelectorAll(".bselpop").forEach(p=>p.remove());};
+  sh.onmouseup=()=>{const d=B.dragged;B.dragFrom=null;if(d){bookSelPop();setTimeout(()=>{B.dragged=false;},0);}};
   sh.ondblclick=e=>{const el=e.target.closest("[data-bid]");if(!el)return;const x=B.flat.find(y=>y.id===el.dataset.bid);if(!x||x.k==="dice")return;
     B.editing=x.id;B.sel=new Set([x.id]);bookRender();const t=$("#bked");if(t){t.focus();t.setSelectionRange(t.value.length,t.value.length);t.style.height=t.scrollHeight+"px";
       t.oninput=()=>{t.style.height="auto";t.style.height=t.scrollHeight+"px";};
@@ -298,11 +307,23 @@ function bindBook(){
   const pr=$("#bkprint");if(pr)pr.onclick=()=>{const st=document.getElementById("bkpage-style")||document.head.appendChild(Object.assign(document.createElement("style"),{id:"bkpage-style"}));const Z=BOOK_SIZES[B.size];st.textContent=`@page{size:${Z.w/559*148}mm ${Z.h/794*210}mm;margin:0}`;window.print();};
   if(B.parts)setTimeout(bookRender,0);
 }
-// 책 고치기 단축키: 1 본문 · 2 잡담 · 3 빼기 · ↑↓ 줄 옮기기 · Esc 고르기 풀기
+// 책 고치기 단축키: 로그 페이지와 같은 규칙 (C 잡담 · X 빼기 · B 시작 · Enter 고치기 · Shift+↑↓ 여러 줄 · Ctrl+Z 되돌리기)
+function bookPaint(){const B=S.book;document.querySelectorAll("#bksheet [data-bid]").forEach(n=>n.classList.toggle("sel",B.sel.has(n.dataset.bid)));bookSelPop();}
+function bookRangeTo(id){const B=S.book,order=B.flat.map(x=>x.id),a=order.indexOf(B.anchor),z=order.indexOf(id);if(a<0||z<0){B.sel=new Set([id]);B.anchor=id;return;}const [i,j]=a<z?[a,z]:[z,a];B.sel=new Set(order.slice(i,j+1));B.cur=id;}
+function bookEditAt(id){const el=document.querySelector(`#bksheet [data-bid="${CSS.escape(id)}"]`);if(el)el.dispatchEvent(new MouseEvent("dblclick",{bubbles:true}));}
 document.addEventListener("keydown",e=>{
-  const B=S.book;if(!B||B.mode!=="edit"||B.editing)return;if(/INPUT|TEXTAREA|SELECT/.test((e.target.tagName||"")))return;
-  if(["1","2","3"].includes(e.key)&&B.sel.size){e.preventDefault();bookSetBk(+e.key-1);return;}
-  if(e.key==="Escape"&&B.sel.size){B.sel=new Set();document.querySelectorAll("#bksheet .sel").forEach(n=>n.classList.remove("sel"));bookSelPop();return;}
-  if((e.key==="ArrowDown"||e.key==="ArrowUp")&&B.sel.size&&B.flat&&B.flat.length){e.preventDefault();const order=B.flat.map(x=>x.id);let i=order.indexOf(B.anchor);i=i<0?0:Math.max(0,Math.min(order.length-1,i+(e.key==="ArrowDown"?1:-1)));
-    B.anchor=order[i];B.sel=new Set([order[i]]);document.querySelectorAll("#bksheet [data-bid]").forEach(n=>n.classList.toggle("sel",B.sel.has(n.dataset.bid)));const el=document.querySelector(`#bksheet [data-bid="${CSS.escape(order[i])}"]`);if(el)el.scrollIntoView({block:"nearest"});bookSelPop();}
+  const B=S.book;if(!B||B.mode!=="edit"||B.editing)return;if(/INPUT|TEXTAREA|SELECT/.test((e.target.tagName||""))||document.querySelector(".modal"))return;
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="z"){e.preventDefault();const inv=B.undo&&B.undo.pop();if(inv){bookSet(inv,true);toast("되돌렸어요");}return;}
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  const k=keyOf(e.key);
+  if(k==="?"){e.preventDefault();helpBox();return;}
+  if(!B.sel.size)return;
+  if(k==="c"){e.preventDefault();bookSetBk(1,true);return;}
+  if(k==="x"){e.preventDefault();bookSetBk(2,true);return;}
+  if(k==="b"&&B.sel.size===1){e.preventDefault();const x=B.flat.find(y=>B.sel.has(y.id));if(x)bookSetStart(x);return;}
+  if(k==="Enter"){e.preventDefault();bookEditAt(B.cur||B.anchor);return;}
+  if(k==="Escape"){B.sel=new Set();bookPaint();return;}
+  if((k==="ArrowDown"||k==="ArrowUp"||k==="j"||k==="k")&&B.flat&&B.flat.length){e.preventDefault();const d=k==="ArrowDown"||k==="j"?1:-1,order=B.flat.map(x=>x.id);let i=order.indexOf(B.cur||B.anchor);i=i<0?0:Math.max(0,Math.min(order.length-1,i+d));
+    if(e.shiftKey)bookRangeTo(order[i]);else{B.anchor=order[i];B.cur=order[i];B.sel=new Set([order[i]]);}
+    bookPaint();const el=document.querySelector(`#bksheet [data-bid="${CSS.escape(order[i])}"]`);if(el)el.scrollIntoView({block:"nearest"});}
 });

@@ -154,12 +154,12 @@ function renderSide(){
     ${(()=>{const hs=allHands();const days=[...new Set(S.sessions.map(info).filter(i=>S.meta&&i.scen===info(S.meta).scen).map(i=>i.day))].sort();const multi=new Set(hs.map(x=>x.day)).size>1;
       return `<button class="foldh${S.openHand?" open":""}" data-fold="openHand"><span class="car">▸</span>핸드아웃 <span class="fc">${hs.length}</span><span class="fsub">세션 전체 · 누르면 이동</span></button>
     <div class="fold${S.openHand?" open":""}"><div class="secs">${hs.map(h=>`<button class="secb${h.sid===S.sid?"":" other"}" data-sec="${h.sid}|${h.id}" title="${esc((h.x||"").slice(0,80))}"><span class="sp">${multi?(days.indexOf(h.day)+1)+"회 ":""}${h.part}부</span>📜 ${esc(h.ti||(h.x||"").split("\n")[0].slice(0,24)||"(제목 없음)")}</button>`).join("")||'<div class="tip" style="padding:2px 4px 6px">아직 핸드아웃이 없어요. 대사를 고르고 <kbd>H</kbd>를 눌러 넣어요.</div>'}</div></div>`;})()}
-    <h3 class="tip usage">사용법</h3>
+    <h3 class="tip usage">자주 쓰는 조작 <button class="ghost tiny" id="help2">전체 보기 <kbd>?</kbd></button></h3>
     <div class="tip usage">
-      대사를 클릭해 고르고 숫자키 <kbd>1</kbd>~<kbd>9</kbd>로 화자를 바꿔요. 이름을 클릭해도 바꿀 수 있어요.<br>
-      한 칸에 두 사람 말이 섞였으면 대사를 클릭해서 고른 뒤 문장 사이의 <b>✂</b>를 눌러 나눠요.<br>
-      <kbd>N</kbd> 고른 대사 아래에 상황 묘사 넣기 · <kbd>D</kbd> 주사위 · <kbd>H</kbd> 핸드아웃 넣기<br>
-      <kbd>↑</kbd><kbd>↓</kbd> 이동 · <kbd>Enter</kbd> 글 수정 · <kbd>P</kbd> 여기서 재생 · <kbd>Space</kbd> 재생/정지 · <kbd>Ctrl</kbd>+<kbd>Z</kbd> 되돌리기
+      클릭 고르기 · <kbd>Shift</kbd>+클릭/드래그 여러 줄 · 더블클릭·<kbd>Enter</kbd> 고치기<br>
+      <kbd>1</kbd>~<kbd>9</kbd> 화자 · <kbd>C</kbd> 잡담 · <kbd>X</kbd> 빼기 · <kbd>B</kbd> 본세션 시작<br>
+      <kbd>N</kbd> 묘사 · <kbd>D</kbd> 주사위 · <kbd>H</kbd> 핸드아웃 · <kbd>S</kbd> 단락 · <kbd>M</kbd> 위와 합치기 · <kbd>Del</kbd> 지우기<br>
+      글자를 드래그하면 떼어내기·고유명사 메뉴 · <kbd>Ctrl</kbd>+<kbd>Z</kbd> 되돌리기
     </div>
     ${S.meta&&S.meta.src==="ccfolia"&&!S.meta.t0&&S.canWrite?`<div class="tip t0fix">이 로그는 예전에 올려서 실제 시각이 없어요. <button class="ghost" id="t0fix">🕘 코코포리아 html 다시 골라 실제 시각 넣기</button><input type="file" id="t0file" accept=".html,.htm" hidden></div>`:""}
     <div class="homefoot sidefoot"><button class="ghost" id="back" title="세션 목록">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>`;
@@ -247,46 +247,46 @@ function setStart(id){
 }
 function rowHTML(e,prev){
   if(e.b.s===SEC){const b=e.b;
-    return `<div class="row sec l${secLv(b)}${S.sel===b.id?" sel":""}" data-id="${b.id}">
+    return `<div class="row sec l${secLv(b)}${isSel(b.id)?" sel":""}" data-id="${b.id}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmtLog(b.t)}</button>
     <div class="body"><div class="tx"><span class="ln">${b.x?hl(b.x):'<span class="ph">단락 이름</span>'}</span></div></div>
     <div class="act">
-      <button class="w" data-act="edit" title="이름 고치기 (Enter)">✎</button>
+      <button class="w" data-act="edit" title="이름 고치기 (Enter · 더블클릭)">✎</button>
       <span class="w lvb" title="단락 단계">${[1,2,3].map(l=>`<button data-act="lv" data-lv="${l}" class="${secLv(b)===l?"on":""}">${"상중하"[l-1]}</button>`).join("")}</span>
-      <button class="w" data-act="del" title="단락 나누기 지우기">🗑</button>
+      <button class="w" data-act="del" title="단락 나누기 지우기 (Delete)">🗑</button>
     </div></div>`;}
   if(e.b.s===HAND){const b=e.b;
-    return `<div class="row${bkOf(b)===2?" bk-cut":""} hand${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}">
+    return `<div class="row${bkOf(b)===2?" bk-cut":""} hand${isSel(b.id)?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmtLog(b.t)}</button>
     <div class="body"><div class="hlab">📜 ${b.ti?`<b class="hti">${esc(b.ti)}</b>`:"핸드아웃"}</div><div class="tx">${b.x?`<span>${b.x.split("\n").map(l=>`<span class="ln">${handLine(l)}</span>`).join("<br>")}</span>`:'<span class="ph">핸드아웃 내용 · [정보] / [비밀]로 시작하는 줄은 라벨이 붙어요</span>'}</div></div>
     <div class="act">${cmBtn()}
-      <button class="w" data-act="edit" title="글 수정 (Enter)">✎</button>
-      <button class="w" data-act="up" title="위 줄과 합치기">⤒</button>
+      <button class="w" data-act="edit" title="글 수정 (Enter · 더블클릭)">✎</button>
+      <button class="w" data-act="up" title="위 줄과 합치기 (M)">⤒</button>
       <button class="w" data-act="who" title="대사로 바꾸기">👤</button>
       <button class="w" data-act="note" title="아래에 상황 묘사 추가 (N)">＋상황</button>
-      <button class="w" data-act="del" title="삭제">🗑</button>
+      <button class="w" data-act="del" title="삭제 (Delete)">🗑</button>
     </div></div>`;}
   if(e.b.s===DICE){const b=e.b,p=b.w?spBy(b.w):null;
-    return `<div class="row${bkOf(b)===2?" bk-cut":""} dice${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}" style="--c:${p?fixC(p.c):"#8a8178"}">
+    return `<div class="row${bkOf(b)===2?" bk-cut":""} dice${isSel(b.id)?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}" style="--c:${p?fixC(p.c):"#8a8178"}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmtLog(b.t)}</button>
     <div class="body"><div class="tx">${diceInner(b)}</div></div>
     <div class="act">${cmBtn()}
-      <button class="w" data-act="edit" title="주사위 수정 (Enter)">✎</button>
+      <button class="w" data-act="edit" title="주사위 수정 (Enter · 더블클릭)">✎</button>
       <button class="w" data-act="note" title="아래에 상황 묘사 추가 (N)">＋상황</button>
       <button class="w" data-act="dice" title="아래에 주사위 추가 (D)">＋🎲</button>
-      <button class="w" data-act="del" title="삭제">🗑</button>
+      <button class="w" data-act="del" title="삭제 (Delete)">🗑</button>
     </div></div>`;}
   if(e.b.s===NOTE){const b=e.b;
-    return `<div class="row${bkOf(b)===2?" bk-cut":""} note${b.st?" stat":""}${b.tab?" tabbed":""}${S.startId===b.id?" bstart":""}${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}">
+    return `<div class="row${bkOf(b)===2?" bk-cut":""} note${b.st?" stat":""}${b.tab?" tabbed":""}${S.startId===b.id?" bstart":""}${isSel(b.id)?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmtLog(b.t)}</button>
     <div class="body"><div class="tx">${b.x?`<span>${b.x.split("\n").map(l=>`<span class="ln">${hl(l)}</span>`).join("<br>")}</span>`:'<span class="ph">상황 묘사</span>'}</div></div>
     <div class="act">${cmBtn()}
       <button class="w" data-act="note" title="아래에 상황 묘사 추가 (N)">＋상황</button>
       <button class="w" data-act="dice" title="아래에 주사위 추가 (D)">＋🎲</button>
       <button class="w" data-act="who" title="대사로 바꾸기">👤</button>
-      <button class="w" data-act="edit" title="글 수정 (Enter)">✎</button>
-      <button class="w" data-act="bstart" title="여기서 본세션 시작 · 리플레이북은 이 줄부터">▶</button>
-      <button class="w" data-act="del" title="삭제">🗑</button>
+      <button class="w" data-act="edit" title="글 수정 (Enter · 더블클릭)">✎</button>
+      <button class="w" data-act="bstart" title="여기서 본세션 시작 · 리플레이북은 이 줄부터 (B)">▶</button>
+      <button class="w" data-act="del" title="삭제 (Delete)">🗑</button>
     </div></div>`;}
   const b=e.b,s=spBy(b.s),lines=b.x.split("\n"),gm=isGM(s.k),bk=bkOf(b);
   // 잡담은 이름과 한 줄로(캐릭터 이름 없이), 매 줄 이름을 보여요
@@ -294,7 +294,7 @@ function rowHTML(e,prev){
   const pbk=prev?bkOf(prev.b):-1,first=!prev||(pbk===1)!==(bk===1)||prev.b.s!==b.s||(bk!==1&&(prev.b.a||"")!==(b.a||""))||(bk!==1&&(prev.b.tab||"")!==(b.tab||""))||b.t-prev.b.t>120;
   const tx=lines.map((l,i)=>(i?`<button class="cut" data-act="cut" data-line="${i}" tabindex="-1" title="여기서 나눠서 다른 화자로 지정할 수 있게 해요">✂</button>`:"")+`<span class="ln">${hl(l)}</span>`).join(" ");
   const q=pcSplit(s.name),label=(gm?gmTag:q.n?`<span class="pcn">${q.n}</span>`:"")+esc(q.name),sub=bk===1?"":(b.a?esc(b.a):s.ch?esc(s.ch):"")+(b.tab&&!CHAT_TAB.test(b.tab)?`<span class="tabchip">${esc(b.tab)}</span>`:"");
-  return `<div class="row${first?" first":""}${gm?" gm":""}${b.tab?" tabbed":""}${bk===1?" bk-ooc":bk===2?" bk-cut":""}${S.startId===b.id?" bstart":""}${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}" style="--c:${fixC(s.c)}">
+  return `<div class="row${first?" first":""}${gm?" gm":""}${b.tab?" tabbed":""}${bk===1?" bk-ooc":bk===2?" bk-cut":""}${S.startId===b.id?" bstart":""}${isSel(b.id)?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}" style="--c:${fixC(s.c)}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmtLog(b.t)}</button>
     <div class="body">
       ${first?`<button class="who" data-act="who" title="클릭해서 화자 바꾸기">${label}${sub?`<small>${sub}</small>`:""}</button>`:""}
@@ -302,12 +302,12 @@ function rowHTML(e,prev){
     </div>
     <div class="act">${cmBtn()}
       <button class="w" data-act="who" title="화자 바꾸기 (숫자키)">👤</button>
-      <button class="w" data-act="edit" title="글 수정 (Enter)">✎</button>
-      <button class="w" data-act="up" title="위 대사와 합치기">⤒</button>
+      <button class="w" data-act="edit" title="글 수정 (Enter · 더블클릭)">✎</button>
+      <button class="w" data-act="up" title="위 대사와 합치기 (M)">⤒</button>
       <button class="w" data-act="note" title="아래에 상황 묘사 추가 (N)">＋상황</button>
       <button class="w" data-act="dice" title="아래에 주사위 추가 (D)">＋🎲</button>
-      <button class="w" data-act="bstart" title="여기서 본세션 시작 · 리플레이북은 이 줄부터">▶</button>
-      <button class="w" data-act="del" title="삭제">🗑</button>
+      <button class="w" data-act="bstart" title="여기서 본세션 시작 · 리플레이북은 이 줄부터 (B)">▶</button>
+      <button class="w" data-act="del" title="삭제 (Delete)">🗑</button>
     </div></div>`;
 }
 function cmBtn(){const id=cmScid();return S.db&&!S.local&&id&&isOpen(id)&&!isExt(id)?`<button class="cmw" data-act="cm" title="이 줄에 댓글">💬</button>`:"";}
@@ -348,17 +348,28 @@ function updateRow(id){
 function prevVis(e){let i=S.flat.indexOf(e)-1;while(i>=0&&!visible(S.flat[i]))i--;return i>=0?S.flat[i]:null;}
 
 // ---------- selection & popovers ----------
-function select(id,scroll=true){
-  const prev=S.sel;S.sel=id;
-  if(prev){const p=document.querySelector(`.row[data-id="${prev}"]`);p&&p.classList.remove("sel");}
-  const r=document.querySelector(`.row[data-id="${id}"]`);
-  if(r){r.classList.add("sel");if(scroll){const rc=r.getBoundingClientRect();const top=(parseInt(getComputedStyle(document.documentElement).getPropertyValue("--hdr"))||110)+10;if(rc.top<top||rc.bottom>innerHeight-20)r.scrollIntoView({block:"center"});}}
+// 고르기: S.sel(지금 줄) · S.anchor(Shift로 넓힐 때 기준) · S.selSet(여러 줄)
+const isSel=id=>S.sel===id||!!(S.selSet&&S.selSet.has(id));
+function paintSel(){document.querySelectorAll("#log .row.sel").forEach(r=>{if(!isSel(r.dataset.id))r.classList.remove("sel");});
+  (S.selSet&&S.selSet.size?[...S.selSet]:[S.sel]).forEach(id=>{const r=id&&document.querySelector(`.row[data-id="${id}"]`);r&&r.classList.add("sel");});}
+// 고른 줄들(로그 순서대로)
+function selIds(){if(S.selSet&&S.selSet.size>1)return S.flat.filter(e=>S.selSet.has(e.b.id)).map(e=>e.b.id);return S.sel?[S.sel]:[];}
+function selRange(toId){
+  const from=S.anchor&&S.byId.has(S.anchor)?S.anchor:S.sel||toId;
+  const vis=S.flat.filter(visible).map(e=>e.b.id),a=vis.indexOf(from),z=vis.indexOf(toId);if(a<0||z<0){select(toId);return;}
+  const [i,j]=a<z?[a,z]:[z,a];S.anchor=from;S.sel=toId;S.selSet=new Set(vis.slice(i,j+1));paintSel();
+  const r=document.querySelector(`.row[data-id="${toId}"]`);if(r){const rc=r.getBoundingClientRect();if(rc.top<120||rc.bottom>innerHeight-20)r.scrollIntoView({block:"nearest"});}
 }
-function moveSel(d){
+function select(id,scroll=true){
+  S.sel=id;S.anchor=id;S.selSet=null;paintSel();
+  const r=document.querySelector(`.row[data-id="${id}"]`);
+  if(r){if(scroll){const rc=r.getBoundingClientRect();const top=(parseInt(getComputedStyle(document.documentElement).getPropertyValue("--hdr"))||110)+10;if(rc.top<top||rc.bottom>innerHeight-20)r.scrollIntoView({block:"center"});}}
+}
+function moveSel(d,extend){
   if(S.follow&&S.audioUrl&&!$("#aud").paused)setFollow(false);
   const rows=[...document.querySelectorAll("#log .row")];if(!rows.length)return;
   let i=rows.findIndex(r=>r.dataset.id===S.sel);
-  i=i<0?0:Math.min(rows.length-1,Math.max(0,i+d));select(rows[i].dataset.id);
+  i=i<0?0:Math.min(rows.length-1,Math.max(0,i+d));if(extend&&S.sel)selRange(rows[i].dataset.id);else select(rows[i].dataset.id);
 }
 function closePop(){$("#layer").innerHTML="";}
 function popAt(anchor,html,bind){
@@ -415,17 +426,20 @@ function confirmBox(msg,ok,fn){
   document.body.appendChild(m);m.querySelector("[data-x]").onclick=()=>m.remove();m.querySelector("[data-ok]").onclick=()=>{m.remove();fn();};
   m.onclick=ev=>{if(ev.target===m)m.remove();};
 }
+// 로그 페이지·책 고치기 공통 조작표
+const KB_HELP=`<div class="kbgrid">
+  <h4>고르기</h4><div><kbd>클릭</kbd> 한 줄 · <kbd>Shift</kbd>+<kbd>클릭</kbd> 또는 줄 위로 드래그 · <kbd>Shift</kbd>+<kbd>↑</kbd><kbd>↓</kbd> 여러 줄 · <kbd>↑</kbd><kbd>↓</kbd> 옮기기 · <kbd>Esc</kbd> 풀기</div>
+  <h4>글 고치기</h4><div><kbd>더블클릭</kbd> 또는 <kbd>Enter</kbd> 시작 · 고치는 중 <kbd>Enter</kbd> 저장 · <kbd>Shift</kbd>+<kbd>Enter</kbd> 줄바꿈 · <kbd>Esc</kbd> 취소</div>
+  <h4>글자 드래그</h4><div>한 줄 안의 글자를 드래그하면 메뉴: <b>떼어서 다른 대사로</b> · <b>상황 묘사로 떼기</b> · <b>고유명사로 바꾸기/등록</b></div>
+  <h4>화자</h4><div><kbd>1</kbd>~<kbd>9</kbd> 왼쪽 목록 순서 · <kbd>0</kbd> 전원 (여러 줄도 한 번에) · 로그 페이지만</div>
+  <h4>책에 넣기</h4><div><kbd>C</kbd> 잡담 · <kbd>X</kbd> 빼기 (다시 누르면 본문으로) · <kbd>B</kbd> 여기서 본세션 시작</div>
+  <h4>넣기</h4><div><kbd>N</kbd> 아래에 상황 묘사 · <kbd>D</kbd> 주사위 · <kbd>H</kbd> 핸드아웃 · <kbd>S</kbd> 위에 단락 (단락을 고르고 누르면 대→중→하)</div>
+  <h4>정리</h4><div><kbd>M</kbd> 위 줄과 합치기 · <kbd>Delete</kbd> 지우기 · <kbd>Ctrl</kbd>+<kbd>Z</kbd> 되돌리기</div>
+  <h4>재생</h4><div><kbd>Space</kbd> 재생/정지 · <kbd>P</kbd> 여기서 재생 · <kbd>[</kbd> <kbd>]</kbd> 5초 뒤로/앞으로</div>
+</div><div class="tip" style="margin-top:8px">한글 입력 상태에서도 같은 자리 키로 돼요. <kbd>?</kbd>로 이 표를 열어요.</div>`;
 function helpBox(){
   const m=document.createElement("div");m.className="modal";
-  m.innerHTML=`<div class="box"><h2>단축키</h2><div class="tip" style="font-size:13.5px;line-height:2">
-  <kbd>↑</kbd><kbd>↓</kbd> 또는 <kbd>K</kbd><kbd>J</kbd> 대사 이동<br>
-  <kbd>1</kbd>~<kbd>9</kbd> 고른 대사의 화자 바꾸기 (왼쪽 목록 순서) · <kbd>0</kbd> 전원<br>
-  <kbd>Enter</kbd> 글 수정 · 수정 중 <kbd>Ctrl</kbd>+<kbd>Enter</kbd> 저장, <kbd>Esc</kbd> 취소<br>
-  <kbd>P</kbd> 고른 대사부터 재생 · <kbd>Space</kbd> 재생/정지<br>
-  <kbd>[</kbd> <kbd>]</kbd> 5초 뒤로/앞으로<br>
-  <kbd>N</kbd> 고른 대사 아래에 상황 묘사 넣기 · <kbd>D</kbd> 주사위 · <kbd>H</kbd> 핸드아웃 넣기<br>
-  <kbd>Ctrl</kbd>+<kbd>Z</kbd> 되돌리기 (이 창에서 한 작업만)</div>
-  <div class="btns"><button class="pri" data-x>닫기</button></div></div>`;
+  m.innerHTML=`<div class="box kbhelp"><h2>단축키 · 조작</h2>${KB_HELP}<div class="btns"><button class="pri" data-x>닫기</button></div></div>`;
   document.body.appendChild(m);m.querySelector("[data-x]").onclick=()=>m.remove();m.onclick=ev=>{if(ev.target===m)m.remove();};
 }
 
@@ -442,7 +456,7 @@ function editRow(id){
   const hlab=isHand&&r.querySelector(".hlab");
   if(hlab)hlab.innerHTML=`<input type="text" class="htin" placeholder="핸드아웃 제목 (예: 열차 탑승권)" value="${esc(e.b.ti||"")}">`;
   const hti=hlab&&hlab.querySelector("input");
-  tx.innerHTML=`<textarea placeholder="${isSec?rulePH().sec[secLv(e.b)-1]:isNote?"예: 아래층에서 소음이 들린다":isHand?"핸드아웃 내용":""}">${esc(e.b.x)}</textarea><div class="edhint">${isNote?"Enter 저장 · Esc 취소":isHand?"Ctrl+Enter 저장 · Esc 취소":"드래그하면 그 부분만 다른 사람 대사로 떼어내요 · **글자**로 감싸면 굵게 · Ctrl+Enter 저장 · Esc 취소"}</div>`;
+  tx.innerHTML=`<textarea placeholder="${isSec?rulePH().sec[secLv(e.b)-1]:isNote?"예: 아래층에서 소음이 들린다":isHand?"핸드아웃 내용":""}">${esc(e.b.x)}</textarea><div class="edhint">${isNote||isHand?"Enter 저장 · Shift+Enter 줄바꿈 · Esc 취소":"Enter 저장 · Shift+Enter 줄바꿈 · Esc 취소 · 글자를 드래그하면 그 부분만 다른 사람 대사로 떼어내요 · **글자**로 감싸면 굵게"}</div>`;
   const ta=tx.querySelector("textarea");ta.style.height=Math.max(isNote?44:60,ta.scrollHeight+4)+"px";ta.focus();
   let done=false;
   const finish=save=>{if(done)return;done=true;
@@ -453,7 +467,8 @@ function editRow(id){
     else if(save){setText(id,isSec?ta.value.replace(/\n/g," "):ta.value);if(isSec)loadSecs(true);}
     else if((isNote||isHand)&&!e.b.x&&!e.b.ti){const x=S.byId.get(id);if(x){S.undo.pop();doOps([{ci:x.ci,op:{t:"del",id}}],null);renderAllRows(true);}return;}
     if(S.byId.has(id)){updateRow(id);select(id,false);}};
-  ta.onkeydown=ev=>{if(ev.key==="Escape"){ev.preventDefault();finish(false);}if(ev.key==="Enter"&&(ev.ctrlKey||ev.metaKey||(isNote&&!ev.shiftKey))){ev.preventDefault();finish(true);}ev.stopPropagation();};
+  // 어디서든 Enter 저장 · Shift+Enter 줄바꿈 · Esc 취소
+  ta.onkeydown=ev=>{if(ev.key==="Escape"){ev.preventDefault();finish(false);}if(ev.key==="Enter"&&!ev.shiftKey&&!ev.isComposing){ev.preventDefault();finish(true);}ev.stopPropagation();};
   const inEd=()=>document.activeElement===ta||(hti&&document.activeElement===hti);
   // 수정 중에 글자를 드래그하면: 그 부분만 따로 떼어 다른 사람 대사로 만들기
   if(!isNote&&!isHand){
@@ -641,21 +656,35 @@ function replaceAt(si,to){
   doOps([{ci:e.ci,op:{t:"set",id:si.id,f:{x:lines.join("\n")}}}],"고유명사 바꾸기");
   updateRow(si.id);toast(`'${si.word}' → '${to}'`);
 }
+// 글자 드래그 메뉴: 떼어내기(대사·상황 묘사) + 고유명사로 바꾸기·등록 — 고치는 중이든 아니든 같은 메뉴
 function nounMenu(si){
-  const gs=nounGroups(),known=nouns().includes(si.word);
-  popAt({getBoundingClientRect:()=>si.rect},`<div class="tip" style="padding:2px 8px 4px">'${esc(si.word)}'을(를) 바꾸기</div>
+  const gs=nounGroups(),known=nouns().includes(si.word),e0=S.byId.get(si.id),canSplit=e0&&e0.b.s!==SEC&&e0.b.s!==HAND;
+  popAt({getBoundingClientRect:()=>si.rect},`<div class="tip" style="padding:2px 8px 4px"><b>'${esc(si.word.length>24?si.word.slice(0,24)+"…":si.word)}'</b></div>
+    ${canSplit?`<div class="tsplit"><button data-tsplit>✂ 떼어서 다른 대사로</button><button data-tnote>▤ 상황 묘사로 떼기</button></div><hr>`:""}
+    <div class="tip" style="padding:2px 8px 4px">고유명사로 바꾸기</div>
     ${gs.length?gs.map(g=>`<div class="ngrp">${[g.n,...g.a].map((w,i)=>`<button data-n="${esc(w)}" class="${i?"alt":"full"}">${esc(w)}</button>`).join("")}${g.pc?'<span class="pct">PC</span>':""}</div>`).join(""):'<div class="tip" style="padding:2px 8px">아직 등록된 고유명사가 없어요</div>'}
     <hr><input type="text" id="nnew" placeholder="새 풀네임 입력 후 Enter (목록에도 추가)">
     ${known?"":`<div class="nreg"><span>'${esc(si.word)}' 등록:</span><select id="nto"><option value="">새 고유명사(풀네임)로</option>${gs.map(g=>`<option value="${esc(g.n)}">${esc(g.n)}의 유의어로</option>`).join("")}</select><button data-reg>등록</button></div>`}`,p=>{
     p.querySelectorAll("[data-n]").forEach(b=>b.onclick=()=>{closePop();getSelection().removeAllRanges();replaceAt(si,b.dataset.n);});
+    const abs=()=>{const e=S.byId.get(si.id);const ls=e.b.x.split("\n");let a=0;for(let i=0;i<si.li;i++)a+=ls[i].length+1;return [a+si.st,a+si.en];};
+    const ts=p.querySelector("[data-tsplit]"),tn=p.querySelector("[data-tnote]");
+    if(tn)tn.onclick=()=>{const [a,z]=abs();closePop();getSelection().removeAllRanges();splitAbs(si.id,a,z,NOTE);};
+    if(ts)ts.onclick=()=>{const [a,z]=abs(),e=S.byId.get(si.id),shown=shownSp(),list=[...shown,...spList().filter(x=>!shown.includes(x))];
+      popAt({getBoundingClientRect:()=>si.rect},`<div class="tip" style="padding:2px 8px 4px">떼어낸 부분은 누구 대사?</div>${list.map((sp,i)=>`<button data-k="${sp.k}" style="--c:${fixC(sp.c)}"><span class="dot"></span>${i<9&&shown.includes(sp)?`<kbd>${i+1}</kbd> `:""}${esc(sp.name)}${sp.ch?` <small style="color:var(--faint)">${esc(sp.ch)}</small>`:""}${sp.k===e.b.s?" (지금 화자)":""}</button>`).join("")}`,pp=>{
+        pp.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{closePop();getSelection().removeAllRanges();splitAbs(si.id,a,z,b.dataset.k);});});};
     const inp=$("#nnew",p);inp.onkeydown=ev=>{ev.stopPropagation();if(ev.key==="Enter"){const v=inp.value.trim();if(!v)return;closePop();if(!nounGroups().some(x=>x.n===v))saveNoun(null,{n:v,a:[]});replaceAt(si,v);}if(ev.key==="Escape")closePop();};
     const rg=p.querySelector("[data-reg]");if(rg)rg.onclick=()=>{const to=$("#nto",p).value;closePop();if(to)addAlias(to,si.word);else saveNoun(null,{n:si.word,a:[]});toast("등록했어요");};
     const sl=$("#nto",p);if(sl)sl.onkeydown=ev=>ev.stopPropagation();
   });
 }
+// 드래그: 여러 줄에 걸치면 그 줄들을 고르고, 한 줄 안 글자면 글자 메뉴
 document.addEventListener("mouseup",ev=>{
-  if(!S.canWrite||!curScen()||!ev.target.closest||!ev.target.closest("#log"))return;
-  setTimeout(()=>{const si=selInfo();if(si)nounMenu(si);},0);
+  if(!ev.target.closest||!ev.target.closest("#log")||ev.target.closest("textarea,input"))return;
+  setTimeout(()=>{const sel=getSelection();if(!sel||sel.isCollapsed||!sel.rangeCount)return;
+    const r=sel.getRangeAt(0),rowOf=n=>(n.nodeType===1?n:n.parentElement)?.closest("#log .row");
+    const a=rowOf(r.startContainer),z=rowOf(r.endContainer);
+    if(a&&z&&a!==z){select(a.dataset.id,false);selRange(z.dataset.id);sel.removeAllRanges();closePop();return;}
+    if(!S.canWrite)return;const si=selInfo();if(si)nounMenu(si);},0);
 });
 
 // ---------- audio ----------
@@ -712,6 +741,7 @@ function bindHeader(){
 }
 function bindSide(){
   {const tb=$("#t0fix"),tf=$("#t0file");if(tb&&tf){tb.onclick=()=>tf.click();tf.onchange=async()=>{const f=tf.files[0];if(!f)return;try{const n=await fixT0(await f.text());toast(n?`${n}개 회차에 실제 시각을 넣었어요`:"이 파일에서 맞는 회차를 못 찾았어요");}catch(e){writeFail(e);}};}}
+  {const h2=$("#help2");if(h2)h2.onclick=helpBox;}
   const bk=$("#back");if(bk)bk.onclick=()=>{location.hash="";if(S.local){S.local=false;openSession(null);}};
   renderAuth();
   document.querySelectorAll("[data-fold]").forEach(b=>b.onclick=()=>{const k=b.dataset.fold;S[k]=!S[k];b.classList.toggle("open",S[k]);b.nextElementSibling.classList.toggle("open",S[k]);});
@@ -750,30 +780,44 @@ function bindSession(){
     if(act==="note"){addNote(id);return;}
     if(act==="dice"){addDice(id);return;}
     if(act==="lv"){const e=S.byId.get(id),l=+ev.target.closest("[data-lv]").dataset.lv;if(e&&S.canWrite&&secLv(e.b)!==l){doOps([{ci:e.ci,op:{t:"set",id,f:{lv:l}}}],"단락 단계 바꾸기");updateRow(id);renderSide();loadSecs(true);}return;}
-    if(!ev.target.closest("textarea"))select(id,false);
+    if(!ev.target.closest("textarea")){if(ev.shiftKey&&S.sel)selRange(id);else if(!(S.selSet&&S.selSet.size>1&&getSelection&&!getSelection().isCollapsed))select(id,false);}
   };
+  $("#log").onmousedown=ev=>{if(ev.shiftKey&&!ev.target.closest("textarea,input"))ev.preventDefault();};
+  // 더블클릭: 글 고치기 (버튼·입력칸 빼고)
+  $("#log").ondblclick=ev=>{const row=ev.target.closest(".row");if(!row||ev.target.closest("button,textarea,input,select")||row.classList.contains("editing"))return;
+    const sel=getSelection();if(sel)sel.removeAllRanges();closePop();editRow(row.dataset.id);};
   $("#log").ondblclick=ev=>{const row=ev.target.closest(".row");if(row&&ev.target.closest(".tx")&&!ev.target.closest("textarea,.dform"))editRow(row.dataset.id);};
 }
+// 로그 페이지 단축키 (한글 입력 상태에서도 같은 자리 키로 돼요)
+const KO_KEY={"ㅊ":"c","ㅌ":"x","ㅠ":"b","ㄴ":"s","ㅡ":"m","ㅜ":"n","ㅇ":"d","ㅗ":"h","ㅔ":"p","ㅓ":"j","ㅏ":"k"};
+const keyOf=k=>KO_KEY[k]||(k.length===1?k.toLowerCase():k);
 document.addEventListener("keydown",ev=>{
   if(!S.sid&&!S.local)return;
   if(ev.target.matches("input,textarea,select")||document.querySelector(".modal"))return;
   if((ev.ctrlKey||ev.metaKey)&&ev.key.toLowerCase()==="z"){if(S.canWrite){ev.preventDefault();undo();}return;}
   if(ev.ctrlKey||ev.metaKey||ev.altKey)return;
-  const k=ev.key;
-  if(k==="ArrowDown"||k==="j"){ev.preventDefault();moveSel(1);}
-  else if(k==="ArrowUp"||k==="k"){ev.preventDefault();moveSel(-1);}
+  const k=keyOf(ev.key),W=S.canWrite;
+  if(k==="ArrowDown"||k==="j"){ev.preventDefault();moveSel(1,ev.shiftKey);}
+  else if(k==="ArrowUp"||k==="k"){ev.preventDefault();moveSel(-1,ev.shiftKey);}
   else if(k===" "){ev.preventDefault();togglePlay();}
-  else if(k==="Escape"){closePop();}
+  else if(k==="Escape"){closePop();if(S.selSet&&S.selSet.size>1)select(S.sel,false);}
+  else if(k==="?"){ev.preventDefault();helpBox();}
   else if(k==="["){const a=$("#aud");a&&(a.currentTime=Math.max(0,a.currentTime-5));}
   else if(k==="]"){const a=$("#aud");a&&(a.currentTime+=5);}
   else if(!S.sel)return;
-  else if(/^[1-9]$/.test(k)&&S.canWrite){const s=shownSp()[+k-1];if(s){assign(S.sel,s.k);}}
-  else if(k==="0"&&S.canWrite&&S.sel){assign(S.sel,ALL);}
+  else if(/^[1-9]$/.test(k)&&W){const sp=shownSp()[+k-1];if(sp)assignMany(selIds(),sp.k);}
+  else if(k==="0"&&W){assignMany(selIds(),ALL);}
   else if(k==="Enter"){ev.preventDefault();editRow(S.sel);}
-  else if((k==="n"||k==="N"||k==="ㅜ")&&S.canWrite){ev.preventDefault();addNote(S.sel);}
-  else if((k==="d"||k==="D"||k==="ㅇ")&&S.canWrite){ev.preventDefault();addDice(S.sel);}
-  else if((k==="h"||k==="H"||k==="ㅗ")&&S.canWrite){ev.preventDefault();addHand(S.sel);}
-  else if(k==="p"||k==="P"){const e=S.byId.get(S.sel);e&&playAt(e.b.t);}
+  else if((k==="Delete"||k==="Backspace")&&W){ev.preventDefault();delMany(selIds());}
+  else if(k==="c"&&W){ev.preventDefault();bkToggle(selIds(),1);}
+  else if(k==="x"&&W){ev.preventDefault();bkToggle(selIds(),2);}
+  else if(k==="b"&&W){ev.preventDefault();setStart(S.sel);}
+  else if(k==="s"&&W){ev.preventDefault();const e=S.byId.get(S.sel);if(e&&e.b.s===SEC)cycleSec(S.sel);else addSec(1);}
+  else if(k==="m"&&W){ev.preventDefault();mergePrev(S.sel);}
+  else if(k==="n"&&W){ev.preventDefault();addNote(S.sel);}
+  else if(k==="d"&&W){ev.preventDefault();addDice(S.sel);}
+  else if(k==="h"&&W){ev.preventDefault();addHand(S.sel);}
+  else if(k==="p"){const e=S.byId.get(S.sel);e&&playAt(e.b.t);}
 });
 
 // ---------- scenario / date grouping ----------

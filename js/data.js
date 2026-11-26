@@ -417,6 +417,27 @@ function assign(id,k){
   if((c[k]||0)===1||!(c[old]>0)){renderSide();}else renderSideCounts();
   if(!(c[old]>0)&&!isGM(old)&&!S.fresh.has(old)){clearTimeout(S.zeroTmr);S.zeroTmr=setTimeout(cleanupZero,4000);}
 }
+// 여러 줄 한꺼번에: 화자 바꾸기 · 잡담/빼기 · 지우기
+const isSpecialS=s=>s===NOTE||s===DICE||s===HAND||s===SEC;
+function assignMany(ids,k){
+  const es=ids.map(id=>S.byId.get(id)).filter(e=>e&&e.b.s!==k&&(ids.length===1||!isSpecialS(e.b.s)));if(!es.length)return;
+  if(es.length===1){assign(es[0].b.id,k);return;}
+  doOps(es.map(e=>({ci:e.ci,op:{t:"set",id:e.b.id,f:e.b.a&&!isGM(k)?{s:k,a:undefined}:{s:k}}})),"화자 변경");renderAllRows(true);renderSide();
+}
+function bkDefault(b){return PRE.log.has(b.id)?2:b.tab&&CHAT_TAB.test(b.tab)&&!isSpecialS(b.s)?1:0;}
+function bkToggle(ids,v){
+  let es=ids.map(id=>S.byId.get(id)).filter(Boolean);if(v===1)es=es.filter(e=>!isSpecialS(e.b.s));if(!es.length)return;
+  const to=es.every(e=>bkOf(e.b)===v)?0:v;
+  doOps(es.map(e=>({ci:e.ci,op:{t:"set",id:e.b.id,f:{bk:to===bkDefault(e.b)?undefined:to}}})),to===2?"빼기":to===1?"잡담":"본문으로");
+  renderAllRows(true);toast(`${es.length>1?es.length+"줄 ":""}${to===2?"빼기":to===1?"잡담":"본문"}으로 · 리플레이북에 반영돼요`);
+}
+function delMany(ids){
+  if(ids.length<=1){if(ids[0])delBlock(ids[0]);return;}
+  const es=ids.map(id=>S.byId.get(id)).filter(Boolean);const last=S.flat.indexOf(es[es.length-1]);const nxt=S.flat.slice(last+1).find(e=>!ids.includes(e.b.id));
+  doOps(es.map(e=>({ci:e.ci,op:{t:"del",id:e.b.id}})),"삭제");renderAllRows(true);renderSideCounts();if(nxt)select(nxt.b.id);toast(`${es.length}줄 삭제했어요 · Ctrl+Z로 되돌리기`);
+}
+// 단락 단계 돌리기: 대 → 중 → 하 → 대
+function cycleSec(id){const e=S.byId.get(id);if(!e||e.b.s!==SEC)return;const l=secLv(e.b)%3+1;doOps([{ci:e.ci,op:{t:"set",id,f:{lv:l}}}],"단락 단계 바꾸기");updateRow(id);renderSide();if(typeof loadSecs==="function")loadSecs(true);toast(["대","중","하"][l-1]+"단락");}
 function shownSp(){
   const c=counts();
   return spList().filter(s=>s.k!==ALL&&(S.showZero||(c[s.k]||0)>0||isGM(s.k)||S.fresh.has(s.k)));
@@ -457,6 +478,18 @@ function splitBlock(id,lineIdx){
   const nb={id:rid(),s:e.b.s,t:e.b.t,x:lines.slice(lineIdx).join("\n")};
   doOps([{ci:e.ci,op:{t:"set",id,f:{x:lines.slice(0,lineIdx).join("\n")}}},{ci:e.ci,op:{t:"ins",after:id,b:nb}}],"나누기");
   renderAllRows(true);renderSideCounts();select(nb.id);
+}
+// 글자 범위 [a,z)를 떼어 화자 k의 새 줄로 (k가 상황 묘사면 묘사로)
+function splitAbs(id,a,z,k){
+  const e=S.byId.get(id);if(!e)return;const v=e.b.x||"";
+  const parts=[[v.slice(0,a),e.b.s],[v.slice(a,z),k],[v.slice(z),e.b.s]].map(([x,sp])=>[x.replace(/\n{2,}/g,"\n").trim(),sp]).filter(([x])=>x);
+  if(!parts.length||(parts.length===1&&parts[0][1]===e.b.s))return;
+  const f0={x:parts[0][0],s:parts[0][1]};if(parts[0][1]!==e.b.s&&e.b.a&&!isGM(parts[0][1]))f0.a=undefined;
+  const ops=[{ci:e.ci,op:{t:"set",id,f:f0}}];let prev=id;const ids=[id];
+  parts.slice(1).forEach(([x,sp])=>{const nb={id:rid(),s:sp,t:e.b.t,x,...(e.b.tab?{tab:e.b.tab}:{}),...(sp===e.b.s&&e.b.a?{a:e.b.a}:{})};ops.push({ci:e.ci,op:{t:"ins",after:prev,b:nb}});prev=nb.id;ids.push(nb.id);});
+  doOps(ops,"대사 나누기");renderAllRows(true);renderSideCounts();
+  select(ids[v.slice(0,a).trim()?1:0]||id,false);
+  toast(k===NOTE?"상황 묘사로 떼어냈어요 · Ctrl+Z로 되돌리기":`'${spBy(k).name}' 대사로 떼어냈어요 · Ctrl+Z로 되돌리기`);
 }
 function mergePrev(id){
   const e=S.byId.get(id);if(!e)return;
