@@ -1149,7 +1149,7 @@ html.hxhome,body.hxhome{background:#f2f3f0!important}
 .gm figcaption .t{flex:1;min-width:0;font-weight:600;overflow-wrap:anywhere}.gm figcaption .t.empty{color:var(--faint);font-weight:400}
 .gm figcaption .m{font:500 10.5px ui-monospace,monospace;color:var(--faint);white-space:nowrap;letter-spacing:.04em}
 .gm figcaption .c{font:600 10.5px ui-monospace,monospace;color:#e5384f;white-space:nowrap}
-.gadd{break-inside:avoid;display:flex;width:100%;aspect-ratio:4/3;border:1px dashed var(--line);border-radius:4px;background:repeating-linear-gradient(-45deg,transparent 0 8px,rgba(0,0,0,.025) 8px 9px);flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--dim);font-size:13px;cursor:pointer;text-align:center;padding:8px}
+.gadd{break-inside:avoid;margin:0 0 16px;display:flex;width:100%;aspect-ratio:4/3;border:1px dashed var(--line);border-radius:4px;background:repeating-linear-gradient(-45deg,transparent 0 8px,rgba(0,0,0,.025) 8px 9px);flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--dim);font-size:13px;cursor:pointer;text-align:center;padding:8px}
 .gadd:hover{border-color:var(--ink)}.gadd b{font:600 11px ui-monospace,monospace;letter-spacing:.14em;color:var(--ink)}.gadd i{font-style:normal;font-size:22px;line-height:1;color:#e5384f}
 @media(max-width:640px){.gm{columns:2;column-gap:10px}.gm figcaption .m{display:none}}
 /* 갤러리 크게 보기 */
@@ -1192,3 +1192,8 @@ body.glbon{overflow:hidden}
   .glb .stage{flex:none;padding:18px 14px}.glb .fr img{max-height:70vh}.glb .nv{display:none}
   .glb .strip{flex:none;height:60px;justify-content:flex-start;padding:0 14px;border:0;order:2}.glb .strip button{width:44px;height:34px}
   .glb .side{flex:1 0 auto;border-left:0;border-top:1px solid rgba(0,0,0,.08);order:3}.glb .cl{overflow:visible}}
+.gm .from{position:absolute;right:8px;bottom:8px;max-width:calc(100% - 16px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:600;color:#111;background:rgba(255,255,255,.88);padding:3px 8px;border-radius:2px;backdrop-filter:blur(4px)}
+.glb .meta .k a{color:inherit;text-decoration:underline;text-underline-offset:2px}
+.glb .top a{font:600 11px ui-monospace,monospace;letter-spacing:.08em}
+/* 고정탁 페이지: 카드에 이름(참가자) 줄은 빼요 — 위에 멤버가 나와요 */
+.fxpage .cast,.fxpage .hx-cast{display:none}

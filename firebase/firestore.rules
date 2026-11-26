@@ -1,4 +1,4 @@
-// 코코 로그방 Firestore 보안 규칙 · 규칙 버전 5
+// 코코 로그방 Firestore 보안 규칙 · 규칙 버전 6
 // 관리자 이메일 자리는 사이트 관리자 페이지에서 복사하면 자동으로 채워져요.
 rules_version = '2';
 service cloud.firestore {
@@ -41,7 +41,7 @@ service cloud.firestore {
     }
     // 규칙 버전 확인용 (사이트가 규칙이 최신인지 확인해요 · 숫자를 바꾸지 마세요)
     match /rulesv/{v} {
-      allow get: if v == "5";
+      allow get: if v == "6";
     }
     // 세션 후기 — 누구나 읽고, 시나리오를 연 사람이 써요. 쓴 브라우저(uid)와 주인만 고치고 지워요
     // (예전 후기는 그때 정한 '후기 비밀번호'를 한 번 넣으면 쓴 브라우저가 이 브라우저로 옮겨와요)
@@ -108,6 +108,12 @@ service cloud.firestore {
       allow create, delete: if isOwner();
       allow update: if isOwner() || (openedWith(gid)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['intro']));
+    }
+    // 고정탁 문서(fixes/fx_이름) — 고정탁 갤러리 등. 누구나 보고, 고정탁 비밀번호로 연 사람이 고쳐요
+    match /fixes/{fk} {
+      allow read: if true;
+      allow create, update: if isOwner() || openedWith(fk);
+      allow delete: if isOwner();
     }
     // 녹음과 대사
     match /sessions/{sid} {

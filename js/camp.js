@@ -43,12 +43,13 @@ function fixLockHTML(f){const ns=[...S.scens.filter(x=>(x.fix||"")===f&&!x.camp)
     <div class="homefoot"><a class="ghost" href="#" style="text-decoration:none">← 목록</a><span style="flex:1"></span><span class="authbox"></span></div></div></div></div>`;}
 function bindFixLock(){const f=S.fix,form=$("#fxunlock");if(!form)return;const inp=$("#fxpw");setTimeout(()=>inp.focus(),0);
   form.onsubmit=async ev=>{ev.preventDefault();const pw=inp.value.trim();if(!pw)return;const m=$("#fxmsg");m.textContent="확인하는 중…";const ids=fixPwIds(f);
-    try{await unlockScen(ids[0],pw);await Promise.all(ids.slice(1).map(id=>unlockScen(id,pw).catch(()=>{})));m.textContent="열렸어요!";refreshCanWrite();render();}
+    try{await unlockScen(ids[0],pw);await Promise.all(ids.slice(1).map(id=>unlockScen(id,pw).catch(()=>{})));
+      try{await S.db.doc(`unlocks/${fixKey(f)}_${S.auth.currentUser.uid}`).set({scid:fixKey(f),uid:S.auth.currentUser.uid,pw,at:Date.now()});}catch(e){}m.textContent="열렸어요!";refreshCanWrite();render();}
     catch(err){m.textContent=err&&err.code==="permission-denied"?"비밀번호가 틀렸어요.":"열지 못했어요: "+(err.code||err.message);}};}
 function fixPageHTML(f){
   const gs=groups().filter(g=>g.sc&&(g.sc.fix||"")===f&&!(g.sc.camp&&campById(g.sc.camp)&&campById(g.sc.camp).fix===f)),cs=S.camps.filter(c=>!isCamp(c)&&(c.fix||"")===f);
   const hx=isHX();
-  const items=[...gs.map(g=>({k:g.last||"",h:hx?hxScCard(g):scenSecHTML(g)})),...cs.map(c=>({k:campKey(c),h:hx?hxCampCard(c):campCardHTML(c)}))].sort((a,b)=>a.k.localeCompare(b.k));
+  const items=[...gs.map(g=>({k:g.last||"",h:hx?hxScCard(g):scenSecHTML(g)})),...cs.map(c=>({k:campKey(c),h:hx?hxCampCard(c):campCardHTML(c)}))].sort((a,b)=>b.k.localeCompare(a.k));
   const allG=[...gs,...cs.flatMap(c=>campEps(c).map(e=>groups().find(g=>g.sc&&g.sc.id===e.id)).filter(Boolean))];
   const days=allG.flatMap(g=>g.days.map(d=>d.day)).filter(Boolean).sort();
   const ppl={};allG.forEach(g=>(g.sc.sp||[]).forEach(p=>{if(p.chr&&!p.ch||isAnon(p)||/&/.test(p.name||""))return;const n=pcSplit(p.name).name;const o=ppl[n]=ppl[n]||{n,c:p.c,ch:new Set(),cnt:new Set()};o.cnt.add(g.sc.id);if(p.ch)o.ch.add(p.ch);}));
@@ -61,10 +62,11 @@ function fixPageHTML(f){
     ${P.length?`<div class="fxppl">${P.map(p=>`<span class="fxp" style="--c:${fixC(p.c)}"><i></i><b>${esc(p.n)}</b><small>${[...p.ch].map(esc).join(" · ")}${p.ch.size?" · ":""}${p.cnt.size}탁</small></span>`).join("")}</div>`:""}
     ${intro||S.canAdmin?`<div class="fxintro${intro?"":" empty"}" id="fxintro">${intro?esc(intro).replace(/\n/g,"<br>"):"고정탁 소개 (선택) — 언제부터 어떤 멤버로 굴리는 탁인지 적어 둘 수 있어요"}${S.canAdmin?` <button class="ghost" id="fxedit" type="button">✎</button>`:""}</div>`:""}
     <div id="sesslist" class="fxlist">${items.map(x=>x.h).join("")||`<div class="notice">아직 이 고정탁으로 묶인 세션이 없어요</div>`}</div>
+    ${S.db?galHTML(galSrcFix(f),{newest:1,title:"고정탁 갤러리"}):""}
     ${S.canAdmin?`<div class="sc-sec fxacc"><h4 data-en="ACCESS">고정탁 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
       <div class="tip">이 비밀번호 하나로 고정탁 안의 모든 세션·캠페인이 열려요. 고정탁을 붙인 세션은 자동으로 이 비밀번호를 따라가요. 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
       <div class="pwrow"><code class="pw">${esc(S.secrets?.[fixKey(f)]||"만드는 중…")}</code><button class="pri" id="fxcopy">링크+비밀번호 복사</button><button class="ghost" id="fxnewpw">새로 만들기</button></div></div>`:""}</div>`;}
-function bindFixPage(){homeMasonry();
+function bindFixPage(){homeMasonry();if(S.db)bindGal(galSrcFix(S.fix));
   const fc=$("#fxcopy");if(fc)fc.onclick=()=>copyText(`[고정탁 ${S.fix}] TRPG 로그\n${location.origin+location.pathname}#f-${encodeURIComponent(S.fix)}\n비밀번호: ${S.secrets?.[fixKey(S.fix)]||""}`,"링크와 비밀번호를 복사했어요");
   const fn=$("#fxnewpw");if(fn)fn.onclick=()=>confirmBox("고정탁 비밀번호를 새로 만들까요? 고정탁 안의 모든 세션 비밀번호가 같이 바뀌고, 예전 비밀번호로 연 사람은 다시 잠겨요.","새로 만들기",async()=>{try{await S.db.doc("secrets/"+fixKey(S.fix)).set({pw:genPw()});ownerMaintain();toast("새 비밀번호를 만들었어요");}catch(err){writeFail(err);}});bindPartEdit&&bindPartEdit();if(isHX())bindHX();
   document.querySelectorAll(".fxpage [data-scen]").forEach(a=>a.onclick=ev=>{ev.preventDefault();gotoScen(a.dataset.scen);});
