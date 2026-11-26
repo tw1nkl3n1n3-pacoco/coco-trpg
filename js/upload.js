@@ -14,7 +14,7 @@ function upHTML(){
   if(!can)body=`<div class="notice">세션을 올리려면 관리자로 로그인해 주세요.</div>`;
   else if(st===0)body=`<div class="upq">어떤 세션이에요?</div><div class="upcards">
     ${card(u.kind==="off",'data-upk="off"',"🎙","오프라인 세션","만나서 플레이 · 클로바노트 녹음·대사 txt를 올리거나, 녹음 없이 날짜만 남겨요")}
-    ${card(u.kind==="on",'data-upk="on"',"💻","온라인 세션","코코포리아 등에서 플레이 · 방의 로그 html을 올리거나, 로그 없이 날짜만 남겨요")}</div>`;
+    ${card(u.kind==="on",'data-upk="on"',"💻","온라인 세션","코코포리아·롤20에서 플레이 · 로그 html을 올리거나, 로그 없이 날짜만 남겨요")}</div>`;
   else if(st===1){const list=upCont();
     body=`${u.fixedCamp?`<div class="upq">${isCamp(campById(u.gid))?`${esc(campById(u.gid)?.name||"캠프")}에 탁 추가`:`${esc(campById(u.gid)?.name||"캠페인")}의 다음 시나리오`}</div>`:`<div class="upq">어느 세션이에요?</div><div class="upcards">
       ${card(u.mode==="cont",'data-upm="cont"',"","이어서 하는 세션","이미 있는 세션에 회차를 추가해요 · 완주한 세션은 안 보여요")}
@@ -34,7 +34,7 @@ function upHTML(){
   else if(st===2){const off=u.kind==="off";
     body=`<div class="upsc"><b>${esc(upName())}</b> · ${off?"오프라인":"온라인"}</div><div class="upq">무엇을 올릴까요?</div><div class="upcards">
       ${off?card(u.src==="file",'data-ups="file"',"🎧","녹음 올리기","클로바노트 대사 txt + 녹음 파일(m4a 등)을 한꺼번에 · 이름이 같으면 알아서 짝지어요 · 녹음 파일만 골라 이미 올린 회차에 붙일 수도 있어요")
-        :card(u.src==="file",'data-ups="file"',"📜","코코포리아 로그","방 메뉴 → 로그 출력으로 받은 html · 날짜별로 회차를 나눠요")}
+        :card(u.src==="file",'data-ups="file"',"📜","코코포리아·롤20 로그","코코포리아: 방 메뉴 → 로그 출력 html · 롤20: Chat Archive 페이지를 저장한 html · 날짜별로 회차를 나눠요")}
       ${card(u.src==="none",'data-ups="none"',"🚫",off?"녹음 없음":"로그 없음",off?"녹음이 금지된 세션 · 플레이한 날짜만 회차로 남겨요":"플레이한 날짜만 회차로 남겨요")}</div>
       ${u.src==="file"?`<div class="upq">파일</div><label class="updrop" id="up-drop"><b>${off?"여기로 끌어다 놓거나 눌러서 고르기":"로그 html 고르기"}</b>${off?"대사 txt · 녹음 파일을 한꺼번에":"[메인]·[잡담] 탭이 다 들어간 로그면 좋아요"}
           <input type="file" id="up-file" ${off?`accept=".txt,text/plain${S.storage?",audio/*,video/*,.m4a,.mp3,.wav,.ogg,.webm":""}" multiple`:'accept=".html,.htm,text/html"'} style="display:none"></label>

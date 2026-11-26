@@ -82,7 +82,7 @@ function renderHeader(){
       <button class="ghost" id="help">단축키</button>
     </div>`;
   const pb=$("#pbar");
-  if(pb)pb.classList.toggle("noaud",S.meta?.src==="ccfolia"&&!S.meta?.audioPath);
+  if(pb)pb.classList.toggle("noaud",(S.meta?.src==="ccfolia"||S.meta?.src==="roll20")&&!S.meta?.audioPath);
   if(pb)pb.innerHTML=`
     <div class="player">
       ${S.meta?.audioPath?`<span class="cloud" title="${esc(S.meta.audioName||"")}">${S.audioLoading?"☁ 녹음 불러오는 중…":S.audioCloud?"☁ 녹음 연결됨":"☁ 녹음 있음"}</span>`:S.canAdmin&&S.meta&&!S.local&&S.storage?`<span class="filebtn"><button class="ghost">⬆ 녹음 올리기</button><input type="file" id="upaudio" accept="audio/*,video/*,.m4a,.mp3,.wav,.ogg,.webm"></span>`:""}
@@ -114,13 +114,13 @@ function renderStatus(){
 function renderSide(){
   const side=$("#side");if(!side)return;
   const c=counts();
-  const sp=shownSp();
+  const sp=shownSp(),tai=isTai(),firstPl=sp.findIndex(s=>!s.chr);
   const hidden=spList().filter(s=>s.k!==ALL&&!(c[s.k]>0)&&!isGM(s.k)&&!S.fresh.has(s.k)).length;
   side.innerHTML=`
-    <button class="foldh${S.openSp?" open":""}" data-fold="openSp"><span class="car">▸</span>플레이어 <span class="fc">${sp.length+1}</span><span class="fsub">클릭하면 그 사람만 보기</span></button>
+    <button class="foldh${S.openSp?" open":""}" data-fold="openSp"><span class="car">▸</span>${tai?"캐릭터":"플레이어"} <span class="fc">${tai?sp.filter(s=>s.chr).length:sp.length+1}</span><span class="fsub">${tai?"타이만 · 클릭하면 그 캐릭터만 보기":"클릭하면 그 사람만 보기"}</span></button>
     <div class="fold${S.openSp?" open":""}">
-    ${curScen()?`<div class="tip" style="margin:-4px 0 8px">이 목록은 '${esc(curScen().name)}'의 모든 녹음이 같이 써요. ⋯에서 캐릭터 이름을 넣으면 로그에 플레이어와 같이 나와요.</div>`:""}
-    <div id="splist">${sp.map((s,i)=>`
+    ${curScen()?`<div class="tip" style="margin:-4px 0 8px">${tai?"타이만(1:1 자캐) 세션이라 대사는 캐릭터 이름으로만 나와요. 플레이어·GM 본인 이름은 잡담용이에요.":`이 목록은 '${esc(curScen().name)}'의 모든 녹음이 같이 써요. ⋯에서 캐릭터 이름을 넣으면 로그에 플레이어와 같이 나와요.`}</div>`:""}
+    <div id="splist">${sp.map((s,i)=>`${tai&&i===firstPl?`<div class="spsub">플레이어 · 잡담</div>`:""}
       <div class="spk ${S.spFilter===s.k?"on":""}" data-k="${s.k}" style="--c:${fixC(s.c)}">
         <span class="key">${i<9?i+1:""}</span>${spDot(s)}
         <span class="nm" data-act="filter" title="${esc(s.name)}">${isGM(s.k)?gmTag+" ":""}${spName(s)}${s.ch?` <small>${esc(s.ch)}</small>`:""}</span>

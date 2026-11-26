@@ -13,7 +13,7 @@ function hxImg(og){return og?`<div class="hx-img"><img src="${esc(og)}" alt="" l
 // 시나리오 카드
 function hxScCard(g){const sc=g.sc||{name:g.scen};const open=!g.sc||isOpen(g.sc.id);
   const d0=g.days[0]?.day||sc.lastDay||"",d1=g.days[g.days.length-1]?.day||sc.lastDay||"";
-  const on=g.days.some(d=>d.parts.some(p=>p.src==="ccfolia")),nolog=g.days.length&&g.days.every(d=>d.nolog);
+  const on=g.days.some(d=>d.parts.some(p=>p.src==="ccfolia"||p.src==="roll20")),nolog=g.days.length&&g.days.every(d=>d.nolog);
   const lines=g.days.reduce((a,d)=>a+d.parts.reduce((x,p)=>x+(p.n||0),0),0);
   return `<a class="hxc" href="${g.sc?"#c-"+esc(g.sc.id):"#"}" style="--c:${hxCol(sc)}">${hxImg(sc.og)}
    <div class="hx-b">${sc.system?`<div class="hx-r1"><span class="hx-tag">${esc(sysLabel(effSys(sc)))}</span></div>`:""}
@@ -39,7 +39,7 @@ function hxLive(c){const es=campEps(c),cc=c.system?hxCol({system:c.system}):"#f0
 // 홈 숫자 (두 테마 같이 써요) · 같은 시나리오를 다시 돌려도 한 번 · 캠프의 탁은 시나리오·세션에 들어가 있어서 캠페인만 따로 · 함께한 사람에서 내 닉네임은 빼요
 function homeStats(all){
   const ns=new Set((site().nicks||[]).map(x=>String(x).trim().toLowerCase()).filter(Boolean)),P=new Set();
-  S.scens.forEach(sc=>(sc.sp||[]).forEach(p=>{if(/&/.test(p.name||"")||isAnon(p))return;const n=pcSplit(p.name||"").name;if(n&&!ns.has(n.toLowerCase()))P.add(n);}));
+  S.scens.forEach(sc=>(sc.sp||[]).forEach(p=>{if(p.chr||/&/.test(p.name||"")||isAnon(p))return;const n=pcSplit(p.name||"").name;if(n&&!ns.has(n.toLowerCase()))P.add(n);}));
   const cps=S.camps.filter(c=>!isCamp(c));
   return {scen:new Set(S.scens.map(sc=>String(sc.name||"").toLowerCase().replace(/\s+/g,"")).filter(Boolean)).size,
     ses:all.reduce((a,g)=>a+(g.days.length||(g.sc?.nDays||0)),0),cpn:cps.length,live:cps.filter(c=>!c.done).length,ppl:P.size};}

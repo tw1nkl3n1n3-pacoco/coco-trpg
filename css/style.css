@@ -381,12 +381,35 @@ h1,h2,h3,.scen-h h3,.sc-top h2,.hometop h2{word-break:keep-all;overflow-wrap:any
 .row.note.stat .tx>span::before{content:"📊 "}
 /* 코코포리아 가져오기 화면 */
 .cc-sec{margin-top:12px}
-.cc-day{display:inline-flex;margin:4px 12px 0 0}
-.cc-roles{display:grid;gap:4px;margin-top:6px;max-height:360px;overflow:auto;padding-right:4px}
-.cc-r{display:grid;grid-template-columns:minmax(0,1fr) 36px 104px minmax(0,1fr);gap:6px;align-items:center;font-size:13.5px}
-.cc-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cc-c{color:var(--faint);font-size:12px;text-align:right}
-.cc-r select,.cc-r input{font-size:13px;padding:3px 6px;min-width:0}
-@media (max-width:640px){.cc-r{grid-template-columns:minmax(0,1fr) 30px 92px;}.cc-r input{grid-column:1/-1}}
+/* 로그 올리기 (코코포리아·롤20) */
+.cc-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.cc-head b{font-size:16px}.cc-head small{color:var(--dim);font-size:12.5px;margin-left:auto}
+.cc-src{font:700 10.5px/1 "Chakra Petch","Noto Sans KR",sans-serif;letter-spacing:.1em;background:#1c1c1b;color:#fff;padding:4px 7px;border-radius:4px}
+.cc-step{margin-top:18px}
+.cc-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:700;font-size:14.5px;margin-bottom:8px}
+.cc-h i{font-style:normal;width:20px;height:20px;border-radius:50%;background:#1c1c1b;color:#fff;display:grid;place-items:center;font-size:11.5px}
+.cc-h .tip{font-weight:400;font-size:12px}
+.cc-days{display:grid;gap:6px}
+.cc-day{display:flex;align-items:flex-start;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);cursor:pointer}
+.cc-day:has(input:checked){border-color:#1c1c1b}
+.cc-day input{margin-top:3px;width:auto}
+.cc-dd{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;min-width:0;flex:1}
+.cc-dd small{color:var(--dim);font-size:12.5px;align-self:center}
+.cc-dd em{grid-column:1/-1;font-style:normal;color:var(--faint);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cc-tai{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;margin-bottom:8px;border:1px solid var(--line);border-radius:10px;background:var(--panel);cursor:pointer}
+.cc-tai input{width:auto;margin-top:3px}.cc-tai span{display:flex;flex-direction:column}.cc-tai small{color:var(--dim);font-size:12px}
+.cc-tai:has(input:checked){border-color:#1c1c1b}
+.cc-roles{display:grid;gap:2px;max-height:460px;overflow:auto;padding-right:4px;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:4px 10px 8px}
+.cc-g{font-size:11.5px;font-weight:700;color:var(--faint);margin:10px 0 2px;letter-spacing:.04em}
+.cc-r{display:grid;grid-template-columns:minmax(0,1fr) 124px minmax(0,150px);gap:8px;align-items:center;font-size:13.5px;padding:4px 0;border-top:1px solid var(--line)}
+.cc-g+.cc-r{border-top:0}
+.cc-nm{min-width:0;display:flex;flex-direction:column}
+.cc-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.cc-nm small{color:var(--faint);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cc-r select,.cc-r input{font-size:13px;padding:4px 6px;min-width:0}
+.cc-go{display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-top:14px;position:sticky;bottom:0;background:var(--bg);padding:10px 0}
+.cc-go .tip{flex:1}
+@media (max-width:640px){.cc-r{grid-template-columns:minmax(0,1fr) 110px}.cc-r input{grid-column:1/-1}.cc-head small{margin-left:0;width:100%}}
 /* 완주 도장 (메인 목록의 날짜 위) */
 .dstamp{position:relative}
 .donestamp{position:absolute;right:2px;top:50%;width:48px;height:48px;margin-top:-33px;border-radius:50%;border:2px solid #c8102e;box-shadow:inset 0 0 0 3px transparent,inset 0 0 0 4px #c8102e;display:flex;align-items:center;justify-content:center;color:#c8102e;font-family:"Noto Serif KR",serif;font-weight:700;font-size:15px;letter-spacing:.02em;white-space:nowrap;mix-blend-mode:multiply;pointer-events:none;z-index:5;transform:translate(var(--sx,0),var(--sy,0)) rotate(var(--sr,-14deg))}
@@ -1078,3 +1101,6 @@ html.hxhome,body.hxhome{background:#f2f3f0!important}
 .hx-foot .sp{flex:1}
 @media(max-width:1000px){.hx-hero{grid-template-columns:1fr}.hx-hl{border-right:0;padding-right:0}.hx-hr{grid-template-columns:repeat(2,1fr);grid-template-rows:auto;border-top:1px solid var(--hx-ln)}.hx-stat{padding:14px 12px;border-right:1px solid var(--hx-ln)}}
 @media(max-width:640px){.hx-wrap{padding:0 16px}.hx-dots,.hx-hide{display:none}.hx-go span{display:none}.hx-go{padding:0 18px}.hx-stat b{font-size:28px;min-width:44px}.hx-stat{flex-direction:column;align-items:flex-start;gap:6px}.hx-hl{padding-top:30px}}
+.cc-istai .cc-g{display:none}.cc-istai .cc-r{border-top:1px solid var(--line)}
+
+.spsub{font-size:11.5px;font-weight:700;color:var(--faint);margin:10px 0 4px;padding-top:8px;border-top:1px dashed var(--line);letter-spacing:.04em}

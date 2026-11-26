@@ -195,7 +195,7 @@ function daysHTML(days,gear=true){
   return days.map((d,i)=>{
     if(!d.parts.length)return `<div class="day oday nolog"><span class="oline"><span class="nth">${i+1}회차</span><span class="odate">${esc(fmtDay(d.day))}</span><span class="ocnt">녹음 없음</span></span></div>`;
     // 온라인(코코포리아) 회차는 한 로그뿐이라 '1부' 칩 없이 한 줄로, 줄 전체가 링크
-    if(d.parts.length===1&&d.parts[0].src==="ccfolia"){const p=d.parts[0];
+    if(d.parts.length===1&&(d.parts[0].src==="ccfolia"||d.parts[0].src==="roll20")){const p=d.parts[0];
       return `<div class="day oday"><a class="oline" href="#s-${esc(p.id)}"><span class="nth">${i+1}회차</span><span class="odate">${esc(fmtDay(d.day))}</span><span class="ocnt">${p.n?p.n+"개 대사":""}</span><span class="ogo">›</span></a>${set(p)}</div>`;}
     // 녹음을 여러 조각으로 나눠 올렸어도 한 회차는 한 줄 · 대사 수는 합쳐서 · 조각 ①②는 세션 페이지에서만
     const tot=d.parts.reduce((a,p)=>a+(+p.n||0),0),one=d.parts.length===1;
@@ -322,8 +322,8 @@ function bindHome(){
 async function takeFiles(all,opt){
     if(!all.length)return;
     const htm=all.find(f=>/\.html?$/i.test(f.name)||f.type==="text/html");
-    if(htm){const box=$("#imp");S.bulkMsg="";$("#bulkres").innerHTML="";const text=await htm.text();const cc=parseCcfolia(text);
-      if(!cc||!cc.days.length){box.innerHTML=`<div class="notice bad">코코포리아 로그에서 대사를 찾지 못했어요. 방 메뉴의 로그 출력으로 받은 html이 맞는지 확인해 주세요.</div>`;return;}
+    if(htm){const box=$("#imp");S.bulkMsg="";$("#bulkres").innerHTML="";const text=await htm.text();const cc=parseCcfolia(text)||parseRoll20(text);
+      if(!cc||!cc.days.length){box.innerHTML=`<div class="notice bad">로그에서 대사를 찾지 못했어요. 코코포리아는 방 메뉴 → 로그 출력, 롤20은 게임의 Chat Archive 페이지를 저장한 html이 맞는지 확인해 주세요.</div>`;return;}
       ccForm(cc,box,opt);return;}
     const isTxt=f=>/\.txt$/i.test(f.name)||f.type==="text/plain";
     const files=all.filter(isTxt),audios=all.filter(f=>!isTxt(f));

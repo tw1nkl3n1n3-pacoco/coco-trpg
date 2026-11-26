@@ -440,8 +440,11 @@ function delMany(ids){
 function cycleSec(id){const e=S.byId.get(id);if(!e||e.b.s!==SEC)return;const l=secLv(e.b)%3+1;doOps([{ci:e.ci,op:{t:"set",id,f:{lv:l}}}],"단락 단계 바꾸기");updateRow(id);renderSide();if(typeof loadSecs==="function")loadSecs(true);toast(["대","중","하"][l-1]+"단락");}
 function shownSp(){
   const c=counts();
-  return spList().filter(s=>s.k!==ALL&&(S.showZero||(c[s.k]||0)>0||isGM(s.k)||S.fresh.has(s.k)));
+  const L=spList().filter(s=>s.k!==ALL&&(S.showZero||(c[s.k]||0)>0||isGM(s.k)||S.fresh.has(s.k)));
+  // 타이만(자캐) 세션: 캐릭터를 앞에, 플레이어·GM 본인(잡담)은 뒤에
+  return isTai()?[...L.filter(s=>s.chr),...L.filter(s=>!s.chr)]:L;
 }
+function isTai(){return spList().some(s=>s.chr);}
 async function removeSpeakerIfUnused(k){
   if((counts()[k]||0)>0)return false;
   const n=await usageElsewhere(k);
