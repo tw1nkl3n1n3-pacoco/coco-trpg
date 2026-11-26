@@ -125,6 +125,7 @@ function mergeScenEdit(L,base,d){
   if(!!d.done!==!!base.done)L.done=!!d.done;
   if((d.theme||"")!==(base.theme||"")){if(d.theme)L.theme=d.theme;else delete L.theme;}
   if((d.og||"")!==(base.og||"")){if(d.og)L.og=d.og;else delete L.og;}
+  if((d.fix||"")!==(base.fix||"")){if(d.fix)L.fix=d.fix;else delete L.fix;}
   if(JSON.stringify(d.aliases||[])!==JSON.stringify(base.aliases||[]))L.aliases=d.aliases;
   if((d.gm||null)!==(base.gm||null)){if(d.gm)L.gm=d.gm;else delete L.gm;}
   {const pl=[...new Set((d.plays||[]).filter(x=>/^\d{4}-\d\d-\d\d$/.test(x)))].sort();if(JSON.stringify(pl)!==JSON.stringify(base.plays||[])){if(pl.length)L.plays=pl;else delete L.plays;}}

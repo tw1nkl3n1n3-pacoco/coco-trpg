@@ -326,8 +326,17 @@ function renderAllRows(keepScroll){
   const ed=log.querySelector(".row.editing"),fa=ed&&ed.contains(document.activeElement)?document.activeElement:null;
   const sel=fa&&"selectionStart" in fa?[fa.selectionStart,fa.selectionEnd]:null;
   S.rerendering=true;
-  log.innerHTML=vis.map((e,i)=>rowHTML(e,vis[i-1])).join("")||`<div class="notice">조건에 맞는 대사가 없어요.</div>`;
-  if(ed){const nr=log.querySelector(`.row[data-id="${ed.dataset.id}"]`);if(nr){nr.replaceWith(ed);if(fa){fa.focus({preventScroll:true});if(sel)try{fa.setSelectionRange(...sel);}catch(e){}}}}
+  // 줄 순서가 그대로면 바뀐 줄만 갈아끼워요 (긴 로그에서 고칠 때마다 전부 다시 그리면 느려요)
+  const hs=vis.map((e,i)=>rowHTML(e,vis[i-1])),kids=log.children;
+  let same=hs.length>0&&kids.length===hs.length;
+  if(same)for(let i=0;i<hs.length;i++){if(kids[i].dataset.id!==vis[i].b.id){same=false;break;}}
+  if(same){const t=document.createElement("div");
+    for(let i=0;i<hs.length;i++){const r=kids[i];if(r._h===hs[i]||r.classList.contains("editing"))continue;t.innerHTML=hs[i];const nr=t.firstElementChild;nr._h=hs[i];r.replaceWith(nr);}
+  }else{
+    log.innerHTML=hs.join("")||`<div class="notice">조건에 맞는 대사가 없어요.</div>`;
+    if(hs.length)for(let i=0;i<kids.length&&i<hs.length;i++)kids[i]._h=hs[i];
+  }
+  if(ed&&!same){const nr=log.querySelector(`.row[data-id="${ed.dataset.id}"]`);if(nr){nr.replaceWith(ed);if(fa){fa.focus({preventScroll:true});if(sel)try{fa.setSelectionRange(...sel);}catch(e){}}}}
   S.rerendering=false;
   const qc=$("#qcount");if(qc)qc.textContent=(S.q||S.spFilter)?`${vis.length}개`:`${S.flat.length}개 대사`;
   if(anchor){const r=log.querySelector(`[data-id="${anchor}"]`);if(r)window.scrollBy(0,r.getBoundingClientRect().top-off);}
@@ -337,8 +346,8 @@ function updateRow(id){
   const old=document.querySelector(`.row[data-id="${id}"]`);const e=S.byId.get(id);
   if(!old||!e)return;
   if(!visible(e)){renderAllRows(true);return;}
-  const t=document.createElement("div");t.innerHTML=rowHTML(e,prevVis(e));const nr=t.firstElementChild;old.replaceWith(nr);
-  const nx=nr.nextElementSibling;if(nx&&nx.dataset.id&&!nx.classList.contains("editing")){const ne=S.byId.get(nx.dataset.id);if(ne){t.innerHTML=rowHTML(ne,e);nx.replaceWith(t.firstElementChild);}}
+  const t=document.createElement("div"),h=rowHTML(e,prevVis(e));t.innerHTML=h;const nr=t.firstElementChild;nr._h=h;old.replaceWith(nr);
+  const nx=nr.nextElementSibling;if(nx&&nx.dataset.id&&!nx.classList.contains("editing")){const ne=S.byId.get(nx.dataset.id);if(ne){const h2=rowHTML(ne,e);t.innerHTML=h2;const n2=t.firstElementChild;n2._h=h2;nx.replaceWith(n2);}}
   renderCmMarks();clearTimeout(S.cmLt);S.cmLt=setTimeout(cmLayout,60);
 }
 function prevVis(e){let i=S.flat.indexOf(e)-1;while(i>=0&&!visible(S.flat[i]))i--;return i>=0?S.flat[i]:null;}

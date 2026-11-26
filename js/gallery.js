@@ -34,11 +34,11 @@ function galHTML(srcs,o={}){
   const items=srcs.flatMap(s=>s.list.map(p=>({...p,src:s.id,kind:s.kind,label:s.label}))).sort((a,b)=>o.newest?(b.at||0)-(a.at||0):(a.at||0)-(b.at||0));
   S.galItems=items;const up=srcs.find(s=>s.up);
   if(!items.length&&!up)return "";
-  const addH=up?`<label class="gadd"><input type="file" accept="image/*" multiple hidden id="galfile" data-src="${esc(up.id)}" data-kind="${up.kind}"><i>＋</i><b>UPLOAD</b><span id="galmsg">사진 올리기 · 원본 그대로 · 여러 장 가능</span></label>`:"";
+  const addH=up?`<label class="gadd"><input type="file" accept="image/*" multiple hidden id="galfile" data-src="${esc(up.id)}" data-kind="${up.kind}"><i>＋</i><span id="galmsg">사진 올리기 <small>· 원본 그대로 · 여러 장</small></span></label>`:"";
   return `<div class="sc-sec galsec"><h4 data-en="GALLERY">${o.title||"세션 갤러리"}${items.length?`<span class="gcnt">${n2(items.length)}</span>`:""}</h4>
-    <div class="gm">${o.newest?addH:""}
-    ${items.map((p,i)=>`<figure data-gal="${esc(p.id)}"><div class="im" style="--r:${p.w&&p.h?p.w+"/"+p.h:"4/3"}"><img src="${esc(p.u||p.o)}" alt="${esc(p.cap||"")}" loading="lazy"><span class="no">${n2(i+1)}</span>${p.label?`<span class="from">${esc(p.label)}</span>`:""}</div>
-      <figcaption><span class="t${p.cap?"":" empty"}">${p.cap?esc(p.cap):"설명 없음"}</span><span class="c" data-galc="${esc(p.id)}"></span><span class="m">${esc(p.by||"")}${p.by?" · ":""}${galDate(p.at)}</span></figcaption></figure>`).join("")}${o.newest?"":addH}</div></div>`;
+    ${addH}<div class="gm">
+    ${items.map((p,i)=>`<figure data-gal="${esc(p.id)}"><div class="im" style="--r:${p.w&&p.h?p.w+"/"+p.h:"4/3"}"><img src="${esc(p.u||p.o)}" alt="${esc(p.cap||"")}" loading="lazy" decoding="async"${p.w?` width="${p.w}" height="${p.h}"`:""}><span class="no">${n2(i+1)}</span>${p.label?`<span class="from">${esc(p.label)}</span>`:""}</div>
+      <figcaption><span class="t${p.cap?"":" empty"}">${p.cap?esc(p.cap):"설명 없음"}</span><span class="c" data-galc="${esc(p.id)}"></span><span class="m">${esc(p.by||"")}${p.by?" · ":""}${galDate(p.at)}</span></figcaption></figure>`).join("")}</div></div>`;
 }
 function galCountsRefresh(){document.querySelectorAll("[data-galc]").forEach(e=>{const it=S.galItems.find(x=>x.id===e.dataset.galc);const n=it?galCmsOf(it).length:0;e.textContent=n?"◦"+n:"";});}
 function bindGal(srcs){
@@ -65,7 +65,7 @@ async function galUpload(kind,src,files){
   const who=galWho(kind,src);
   if(!who){toast("먼저 내가 누구인지 골라 주세요");const sc=scenById(src);sc&&mePicker(sc);return;}
   if(!S.storage){toast("저장소를 쓸 수 없어요");return;}
-  const msg=$("#galmsg"),base="사진 올리기 · 원본 그대로 · 여러 장 가능";let done=0;
+  const msg=$("#galmsg"),base="사진 올리기 · 원본 그대로 · 여러 장";let done=0;
   try{if(!S.authUser)await S.auth.signInAnonymously();
     for(const f of files){
       if(!/^image\//.test(f.type))continue;
