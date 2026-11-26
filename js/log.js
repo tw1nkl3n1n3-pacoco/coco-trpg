@@ -239,6 +239,28 @@ async function fixT0(html){
     await S.db.doc(`sessions/${s.id}`).update({t0:m0.t});s.t0=m0.t;if(s.id===S.sid&&S.meta)S.meta.t0=m0.t;n++;}
   renderSide();renderAllRows(true);return n;
 }
+// 줄 옆 ⋯ 메뉴: 그 줄에서 할 수 있는 일 + 단축키
+function rowMenu(id,btn){
+  const e=S.byId.get(id);if(!e)return;const b=e.b,k=b.s===SEC?"sec":b.s===NOTE?"note":b.s===DICE?"dice":b.s===HAND?"hand":"line";
+  if(!isSel(id))select(id,false);
+  const many=selIds().length>1&&isSel(id),ids=many?selIds():[id],bk=bkOf(b);
+  const it=(a,label,key,on)=>`<button data-m="${a}"${on?' class="on"':""}><span>${label}</span>${key?`<kbd>${key}</kbd>`:""}</button>`,hr='<hr>';
+  let h=many?`<div class="tip" style="padding:2px 10px 4px">${ids.length}줄 고름</div>`:"";
+  if(k==="sec")h+=it("edit","✎ 이름 고치기","Enter")+hr+[1,2,3].map(l=>it("lv"+l,["대","중","하"][l-1]+"단락","",secLv(b)===l)).join("")+`<div class="tip" style="padding:0 10px 4px">고른 채로 <kbd>S</kbd>를 누르면 대→중→하</div>`+hr+it("del","🗑 지우기","Del");
+  else{
+    if(!many)h+=it("edit","✎ 고치기","Enter");
+    if(k==="line")h+=it("who","👤 화자 바꾸기","1~9");else if(k!=="dice"&&!many)h+=it("who","👤 대사로 바꾸기","");
+    if(!many){h+=hr+it("note","＋ 아래에 상황 묘사","N")+it("dice","＋ 아래에 주사위","D")+it("hand","＋ 아래에 핸드아웃","H")+it("sec","＋ 위에 단락","S");if(k==="line"||k==="note")h+=it("up","⤒ 위 줄과 합치기","M");}
+    h+=hr+(k==="line"?it("ooc","잡담 (책에 작게)","C",bk===1):"")+it("cut","빼기 (책에서 빼기)","X",bk===2);
+    if(!many&&k!=="dice")h+=it("start","▶ 여기서 본세션 시작","B",S.startId===id);
+    h+=hr+it("del","🗑 지우기","Del");
+  }
+  popAt(btn,`<div class="rmenu">${h}</div>`,p=>{p.querySelectorAll("[data-m]").forEach(x=>x.onclick=()=>{const a=x.dataset.m;closePop();
+    if(a==="edit")editRow(id);else if(a==="who")whoMenu(btn,id);else if(a==="note")addNote(id);else if(a==="dice")addDice(id);else if(a==="hand")addHand(id);
+    else if(a==="sec"){select(id,false);addSec(1);}else if(a==="up")mergePrev(id);else if(a==="ooc")bkToggle(ids,1);else if(a==="cut")bkToggle(ids,2);
+    else if(a==="start")setStart(id);else if(a==="del")delMany(ids);
+    else if(/^lv\d$/.test(a)){const l=+a[2];if(secLv(b)!==l){doOps([{ci:e.ci,op:{t:"set",id,f:{lv:l}}}],"단락 단계 바꾸기");updateRow(id);renderSide();loadSecs(true);}}});});
+}
 function setStart(id){
   if(!S.canWrite)return;const e=S.byId.get(id);if(!e)return;
   const ops=S.flat.filter(x=>x.b.bstart&&x.b.id!==id).map(x=>({ci:x.ci,op:{t:"set",id:x.b.id,f:{bstart:undefined}}}));
@@ -250,44 +272,22 @@ function rowHTML(e,prev){
     return `<div class="row sec l${secLv(b)}${isSel(b.id)?" sel":""}" data-id="${b.id}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmtLog(b.t)}</button>
     <div class="body"><div class="tx"><span class="ln">${b.x?hl(b.x):'<span class="ph">단락 이름</span>'}</span></div></div>
-    <div class="act">
-      <button class="w" data-act="edit" title="이름 고치기 (Enter · 더블클릭)">✎</button>
-      <span class="w lvb" title="단락 단계">${[1,2,3].map(l=>`<button data-act="lv" data-lv="${l}" class="${secLv(b)===l?"on":""}">${"상중하"[l-1]}</button>`).join("")}</span>
-      <button class="w" data-act="del" title="단락 나누기 지우기 (Delete)">🗑</button>
-    </div></div>`;}
+    <div class="act"><button class="w more" data-act="more" title="고치기·화자·넣기·지우기… (단축키는 ?)">⋯</button></div></div>`;}
   if(e.b.s===HAND){const b=e.b;
     return `<div class="row${bkOf(b)===2?" bk-cut":""} hand${isSel(b.id)?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmtLog(b.t)}</button>
     <div class="body"><div class="hlab">📜 ${b.ti?`<b class="hti">${esc(b.ti)}</b>`:"핸드아웃"}</div><div class="tx">${b.x?`<span>${b.x.split("\n").map(l=>`<span class="ln">${handLine(l)}</span>`).join("<br>")}</span>`:'<span class="ph">핸드아웃 내용 · [정보] / [비밀]로 시작하는 줄은 라벨이 붙어요</span>'}</div></div>
-    <div class="act">${cmBtn()}
-      <button class="w" data-act="edit" title="글 수정 (Enter · 더블클릭)">✎</button>
-      <button class="w" data-act="up" title="위 줄과 합치기 (M)">⤒</button>
-      <button class="w" data-act="who" title="대사로 바꾸기">👤</button>
-      <button class="w" data-act="note" title="아래에 상황 묘사 추가 (N)">＋상황</button>
-      <button class="w" data-act="del" title="삭제 (Delete)">🗑</button>
-    </div></div>`;}
+    <div class="act">${cmBtn()}<button class="w more" data-act="more" title="고치기·화자·넣기·지우기… (단축키는 ?)">⋯</button></div></div>`;}
   if(e.b.s===DICE){const b=e.b,p=b.w?spBy(b.w):null;
     return `<div class="row${bkOf(b)===2?" bk-cut":""} dice${isSel(b.id)?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}" style="--c:${p?fixC(p.c):"#8a8178"}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmtLog(b.t)}</button>
     <div class="body"><div class="tx">${diceInner(b)}</div></div>
-    <div class="act">${cmBtn()}
-      <button class="w" data-act="edit" title="주사위 수정 (Enter · 더블클릭)">✎</button>
-      <button class="w" data-act="note" title="아래에 상황 묘사 추가 (N)">＋상황</button>
-      <button class="w" data-act="dice" title="아래에 주사위 추가 (D)">＋🎲</button>
-      <button class="w" data-act="del" title="삭제 (Delete)">🗑</button>
-    </div></div>`;}
+    <div class="act">${cmBtn()}<button class="w more" data-act="more" title="고치기·화자·넣기·지우기… (단축키는 ?)">⋯</button></div></div>`;}
   if(e.b.s===NOTE){const b=e.b;
     return `<div class="row${bkOf(b)===2?" bk-cut":""} note${b.st?" stat":""}${b.tab?" tabbed":""}${S.startId===b.id?" bstart":""}${isSel(b.id)?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmtLog(b.t)}</button>
     <div class="body"><div class="tx">${b.x?`<span>${b.x.split("\n").map(l=>`<span class="ln">${hl(l)}</span>`).join("<br>")}</span>`:'<span class="ph">상황 묘사</span>'}</div></div>
-    <div class="act">${cmBtn()}
-      <button class="w" data-act="note" title="아래에 상황 묘사 추가 (N)">＋상황</button>
-      <button class="w" data-act="dice" title="아래에 주사위 추가 (D)">＋🎲</button>
-      <button class="w" data-act="who" title="대사로 바꾸기">👤</button>
-      <button class="w" data-act="edit" title="글 수정 (Enter · 더블클릭)">✎</button>
-      <button class="w" data-act="bstart" title="여기서 본세션 시작 · 리플레이북은 이 줄부터 (B)">▶</button>
-      <button class="w" data-act="del" title="삭제 (Delete)">🗑</button>
-    </div></div>`;}
+    <div class="act">${cmBtn()}<button class="w more" data-act="more" title="고치기·화자·넣기·지우기… (단축키는 ?)">⋯</button></div></div>`;}
   const b=e.b,s=spBy(b.s),lines=b.x.split("\n"),gm=isGM(s.k),bk=bkOf(b);
   // 잡담은 이름과 한 줄로(캐릭터 이름 없이), 매 줄 이름을 보여요
   // 잡담은 잡담끼리, 본문은 본문끼리 이어지는지 봐요
@@ -300,15 +300,7 @@ function rowHTML(e,prev){
       ${first?`<button class="who" data-act="who" title="클릭해서 화자 바꾸기">${label}${sub?`<small>${sub}</small>`:""}</button>`:""}
       <div class="tx">${tx}</div>
     </div>
-    <div class="act">${cmBtn()}
-      <button class="w" data-act="who" title="화자 바꾸기 (숫자키)">👤</button>
-      <button class="w" data-act="edit" title="글 수정 (Enter · 더블클릭)">✎</button>
-      <button class="w" data-act="up" title="위 대사와 합치기 (M)">⤒</button>
-      <button class="w" data-act="note" title="아래에 상황 묘사 추가 (N)">＋상황</button>
-      <button class="w" data-act="dice" title="아래에 주사위 추가 (D)">＋🎲</button>
-      <button class="w" data-act="bstart" title="여기서 본세션 시작 · 리플레이북은 이 줄부터 (B)">▶</button>
-      <button class="w" data-act="del" title="삭제 (Delete)">🗑</button>
-    </div></div>`;
+    <div class="act">${cmBtn()}<button class="w more" data-act="more" title="고치기·화자·넣기·지우기… (단축키는 ?)">⋯</button></div></div>`;
 }
 function cmBtn(){const id=cmScid();return S.db&&!S.local&&id&&isOpen(id)&&!isExt(id)?`<button class="cmw" data-act="cm" title="이 줄에 댓글">💬</button>`:"";}
 function visible(e){
@@ -436,7 +428,7 @@ const KB_HELP=`<div class="kbgrid">
   <h4>넣기</h4><div><kbd>N</kbd> 아래에 상황 묘사 · <kbd>D</kbd> 주사위 · <kbd>H</kbd> 핸드아웃 · <kbd>S</kbd> 위에 단락 (단락을 고르고 누르면 대→중→하)</div>
   <h4>정리</h4><div><kbd>M</kbd> 위 줄과 합치기 · <kbd>Delete</kbd> 지우기 · <kbd>Ctrl</kbd>+<kbd>Z</kbd> 되돌리기</div>
   <h4>재생</h4><div><kbd>Space</kbd> 재생/정지 · <kbd>P</kbd> 여기서 재생 · <kbd>[</kbd> <kbd>]</kbd> 5초 뒤로/앞으로</div>
-</div><div class="tip" style="margin-top:8px">한글 입력 상태에서도 같은 자리 키로 돼요. <kbd>?</kbd>로 이 표를 열어요.</div>`;
+</div><div class="tip" style="margin-top:8px">줄 옆 <b>⋯</b>를 누르면 그 줄에서 할 수 있는 일이 단축키와 함께 나와요. 한글 입력 상태에서도 같은 자리 키로 돼요. <kbd>?</kbd>로 이 표를 열어요.</div>`;
 function helpBox(){
   const m=document.createElement("div");m.className="modal";
   m.innerHTML=`<div class="box kbhelp"><h2>단축키 · 조작</h2>${KB_HELP}<div class="btns"><button class="pri" data-x>닫기</button></div></div>`;
@@ -775,6 +767,7 @@ function bindSession(){
     if(act==="cut"){if(S.canWrite)splitBlock(id,+ev.target.dataset.line);return;}
     if(act==="edit"){editRow(id);return;}
     if(act==="up"){mergePrev(id);return;}
+    if(act==="more"){rowMenu(id,ev.target.closest("[data-act]"));return;}
     if(act==="bstart"){setStart(id);return;}
     if(act==="del"){delBlock(id);return;}
     if(act==="note"){addNote(id);return;}

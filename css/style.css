@@ -947,3 +947,11 @@ body.booking #hdr,body.booking .topbar{display:none}
 .kbgrid kbd,.bselpop kbd,.tsplit kbd,#layer kbd{display:inline-block;min-width:14px;text-align:center;background:var(--panel2,#f3f3f3);border:1px solid var(--line,#ccc);border-bottom-width:2px;border-radius:4px;padding:0 4px;font:600 11px/1.5 ui-monospace,monospace;color:var(--ink,#333)}
 .bselpop kbd{background:#444;border-color:#666;color:#fff;margin-right:2px}
 .scmeta #scbook{margin-right:6px}
+/* 줄 옆 ⋯ 메뉴 */
+.act .more{font-size:16px;line-height:1;padding:0 8px;letter-spacing:1px}
+.rmenu{display:flex;flex-direction:column;min-width:210px;padding:2px 0}
+.rmenu button{display:flex;justify-content:space-between;align-items:center;gap:16px;text-align:left;border:0;background:none;padding:6px 10px;border-radius:6px;font-size:13.5px;color:var(--ink)}
+.rmenu button:hover{background:var(--panel2,#f1f1f1)}
+.rmenu button.on span::after{content:" ✓";color:var(--acc)}
+.rmenu kbd{font-size:10.5px;color:var(--dim)}
+.rmenu hr{margin:4px 6px;border:0;border-top:1px solid var(--line)}
