@@ -44,7 +44,7 @@ function syncSubs(reset){
     if(SUB.all.length)return;
     SUB.all.push(S.db.collection("scenarios").onSnapshot(snap=>{SUB.scData={};snap.docs.forEach(d=>SUB.scData[d.id]=d.data());markLoaded();publish();},e=>{markLoaded();render();}));
     SUB.all.push(S.db.collection("sessions").onSnapshot(snap=>{const m={};snap.docs.forEach(d=>m[d.id]={id:d.id,...d.data()});SUB.sessData={all:m};markLoaded();publish();},e=>{}));
-    SUB.all.push(S.db.collection("secrets").onSnapshot(snap=>{S.secrets={};snap.docs.forEach(d=>S.secrets[d.id]=d.data().pw);if(S.cid&&!S.scEdit)render();ownerMaintain();},()=>{}));
+    SUB.all.push(S.db.collection("secrets").onSnapshot(snap=>{S.secrets={};snap.docs.forEach(d=>S.secrets[d.id]=d.data().pw);if(S.cid&&!S.scEdit||S.fix&&!S.sid&&!S.cid)render();ownerMaintain();},()=>{}));
     return;
   }
   // 시나리오 목록은 누구나
@@ -85,6 +85,14 @@ async function _ownerMaintain(){
   }
   for(const sc of [...S.scens,...S.camps]){
     if(!S.secrets[sc.id]&&!_pwMade.has(sc.id)){_pwMade.add(sc.id);try{const ex=await S.db.doc("secrets/"+sc.id).get();if(!ex.exists)await S.db.doc("secrets/"+sc.id).set({pw:genPw()});}catch(e){_pwMade.delete(sc.id);}}
+  }
+  // 고정탁: 고정탁 비밀번호를 하나 만들고, 고정탁 안의 세션·캠페인 비밀번호를 모두 그걸로 맞춰요
+  if(typeof allFixes!=="function")return;
+  for(const f of allFixes()){
+    const k=fixKey(f);let pw=S.secrets[k];
+    if(!pw){if(_pwMade.has(k))continue;_pwMade.add(k);
+      try{const ex=await S.db.doc("secrets/"+k).get();pw=ex.exists?ex.data().pw:genPw();if(!ex.exists)await S.db.doc("secrets/"+k).set({pw});}catch(e){_pwMade.delete(k);continue;}}
+    for(const id of fixPwIds(f)){if(S.secrets[id]!==pw){try{await S.db.doc("secrets/"+id).set({pw});}catch(e){}}}
   }
 }
 function genPw(){const c="abcdefghjkmnpqrstuvwxyz23456789";let o="";const a=new Uint32Array(8);crypto.getRandomValues(a);a.forEach(n=>o+=c[n%c.length]);return o;}

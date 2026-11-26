@@ -28,6 +28,23 @@ function fixListHTML(){return `<datalist id="fixlist">${allFixes().map(x=>`<opti
 // 아카이브 카드 안의 고정탁 태그(카드 링크 안이라 따로 잡아요) → 고정탁 페이지
 document.addEventListener("click",ev=>{const a=ev.target.closest("[data-fix]");if(!a)return;ev.preventDefault();ev.stopPropagation();location.hash="f-"+encodeURIComponent(a.dataset.fix);},true);
 // 고정탁 페이지: 이 고정탁의 시나리오·캠페인 카드(첫 화면과 같은 카드)와 멤버·기간
+// 고정탁 비밀번호: secrets/fx_이름 하나 · 고정탁 안의 모든 세션·캠페인 비밀번호를 이걸로 맞춰요 (주인 브라우저가 자동으로)
+function fixKey(f){return "fx_"+encodeURIComponent(f);}
+function fixOfScen(sc){return (sc&&(sc.fix||(campOf(sc)&&campOf(sc).fix)))||"";}
+function fixPwIds(f){return [...new Set([...S.scens.filter(x=>(x.fix||"")===f).map(pwOf),...S.camps.filter(c=>(c.fix||"")===f).map(c=>c.id)].filter(Boolean))];}
+function fixCount(f){return S.scens.filter(x=>(x.fix||"")===f&&!(x.camp&&campById(x.camp)&&campById(x.camp).fix===f)).length+S.camps.filter(c=>(c.fix||"")===f).length;}
+function fixOpen(f){if(S.canAdmin)return true;const ids=fixPwIds(f);return ids.length>0&&ids.every(id=>campById(id)?campOpen(campById(id)):isOpen(id));}
+function fixTagsHTML(){const fs=allFixes().sort((a,b)=>a.localeCompare(b,"ko"));return fs.length?`<div class="fxtags">${fs.map(f=>`<a href="#f-${encodeURIComponent(f)}">${esc(f)}<small>${fixCount(f)}</small></a>`).join("")}</div>`:"";}
+function fixLockHTML(f){const ns=[...S.scens.filter(x=>(x.fix||"")===f&&!x.camp).map(x=>x.name),...S.camps.filter(c=>(c.fix||"")===f).map(c=>c.name)];
+  return `<div class="sc-page lockpage"><div class="lkwrap"><div class="lkbox">
+    <div class="lockicon">🔒</div><div class="tip fxk">고정탁</div><h2>${esc(f)}</h2>${ns.length?`<div class="tip">${ns.map(esc).join(" · ")}</div>`:""}
+    <div class="lkpw"><form id="fxunlock"><input type="text" id="fxpw" placeholder="고정탁 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form>
+    <div class="tip" id="fxmsg" style="margin-top:8px">이 비밀번호 하나로 고정탁 안의 모든 세션이 열려요</div></div>
+    <div class="homefoot"><a class="ghost" href="#" style="text-decoration:none">← 목록</a><span style="flex:1"></span><span class="authbox"></span></div></div></div></div>`;}
+function bindFixLock(){const f=S.fix,form=$("#fxunlock");if(!form)return;const inp=$("#fxpw");setTimeout(()=>inp.focus(),0);
+  form.onsubmit=async ev=>{ev.preventDefault();const pw=inp.value.trim();if(!pw)return;const m=$("#fxmsg");m.textContent="확인하는 중…";const ids=fixPwIds(f);
+    try{await unlockScen(ids[0],pw);await Promise.all(ids.slice(1).map(id=>unlockScen(id,pw).catch(()=>{})));m.textContent="열렸어요!";refreshCanWrite();render();}
+    catch(err){m.textContent=err&&err.code==="permission-denied"?"비밀번호가 틀렸어요.":"열지 못했어요: "+(err.code||err.message);}};}
 function fixPageHTML(f){
   const gs=groups().filter(g=>g.sc&&(g.sc.fix||"")===f&&!(g.sc.camp&&campById(g.sc.camp)&&campById(g.sc.camp).fix===f)),cs=S.camps.filter(c=>!isCamp(c)&&(c.fix||"")===f);
   const hx=isHX();
@@ -43,8 +60,13 @@ function fixPageHTML(f){
     <div class="fxmeta">${days.length?`${esc(dot(days[0]))} – ${esc(dot(days.at(-1)))} · `:""}<b>${gs.length+cs.reduce((a,c)=>a+campEps(c).length,0)}</b>시나리오 · <b>${days.length}</b>세션${cs.length?` · <b>${cs.length}</b>캠페인`:""}</div>
     ${P.length?`<div class="fxppl">${P.map(p=>`<span class="fxp" style="--c:${fixC(p.c)}"><i></i><b>${esc(p.n)}</b><small>${[...p.ch].map(esc).join(" · ")}${p.ch.size?" · ":""}${p.cnt.size}탁</small></span>`).join("")}</div>`:""}
     ${intro||S.canAdmin?`<div class="fxintro${intro?"":" empty"}" id="fxintro">${intro?esc(intro).replace(/\n/g,"<br>"):"고정탁 소개 (선택) — 언제부터 어떤 멤버로 굴리는 탁인지 적어 둘 수 있어요"}${S.canAdmin?` <button class="ghost" id="fxedit" type="button">✎</button>`:""}</div>`:""}
-    <div id="sesslist" class="fxlist">${items.map(x=>x.h).join("")||`<div class="notice">아직 이 고정탁으로 묶인 세션이 없어요</div>`}</div></div>`;}
-function bindFixPage(){homeMasonry();bindPartEdit&&bindPartEdit();if(isHX())bindHX();
+    <div id="sesslist" class="fxlist">${items.map(x=>x.h).join("")||`<div class="notice">아직 이 고정탁으로 묶인 세션이 없어요</div>`}</div>
+    ${S.canAdmin?`<div class="sc-sec fxacc"><h4 data-en="ACCESS">고정탁 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
+      <div class="tip">이 비밀번호 하나로 고정탁 안의 모든 세션·캠페인이 열려요. 고정탁을 붙인 세션은 자동으로 이 비밀번호를 따라가요. 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
+      <div class="pwrow"><code class="pw">${esc(S.secrets?.[fixKey(f)]||"만드는 중…")}</code><button class="pri" id="fxcopy">링크+비밀번호 복사</button><button class="ghost" id="fxnewpw">새로 만들기</button></div></div>`:""}</div>`;}
+function bindFixPage(){homeMasonry();
+  const fc=$("#fxcopy");if(fc)fc.onclick=()=>copyText(`[고정탁 ${S.fix}] TRPG 로그\n${location.origin+location.pathname}#f-${encodeURIComponent(S.fix)}\n비밀번호: ${S.secrets?.[fixKey(S.fix)]||""}`,"링크와 비밀번호를 복사했어요");
+  const fn=$("#fxnewpw");if(fn)fn.onclick=()=>confirmBox("고정탁 비밀번호를 새로 만들까요? 고정탁 안의 모든 세션 비밀번호가 같이 바뀌고, 예전 비밀번호로 연 사람은 다시 잠겨요.","새로 만들기",async()=>{try{await S.db.doc("secrets/"+fixKey(S.fix)).set({pw:genPw()});ownerMaintain();toast("새 비밀번호를 만들었어요");}catch(err){writeFail(err);}});bindPartEdit&&bindPartEdit();if(isHX())bindHX();
   document.querySelectorAll(".fxpage [data-scen]").forEach(a=>a.onclick=ev=>{ev.preventDefault();gotoScen(a.dataset.scen);});
   const e=$("#fxedit");if(e)e.onclick=()=>{const f=S.fix,cur=(site().fixes||{})[f]||"";const box=$("#fxintro");
     box.innerHTML=`<textarea id="fxta" rows="3" style="width:100%">${esc(cur)}</textarea><div style="display:flex;gap:6px;justify-content:flex-end;margin-top:6px"><button class="ghost" id="fxx" type="button">취소</button><button class="pri" id="fxok" type="button">저장</button></div>`;
@@ -203,7 +225,7 @@ function bindCamp(){
       render();toast("저장했어요");}catch(err){writeFail(err);}};
   const dl=$("#g-del");if(dl)dl.onclick=()=>confirmBox(`'${c.name}' ${campWord(c)}을(를) 지울까요?`,"삭제",async()=>{try{await S.db.doc("camps/"+c.id).delete();S.db.doc("secrets/"+c.id).delete().catch(()=>{});location.hash="";}catch(err){writeFail(err);}});
   const cp=$("#g-copy");if(cp)cp.onclick=()=>copyText(`${c.name}\n${campLink(c)}\n비밀번호: ${S.secrets?.[c.id]||""}`,"링크와 비밀번호를 복사했어요");
-  const np=$("#g-newpw");if(np)np.onclick=()=>confirmBox(campWord(c)+" 비밀번호를 새로 만들까요? 예전 비밀번호로 연 사람은 다시 잠겨요.","새로 만들기",async()=>{try{await S.db.doc("secrets/"+c.id).set({pw:genPw()});}catch(err){writeFail(err);}});
+  const np=$("#g-newpw");if(np)np.onclick=()=>confirmBox(campWord(c)+" 비밀번호를 새로 만들까요? 예전 비밀번호로 연 사람은 다시 잠겨요.","새로 만들기",async()=>{try{await S.db.doc("secrets/"+(c.fix?fixKey(c.fix):c.id)).set({pw:genPw()});if(c.fix)ownerMaintain();}catch(err){writeFail(err);}});
   const ag=$("#g-addgo");if(ag)ag.onclick=async()=>{const id=$("#g-addsel").value;if(!id){toast("넣을 세션을 골라 주세요");return;}
     ag.disabled=true;try{await setEpCamp(id,c.id,"",!!$("#g-addgai")?.checked);toast(isCamp(c)?"캠프에 넣었어요":"캠페인에 넣었어요");}catch(err){ag.disabled=false;writeFail(err);}};
   const uf=$("#g-unlock");if(uf)uf.onsubmit=async ev=>{ev.preventDefault();const pw=$("#g-pw").value.trim();if(!pw)return;const m=$("#g-msg");m.textContent="확인하는 중…";

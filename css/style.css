@@ -1130,3 +1130,9 @@ html.hxhome,body.hxhome{background:#f2f3f0!important}
 .fxlist{margin-top:20px}
 .hx.fxpage{max-width:1180px;padding:20px 28px 60px}.hx.fxpage .fxh{font-family:var(--hx-sans)}.hx.fxpage .fxp,.hx.fxpage .fxintro{border-radius:0}
 .fxpage .fixline,.fxpage .hx-fix{display:none}
+
+/* 홈 맨 아래 고정탁 태그 */
+.fxtags{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:28px 0 6px}
+.fxtags a{padding:5px 12px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);text-decoration:none;font-size:12.5px;font-weight:600}
+.fxtags a:hover{border-color:var(--ink)}.fxtags a small{color:var(--faint);font-weight:400;margin-left:5px}
+.fxacc{margin-top:22px}.lockpage .fxk{letter-spacing:.1em;margin-bottom:-6px}

@@ -60,6 +60,7 @@ function hxHomeHTML(o){
   ${o.live.length?`<div class="hx-sh"><span class="hx-m hx-idx">01</span><h2>진행 중<small>Ongoing</small></h2><span class="hx-ln"></span><span class="hx-m">${o.live.length} active</span></div><div class="hx-og">${o.live.map(hxLive).join("")}</div>`:""}
   <div class="hx-sh"><span class="hx-m hx-idx">${o.live.length?"02":"01"}</span><h2>세션 기록<small>Archive</small></h2><span class="hx-ln"></span><span class="hx-m hx-cnt">${o.n} records</span></div>
   <div id="sesslist">${o.list}</div>
+  ${fixTagsHTML()}
   <div class="homefoot hx-foot"><span class="hx-m">${esc(site().title)} © ${y}</span><span class="sp"></span><span class="hright">${o.adminBtn}<span class="authbox"></span></span></div>
   </div></div>`;}
 function bindHX(){document.querySelectorAll("[data-hxs]").forEach(b=>b.onclick=ev=>{ev.preventDefault();ev.stopPropagation();location.hash="s-"+b.dataset.hxs;});

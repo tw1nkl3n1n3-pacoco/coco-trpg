@@ -96,7 +96,7 @@ function scenHTML(){
     <div class="sc-sec"><h4 data-en="SESSIONS">${days.length&&days.every(x=>x.nolog)?"회차":"녹음"}</h4>${days.length?daysHTML(days):`<div class="sc-text empty">아직 올린 회차가 없어요.</div>`}${S.db&&S.canWrite&&!sc.done?`<div class="upadd"><a class="btnlike" href="#up-${esc(sc.id)}">＋ 회차 올리기</a></div>`:""}</div>
     ${S.db?revSectionHTML(sc):""}
     ${S.canAdmin?`    <div class="sc-sec"><h4 data-en="ACCESS">${campOf(sc)?campWord(campOf(sc))+" 비밀번호":"세션 비밀번호"} <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
-      <div class="tip" style="margin-bottom:10px">${campOf(sc)?`이 비밀번호 하나로 ${esc(campOf(sc).name)}의 모든 ${isCamp(campOf(sc))?"탁이":"편이"} 열려요.`:"링크와 비밀번호를 같이 받은 사람만 이 세션을 보고 고칠 수 있어요."} 비밀번호를 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
+      <div class="tip" style="margin-bottom:10px">${campOf(sc)?`이 비밀번호 하나로 ${esc(campOf(sc).name)}의 모든 ${isCamp(campOf(sc))?"탁이":"편이"} 열려요.`:"링크와 비밀번호를 같이 받은 사람만 이 세션을 보고 고칠 수 있어요."}${fixOfScen(sc)?` 고정탁 ${esc(fixOfScen(sc))}의 비밀번호와 같아요(새로 만들면 고정탁 전체가 바뀌어요).`:""} 비밀번호를 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
       ${S.secrets&&S.secrets[pwOf(sc)]?`<div class="pwrow"><code class="pw">${esc(S.secrets[pwOf(sc)])}</code>
         <button id="copyshare" class="pri">링크+비밀번호 복사</button><button id="regenpw" class="ghost">새로 만들기</button></div>
         <div class="tip" style="margin-top:8px;word-break:break-all">${esc(shareUrl(sc.id))}</div>`:`<div class="tip">비밀번호를 만드는 중…</div>`}
@@ -159,7 +159,7 @@ function bindScen(){
   const mep=$("#mepick");if(mep)mep.onclick=()=>mePicker(scenById(S.cid));
   const scx=scenById(S.cid);
   const cs=$("#copyshare");if(cs)cs.onclick=async()=>{const t=`[${campOf(scx)?campOf(scx).name+" · ":""}${scx.name}] TRPG 로그\n${shareUrl(scx.id)}\n비밀번호: ${S.secrets[pwOf(scx)]}`;try{await navigator.clipboard.writeText(t);toast("복사했어요. 친구들에게 붙여넣어 보내면 돼요");}catch(e){toast("복사가 막혔어요");}};
-  const rg=$("#regenpw");if(rg)rg.onclick=()=>confirmBox("비밀번호를 새로 만들까요? 예전 비밀번호로 연 사람은 모두 다시 잠겨요.","새로 만들기",async()=>{try{await S.db.doc("secrets/"+pwOf(scx)).set({pw:genPw()});toast("새 비밀번호를 만들었어요");}catch(e){toast("바꾸지 못했어요");}});
+  const rg=$("#regenpw");if(rg)rg.onclick=()=>confirmBox("비밀번호를 새로 만들까요? 예전 비밀번호로 연 사람은 모두 다시 잠겨요.","새로 만들기",async()=>{try{const fx=fixOfScen(scx);await S.db.doc("secrets/"+(fx?fixKey(fx):pwOf(scx))).set({pw:genPw()});if(fx)ownerMaintain();toast("새 비밀번호를 만들었어요");}catch(e){toast("바꾸지 못했어요");}});
   const b=$("#scback");if(b)b.onclick=()=>{location.hash="";};
   const e=$("#scedit");if(e)e.onclick=()=>{S.scEdit=true;render();};
   if(!S.scEdit){const sc0=scenById(S.cid);if(sc0)bindRevs(sc0);}
