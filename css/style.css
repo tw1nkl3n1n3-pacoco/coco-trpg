@@ -903,3 +903,18 @@ body.booking #hdr,body.booking .topbar{display:none}
 .bki-e{color:#999;font-size:12px}
 .row.bk-ooc .who .gmtag{filter:grayscale(1);opacity:.55}
 .bday{margin:18px 0 6px;font:600 11px "Pretendard",sans-serif;color:#a39d90;letter-spacing:.04em}
+/* 리플레이북 속지는 흑백 인쇄 기준(표지만 컬러) */
+.bpg:not(.bcover){background:#fff;--acc:#1c1c1b}
+.bpg:not(.bcover) .bln .sp{color:#1c1c1b}
+.bpg:not(.bcover) .bln.gm .sp{color:#1c1c1b}
+.bpg:not(.bcover) .bln .sp small{color:#8c8c8c}
+.bpg:not(.bcover) .bln .act{color:#7a7a7a}
+.bpg:not(.bcover) .bln.ooc,.bpg:not(.bcover) .bln.ooc .sp{color:#8c8c8c}
+.bpg:not(.bcover) .bnar{border-left-color:#bdbdbd;color:#333}
+.bpg:not(.bcover) .bhand{background:#efefef}.bpg:not(.bcover) .bhand b{color:#555}
+.bpg:not(.bcover) .bmemo{background:#f2f2f2;border-top-color:#1c1c1b;color:#555}
+.bpg:not(.bcover) .bdice{border-color:#bdbdbd}
+.bpg:not(.bcover) .bscene.l2::before{background:#9e9e9e}
+.bpg:not(.bcover) .bpc .av{background:#5a5a5a}
+.bpg:not(.bcover) img{filter:grayscale(1)}
+.bpg:not(.bcover) .brv .rb{filter:grayscale(1)}
