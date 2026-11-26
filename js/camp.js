@@ -21,11 +21,17 @@ function campOpen(c){return S.canAdmin||_unlockIds.includes(c.id)||campEps(c).so
 function epStatus(sc){const n=groups().find(g=>g.scen===sc.name)?.days.length||sc.nDays||0;return sc.done||campOf(sc)?.done?`<span class="st">완주</span>`:`<span class="st now">진행 중${n?` · ${n}회차`:""}</span>`;}
 function epRowHTML(c,sc){const cm=isCamp(c),diff=sc.system&&(cm||sysLabel(sc.system)!==sysLabel(c.system||""));
   return `<div class="cep"><span class="en${sc.gaiden&&!cm?" gai":""}">${cm?esc((sc.lastDay||"").slice(5).replace("-","/")):esc(epLabel(c,sc))}</span><a href="#c-${esc(sc.id)}" class="et">${esc(sc.name)}</a>${diff?`<span class="sys" data-th="${themeOf(sc)}">${esc(sysLabel(sc.system))}</span>`:""}${epStatus(sc)}</div>`;}
+// 고정탁: 같은 인선으로 쭉 이어가는 탁에 붙이는 이름 (시나리오·캠페인에 붙여요) · 누르면 첫 화면에서 그 고정탁만
+function fixLineHTML(f,cls="fixline"){return `<div class="${cls}">고정탁 · <a href="#" data-fix="${esc(f)}">${esc(f)}</a></div>`;}
+function allFixes(){return [...new Set([...S.scens.map(x=>x.fix),...S.camps.map(x=>x.fix)].map(x=>(x||"").trim()).filter(Boolean))];}
+function fixListHTML(){return `<datalist id="fixlist">${allFixes().map(x=>`<option value="${esc(x)}">`).join("")}</datalist>`;}
+document.addEventListener("click",ev=>{const a=ev.target.closest("[data-fix]");if(!a)return;ev.preventDefault();ev.stopPropagation();
+  S.homeQc=S.homeQ=a.dataset.fix;S.homePerson=null;if(location.hash&&location.hash!=="#")location.hash="";else render();scrollTo(0,0);},true);
 function campTagHTML(c){return c.system?`<span class="sys" data-th="${themeOf({system:c.system})}">${esc(sysLabel(c.system))}</span>`:"";}
 function campCardHTML(c){
   const es=campEps(c).slice().reverse(),last=campLast(c);
   // 일반 세션 카드와 같은 머리 모양: 제목 · 오른쪽에 룰 태그와 편 수 (캠페인인 건 '진행 중인 캠페인' 칸과 굵은 테두리로 보여요)
-  const head=`<div class="scen-h"><h3><a href="#g-${esc(c.id)}">${esc(c.name)} ›</a>${c.orig&&!isCamp(c)?`<span class="orig">${esc(c.orig)}</span>`:""}</h3>${campTagHTML(c)}<span class="d${c.done&&!isCamp(c)||isCamp(c)&&campEnded(c)?" dstamp":""}">${isCamp(c)?`캠프 · ${campWhen(c)?esc(campWhen(c).replace(/ · 당일치기$/,"")):""}${campWhen(c)?" · ":""}${campCount(c)}`:`${campCount(c)}${last?` · 마지막 ${esc(fmtDay(last))}`:""}`}${isCamp(c)?(campEnded(c)?stampHTML(c,"종료"):""):stampHTML(c)}</span></div>`;
+  const head=(!isCamp(c)&&c.fix?fixLineHTML(c.fix):"")+`<div class="scen-h"><h3><a href="#g-${esc(c.id)}">${esc(c.name)} ›</a>${c.orig&&!isCamp(c)?`<span class="orig">${esc(c.orig)}</span>`:""}</h3>${campTagHTML(c)}<span class="d${c.done&&!isCamp(c)||isCamp(c)&&campEnded(c)?" dstamp":""}">${isCamp(c)?`캠프 · ${campWhen(c)?esc(campWhen(c).replace(/ · 당일치기$/,"")):""}${campWhen(c)?" · ":""}${campCount(c)}`:`${campCount(c)}${last?` · 마지막 ${esc(fmtDay(last))}`:""}`}${isCamp(c)?(campEnded(c)?stampHTML(c,"종료"):""):stampHTML(c)}</span></div>`;
   const more=!!S.campMore[c.id],shown=more?es:es.slice(0,3);
   return `<section class="scen camp${c.done&&!isCamp(c)?" done":""}">${c.og?`<div class="ogtop"><img src="${esc(c.og)}" alt="" loading="lazy"></div>`:""}${head}${shown.map(e=>epRowHTML(c,e)).join("")||`<div class="tip" style="margin-top:8px">아직 ${isCamp(c)?"탁이":"편이"} 없어요</div>`}
     ${es.length>3?`<button class="cmore" data-cmore="${esc(c.id)}">${more?"▴ 접기":`▾ ${isCamp(c)?"탁":"이전 편"} ${es.length-3}개 더 보기`}</button>`:""}</section>`;
@@ -60,13 +66,14 @@ function campPageHTML(){
         <label>${W} 이름<input type="text" id="g-name" value="${esc(c.name)}"></label>
         <label>원어 제목 <span class="tip" style="display:inline">· 선택</span><input type="text" id="g-orig" value="${esc(c.orig||"")}" placeholder="해외 캠페인이면 원래 제목 (없으면 비워 두세요)"></label>
         <div class="g-cponly fields" style="margin:0${cm?";display:none":""}"><label>캠페인 룰 <span class="tip" style="display:inline">· 각 편은 룰을 비워 두면 이 룰을 따라가요</span><input type="text" id="g-sys" value="${esc(c.system||"")}" placeholder="예: 더블크로스 3rd, 인세인, D&D 5.5e" list="g-syslist"></label>
+        <label>고정탁 <span class="tip" style="display:inline">· 같은 인선으로 이어가는 탁이면 이름을 붙여요 (예: ㄹㅈㅅ)</span><input type="text" id="g-fix" value="${esc(c.fix||"")}" placeholder="비워 두면 없음" list="fixlist"></label>${fixListHTML()}
         <datalist id="g-syslist">${[...new Set(S.scens.map(x=>(x.system||"").trim()).filter(Boolean))].map(x=>`<option value="${esc(x)}">`).join("")}</datalist>
         <div class="donerow"><label class="chk"><input type="checkbox" id="g-done"${c.done?" checked":""}> 캠페인 완주</label><span class="tip">첫 화면에 캠페인 완주 도장이 찍히고, 진행 중인 캠페인 칸에서 빠져요</span></div></div>
       </div></div>
       <div class="sc-sec"><h4 data-en="INTRO">소개</h4><textarea id="g-intro" placeholder="${cm?"언제 어디서 모인 캠프인지 적어 주세요 (선택)":"어떤 캠페인인지 적어 주세요 (선택)"}">${esc(c.intro||"")}</textarea></div>
       ${es.length?"":`<div class="sc-sec"><h4 data-en="DELETE">${W} 지우기</h4><div class="tip" style="margin-bottom:8px">${cm?"탁이":"편이"} 하나도 없을 때만 지울 수 있어요.</div><button class="ghost" id="g-del">이 ${W} 지우기</button></div>`}`
       :`<div class="ckick"><span class="cbadge">${W}</span></div>
-      <div class="sc-top"><h2>${esc(c.name)}${c.orig?`<span class="orig">${esc(c.orig)}</span>`:""}</h2><span class="scmeta">${campTagHTML(c)}${S.canAdmin?`<button id="g-edit" title="${W} 수정" aria-label="${W} 수정">✎<span class="lbl"> 수정</span></button>`:""}</span></div>`}
+      ${c.fix?fixLineHTML(c.fix,"campline"):""}<div class="sc-top"><h2>${esc(c.name)}${c.orig?`<span class="orig">${esc(c.orig)}</span>`:""}</h2><span class="scmeta">${campTagHTML(c)}${S.canAdmin?`<button id="g-edit" title="${W} 수정" aria-label="${W} 수정">✎<span class="lbl"> 수정</span></button>`:""}</span></div>`}
     ${!ed&&c.intro?`<div class="sc-sec"><h4 data-en="INTRO">소개</h4><div class="sc-text">${emoize(esc(c.intro)).replace(/\n/g,"<br>")}</div></div>`:""}
     ${ed?"":`<div class="sc-sec"><h4 data-en="${cm?"TABLES":"EPISODES"}">${cm?"탁 목록":"시나리오 목록"}</h4>${list.map(e=>epRowHTML(c,e)).join("")||`<div class="sc-text empty">아직 ${cm?"탁이":"편이"} 없어요.</div>`}
       ${S.canAdmin&&S.db?(()=>{const free=S.scens.filter(x=>!x.camp||!campById(x.camp)).sort((a,b)=>(b.lastDay||"").localeCompare(a.lastDay||""));
@@ -166,7 +173,7 @@ function bindCamp(){
   const sv=$("#g-save");if(sv)sv.onclick=async()=>{const name=$("#g-name").value.trim();if(!name){toast("이름을 넣어 주세요");return;}
     const cm=isCamp(c);let v;
     if(cm){const a=$("#g-start").value,b=$("#g-end").value||a;if(a&&b<a){toast("끝나는 날이 시작일보다 빨라요");return;}v={name,place:$("#g-place").value.trim(),start:a,end:b};if(S.campOg!==undefined)v.og=S.campOg||firebase.firestore.FieldValue.delete();}
-    else{v={name,orig:$("#g-orig").value.trim(),system:$("#g-sys").value.trim(),intro:$("#g-intro").value.trim(),done:$("#g-done").checked};}const done=!cm&&v.done;if(done&&!c.done)v.doneAt=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+    else{v={name,orig:$("#g-orig").value.trim(),system:$("#g-sys").value.trim(),fix:($("#g-fix")?.value||"").trim(),intro:$("#g-intro").value.trim(),done:$("#g-done").checked};}const done=!cm&&v.done;if(done&&!c.done)v.doneAt=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
     try{await S.db.doc("camps/"+c.id).update(v);S.campEdit=false;const og=S.campOg;S.campOg=undefined;Object.assign(c,v);if(og==="")delete c.og;
       if(done){const es=campEps(c);if(es.length)await closePrevEps(c.id,"__all");}
       render();toast("저장했어요");}catch(err){writeFail(err);}};

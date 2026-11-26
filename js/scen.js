@@ -43,6 +43,7 @@ function scenHTML(){
         <label>시나리오 이름<input type="text" id="e-name" value="${esc(d.name)}"></label>
         <label>원어 제목 <span class="tip" style="display:inline">· 선택</span><input type="text" id="e-orig" value="${esc(d.orig||"")}" placeholder="해외 시나리오면 원래 제목 (없으면 비워 두세요)"></label>
         <label>룰 시스템<input type="text" id="e-sys" value="${esc(d.system||"")}" placeholder="예: D&D 5.5e, 더블크로스 3rd, CoC 7판, 인세인" list="syslist"></label>
+        <label>고정탁 <span class="tip" style="display:inline">· 같은 인선으로 이어가는 탁이면 이름을 붙여요 (예: ㄹㅈㅅ)</span><input type="text" id="e-fix" value="${esc(d.fix||"")}" placeholder="비워 두면 없음" list="fixlist"></label>${fixListHTML()}
         <div class="donerow"><label class="chk"><input type="checkbox" id="e-done"${d.done?" checked":""}> 완주했어요</label><label class="donedate">완주한 날 <input type="date" id="e-doneat" value="${esc(d.doneAt||"")}"></label></div>
         <datalist id="syslist">${[...new Set(S.scens.map(x=>(x.system||"").trim()).filter(Boolean))].map(x=>`<option value="${esc(x)}">`).join("")}</datalist>
       </div></div>
@@ -85,6 +86,7 @@ function scenHTML(){
     </div>`;
   }
   return `<div class="sc-page">
+    ${sc.fix?fixLineHTML(sc.fix,"campline"):""}
     ${campOf(sc)?isCamp(campOf(sc))?`<div class="campline">캠프 · <a href="#g-${esc(sc.camp)}">${esc(campOf(sc).name)}</a></div>`:`<div class="campline">📚 <a href="#g-${esc(sc.camp)}">${esc(campOf(sc).name)}</a> · ${esc(epLabel(campOf(sc),sc))}${sc.gaiden?"":` <span class="tip">(전체 ${campCount(campOf(sc))})</span>`}</div>`:""}
     ${(()=>{const t=`<h2>${esc(sc.name)}${sc.orig?`<span class="orig">${esc(sc.orig)}</span>`:""}</h2>`,m=`${effSys(sc)?`<span class="sys" data-th="${themeOf(sc)||"pa"}">${esc(sysLabel(effSys(sc)))}</span>`:""}${bookCan(sc)?`<button id="scbook" type="button" title="리플레이북" aria-label="리플레이북" onclick="location.hash='b-${esc(sc.id)}'">📖<span class="lbl"> 리플레이북</span></button>`:""}${S.canWrite?`<button id="scedit" title="세션 수정" aria-label="세션 수정">✎<span class="lbl"> 수정</span></button>`:""}`;
       return sc.og?`<div class="schero"><img src="${sc.og}" alt=""><div class="schero-t">${t}<span class="scmeta">${m}</span></div></div>`
@@ -164,7 +166,7 @@ function bindScen(){
   if(!S.scEdit)return;
   const sc=scenById(S.cid);if(!sc){S.scEdit=false;return;}
   const d=S.scDraft;
-  const pull=()=>{d.name=$("#e-name").value.trim()||d.name;d.system=$("#e-sys").value.trim();d.orig=$("#e-orig").value.trim();d.done=$("#e-done").checked;d.doneAt=d.done?$("#e-doneat").value:"";d.summary=$("#e-sum").value.replace(/\s+$/,"");
+  const pull=()=>{d.name=$("#e-name").value.trim()||d.name;d.system=$("#e-sys").value.trim();d.fix=($("#e-fix")?.value||"").trim();d.orig=$("#e-orig").value.trim();d.done=$("#e-done").checked;d.doneAt=d.done?$("#e-doneat").value:"";d.summary=$("#e-sum").value.replace(/\s+$/,"");
     document.querySelectorAll("[data-nm]").forEach(i=>{const v=i.value.trim();if(v)d.sp[+i.dataset.nm].name=v;});
     document.querySelectorAll("[data-ch]").forEach(i=>{d.sp[+i.dataset.ch].ch=i.value.trim();});
     const g=document.querySelector("[data-gm]:checked");if(g){if(g.dataset.gm)d.gm=g.dataset.gm;else delete d.gm;}

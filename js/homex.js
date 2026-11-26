@@ -18,7 +18,7 @@ function hxScCard(g){const sc=g.sc||{name:g.scen};const open=!g.sc||isOpen(g.sc.
   const on=g.days.some(d=>d.parts.some(p=>p.src==="ccfolia"||p.src==="roll20")),nolog=g.days.length&&g.days.every(d=>d.nolog);
   const lines=g.days.reduce((a,d)=>a+d.parts.reduce((x,p)=>x+(p.n||0),0),0);
   return `<a class="hxc" href="${g.sc?"#c-"+esc(g.sc.id):"#"}" style="--c:${hxCol(sc)}">${hxImg(sc.og)}
-   <div class="hx-b">${sc.system?`<div class="hx-r1"><span class="hx-tag">${esc(sysLabel(effSys(sc)))}</span></div>`:""}
+   <div class="hx-b">${sc.system||sc.fix?`<div class="hx-r1">${sc.system?`<span class="hx-tag">${esc(sysLabel(effSys(sc)))}</span>`:""}${sc.fix?`<span class="hx-tag o hx-fix" data-fix="${esc(sc.fix)}">◆ ${esc(sc.fix)}</span>`:""}</div>`:""}
    <h4>${esc(sc.name)}</h4>${sc.orig?`<div class="hx-orig">${esc(sc.orig)}</div>`:""}
    <span class="hx-when">${esc(hxRng(d0,d1))}${d0?` · ${g.days.length||sc.nDays||1}회차`:""}${on?" · ONLINE":nolog?" · 녹음 없음":""}${!open?" · 🔒":""}</span>
    ${sc.summary?`<div class="hx-sum">${esc(sc.summary)}</div>`:""}
@@ -28,7 +28,7 @@ function hxScCard(g){const sc=g.sc||{name:g.scen};const open=!g.sc||isOpen(g.sc.
 // 캠프·캠페인 카드
 function hxCampCard(c){const es=campEps(c),cm=isCamp(c),cc=c.system?hxCol({system:c.system}):"#1fa8e0",shown=S.campMore[c.id]?es.slice().reverse():es.slice().reverse().slice(0,5);
   return `<a class="hxc" href="#g-${esc(c.id)}" style="--c:${cm?"#1fa8e0":cc}">${hxImg(c.og)}
-   <div class="hx-b"><div class="hx-r1"><span class="hx-tag" style="--c:#1fa8e0">${cm?"CAMP":"CAMPAIGN"}</span>${c.system?`<span class="hx-tag o" style="--c:${cc}">${esc(sysLabel(c.system))}</span>`:""}${c.place?`<span class="hx-tag o">${esc(c.place)}</span>`:""}</div>
+   <div class="hx-b"><div class="hx-r1"><span class="hx-tag" style="--c:#1fa8e0">${cm?"CAMP":"CAMPAIGN"}</span>${c.system?`<span class="hx-tag o" style="--c:${cc}">${esc(sysLabel(c.system))}</span>`:""}${c.place?`<span class="hx-tag o">${esc(c.place)}</span>`:""}${!cm&&c.fix?`<span class="hx-tag o hx-fix" data-fix="${esc(c.fix)}">◆ ${esc(c.fix)}</span>`:""}</div>
    <h4>${esc(c.name)}</h4>${c.orig&&!cm?`<div class="hx-orig">${esc(c.orig)}</div>`:""}
    <span class="hx-when">${cm?esc(campWhen(c)||""):esc(hxRng(es[0]?.lastDay,campLast(c)))} · ${es.length}${cm?"탁":"편"}</span>
    <ul class="hx-eps">${shown.map(e=>`<li style="--c:${hxCol(e)}"><b>${esc(e.name)}</b><small>${cm?esc((e.lastDay||"").slice(5).replace("-","/")):esc(epLabel(c,e))}</small></li>`).join("")}</ul>
