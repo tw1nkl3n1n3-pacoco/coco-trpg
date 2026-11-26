@@ -810,7 +810,11 @@ body.booking #hdr,body.booking .topbar{display:none}
 .bchap b{font-size:1.9em;line-height:1.3}
 .bscene{font:700 .92em/1.4 "Pretendard",sans-serif;margin:1.6em 0 .8em;display:flex;align-items:center;gap:8px}
 .bscene::before{content:"";width:14px;height:2px;background:var(--acc)}
-.bscene.l2{font-size:1.04em;font-weight:700;color:#1c1c1b;margin-top:1.8em}.bscene.l3{font-size:.9em;font-weight:600;color:#555}.bscene.l3::before{width:8px;background:#bbb}
+/* 중단락: 굵은 큰 제목 + 아래 선 · 하단락: 짧은 막대 + 굵은 제목 */
+.bscene.l2{font:700 1.32em/1.35 "Pretendard",sans-serif;color:#1c1c1b;margin:2em 0 1em;padding:0 0 .35em;border-bottom:1.5px solid #1c1c1b;gap:10px}
+.bscene.l2::before{width:5px;height:1em;background:#1c1c1b}
+.bscene.l3{font-size:1.06em;font-weight:700;color:#1c1c1b;margin:1.7em 0 .8em}
+.bscene.l3::before{width:14px;height:2px;background:#1c1c1b}
 .bnar{font:inherit;margin:.7em 0;padding-left:.9em;border-left:2px solid #d9d4c8;color:#3b3934}
 .bln{display:grid;grid-template-columns:5.6em 1fr;gap:0 .9em;margin:.32em 0}
 .bln .sp{word-break:keep-all;text-align:right;font:600 .86em/1.9 "Pretendard",sans-serif;color:var(--c,#333)}
@@ -920,7 +924,7 @@ body.booking #hdr,body.booking .topbar{display:none}
 .bpg:not(.bcover) .bhand{background:#efefef}.bpg:not(.bcover) .bhand b{color:#555}
 .bpg:not(.bcover) .bmemo{background:#f2f2f2;border-top-color:#1c1c1b;color:#555}
 .bpg:not(.bcover) .bdice{border-color:#bdbdbd}
-.bpg:not(.bcover) .bscene.l3::before{background:#9e9e9e}
+
 .bpg:not(.bcover) .bpc .av{background:#5a5a5a}
 .bpg:not(.bcover) img{filter:grayscale(1)}
 .bpg:not(.bcover) .brv .rb{filter:grayscale(1)}
