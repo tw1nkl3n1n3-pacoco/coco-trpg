@@ -101,6 +101,7 @@ async function galMutate(it,fn){
   await S.db.runTransaction(async tx=>{const d=await tx.get(ref);const g=(d.exists&&d.data().gal)||[];tx.update(ref,{gal:fn(g)});});
 }
 function galIsCover(sc,p,k){return !!(sc&&sc.cover&&sc.cover.id===p.id&&(sc.cover.k||0)===(k||0));}
+function galIsFxCover(p,k){const c=S.fix&&(S.fixDocs[fixKey(S.fix)]||{}).cover;return !!(c&&c.id===p.id&&(c.k||0)===(k||0));}
 function galCur(){const L=S.galItems;const i=L.findIndex(p=>p.id===S.galOpen);return {L,i,p:L[i]};}
 function galCanUp(it){return it.kind==="fx"?(S.canAdmin||(S.fix&&fixOpen(S.fix))):(canWriteScen(it.src)||S.canAdmin);}
 const galYmd=t=>{const d=new Date(t||Date.now()),z=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`;};
@@ -124,7 +125,7 @@ function galLBRefresh(force){
     <div class="side"><div class="meta"><div class="k">#${n2(i+1)}${p.label?` · <a href="#c-${esc(p.src)}">${esc(p.label)}</a>`:""}</div>
       ${p.cap?`<h3>${esc(p.cap)}</h3>`:""}
       <div class="by">${esc(p.by||"")}${p.by?" 올림 · ":""}${p.at?new Date(p.at).toLocaleDateString("ko-KR"):""}${IM.length>1?` · ${IM.length}장`:""}${q.w?` · ${q.w}×${q.h}`:""}</div>
-      ${ed?`<div class="tools"><button type="button" data-glb="edit">✎ 수정</button>${S.canAdmin&&p.kind==="sc"?`<button type="button" data-glb="cover" class="${galIsCover(sc,p,S.galImg)?"on":""}">${galIsCover(sc,p,S.galImg)?"★ 카드 이미지":"☆ 카드 이미지로"}</button>`:""}</div>`:""}</div>
+      ${ed?`<div class="tools"><button type="button" data-glb="edit">✎ 수정</button>${S.canAdmin&&S.fix&&!S.cid&&!S.sid?`<button type="button" data-glb="fxcover" class="${galIsFxCover(p,S.galImg)?"on":""}">${galIsFxCover(p,S.galImg)?"★ 커버":"☆ 커버로"}</button>`:""}${S.canAdmin&&p.kind==="sc"?`<button type="button" data-glb="cover" class="${galIsCover(sc,p,S.galImg)?"on":""}">${galIsCover(sc,p,S.galImg)?"★ 카드 이미지":"☆ 카드 이미지로"}</button>`:""}</div>`:""}</div>
       <div class="ch">COMMENTS · ${cms.length}</div>
       <div class="cl">${cms.map(c=>{const sp=(sc?.sp||[]).find(x=>x.k===c.k);return `<div class="cm"><span class="av" style="--c:${sp?.c||"#888"}">${esc((c.name||"?").slice(0,1))}</span><div><b>${esc(c.name||"")}</b><i>${galTime(c.created)}</i>${S.canAdmin||c.uid===myUid()?`<button type="button" class="cmx" data-glbcx="${esc(c.id)}" title="지우기">✕</button>`:""}<p>${esc(c.text||"")}</p></div></div>`;}).join("")||`<div class="tip" style="padding:10px 0">아직 댓글이 없어요</div>`}</div>
       ${can?`<form class="cin" id="glbf"><input type="text" id="glbnew" maxlength="2000" placeholder="댓글 달기" autocomplete="off"><button class="pri">등록</button></form>`:""}</div>
@@ -140,6 +141,10 @@ function galLBRefresh(force){
     if(act==="x")galClose();
     else if(act==="prev")galStep(-1);else if(act==="next")galStep(1);
     else if(act==="edit")galEditOpen(p);
+    else if(act==="fxcover"){const fk=fixKey(S.fix),on=galIsFxCover(p,S.galImg);const cv=on?null:{id:p.id,k:S.galImg,u:q.u||q.o,y:50};
+      S.fixDocs[fk]={...(S.fixDocs[fk]||{}),cover:cv||undefined};
+      try{await S.db.doc("fixes/"+fk).set({cover:cv?cv:firebase.firestore.FieldValue.delete()},{merge:true});toast(on?"커버를 뺐어요":"페이지 커버로 정했어요 · 위치는 커버의 ↕ 위치로 고를 수 있어요",3200);}catch(err){toast("저장하지 못했어요");}
+      render();galLBRefresh(true);}
     else if(act==="cover"&&sc){const on=galIsCover(sc,p,S.galImg);
       await mutateScen(sc.id,L=>{if(on)delete L.cover;else L.cover={id:p.id,k:S.galImg,u:q.u||q.o,w:q.w||0,h:q.h||0,y:50};});
       toast(on?"카드 이미지를 공유 이미지로 되돌렸어요":"카드 이미지로 정했어요 · 보여줄 위치는 시나리오 수정에서 고를 수 있어요",3200);render();galLBRefresh(true);}

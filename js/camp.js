@@ -63,6 +63,20 @@ function bindFixLock(){const f=S.fix;
       try{await S.db.doc(`unlocks/${fixKey(f)}_${S.auth.currentUser.uid}`).set({scid:fixKey(f),uid:S.auth.currentUser.uid,pw,at:Date.now()});}catch(e){}const who=fixWord(f)==="자관"&&fixOther(f)||S.fxPick;if(who)fixSetMe(f,who);S.fxPick=null;
       m.textContent="열렸어요!";refreshCanWrite();render();}
     catch(err){m.textContent=err&&err.code==="permission-denied"?"비밀번호가 틀렸어요.":"열지 못했어요: "+(err.code||err.message);}};}
+// 타임라인: 고정탁 안의 모든 세션을 날짜순(최근이 위)으로 · 시나리오 첫 세션에 갤러리 사진 하나
+function fixTimelineHTML(f,allG,cs){
+  const E=[];allG.forEach(g=>{const sc=g.sc,n=g.days.length;g.days.forEach((d,i)=>E.push({day:d.day||"",sc,i:i+1,n,sid:d.parts[0]?.id,camp:sc.camp&&campById(sc.camp)}));
+    (sc.plays||[]).filter(x=>!g.days.some(d=>d.day===x)).forEach(x=>E.push({day:x,sc,nolog:1,n}));});
+  if(!E.length)return "";
+  E.sort((a,b)=>b.day.localeCompare(a.day));
+  const firstOf={};E.slice().reverse().forEach(e=>{if(!firstOf[e.sc.id])firstOf[e.sc.id]=e;});
+  const lastOf={};E.forEach(e=>{if(!lastOf[e.sc.id])lastOf[e.sc.id]=e;});
+  const dot=d=>d.replace(/-/g,".");let ym="";
+  return `<div class="sc-sec fxtl"><h4 data-en="TIMELINE">타임라인<span class="gcnt">${String(E.length).padStart(2,"0")}</span></h4><ol class="tl">${E.map(e=>{
+    const sc=e.sc,open=isOpen(sc.id),th=galImgs((sc.gal||[]).slice().sort((a,b)=>(a.at||0)-(b.at||0))[0])[0],m=e.day.slice(0,7),mh=m!==ym?(ym=m,`<li class="tlm">${esc(dot(m))}</li>`):"";
+    const done=lastOf[sc.id]===e&&(sc.done||e.camp&&e.camp.done),first=firstOf[sc.id]===e;
+    const body=`<b>${esc(sc.name)}</b><small>${e.nolog?"녹음 없이 플레이":(e.n>1?`${e.i}회차 / ${e.n}`:"1회차")}${effSys(sc)?" · "+esc(sysLabel(effSys(sc))):""}${e.camp?" · "+esc(e.camp.name):""}</small>${first&&e.n>1?`<em class="st">시작</em>`:""}${done?`<em class="dn">완주</em>`:""}`;
+    return mh+`<li style="--c:${typeof hxCol==="function"?hxCol(sc):"var(--acc)"}"><span class="d">${esc(e.day.slice(8))}</span><i class="dot"></i>${open&&e.sid?`<a class="b" href="#s-${esc(e.sid)}">${body}</a>`:`<span class="b">${body}</span>`}${first&&th?`<img src="${esc(th.u||th.o)}" alt="" loading="lazy">`:""}</li>`;}).join("")}</ol></div>`;}
 function fixPageHTML(f){
   const gs=groups().filter(g=>g.sc&&(g.sc.fix||"")===f&&!(g.sc.camp&&campById(g.sc.camp)&&campById(g.sc.camp).fix===f)),cs=S.camps.filter(c=>!isCamp(c)&&(c.fix||"")===f);
   const hx=isHX();
@@ -73,17 +87,27 @@ function fixPageHTML(f){
   const P=Object.values(ppl).sort((a,b)=>b.cnt.size-a.cnt.size);
   const intro=(site().fixes||{})[f]||"";
   const dot=d=>d.replace(/-/g,".");
-  return `<div class="home hmain fxpage${hx?" hx":""}"><a class="ghost ownonly" href="#" style="font-size:13px">← 첫 화면</a>
-    <div class="fxk">${fixWord(f)}</div><h2 class="fxh">${esc(f)}</h2>
+  const fk=fixKey(f);fixDocWatch(fk);const cv=(S.fixDocs[fk]||{}).cover;
+  const head=`<div class="fxk">${fixWord(f)}</div><h2 class="fxh">${esc(f)}</h2>`;
+  return `<div class="home hmain fxpage${hx?" hx":""}${cv?" hascv":""}"><a class="ghost ownonly" href="#" style="font-size:13px">← 첫 화면</a>
+    ${cv?`<div class="fxcover cv${S.fxCvDrag?" drag":""}" id="fxcover"><img src="${esc(cv.u)}" alt="" draggable="false" style="object-position:50% ${+cv.y>=0?+cv.y:50}%"><div class="fxct">${head}</div>
+      ${S.canAdmin?`<button type="button" class="fxcvpos" id="fxcvpos">${S.fxCvDrag?"✓ 위치 저장":"↕ 위치"}</button>`:""}</div>`:head}
     <div class="fxmeta">${days.length?`${esc(dot(days[0]))} – ${esc(dot(days.at(-1)))} · `:""}<b>${gs.length+cs.reduce((a,c)=>a+campEps(c).length,0)}</b>시나리오 · <b>${days.length}</b>세션${cs.length?` · <b>${cs.length}</b>캠페인`:""}</div>
     ${P.length?`<div class="fxppl">${P.map(p=>`<span class="fxp${fixMe(f)===p.n?" me":""}"${!S.canAdmin&&fixWord(f)!=="자관"?` data-fxme="${esc(p.n)}" title="나로 고르기"`:""} style="--c:${fixC(p.c)}"><i></i><b>${esc(p.n)}</b><small>${[...p.ch].map(esc).join(" · ")}${p.ch.size?" · ":""}${p.cnt.size}탁</small></span>`).join("")}</div>`:""}
     ${intro||S.canAdmin?`<div class="fxintro${intro?"":" empty"}" id="fxintro">${intro?esc(intro).replace(/\n/g,"<br>"):"고정탁 소개 (선택) — 언제부터 어떤 멤버로 굴리는 탁인지 적어 둘 수 있어요"}${S.canAdmin?` <button class="ghost" id="fxedit" type="button">✎</button>`:""}</div>`:""}
+    ${fixTimelineHTML(f,allG,cs)}
     <div id="sesslist" class="fxlist">${items.map(x=>x.h).join("")||`<div class="notice">아직 이 고정탁으로 묶인 세션이 없어요</div>`}</div>
     ${S.db?galHTML(galSrcFix(f),{newest:1,title:"전체 갤러리"}):""}
     ${S.canAdmin?`<div class="sc-sec fxacc"><h4 data-en="ACCESS">${fixWord(f)} 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
       <div class="tip">이 비밀번호 하나로 고정탁 안의 모든 세션·캠페인이 열려요. 고정탁을 붙인 세션은 자동으로 이 비밀번호를 따라가요. 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
       <div class="pwrow"><code class="pw">${esc(S.secrets?.[fixKey(f)]||"만드는 중…")}</code><button class="pri" id="fxcopy">링크+비밀번호 복사</button><button class="ghost" id="fxnewpw">새로 만들기</button></div></div>`:""}</div>`;}
 function bindFixPage(){homeMasonry();
+  {const b=$("#fxcvpos"),box=$("#fxcover"),im=box&&box.querySelector("img");if(b&&im){const fk=fixKey(S.fix);
+    b.onclick=async()=>{if(!S.fxCvDrag){S.fxCvDrag=true;render();return;}S.fxCvDrag=false;const y=parseFloat(im.style.objectPosition.split(" ")[1])||50;
+      const cv={...(S.fixDocs[fk]||{}).cover,y:Math.round(y)};S.fixDocs[fk]={...(S.fixDocs[fk]||{}),cover:cv};render();try{await S.db.doc("fixes/"+fk).set({cover:cv},{merge:true});toast("커버 위치를 저장했어요");}catch(e){toast("저장하지 못했어요");}};
+    if(S.fxCvDrag){let sy=null,y0=50;box.onpointerdown=e=>{if(e.target===b)return;sy=e.clientY;y0=parseFloat(im.style.objectPosition.split(" ")[1])||50;box.setPointerCapture(e.pointerId);};
+      box.onpointermove=e=>{if(sy==null)return;const ex=im.naturalWidth?im.clientWidth*im.naturalHeight/im.naturalWidth-im.clientHeight:0;if(ex<=0)return;const v=Math.max(0,Math.min(100,y0-(e.clientY-sy)/ex*100));im.style.objectPosition=`50% ${v}%`;};
+      box.onpointerup=box.onpointercancel=()=>{sy=null;};}}}
   document.querySelectorAll("[data-fxme]").forEach(b=>b.onclick=()=>{fixSetMe(S.fix,b.dataset.fxme);toast(`${b.dataset.fxme}(으)로 골랐어요 · 안의 모든 세션에 적용돼요`);render();});if(S.db)bindGal(galSrcFix(S.fix));
   const fc=$("#fxcopy");if(fc)fc.onclick=()=>copyText(`[고정탁 ${S.fix}] TRPG 로그\n${location.origin+location.pathname}#f-${encodeURIComponent(S.fix)}\n비밀번호: ${S.secrets?.[fixKey(S.fix)]||""}`,"링크와 비밀번호를 복사했어요");
   const fn=$("#fxnewpw");if(fn)fn.onclick=()=>confirmBox("고정탁 비밀번호를 새로 만들까요? 고정탁 안의 모든 세션 비밀번호가 같이 바뀌고, 예전 비밀번호로 연 사람은 다시 잠겨요.","새로 만들기",async()=>{try{await S.db.doc("secrets/"+fixKey(S.fix)).set({pw:genPw()});ownerMaintain();toast("새 비밀번호를 만들었어요");}catch(err){writeFail(err);}});bindPartEdit&&bindPartEdit();if(isHX())bindHX();
