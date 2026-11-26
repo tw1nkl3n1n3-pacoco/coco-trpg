@@ -108,7 +108,8 @@ function bookPaginate(blocks,host,startNo){
   const pages=[];let body=null,day=null;
   const pg=()=>pages[pages.length-1];
   const newPage=()=>{const el=document.createElement("div");el.className="bpg";el.innerHTML=`<div class="bbody"></div><div class="bfolio"><span></span><span></span></div>`;host.appendChild(el);body=el.firstChild;pages.push({el,ids:[],chap:null,day:null});};
-  const over=()=>body.scrollHeight>body.clientHeight+1;
+  // 넘침 판단은 1px도 봐줘요 안 해요 (반올림 탓에 마지막 줄 아래가 살짝 잘리던 것)
+  const over=()=>{if(body.scrollHeight>body.clientHeight)return true;const l=body.lastElementChild;return !!l&&l.getBoundingClientRect().bottom>body.getBoundingClientRect().bottom+.5;};
   const mk=x=>{const t=document.createElement("div");t.innerHTML=blockHTML(x,false);return t.firstElementChild;};
   const SPLIT=new Set(["nar","line","hand"]);
   const fits=x=>{const el=mk(x);if(!el)return true;body.appendChild(el);const ok=!over();body.removeChild(el);return ok;};
