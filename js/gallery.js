@@ -1,7 +1,7 @@
 // 갤러리 — 세션 페이지(세션 후기 아래)와 고정탁 페이지
 // 사진 목록: scenarios/{id}.gal 또는 fixes/{fx_이름}.gal = [{id,u(미리보기),o(원본),p,op,w,h,fn,cap,by,k,uid,at}]
 // 파일: Storage gal/{scid 또는 fx_이름}/{uid}/… — 원본 그대로 + 화면용 미리보기 · 댓글: comments (scid=출처, sid:"gal", bid:사진 id)
-S.galCms={};S.galItems=[];S.galOpen=null;S.galEditCap=false;S.fixDocs={};
+S.galCms={};S.galItems=[];S.galOpen=null;S.gEdit=null;S.fixDocs={};
 const _galSubs={};let _galKey="";const _fixSubs={};
 // 게시물 하나에 사진 여러 장 (imgs) · 예전 한 장짜리는 u/o를 그대로
 function galImgs(p){return p&&Array.isArray(p.imgs)&&p.imgs.length?p.imgs:p?[{u:p.u,o:p.o,p:p.p,op:p.op,w:p.w,h:p.h,fn:p.fn,sz:p.sz}]:[];}
@@ -104,15 +104,15 @@ function galIsCover(sc,p,k){return !!(sc&&sc.cover&&sc.cover.id===p.id&&(sc.cove
 function galCur(){const L=S.galItems;const i=L.findIndex(p=>p.id===S.galOpen);return {L,i,p:L[i]};}
 function galCanUp(it){return it.kind==="fx"?(S.canAdmin||(S.fix&&fixOpen(S.fix))):(canWriteScen(it.src)||S.canAdmin);}
 const galYmd=t=>{const d=new Date(t||Date.now()),z=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`;};
-function galOpenAt(id,k){S.galOpen=id;S.galImg=k||0;S.galEditCap=false;S.galEditAt=false;galLBRefresh(true);}
-function galClose(){S.galOpen=null;S.galEditCap=false;document.querySelector(".glb")?.remove();document.body.classList.remove("glbon");}
+function galOpenAt(id,k){S.galOpen=id;S.galImg=k||0;galLBRefresh(true);}
+function galClose(){galEditClose();S.galOpen=null;document.querySelector(".glb")?.remove();document.body.classList.remove("glbon");}
 function galLBRefresh(force){
   if(!S.galOpen)return;
   const {L,i,p}=galCur();
   if(!p){if(force||!document.querySelector(".galsec"))galClose();return;}
   let ov=document.querySelector(".glb");
   const ta=ov&&ov.querySelector("#glbnew"),draft=ta?ta.value:"",focused=ta&&document.activeElement===ta;
-  if(ov&&!force&&(S.galEditCap||S.galEditAt))return;
+  if(ov&&!force&&S.gEdit)return;
   if(!ov){ov=document.createElement("div");ov.className="glb";document.body.appendChild(ov);document.body.classList.add("glbon");}
   const cms=galCmsOf(p),can=galCanUp(p),ed=galCanEdit(p),sc=p.kind==="sc"?scenById(p.src):null;
   const IM=galImgs(p);if(!(S.galImg>=0&&S.galImg<IM.length))S.galImg=0;const q=IM[S.galImg];
@@ -122,19 +122,15 @@ function galLBRefresh(force){
       ${L.length>1||IM.length>1?`<button type="button" class="nv l" data-glb="prev">‹</button><button type="button" class="nv r" data-glb="next">›</button>`:""}
       ${IM.length>1?`<div class="idots">${IM.map((_,k)=>`<button type="button" class="${k===S.galImg?"on":""}" data-glbimg="${k}"></button>`).join("")}</div>`:""}</div>
     <div class="side"><div class="meta"><div class="k">#${n2(i+1)}${p.label?` · <a href="#c-${esc(p.src)}">${esc(p.label)}</a>`:""}</div>
-      ${S.galEditCap?`<div class="capf"><input type="text" id="glbcap" maxlength="80" value="${esc(p.cap||"")}" placeholder="한 줄 설명"><button type="button" class="pri" data-glb="capok">저장</button><button type="button" class="ghost" data-glb="capx">취소</button></div>`
-        :p.cap?`<h3>${esc(p.cap)}</h3>`:""}
+      ${p.cap?`<h3>${esc(p.cap)}</h3>`:""}
       <div class="by">${esc(p.by||"")}${p.by?" 올림 · ":""}${p.at?new Date(p.at).toLocaleDateString("ko-KR"):""}${IM.length>1?` · ${IM.length}장`:""}${q.w?` · ${q.w}×${q.h}`:""}</div>
-      ${S.galEditAt?`<div class="capf"><input type="date" id="glbat" value="${galYmd(p.at)}"><button type="button" class="pri" data-glb="atok">저장</button><button type="button" class="ghost" data-glb="atx">취소</button></div>`:""}
-      ${ed&&!S.galEditCap&&!S.galEditAt?`<div class="tools"><button type="button" data-glb="cap">✎ 설명</button>${S.canAdmin?`<button type="button" data-glb="at">📅 날짜</button>`:""}${S.canAdmin&&p.kind==="sc"?`<button type="button" data-glb="cover" class="${galIsCover(sc,p,S.galImg)?"on":""}">${galIsCover(sc,p,S.galImg)?"★ 카드 이미지":"☆ 카드 이미지로"}</button>`:""}<button type="button" data-glb="del">지우기</button></div>
-        <div class="tools"><button type="button" data-glb="rep">🔄 이 사진 바꾸기</button><button type="button" data-glb="more">＋ 사진 더하기</button>${IM.length>1?`<button type="button" data-glb="drop">이 장 빼기</button>`:""}<input type="file" accept="image/*" hidden id="glbfile"></div><div class="tip" id="glbmsg"></div>`:""}</div>
+      ${ed?`<div class="tools"><button type="button" data-glb="edit">✎ 수정</button>${S.canAdmin&&p.kind==="sc"?`<button type="button" data-glb="cover" class="${galIsCover(sc,p,S.galImg)?"on":""}">${galIsCover(sc,p,S.galImg)?"★ 카드 이미지":"☆ 카드 이미지로"}</button>`:""}</div>`:""}</div>
       <div class="ch">COMMENTS · ${cms.length}</div>
       <div class="cl">${cms.map(c=>{const sp=(sc?.sp||[]).find(x=>x.k===c.k);return `<div class="cm"><span class="av" style="--c:${sp?.c||"#888"}">${esc((c.name||"?").slice(0,1))}</span><div><b>${esc(c.name||"")}</b><i>${galTime(c.created)}</i>${S.canAdmin||c.uid===myUid()?`<button type="button" class="cmx" data-glbcx="${esc(c.id)}" title="지우기">✕</button>`:""}<p>${esc(c.text||"")}</p></div></div>`;}).join("")||`<div class="tip" style="padding:10px 0">아직 댓글이 없어요</div>`}</div>
       ${can?`<form class="cin" id="glbf"><input type="text" id="glbnew" maxlength="2000" placeholder="댓글 달기" autocomplete="off"><button class="pri">등록</button></form>`:""}</div>
     <div class="strip">${L.map(x=>`<button type="button" class="${x.id===p.id?"on":""}" data-glbgo="${esc(x.id)}"><img src="${esc(galImgs(x)[0].u||galImgs(x)[0].o)}" alt="" loading="lazy">${galImgs(x).length>1?`<i>${galImgs(x).length}</i>`:""}</button>`).join("")}</div>`;
   const nt=ov.querySelector("#glbnew");if(nt&&draft){nt.value=draft;if(focused)nt.focus();}
   ov.querySelector(".strip .on")?.scrollIntoView({block:"nearest",inline:"center"});
-  const cap=ov.querySelector("#glbcap");if(cap){cap.focus();cap.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();ov.querySelector('[data-glb="capok"]').click();}};}
   ov.onclick=async e=>{
     const go=e.target.closest("[data-glbgo]");if(go){galOpenAt(go.dataset.glbgo);return;}
     const di=e.target.closest("[data-glbimg]");if(di){S.galImg=+di.dataset.glbimg;galLBRefresh(true);return;}
@@ -143,28 +139,10 @@ function galLBRefresh(force){
     const a=e.target.closest("[data-glb]"),act=a?a.dataset.glb:(e.target.classList.contains("stage")?"x":"");
     if(act==="x")galClose();
     else if(act==="prev")galStep(-1);else if(act==="next")galStep(1);
-    else if(act==="rep"||act==="more"){const fi=ov.querySelector("#glbfile");fi.multiple=act==="more";fi.onchange=()=>{const fs=[...fi.files].filter(f=>/^image\//.test(f.type));fi.value="";if(fs.length)galEditImgs(p,act,fs);};fi.click();}
-    else if(act==="drop")confirmBox(`${S.galImg+1}번째 사진을 이 게시물에서 뺄까요? 원본 파일도 지워져요.`,"빼기",async()=>{const k=S.galImg,old=IM[k];
-      try{await galMutate(p,g=>g.map(x=>x.id!==p.id?x:galSetImgs(x,galImgs(x).filter((_,j)=>j!==k))));[old.p,old.op].filter(Boolean).forEach(x=>S.storage?.ref(x).delete().catch(()=>{}));await galFixCover(p,IM.filter((_,j)=>j!==k));S.galImg=Math.max(0,k-1);toast("뺐어요");}catch(err){toast("빼지 못했어요");}galLBRefresh(true);});
-    else if(act==="cap"){S.galEditCap=true;galLBRefresh(true);}
-    else if(act==="capx"){S.galEditCap=false;galLBRefresh(true);}
-    else if(act==="at"){S.galEditAt=true;galLBRefresh(true);}
-    else if(act==="atx"){S.galEditAt=false;galLBRefresh(true);}
-    else if(act==="atok"){const v=ov.querySelector("#glbat").value;S.galEditAt=false;
-      if(/^\d{4}-\d\d-\d\d$/.test(v)){const [y,m,d]=v.split("-").map(Number),old=new Date(p.at||Date.now());const t=new Date(y,m-1,d,old.getHours(),old.getMinutes(),old.getSeconds()).getTime();
-        try{await galMutate(p,g=>g.map(x=>x.id===p.id?{...x,at:t}:x));}catch(err){toast("저장하지 못했어요");}}
-      galLBRefresh(true);}
+    else if(act==="edit")galEditOpen(p);
     else if(act==="cover"&&sc){const on=galIsCover(sc,p,S.galImg);
       await mutateScen(sc.id,L=>{if(on)delete L.cover;else L.cover={id:p.id,k:S.galImg,u:q.u||q.o,w:q.w||0,h:q.h||0,y:50};});
       toast(on?"카드 이미지를 공유 이미지로 되돌렸어요":"카드 이미지로 정했어요 · 보여줄 위치는 시나리오 수정에서 고를 수 있어요",3200);render();galLBRefresh(true);}
-    else if(act==="capok"){const v=(ov.querySelector("#glbcap").value||"").trim().slice(0,80);S.galEditCap=false;
-      try{await galMutate(p,g=>g.map(x=>x.id===p.id?{...x,cap:v}:x));}catch(err){toast("저장하지 못했어요");}galLBRefresh(true);}
-    else if(act==="del")confirmBox(IM.length>1?`이 게시물(사진 ${IM.length}장)을 지울까요? 원본 파일과 댓글도 같이 사라져요.`:"이 사진을 지울까요? 원본 파일과 사진에 달린 댓글도 같이 사라져요.","지우기",async()=>{
-      try{await galMutate(p,g=>g.filter(x=>x.id!==p.id));
-        if(sc&&sc.cover?.id===p.id)await mutateScen(sc.id,L=>{delete L.cover;});
-        galImgs(p).flatMap(x=>[x.p,x.op]).filter(Boolean).forEach(x=>S.storage?.ref(x).delete().catch(()=>{}));
-        cms.filter(c=>S.canAdmin||c.uid===myUid()).forEach(c=>S.db.doc("comments/"+c.id).delete().catch(()=>{}));
-        toast("지웠어요");}catch(err){toast("지우지 못했어요");}});
   };
   {const stg=ov.querySelector(".stage");let tx=null;stg.ontouchstart=e=>{tx=e.touches[0].clientX;};stg.ontouchend=e=>{if(tx==null)return;const dx=e.changedTouches[0].clientX-tx;tx=null;if(Math.abs(dx)>45)galStep(dx<0?1:-1);};}
   const f=ov.querySelector("#glbf");if(f)f.onsubmit=async e=>{e.preventDefault();const t=ov.querySelector("#glbnew"),text=t.value.trim();if(!text)return;
@@ -178,21 +156,61 @@ function galLBRefresh(force){
 // 카드 이미지로 쓰던 사진이 바뀌거나 빠지면 카드도 맞춰요
 async function galFixCover(p,imgs){if(p.kind!=="sc")return;const sc=scenById(p.src);const c=sc&&sc.cover;if(!c||c.id!==p.id)return;
   const k=Math.min(c.k||0,imgs.length-1),q=imgs[k];await mutateScen(sc.id,L=>{if(!q){delete L.cover;return;}L.cover={...L.cover,k,u:q.u||q.o,w:q.w||0,h:q.h||0};});}
+// ---------- 게시물 수정창 ----------
+// 사진 순서·바꾸기·더하기·빼기, 한 줄 설명 · 주인은 글쓴이·작성일자도
+function galEditOpen(p){S.gEdit={pid:p.id,imgs:galImgs(p).map(q=>({...q})),cap:p.cap||"",by:p.by||"",at:p.at||Date.now(),busy:false};galEditRender();}
+function galEditClose(){if(S.gEdit)S.gEdit.imgs.forEach(q=>q.file&&URL.revokeObjectURL(q.prev));S.gEdit=null;document.querySelector(".gedit")?.remove();}
+function galEditRender(){const E=S.gEdit;if(!E)return;const {p}=galCur();if(!p||p.id!==E.pid){galEditClose();return;}
+  let w=document.querySelector(".gedit");if(!w){w=document.createElement("div");w.className="gedit";document.body.appendChild(w);}
+  const sc=p.kind==="sc"?scenById(p.src):S.scens.find(x=>fixOfScen(x)===S.fix);
+  const ppl=[...new Set((p.kind==="sc"?[sc]:S.scens.filter(x=>fixOfScen(x)===S.fix)).flatMap(x=>(x?.sp||[]).filter(q=>!isAnon(q)&&!/&/.test(q.name||"")).map(q=>pcSplit(q.name).name)))];
+  w.innerHTML=`<div class="gebox"><div class="geh"><b>게시물 수정</b><button type="button" class="x" data-ge="x">✕</button></div>
+    <div class="gelab">사진 <span class="tip">· ← → 로 순서 · 🔄 바꾸기 · ✕ 빼기</span></div>
+    <div class="geimgs">${E.imgs.map((q,k)=>`<div class="gei"><img src="${esc(q.prev||q.u||q.o)}" alt=""><span class="n">${k+1}</span>${q.file?`<span class="new">새 사진</span>`:""}
+      <div class="geb"><button type="button" data-gemv="${k}:-1"${k?"":" disabled"}>←</button><button type="button" data-gerep="${k}" title="바꾸기">🔄</button><button type="button" data-gedel="${k}"${E.imgs.length>1?"":" disabled"} title="빼기">✕</button><button type="button" data-gemv="${k}:1"${k<E.imgs.length-1?"":" disabled"}>→</button></div></div>`).join("")}
+      <label class="geadd"><input type="file" accept="image/*" multiple hidden id="geaddf">＋<small>더하기</small></label></div>
+    <input type="file" accept="image/*" hidden id="gerepf">
+    <div class="gelab">한 줄 설명</div><input type="text" id="gecap" maxlength="80" value="${esc(E.cap)}" placeholder="(선택)">
+    ${S.canAdmin?`<div class="gerow"><div><div class="gelab">글쓴이 <span class="tip">· 주인만</span></div><input type="text" id="geby" value="${esc(E.by)}" list="gebyl"><datalist id="gebyl">${ppl.map(n=>`<option value="${esc(n)}">`).join("")}</datalist></div>
+      <div><div class="gelab">작성일자 <span class="tip">· 주인만</span></div><input type="date" id="geat" value="${galYmd(E.at)}"></div></div>`:""}
+    <div class="tip" id="gemsg"></div>
+    <div class="gefoot"><button type="button" class="ghost danger" data-ge="del">게시물 지우기</button><span style="flex:1"></span><button type="button" class="ghost" data-ge="x">취소</button><button type="button" class="pri" data-ge="ok">저장</button></div></div>`;
+  const pull=()=>{const c=w.querySelector("#gecap");if(c)E.cap=c.value;const b=w.querySelector("#geby");if(b)E.by=b.value;const t=w.querySelector("#geat");if(t&&/^\d{4}-\d\d-\d\d$/.test(t.value)){const [y,m,d]=t.value.split("-").map(Number),o=new Date(E.at);E.at=new Date(y,m-1,d,o.getHours(),o.getMinutes(),o.getSeconds()).getTime();}};
+  const fileObj=f=>({file:f,prev:URL.createObjectURL(f)});
+  let repAt=-1;const rf=w.querySelector("#gerepf");
+  rf.onchange=()=>{const f=[...rf.files].find(x=>/^image\//.test(x.type));rf.value="";if(!f||repAt<0)return;pull();const old=E.imgs[repAt];if(old.file)URL.revokeObjectURL(old.prev);E.imgs[repAt]=fileObj(f);galEditRender();};
+  w.querySelector("#geaddf").onchange=e=>{const fs=[...e.target.files].filter(x=>/^image\//.test(x.type));if(!fs.length)return;pull();E.imgs.push(...fs.map(fileObj));galEditRender();};
+  w.onclick=async e=>{if(E.busy)return;
+    if(e.target===w){pull();galEditClose();return;}
+    const mv=e.target.closest("[data-gemv]");if(mv){pull();const [k,d]=mv.dataset.gemv.split(":").map(Number),j=k+d;[E.imgs[k],E.imgs[j]]=[E.imgs[j],E.imgs[k]];galEditRender();return;}
+    const rp=e.target.closest("[data-gerep]");if(rp){repAt=+rp.dataset.gerep;rf.click();return;}
+    const dl=e.target.closest("[data-gedel]");if(dl){pull();const k=+dl.dataset.gedel;const q=E.imgs[k];if(q.file)URL.revokeObjectURL(q.prev);E.imgs.splice(k,1);galEditRender();return;}
+    const a=e.target.closest("[data-ge]");if(!a)return;
+    if(a.dataset.ge==="x"){galEditClose();return;}
+    if(a.dataset.ge==="del"){const IM=galImgs(p),cms=galCmsOf(p);confirmBox(IM.length>1?`이 게시물(사진 ${IM.length}장)을 지울까요? 원본 파일과 댓글도 같이 사라져요.`:"이 사진을 지울까요? 원본 파일과 사진에 달린 댓글도 같이 사라져요.","지우기",async()=>{
+      try{await galMutate(p,g=>g.filter(x=>x.id!==p.id));const sc2=p.kind==="sc"?scenById(p.src):null;
+        if(sc2&&sc2.cover?.id===p.id)await mutateScen(sc2.id,L=>{delete L.cover;});
+        IM.flatMap(x=>[x.p,x.op]).filter(Boolean).forEach(x=>S.storage?.ref(x).delete().catch(()=>{}));
+        cms.filter(c=>S.canAdmin||c.uid===myUid()).forEach(c=>S.db.doc("comments/"+c.id).delete().catch(()=>{}));
+        galEditClose();toast("지웠어요");}catch(err){toast("지우지 못했어요");}});return;}
+    if(a.dataset.ge==="ok"){pull();if(!E.imgs.length){toast("사진이 한 장은 있어야 해요");return;}
+      E.busy=true;const m=w.querySelector("#gemsg");w.querySelectorAll("button,input").forEach(x=>x.disabled=true);
+      try{if(!S.authUser)await S.auth.signInAnonymously();
+        const news=E.imgs.filter(q=>q.file).length;let n=0;const out=[];
+        for(const q of E.imgs){if(!q.file){out.push(q);continue;}
+          out.push(await galPut(p.src,q.file,p.id+"_"+Date.now().toString(36)+rid4(),pr=>{if(m)m.textContent=`올리는 중… ${n+1} / ${news} · ${pr}%`;}));n++;}
+        const before=galImgs(p),keep=new Set(out.map(q=>q.op||q.o));
+        await galMutate(p,g=>g.map(x=>{if(x.id!==p.id)return x;const y=galSetImgs(x,out);y.cap=E.cap.trim().slice(0,80);if(S.canAdmin){y.by=E.by.trim().slice(0,40);y.at=E.at;}return y;}));
+        before.filter(q=>!keep.has(q.op||q.o)).flatMap(q=>[q.p,q.op]).filter(Boolean).forEach(x=>S.storage?.ref(x).delete().catch(()=>{}));
+        await galFixCover(p,out);
+        galEditClose();S.galImg=Math.min(S.galImg||0,out.length-1);toast("저장했어요");galLBRefresh(true);
+      }catch(err){E.busy=false;toast("저장하지 못했어요");galEditRender();}}};
+  const cap=w.querySelector("#gecap");if(cap)cap.onkeydown=e=>{if(e.key==="Enter"&&!e.isComposing){e.preventDefault();w.querySelector('[data-ge="ok"]').click();}};
+}
 function galSetImgs(x,imgs){const f=imgs[0]||{};return {...x,imgs,u:f.u,o:f.o,w:f.w||0,h:f.h||0,p:f.p||"",op:f.op||""};}
-// 게시물 사진 바꾸기·더하기
-async function galEditImgs(p,mode,fs){const m=document.querySelector("#glbmsg");const k=S.galImg||0,IM=galImgs(p);
-  try{if(!S.authUser)await S.auth.signInAnonymously();const add=[];
-    for(const f of (mode==="rep"?fs.slice(0,1):fs)){add.push(await galPut(p.src,f,p.id+"_"+Date.now().toString(36)+rid4(),pr=>{if(m)m.textContent=`올리는 중… ${add.length+1} / ${mode==="rep"?1:fs.length} · ${pr}%`;}));}
-    await galMutate(p,g=>g.map(x=>{if(x.id!==p.id)return x;const cur=galImgs(x).slice();if(mode==="rep")cur[k]=add[0];else cur.push(...add);return galSetImgs(x,cur);}));
-    {const cur=IM.slice();if(mode==="rep")cur[k]=add[0];else cur.push(...add);await galFixCover(p,cur);}
-    if(mode==="rep"){const old=IM[k];if(old)[old.p,old.op].filter(Boolean).forEach(x=>S.storage?.ref(x).delete().catch(()=>{}));}
-    else S.galImg=IM.length;
-    toast(mode==="rep"?"사진을 바꿨어요":`사진 ${add.length}장을 더했어요`);}
-  catch(e){toast("사진을 올리지 못했어요");if(m)m.textContent="";}
-  galLBRefresh(true);}
 function galStep(d){const {L,i,p}=galCur();if(!L.length)return;const n=galImgs(p).length,k=(S.galImg||0)+d;
   if(k>=0&&k<n){S.galImg=k;galLBRefresh(true);return;}
   const np=L[(i+d+L.length)%L.length];galOpenAt(np.id,d<0?galImgs(np).length-1:0);}
-document.addEventListener("keydown",e=>{if(!S.galOpen||e.target.matches("input,textarea"))return;
+document.addEventListener("keydown",e=>{if(S.gEdit){if(e.key==="Escape")galEditClose();return;}if(!S.galOpen||e.target.matches("input,textarea"))return;
   if(e.key==="Escape")galClose();else if(e.key==="ArrowLeft")galStep(-1);else if(e.key==="ArrowRight")galStep(1);});
 window.addEventListener("hashchange",()=>{if(S.galOpen)galClose();galUnwatch();});
