@@ -294,7 +294,9 @@ async function saveScen(sc){
   if(S.scBusy[id]){S.scAgain[id]=true;return;}
   S.scBusy[id]=true;renderStatus();
   const {id:_,...body}=sc;
-  try{await retry(()=>S.db.doc("scenarios/"+id).set(JSON.parse(JSON.stringify(body))));}catch(e){writeFail(e);}
+  // 갤러리(gal)는 다른 사람이 동시에 올릴 수 있어서, 저장할 때 서버에 있는 걸 그대로 둬요
+  const clean=JSON.parse(JSON.stringify(body));delete clean.gal;
+  try{await retry(()=>S.db.runTransaction(async tx=>{const ref=S.db.doc("scenarios/"+id),d=await tx.get(ref),g=d.exists?d.data().gal:undefined;tx.set(ref,g!==undefined?{...clean,gal:g}:clean);}));}catch(e){writeFail(e);}
   S.scBusy[id]=false;
   if(S.scAgain[id]){S.scAgain[id]=false;await saveScen(scenById(id)||sc);}
   renderStatus();

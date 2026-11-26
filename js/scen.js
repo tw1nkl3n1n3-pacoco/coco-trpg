@@ -95,6 +95,7 @@ function scenHTML(){
     <div class="sc-sec"><h4 data-en="CAST">플레이어 · 등장인물</h4>${sc.sp.length?`${(()=>{const m=meSp(sc.id),k=myK(sc.id);return k==="ext"&&!S.canAdmin?`<div class="meline">외부인으로 보는 중 · <button class="lnk" id="mepick">바꾸기</button></div>`:m?`<div class="meline" style="--c:${fixC(m.c)}"><span class="me"><i></i>나: ${esc(pcSplit(m.name).name)}</span>${m.ch?` · ${esc(m.ch)}`:""} · <button class="lnk" id="mepick">바꾸기</button></div>`:`<div class="meline"><button class="lnk" id="mepick">나는 누구? 고르기</button></div>`;})()}<div class="castrow">${(sc.sp.some(p=>p.chr)?gmFirst(sc.sp.filter(p=>p.chr&&p.ch),gmKey(sc)):gmFirst(sc.sp.filter(p=>p.k===gmKey(sc)||!isAnon(p)&&!/&/.test(p.name)||p.ch),gmKey(sc))).map(p=>{const gm=p.k===gmKey(sc),q=pcSplit(p.name);return `<div class="cc${gm?" gm":""}${p.k===myK(sc.id)?" mine":""}" style="--c:${fixC(p.c)}"><div class="av">${avHTML(p,gm&&!p.chr)}</div><div class="cn">${esc(gm?(p.ch||gmWord(sc)):(p.ch||q.name))}</div><div class="cp">${gm?gmTag:q.n?`<span class="pcn">${q.n}</span>`:""}${p.ch||gm?esc(q.name):""}</div></div>`;}).join("")}</div>`:`<div class="sc-text empty">녹음을 올리면 화자가 여기 모여요.</div>`}</div>
     <div class="sc-sec"><h4 data-en="SESSIONS">${days.length&&days.every(x=>x.nolog)?"회차":"녹음"}</h4>${days.length?daysHTML(days):`<div class="sc-text empty">아직 올린 회차가 없어요.</div>`}${S.db&&S.canWrite&&!sc.done?`<div class="upadd"><a class="btnlike" href="#up-${esc(sc.id)}">＋ 회차 올리기</a></div>`:""}</div>
     ${S.db?revSectionHTML(sc):""}
+    ${S.db?galHTML(sc):""}
     ${S.canAdmin?`    <div class="sc-sec"><h4 data-en="ACCESS">${campOf(sc)?campWord(campOf(sc))+" 비밀번호":"세션 비밀번호"} <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
       <div class="tip" style="margin-bottom:10px">${campOf(sc)?`이 비밀번호 하나로 ${esc(campOf(sc).name)}의 모든 ${isCamp(campOf(sc))?"탁이":"편이"} 열려요.`:"링크와 비밀번호를 같이 받은 사람만 이 세션을 보고 고칠 수 있어요."}${fixOfScen(sc)?` 고정탁 ${esc(fixOfScen(sc))}의 비밀번호와 같아요(새로 만들면 고정탁 전체가 바뀌어요).`:""} 비밀번호를 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
       ${S.secrets&&S.secrets[pwOf(sc)]?`<div class="pwrow"><code class="pw">${esc(S.secrets[pwOf(sc)])}</code>
@@ -162,7 +163,7 @@ function bindScen(){
   const rg=$("#regenpw");if(rg)rg.onclick=()=>confirmBox("비밀번호를 새로 만들까요? 예전 비밀번호로 연 사람은 모두 다시 잠겨요.","새로 만들기",async()=>{try{const fx=fixOfScen(scx);await S.db.doc("secrets/"+(fx?fixKey(fx):pwOf(scx))).set({pw:genPw()});if(fx)ownerMaintain();toast("새 비밀번호를 만들었어요");}catch(e){toast("바꾸지 못했어요");}});
   const b=$("#scback");if(b)b.onclick=()=>{location.hash="";};
   const e=$("#scedit");if(e)e.onclick=()=>{S.scEdit=true;render();};
-  if(!S.scEdit){const sc0=scenById(S.cid);if(sc0)bindRevs(sc0);}
+  if(!S.scEdit){const sc0=scenById(S.cid);if(sc0){bindRevs(sc0);bindGal(sc0);}}
   if(!S.scEdit)return;
   const sc=scenById(S.cid);if(!sc){S.scEdit=false;return;}
   const d=S.scDraft;
