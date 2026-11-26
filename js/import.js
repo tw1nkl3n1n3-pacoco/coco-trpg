@@ -154,7 +154,7 @@ function ccBuild(day,cfg){
     const w=who(m.sp);out.push({id:rid(),s:w.k,t,x:m.x,...(w.a?{a:w.a}:{}),...extra});
   }
   const chunks=[];for(let i=0;i<out.length;i+=CHUNK)chunks.push(out.slice(i,i+CHUNK));
-  return {meta:{title:`${cfg.scen} ${kst(t0)}`,date:kst(t0),t0,created:Date.now(),n:out.length,sp,src:cfg.src||"ccfolia",scen:cfg.scen,day:kst(t0),part:cfg.part||1},chunks,gmName:tai&&mainBy[cfg.gmNick]?"":(cfg.gmNick||"GM")};
+  return {meta:{title:`${cfg.scen} ${kst(t0)}`,date:kst(t0),t0,created:Date.now(),n:out.length,sp,src:cfg.src||"ccfolia",scen:cfg.scen,day:kst(t0),part:cfg.part||1},chunks,gmName:cfg.gmNick||"GM",...(tai&&mainBy[cfg.gmNick]?{gmCh:(sp.find(x=>x.k===mainBy[cfg.gmNick])||{}).ch}:{})};
 }
 function ccForm(cc,box,opt={}){
   const ex=findScen(opt.scen||cc.title);

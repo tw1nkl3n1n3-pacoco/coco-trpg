@@ -114,7 +114,8 @@ async function importSession(r,inf,pre="",cfg={}){return importBuilt(buildSessio
 async function importBuilt(built,pre="",cfg={}){
   const {meta,chunks}=built;
   const sc=attachToScen(meta,chunks);meta.scid=sc.id;
-  const gmK=built.gmName?(sc.sp.find(x=>x.name===built.gmName&&!x.ch)||{}).k:null;
+  // 타이만이면 GM이 맡은 캐릭터 화자가 GM
+  const gmK=built.gmName?(sc.sp.find(x=>x.name===built.gmName&&(built.gmCh?x.ch===built.gmCh:!x.ch))||{}).k:null;
   const sid="s"+Date.now().toString(36)+rid().slice(0,3);
   const prog=$("#iprog"),btn=$("#igo");btn.disabled=true;
   try{
