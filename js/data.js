@@ -454,13 +454,14 @@ async function removeSpeakerIfUnused(k){
   if(S.spFilter===k)S.spFilter=null;renderSide();return true;
 }
 // 세션(시나리오)의 모든 녹음에서 화자 from → to 로 옮기고 목록에서 from을 지워요
-async function mergeSpeakerAll(from,to){
-  const sc=curScen();
-  doOps(S.flat.filter(e=>e.b.s===from||e.b.w===from).map(e=>({ci:e.ci,op:{t:"set",id:e.b.id,f:{...(e.b.s===from?{s:to}:{}),...(e.b.w===from?{w:to}:{})}}})),"화자 합치기");
+// alias: 옮긴 줄에 원래 이름을 '그 줄에서 쓴 이름'(a)으로 남겨요 (타이만에서 정체를 숨긴 캐릭터 → 진짜 캐릭터)
+async function mergeSpeakerAll(from,to,alias){
+  const sc=curScen();const al=e=>alias&&e.b.s===from&&!e.b.a?{a:alias}:{};
+  doOps(S.flat.filter(e=>e.b.s===from||e.b.w===from).map(e=>({ci:e.ci,op:{t:"set",id:e.b.id,f:{...(e.b.s===from?{s:to}:{}),...(e.b.w===from?{w:to}:{}),...al(e)}}})),alias?"가명으로 합치기":"화자 합치기");
   if(S.spFilter===from)S.spFilter=null;renderAllRows();renderSide();
   if(sc&&!S.local){const others=S.sessions.filter(x=>x.scid===sc.id&&x.id!==S.sid);let n=0;
     for(const ss of others){try{const q=await S.db.collection(`sessions/${ss.id}/chunks`).get();
-      for(const d of q.docs){const b=d.data().b||[];let ch=false;const nb=b.map(x=>{if(x.s!==from&&x.w!==from)return x;ch=true;n++;return {...x,...(x.s===from?{s:to}:{}),...(x.w===from?{w:to}:{})};});
+      for(const d of q.docs){const b=d.data().b||[];let ch=false;const nb=b.map(x=>{if(x.s!==from&&x.w!==from)return x;ch=true;n++;return {...x,...(x.s===from?{s:to}:{}),...(x.w===from?{w:to}:{}),...(alias&&x.s===from&&!x.a?{a:alias}:{})};});
         if(ch)await retry(()=>d.ref.update({b:nb}));}}catch(e){toast("다른 녹음 일부를 옮기지 못했어요",4000);}}
     await mutateScen(sc.id,d=>{d.sp=(d.sp||[]).filter(x=>x.k!==from);if(d.gm===from)d.gm=to;});
     toast(`합쳤어요${n?` (다른 녹음 ${n}줄 포함)`:""}`);}

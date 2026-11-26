@@ -296,7 +296,7 @@ function rowHTML(e,prev){
   const tx=lines.map((l,i)=>(i?`<button class="cut" data-act="cut" data-line="${i}" tabindex="-1" title="여기서 나눠서 다른 화자로 지정할 수 있게 해요">✂</button>`:"")+`<span class="ln">${hl(l)}</span>`).join(" ");
   // 타이만 캐릭터: 본문은 캐릭터 이름만, 잡담은 맡은 사람 이름
   const tch=s.chr&&s.ch&&bk!==1&&!(b.tab&&CHAT_TAB.test(b.tab));
-  const q=pcSplit(s.name),label=tch?esc(s.ch):(gm&&!s.chr?gmTag:q.n?`<span class="pcn">${q.n}</span>`:"")+esc(q.name),sub=bk===1||tch||s.chr?"":(b.a?esc(b.a):s.ch?esc(s.ch):"")+(b.tab&&!CHAT_TAB.test(b.tab)?`<span class="tabchip">${esc(b.tab)}</span>`:"");
+  const q=pcSplit(s.name),label=tch?esc(b.a||s.ch):(gm&&!s.chr?gmTag:q.n?`<span class="pcn">${q.n}</span>`:"")+esc(q.name),sub=bk===1||tch||s.chr?"":(b.a?esc(b.a):s.ch?esc(s.ch):"")+(b.tab&&!CHAT_TAB.test(b.tab)?`<span class="tabchip">${esc(b.tab)}</span>`:"");
   return `<div class="row${first?" first":""}${gm?" gm":""}${b.tab?" tabbed":""}${bk===1?" bk-ooc":bk===2?" bk-cut":""}${S.startId===b.id?" bstart":""}${S.endId===b.id?" bend":""}${isSel(b.id)?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}" style="--c:${fixC(s.c)}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmtLog(b.t)}</button>
     <div class="body">
@@ -396,6 +396,8 @@ function spMenu(anchor,k){
     ${curScen()?`<button data-a="gm">${isGM(k)?"GM 해제":"GM으로 지정 (맨 앞으로)"}</button>`:""}<hr>
     <div class="tip" style="padding:2px 8px">이 녹음에서 이 화자의 대사 ${c}개를 모두 다른 화자로 옮기기</div>
     ${others.map(o=>`<button data-to="${o.k}" style="--c:${fixC(o.c)}"><span class="dot"></span>→ ${esc(o.name)}</button>`).join("")}
+    ${s.chr&&!s.ch&&others.some(o=>o.chr&&o.ch)?`<hr><div class="tip" style="padding:2px 8px">타이만 · 사실은 다른 캐릭터였다면: 대사는 그 캐릭터로 묶고, 로그·리플레이북에는 '${esc(s.name)}'(으)로 그대로 보여요 (이 세션의 모든 녹음)</div>
+    ${others.filter(o=>o.chr&&o.ch).map(o=>`<button data-alias="${o.k}" style="--c:${fixC(o.c)}"><span class="dot"></span>'${esc(s.name)}'는 사실 ${esc(o.ch)}</button>`).join("")}`:""}
     ${c===0?`<hr><button data-a="del" style="color:var(--bad)">목록에서 지우기</button>`:""}`,p=>{
     const rn=$("#rn",p),rch=$("#rch",p);
     const doRename=()=>{const v=rn.value.trim(),ch=rch.value.trim();const t=spTarget().find(x=>x.k===k)||(S.meta.sp||[]).find(x=>x.k===k);
@@ -410,6 +412,7 @@ function spMenu(anchor,k){
     p.querySelector('[data-a=up]').onclick=()=>{const sw=a=>{const i=a.findIndex(x=>x.k===k);if(i>0)[a[i-1],a[i]]=[a[i],a[i-1]];};const sc=curScen();
       if(sc)mutateScen(sc.id,d=>sw(d.sp));else{sw(spTarget());saveMeta();}renderSide();closePop();};
     p.querySelectorAll("[data-to]").forEach(b=>b.onclick=()=>{closePop();confirmBox(`이 녹음에서 '${s.name}'의 대사 ${c}개를 '${spBy(b.dataset.to).name}'(으)로 옮길까요?`,"옮기기",()=>mergeSpeaker(k,b.dataset.to));});
+    p.querySelectorAll("[data-alias]").forEach(b=>b.onclick=()=>{const o=spBy(b.dataset.alias);closePop();confirmBox(`'${s.name}'의 대사를 ${o.ch}(으)로 묶을까요? 로그와 리플레이북에는 그 줄들이 계속 '${s.name}'(으)로 보이고, 등장인물·대사 수는 ${o.ch}(으)로 합쳐져요.`,"묶기",()=>mergeSpeakerAll(k,b.dataset.alias,s.name));});
     const d=p.querySelector('[data-a=del]');if(d)d.onclick=()=>{closePop();removeSpeakerIfUnused(k);};
     const g=p.querySelector('[data-a=gm]');if(g)g.onclick=()=>{const sc=curScen();if(!sc){closePop();return;}const on=!isGM(k);mutateScen(sc.id,d=>{if(on)d.gm=k;else delete d.gm;});closePop();renderSide();renderAllRows(true);toast(on?"GM으로 지정했어요. 숫자키 1번이 돼요":"GM을 해제했어요");};
     setTimeout(()=>rn.select(),0);

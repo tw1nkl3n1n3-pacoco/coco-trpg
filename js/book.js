@@ -72,7 +72,7 @@ function bookBlocks(sc,edit){
       // GM 줄은 늘 'GM'을 캐릭터 이름처럼, 아래 회색으로 닉네임
       const gn=q.name&&!isAnon(p)?q.name:gmw;
       // 타이만 캐릭터: 본문은 캐릭터 이름만 (잡담은 맡은 사람 이름)
-      if(p.chr)out.push({...base,k:"line",gm:false,tai:1,ooc:bk===1,c:p.c,pc:"",player:q.name,char:bk===1?q.name:(ch||q.name),sub:"",text:b.x||""});
+      if(p.chr)out.push({...base,k:"line",gm:false,tai:1,ooc:bk===1,c:p.c,pc:"",player:q.name,char:bk===1?q.name:(b.a||ch||q.name),sub:"",text:b.x||""});
       else out.push({...base,k:"line",gm,ooc:bk===1,c:p.c,pc:q.n,player:gm?gn:q.name,char:gm?gmw:(ch||q.name),sub:gm?(gn!==gmw?gn:""):(!ch?"":q.name),text:b.x||""});
       if(!edit&&bk!==1)out.push(...noteFor(b.x));
     });
