@@ -62,9 +62,9 @@ function bookBlocks(sc,edit){
       if(b.s===HAND){out.push({...base,k:"hand",title:b.ti||"핸드아웃",text:b.x||""});return;}
       if(b.s===DICE){const p=b.w?bookSp(sc,b.w):null;out.push({...base,k:"dice",who:b.a||(p?(p.ch||pcSplit(p.name).name):""),text:b.x||"",res:b.r||"",sec:!!b.sec});return;}
       const p=bookSp(sc,b.s)||{name:"?",c:"#888"},gm=p.k===gk,q=pcSplit(p.name||""),ch=b.a||p.ch||"";
-      // GM 줄은 'GM'(NPC 대사면 NPC 이름) 아래 회색 닉네임
+      // GM 줄은 늘 'GM'을 캐릭터 이름처럼, 아래 회색으로 닉네임
       const gn=q.name&&!isAnon(p)?q.name:gmw;
-      out.push({...base,k:"line",gm,ooc:bk===1,c:p.c,pc:q.n,player:gm?gn:q.name,char:gm?(b.a||gmw):(ch||q.name),sub:gm?(gn!==gmw?gn:""):(!ch?"":q.name),text:b.x||""});
+      out.push({...base,k:"line",gm,ooc:bk===1,c:p.c,pc:q.n,player:gm?gn:q.name,char:gm?gmw:(ch||q.name),sub:gm?(gn!==gmw?gn:""):(!ch?"":q.name),text:b.x||""});
       if(!edit&&bk!==1)out.push(...noteFor(b.x));
     });
   });
