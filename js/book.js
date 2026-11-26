@@ -255,7 +255,8 @@ function bookSelPop(){
   const xs=B.flat.filter(x=>B.sel.has(x.id)),speech=xs.every(x=>x.k==="line"),cur=xs.every(x=>x.bk===xs[0].bk)?xs[0].bk:-1;
   const pop=document.createElement("div");pop.className="bselpop";
   pop.innerHTML=`${xs.length>1?`<em>${xs.length}줄</em>`:""}<button data-bk="0" class="${cur===0?"on":""}">1 본문</button>${speech?`<button data-bk="1" class="${cur===1?"on":""}">2 잡담</button>`:""}<button data-bk="2" class="${cur===2?"on":""}">3 빼기</button>${xs.length===1&&xs[0].k!=="dice"?`<button data-bst="1" title="이 줄부터 본세션 · 앞은 빼기로">▶ 여기서 시작</button>`:""}`;
-  const first=els[0];first.style.position="relative";first.appendChild(pop);
+  // 고른 줄 안에 넣으면 빼기 줄의 흐림이 같이 먹어서, 시트 위에 따로 띄워요
+  const first=els[0],sh=$("#bksheet");pop.style.top=(first.offsetTop+first.offsetHeight+4)+"px";sh.appendChild(pop);
   pop.onmousedown=e=>{const st=e.target.closest("[data-bst]");if(st){e.preventDefault();e.stopPropagation();bookSetStart(xs[0]);return;}
     const b=e.target.closest("[data-bk]");if(!b)return;e.preventDefault();e.stopPropagation();bookSetBk(+b.dataset.bk);};
 }

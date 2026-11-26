@@ -867,7 +867,7 @@ body.booking #hdr,body.booking .topbar{display:none}
 .bkkeys kbd{display:inline-block;min-width:16px;text-align:center;border:1px solid #bbb;border-bottom-width:2px;border-radius:4px;padding:0 4px;margin-right:4px;font:600 11px/1.5 monospace;background:#fff}
 .bksheet{background:#fffdf8;border-radius:8px;box-shadow:0 1px 6px rgba(0,0,0,.1);padding:24px 40px 40px;font-family:"Noto Serif CJK KR","Noto Serif KR",serif;font-size:14px;line-height:1.7;user-select:none}
 .bksheet .bln{grid-template-columns:7em 1fr}
-.bksheet .bdice{margin-left:7.9em}.bksheet .bln.ooc{margin-left:6.58em}
+.bksheet .bdice{margin-left:7.9em}.bksheet .bln.ooc{font-size:.88em;margin-left:8.98em}
 .bksheet [data-bid]{position:relative;cursor:pointer;border-radius:4px;padding-right:46px}
 .bksheet [data-bid]:hover{background:#f3efe6}
 .bksheet [data-bid].sel{background:#fbe7d8;outline:1px solid #e8b893}
@@ -881,7 +881,8 @@ body.booking #hdr,body.booking .topbar{display:none}
 .bfold{display:block;width:100%;margin:4px 0;padding:8px;border:1px dashed #ccc;border-radius:6px;background:none;font:12px "Pretendard";color:#888;cursor:pointer}
 .bpbreak{display:flex;align-items:center;gap:8px;margin:10px 0;font:10px "Pretendard";color:#b3aea4;letter-spacing:.06em}
 .bpbreak::before,.bpbreak::after{content:"";flex:1;border-top:1px dashed #d6d1c6}
-.bselpop{position:absolute;right:0;top:calc(100% + 4px);z-index:5;display:flex;gap:4px;align-items:center;background:#1c1c1b;padding:4px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.25);font-family:"Pretendard",sans-serif}
+.bksheet{position:relative}
+.bselpop{position:absolute;right:40px;z-index:5;display:flex;gap:4px;align-items:center;background:#1c1c1b;padding:4px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.25);font-family:"Pretendard",sans-serif}
 .bselpop em{color:#bbb;font-size:11px;font-style:normal;padding:0 6px}
 .bselpop button{border:0;background:#333;color:#fff;border-radius:6px;padding:4px 10px;font:12px "Pretendard";cursor:pointer}
 .bselpop button.on,.bselpop button:hover{background:var(--acc)}
@@ -938,3 +939,5 @@ body.booking #hdr,body.booking .topbar{display:none}
 /* 로그 페이지의 .tx 스타일이 책에 섞이지 않게: 크기는 판형 글자 크기에 맞춰 비율로 */
 .bln .tx{font-size:1.38em;line-height:1.8;color:#1c1c1b;max-width:none}
 .bln.ooc .tx{font-size:1em;line-height:inherit;color:inherit}
+/* 책 고치기 화면은 화면용 크기 그대로 (완성본의 판형 비율 적용 안 함) */
+.bksheet .bln .tx{font-size:1em;line-height:1.7}
