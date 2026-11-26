@@ -876,6 +876,14 @@ body.booking #hdr,body.booking .topbar{display:none}
 .bcover .bcsub{margin-top:1em;font-size:.95em;opacity:.9;max-width:90%}
 .bcover .bcwho{margin-top:1.6em;font:.86em/1.7 "Pretendard",sans-serif}
 .bcover .bcwho b{display:inline-block;width:2.6em;color:color-mix(in srgb,var(--acc) 40%,#fff)}
+/* 타이만 표지: 캐릭터 이름 칸 너비를 맞춰서 */
+.bcover .bcwho.tai{display:grid;grid-template-columns:max-content 1fr;gap:0 1em}
+.bcover .bcwho.tai>div{display:contents}.bcover .bcwho.tai b{width:auto}
+/* 타이만 등장인물 쪽의 NPC 줄 */
+.bnpc{margin-top:1.4em;padding-top:1em;border-top:1px solid #ddd;font:.86em/1.8 "Pretendard",sans-serif;color:#555;display:flex;flex-wrap:wrap;gap:.2em 1.1em;align-items:baseline}
+.bnpc b{color:#1c1c1b;letter-spacing:.08em;margin-right:.2em}.bnpc small{color:#999;margin-left:.4em}
+/* 타이만 본문: 캐릭터 이름을 대사 첫 줄과 같은 높이로 */
+.bln.tai{align-items:baseline}.bln.tai .sp{font-size:.9em;line-height:inherit}
 .bcover .bcpub{margin-top:1.4em;padding-top:.8em;border-top:1px solid rgba(255,255,255,.3);display:flex;justify-content:space-between;font:9px "Pretendard",sans-serif;opacity:.75}
 /* 등장인물 · 차례 · 후기 */
 .bcast{display:flex;flex-direction:column;gap:1.1em}

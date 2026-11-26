@@ -72,7 +72,7 @@ function bookBlocks(sc,edit){
       // GM 줄은 늘 'GM'을 캐릭터 이름처럼, 아래 회색으로 닉네임
       const gn=q.name&&!isAnon(p)?q.name:gmw;
       // 타이만 캐릭터: 본문은 캐릭터 이름만 (잡담은 맡은 사람 이름)
-      if(p.chr)out.push({...base,k:"line",gm:false,ooc:bk===1,c:p.c,pc:"",player:q.name,char:bk===1?q.name:(ch||q.name),sub:"",text:b.x||""});
+      if(p.chr)out.push({...base,k:"line",gm:false,tai:1,ooc:bk===1,c:p.c,pc:"",player:q.name,char:bk===1?q.name:(ch||q.name),sub:"",text:b.x||""});
       else out.push({...base,k:"line",gm,ooc:bk===1,c:p.c,pc:q.n,player:gm?gn:q.name,char:gm?gmw:(ch||q.name),sub:gm?(gn!==gmw?gn:""):(!ch?"":q.name),text:b.x||""});
       if(!edit&&bk!==1)out.push(...noteFor(b.x));
     });
@@ -105,7 +105,7 @@ function blockHTML(x,edit){
     case "note":return `<div class="bmemo"><b>${esc(x.n)}</b>${esc(x.d)}</div>`;
     case "line":
       if(x.ooc)return `<div class="bln ooc${x.same||x.cont?" same":""}${sel}${cut}"${dat}><span class="sp">${x.cont||x.same?"":esc(x.player)}</span><span class="tx">${tbox||esc(x.text).replace(/\n/g,"<br>")}</span>${tag}</div>`;
-      return `<div class="bln${x.gm?" gm":""}${x.same||x.cont?" same":""}${sel}${cut}"${dat} style="--c:${fixC(x.c)}"><span class="sp">${x.cont||x.same?"":esc(x.char)+(x.sub?`<small>${esc(x.sub)}</small>`:"")}</span><span class="tx">${tbox||bookTxt(x.text,x.inQ)}</span>${tag}</div>`;
+      return `<div class="bln${x.gm?" gm":""}${x.tai?" tai":""}${x.same||x.cont?" same":""}${sel}${cut}"${dat} style="--c:${fixC(x.c)}"><span class="sp">${x.cont||x.same?"":esc(x.char)+(x.sub?`<small>${esc(x.sub)}</small>`:"")}</span><span class="tx">${tbox||bookTxt(x.text,x.inQ)}</span>${tag}</div>`;
   }
   return "";
 }
@@ -182,9 +182,13 @@ function bookFront(sc){
   const cover=`<div class="bpg bcover"${sc.og?` style="--og:url('${sc.og}')"`:""}><div class="art${sc.og?" img":""}"></div><div class="band"></div><div class="in">
     <div class="series">${sys?`<b>${esc(sys)}</b>`:""}REPLAY BOOK</div><h1>${esc(sc.name)}</h1>${sc.orig?`<div class="bcorig">${esc(sc.orig)}</div>`:""}
     ${sc.summary?`<div class="bcsub">${esc(sc.summary.split("\n").filter(Boolean).slice(0,2).join(" "))}</div>`:""}
-    <div class="bcwho">${gm&&!gm.chr?`<div><b>${gmw}</b>${esc(pcSplit(gm.name).name)}</div>`:""}${(sc.sp||[]).some(p=>p.chr)?gmFirst((sc.sp||[]).filter(p=>p.chr&&p.ch),gk).map(p=>`<div><b>${esc(p.ch)}</b>${esc(pcSplit(p.name).name)}</div>`).join(""):`<div><b>PL</b>${pcs.map(p=>esc(pcSplit(p.name).name)).join(" · ")}</div>`}</div>
+    <div class="bcwho${(sc.sp||[]).some(p=>p.chr)?" tai":""}">${gm&&!gm.chr?`<div><b>${gmw}</b>${esc(pcSplit(gm.name).name)}</div>`:""}${(sc.sp||[]).some(p=>p.chr)?gmFirst((sc.sp||[]).filter(p=>p.chr&&p.ch),gk).map(p=>`<div class="tai"><b>${esc(p.ch)}</b><span>${esc(pcSplit(p.name).name)}</span></div>`).join(""):`<div><b>PL</b>${pcs.map(p=>esc(pcSplit(p.name).name)).join(" · ")}</div>`}</div>
     <div class="bcpub"><span>${site().title===SITE_UNSET?"":esc(site().title)}</span><span>${days.length?esc(days[0].replace(/-/g,". ")):""}${days.length>1?` – ${esc(days[days.length-1].slice(5).replace(/-/g,". "))}`:""}${campOf(sc)?` · ${esc(campOf(sc).name)}`:""}</span></div></div></div>`;
-  const castP=`<div class="bpg"><div class="bbody"><h2 class="ph">CHARACTERS</h2><h3 class="pt">등장인물</h3><div class="bcast">${pcs.map(p=>{const q=pcSplit(p.name);return `<div class="bpc" style="--c:${fixC(p.c)}"><span class="av">${p.img?`<img src="${esc(p.img)}" alt="">`:`<em>${esc((p.ch||q.name).slice(0,1))}</em>`}${q.n?`<i>${q.n}</i>`:""}</span><div><b>${esc(p.ch||q.name)}</b><div class="pl">플레이어 · ${esc(q.name)}</div>${p.memo?`<p>${esc(p.memo)}</p>`:""}</div></div>`;}).join("")}</div>
+  // 타이만: 메인 캐릭터 둘(GM이 맡은 캐릭터 먼저)을 크게, 나머지는 NPC로 작게
+  const taiS=(sc.sp||[]).some(p=>p.chr),taiM=gmFirst((sc.sp||[]).filter(p=>p.chr&&p.ch),gk),taiN=(sc.sp||[]).filter(p=>p.chr&&!p.ch&&!/&/.test(p.name||""));
+  const castP=taiS?`<div class="bpg"><div class="bbody"><h2 class="ph">CHARACTERS</h2><h3 class="pt">등장인물</h3><div class="bcast">${taiM.map(p=>`<div class="bpc" style="--c:${fixC(p.c)}"><span class="av">${p.img?`<img src="${esc(p.img)}" alt="">`:`<em>${esc(p.ch.slice(0,1))}</em>`}</span><div><b>${esc(p.ch)}</b><div class="pl">${p.k===gk?gmw+" · ":""}${esc(pcSplit(p.name).name)}</div>${p.memo?`<p>${esc(p.memo)}</p>`:""}</div></div>`).join("")}</div>
+    ${taiN.length?`<div class="bnpc"><b>NPC</b>${taiN.map(p=>`<span>${esc(p.name)}${p.memo?`<small>${esc(p.memo)}</small>`:""}</span>`).join("")}</div>`:""}</div><div class="bfolio"><span>${esc(sc.name)}</span><span>2</span></div></div>`
+   :`<div class="bpg"><div class="bbody"><h2 class="ph">CHARACTERS</h2><h3 class="pt">등장인물</h3><div class="bcast">${pcs.map(p=>{const q=pcSplit(p.name);return `<div class="bpc" style="--c:${fixC(p.c)}"><span class="av">${p.img?`<img src="${esc(p.img)}" alt="">`:`<em>${esc((p.ch||q.name).slice(0,1))}</em>`}${q.n?`<i>${q.n}</i>`:""}</span><div><b>${esc(p.ch||q.name)}</b><div class="pl">플레이어 · ${esc(q.name)}</div>${p.memo?`<p>${esc(p.memo)}</p>`:""}</div></div>`;}).join("")}</div>
     ${gm?`<div class="bgm"><b>${gmw}</b>${esc(pcSplit(gm.name).name)}${gm.ch?` · ${esc(gm.ch)}`:""} — 이 이야기의 진행자</div>`:""}</div><div class="bfolio"><span>${esc(sc.name)}</span><span>2</span></div></div>`;
   return {cover,castP};
 }
