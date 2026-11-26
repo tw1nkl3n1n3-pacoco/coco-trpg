@@ -3,7 +3,6 @@
 // ---------- 세션 후기 ----------
 async function copyText(t,ok){try{await navigator.clipboard.writeText(t);toast(ok||"복사했어요");}catch(e){prompt("이 주소를 복사해 주세요",t);}}
 // reviews/{rid}: 누구나 읽기 · 시나리오를 연 멤버가 쓰고, 쓴 브라우저(uid)와 주인만 고쳐요
-// (예전 후기: revkeys/{rid} 후기 비밀번호 · revunlocks 비밀번호를 맞게 넣은 기록 → 넣으면 uid가 옮겨와요)
 S.revs={};S.revForm=null;S.revPage=null;
 function watchRevs(scid){
   if(!S.db||S.revs[scid]!==undefined)return;
@@ -36,7 +35,7 @@ function revSectionHTML(sc){
     return `<div class="rvr${cm?" noav":""}">${cm?"":`<span class="av${w.gm?" gm":""}" style="--c:${fixC(w.p?.c||"#888")}">${w.p?avHTML(w.p,w.gm):`<span class="ini">${esc((w.ch||w.name).slice(0,1))}</span>`}</span>`}
       <span class="nm"><b>${esc(w.name)}</b>${cm?(w.p?.roles?`<small>${esc(w.p.roles)}</small>`:""):w.ch||w.gm?`<small>${esc(w.gm?gmWord(sc):w.ch)}</small>`:""}</span>
       ${r.url?`<a class="ext" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">외부 후기 ↗</a>${r.lpw?`<button class="ghost lpw" data-rvlpw="${esc(r.id)}" title="눌러서 비밀번호 복사">🔑 ${esc(r.lpw)}</button>`:""}`:`<button class="go" data-rvopen="${esc(r.id)}">후기 보기</button><button class="cp ghost" data-rvcopy="${esc(r.id)}" title="이 후기 링크 복사">🔗</button>`}
-      ${revMine(r)||(!r.uid&&canTalk(sc.id))?`<button class="ghost cp" data-rvedit="${esc(r.id)}" title="고치기">✎</button>`:""}${revMine(r)?`<button class="ghost cp" data-rvdel="${esc(r.id)}" title="지우기">🗑</button>`:""}</div>`;}).join("");
+      ${revMine(r)?`<button class="ghost cp" data-rvedit="${esc(r.id)}" title="고치기">✎</button>`:""}${revMine(r)?`<button class="ghost cp" data-rvdel="${esc(r.id)}" title="지우기">🗑</button>`:""}</div>`;}).join("");
   const form=f?`<div class="rvform">
       ${f.id||!S.canAdmin?`<div class="tip">${esc(revWho(sc,f).name)} 님의 후기${f.id?"를 고쳐요":"예요"}</div>`:`<label>누구의 후기예요?<select id="rv-k">${cast.map(p=>`<option value="${esc(p.k)}"${f.k===p.k?" selected":""}>${esc(pcSplit(p.name).name)}${p.k===gmKey(sc)||p.ch?` · ${esc(p.k===gmKey(sc)?gmWord(sc):p.ch)}`:""}</option>`).join("")}</select></label>`}
       <div class="tabs"><button type="button" data-rvmode="text" class="${f.mode==="text"?"on":""}">여기에 쓰기</button><button type="button" data-rvmode="url" class="${f.mode==="url"?"on":""}">링크 붙이기</button></div>
@@ -52,24 +51,16 @@ function revPopup(sc,r){
   ov.querySelector("[data-rvcopy]").onclick=()=>copyText(revUrl(r.id),"후기 링크를 복사했어요");
   document.addEventListener("keydown",function k(e){if(e.key==="Escape"){close();document.removeEventListener("keydown",k);}});
 }
-async function revUnlock(rid,pw){
-  if(!S.authUser)await S.auth.signInAnonymously();
-  const uid=S.auth.currentUser.uid;
-  await S.db.doc(`revunlocks/${rid}_${uid}`).set({rid,uid,pw:String(pw).trim(),at:Date.now()});
-}
 function bindRevs(sc){
   const list=S.revs[sc.id]||[],byId=id=>list.find(x=>x.id===id);
   document.querySelectorAll("[data-rvopen]").forEach(b=>b.onclick=()=>revPopup(sc,byId(b.dataset.rvopen)));
   document.querySelectorAll(".rvsec [data-rvcopy]").forEach(b=>b.onclick=()=>copyText(revUrl(b.dataset.rvcopy),"후기 링크를 복사했어요"));
   const add=$("#rv-add");if(add)add.onclick=()=>{const m=meSp(sc.id),taken=new Set(sc.isCampSc?list.map(r=>r.k):[]);S.revForm={scid:sc.id,mode:"text",k:(m&&!taken.has(m.k)?m:sc.sp.find(p=>p.k!==gmKey(sc)&&!taken.has(p.k))||sc.sp[0]||{}).k};render();};
   document.querySelectorAll("[data-rvedit]").forEach(b=>b.onclick=async()=>{const r=byId(b.dataset.rvedit);if(!r)return;
-    // 예전 방식(후기 비밀번호)으로 쓴 후기: 비밀번호로 한 번 열면 이 브라우저 것이 돼요
-    if(!revMine(r)){const pw=prompt(`예전에 정한 ${revWho(sc,r).name} 님의 후기 비밀번호를 넣어 주세요.\n한 번 넣으면 다음부터는 이 브라우저에서 바로 고칠 수 있어요.`);if(!pw)return;
-      try{await revUnlock(r.id,pw);await S.db.doc("reviews/"+r.id).update({uid:myUid()});r.uid=myUid();}catch(e){toast("비밀번호가 틀렸어요");return;}}
     S.revForm={scid:sc.id,id:r.id,k:r.k,mode:r.url?"url":"text",text:r.text||"",html:r.html!=null?r.html:null,url:r.url||"",lpw:r.lpw||""};render();});
   document.querySelectorAll("[data-rvlpw]").forEach(b=>b.onclick=()=>{const r=byId(b.dataset.rvlpw);r&&copyText(r.lpw,"비밀번호를 복사했어요");});
   document.querySelectorAll("[data-rvdel]").forEach(b=>b.onclick=async()=>{const r=byId(b.dataset.rvdel);if(!r||!confirm(`${revWho(sc,r).name} 님의 후기를 지울까요? 되돌릴 수 없어요.`))return;
-    try{await S.db.doc("reviews/"+r.id).delete();await S.db.doc("revkeys/"+r.id).delete().catch(()=>{});}catch(e){writeFail(e);}});
+    try{await S.db.doc("reviews/"+r.id).delete();}catch(e){writeFail(e);}});
   const f=S.revForm;if(!f||f.scid!==sc.id)return;
   const pull=()=>{const k=$("#rv-k");if(k)f.k=k.value;const w=$("#rv-wed");if(w)f.html=wedValue(w);const u=$("#rv-url");if(u)f.url=u.value.trim();const lp=$("#rv-lpw");if(lp)f.lpw=lp.value.trim();};
   {const w=$("#rv-wed");if(w)bindWed(w,sc.id);}

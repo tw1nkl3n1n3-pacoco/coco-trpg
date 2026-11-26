@@ -158,7 +158,7 @@ async function importAll(data,prog){
   }catch(e){S.impMsg="가져오다가 멈췄어요: "+(e.code||e.message)+" · 다시 가져오면 처음부터 덮어써요";}
   S.importing=false;render();
 }
-const BK_COLS=["camps","reviews","revkeys","comments","secrets"];
+const BK_COLS=["camps","reviews","comments","secrets"];
 async function exportAll(prog){
   const out={format:"trpg-log",version:2,exported:new Date().toISOString(),scenarios:[],sessions:[]};
   // 캠페인·캠프, 후기, 댓글, 비밀번호도 같이 (읽을 수 없는 건 건너뛰어요)

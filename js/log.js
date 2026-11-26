@@ -161,7 +161,6 @@ function renderSide(){
       <kbd>N</kbd> 묘사 · <kbd>D</kbd> 주사위 · <kbd>H</kbd> 핸드아웃 · <kbd>S</kbd> 단락 · <kbd>M</kbd> 위와 합치기 · <kbd>Del</kbd> 지우기<br>
       글자를 드래그하면 떼어내기·고유명사 메뉴 · <kbd>Ctrl</kbd>+<kbd>Z</kbd> 되돌리기
     </div>
-    ${S.meta&&S.meta.src==="ccfolia"&&!S.meta.t0&&S.canWrite?`<div class="tip t0fix">이 로그는 예전에 올려서 실제 시각이 없어요. <button class="ghost" id="t0fix">🕘 코코포리아 html 다시 골라 실제 시각 넣기</button><input type="file" id="t0file" accept=".html,.htm" hidden></div>`:""}
     <div class="homefoot sidefoot"><button class="ghost" id="back" title="세션 목록">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>`;
   bindSide();
 }
@@ -233,18 +232,6 @@ function diceInner(b){
   const p=b.w?spBy(b.w):null;
   if(!p&&!b.r&&!b.o&&!b.x&&!b.sec)return '<span class="ph">🎲 주사위 — ✎를 눌러 입력</span>';
   return `<span class="dd">🎲</span>${b.a?`<b class="dw">${esc(b.a)}</b>`:p?`<b class="dw">${esc(p.ch||p.name)}</b>`:""}${b.x?`<span class="dl">${hl(b.x)}</span>`:""}${b.r?`<span class="dr">${hl(b.r)}</span>`:""}${b.sec?`<span class="dres secret">Secret Dice</span>`:""}${b.o&&OUT[b.o]?`<span class="dres ${b.o}">${outLabel(b.o)}</span>`:""}`;
-}
-// 예전에 올린 코코포리아 회차들에 실제 시작 시각(t0)을 넣어요: 같은 시나리오·같은 날짜 회차와 짝지어서
-async function fixT0(html){
-  const parsed=parseCcfolia(html);if(!parsed)throw new Error("코코포리아 로그 html이 아니에요");
-  const cur=S.sessions.find(s=>s.id===S.sid);if(!cur)return 0;const scen=info(cur).scen;
-  const mine=S.sessions.filter(s=>info(s).scen===scen&&s.src==="ccfolia"&&!s.t0);
-  let n=0;
-  for(const s of mine){const i=info(s);
-    const cands=parsed.days.map(d=>d.find(m=>m.ch==="main"&&!m.sys)||d[0]).filter(m=>m&&kst(m.t)===i.day);
-    const m0=cands[(i.part||1)-1]||cands[0];if(!m0)continue;
-    await S.db.doc(`sessions/${s.id}`).update({t0:m0.t});s.t0=m0.t;if(s.id===S.sid&&S.meta)S.meta.t0=m0.t;n++;}
-  renderSide();renderAllRows(true);return n;
 }
 // 줄 옆 ⋯ 메뉴: 그 줄에서 할 수 있는 일 + 단축키
 function rowMenu(id,btn){
@@ -745,7 +732,6 @@ function bindHeader(){
   $("#jump").onclick=()=>{setFollow(true);const r=S.playingId&&document.querySelector(`.row[data-id="${S.playingId}"]`);r&&r.scrollIntoView({block:"center",behavior:"smooth"});};
 }
 function bindSide(){
-  {const tb=$("#t0fix"),tf=$("#t0file");if(tb&&tf){tb.onclick=()=>tf.click();tf.onchange=async()=>{const f=tf.files[0];if(!f)return;try{const n=await fixT0(await f.text());toast(n?`${n}개 회차에 실제 시각을 넣었어요`:"이 파일에서 맞는 회차를 못 찾았어요");}catch(e){writeFail(e);}};}}
   {const h2=$("#help2");if(h2)h2.onclick=helpBox;}
   const bk=$("#back");if(bk)bk.onclick=()=>{location.hash="";if(S.local){S.local=false;openSession(null);}};
   renderAuth();
