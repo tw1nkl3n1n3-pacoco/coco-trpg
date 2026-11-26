@@ -171,7 +171,7 @@ function galEditRender(){const E=S.gEdit;if(!E)return;const {p}=galCur();if(!p||
       <label class="geadd"><input type="file" accept="image/*" multiple hidden id="geaddf">＋<small>더하기</small></label></div>
     <input type="file" accept="image/*" hidden id="gerepf">
     <div class="gelab">한 줄 설명</div><input type="text" id="gecap" maxlength="80" value="${esc(E.cap)}" placeholder="(선택)">
-    ${S.canAdmin?`<div class="gerow"><div><div class="gelab">글쓴이 <span class="tip">· 주인만</span></div><input type="text" id="geby" value="${esc(E.by)}" list="gebyl"><datalist id="gebyl">${ppl.map(n=>`<option value="${esc(n)}">`).join("")}</datalist></div>
+    ${S.canAdmin?`<div class="gerow"><div><div class="gelab">글쓴이 <span class="tip">· 주인만</span></div><select id="geby">${[...new Set([...(E.by&&!ppl.includes(E.by)?[E.by]:[]),...ppl])].map(n=>`<option value="${esc(n)}"${n===E.by?" selected":""}>${esc(n)}</option>`).join("")}${E.by?"":`<option value="" selected>(없음)</option>`}</select></div>
       <div><div class="gelab">작성일자 <span class="tip">· 주인만</span></div><input type="date" id="geat" value="${galYmd(E.at)}"></div></div>`:""}
     <div class="tip" id="gemsg"></div>
     <div class="gefoot"><button type="button" class="ghost danger" data-ge="del">게시물 지우기</button><span style="flex:1"></span><button type="button" class="ghost" data-ge="x">취소</button><button type="button" class="pri" data-ge="ok">저장</button></div></div>`;
@@ -200,7 +200,7 @@ function galEditRender(){const E=S.gEdit;if(!E)return;const {p}=galCur();if(!p||
         for(const q of E.imgs){if(!q.file){out.push(q);continue;}
           out.push(await galPut(p.src,q.file,p.id+"_"+Date.now().toString(36)+rid4(),pr=>{if(m)m.textContent=`올리는 중… ${n+1} / ${news} · ${pr}%`;}));n++;}
         const before=galImgs(p),keep=new Set(out.map(q=>q.op||q.o));
-        await galMutate(p,g=>g.map(x=>{if(x.id!==p.id)return x;const y=galSetImgs(x,out);y.cap=E.cap.trim().slice(0,80);if(S.canAdmin){y.by=E.by.trim().slice(0,40);y.at=E.at;}return y;}));
+        await galMutate(p,g=>g.map(x=>{if(x.id!==p.id)return x;const y=galSetImgs(x,out);y.cap=E.cap.trim().slice(0,80);if(S.canAdmin){y.by=E.by.trim().slice(0,40);y.at=E.at;const sp=p.kind==="sc"?(scenById(p.src)?.sp||[]).find(q=>pcSplit(q.name||"").name===y.by):null;y.k=sp?sp.k:"";}return y;}));
         before.filter(q=>!keep.has(q.op||q.o)).flatMap(q=>[q.p,q.op]).filter(Boolean).forEach(x=>S.storage?.ref(x).delete().catch(()=>{}));
         await galFixCover(p,out);
         galEditClose();S.galImg=Math.min(S.galImg||0,out.length-1);toast("저장했어요");galLBRefresh(true);

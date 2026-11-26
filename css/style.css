@@ -1267,3 +1267,4 @@ body:not(.own) .ownonly{display:none!important}
 .gebox input[type=text],.gebox input[type=date]{width:100%}
 .gerow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .gefoot{display:flex;gap:6px;align-items:center;margin-top:16px}.gefoot .danger{color:var(--bad)}
+.gebox select{width:100%}
