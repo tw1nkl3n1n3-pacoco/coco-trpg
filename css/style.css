@@ -125,8 +125,8 @@ mark{background:#f2c970;color:inherit;border-radius:3px}
 .foldh{white-space:nowrap}.foldh .fsub{overflow:hidden;text-overflow:ellipsis;min-width:0}
 .nb{background:#efe4cf;border-radius:4px;padding:0 3px;box-shadow:inset 0 -1px 0 #d8c39c}
 .nouns{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 8px}
-.noun{display:inline-flex;flex-wrap:wrap;align-items:baseline;gap:4px;background:#fffdf8;border:1px solid var(--line);border-radius:10px;padding:3px 9px;font-size:13px;text-align:left;cursor:pointer;max-width:100%}
-.noun b{font-weight:600}.noun small{color:#9a8a78;font-size:11.5px}
+.noun{display:inline-flex;flex-wrap:wrap;align-items:baseline;gap:4px;background:color-mix(in srgb,var(--ink) 6%,transparent);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:3px 9px;font-size:13px;text-align:left;cursor:pointer;max-width:100%}
+.noun b{font-weight:600}.noun small{color:var(--dim);font-size:11.5px}
 .pct{font-size:10px;font-weight:700;color:var(--acc);border:1px solid currentColor;border-radius:4px;padding:0 3px;line-height:14px}
 .nedit{display:flex;flex-direction:column;gap:5px;padding:6px;min-width:250px}.nedit label{font-size:12px;color:var(--dim)}
 .nedit .btns{display:flex;gap:6px;justify-content:flex-end;margin-top:4px}
