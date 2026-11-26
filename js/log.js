@@ -194,7 +194,10 @@ function hlq(h){
 // **강조** → 굵게. 별표는 숨겨 두기만 해서(글자 위치 계산이 안 틀어지게) 원문은 그대로예요
 const emph=h=>h.replace(/\*\*([^*\n]+?)\*\*/g,'<strong class="em"><span class="mk">**</span>$1<span class="mk">**</span></strong>');
 function hl(text){return emph(hl0(text));}
-function hl0(text){
+// 둥근 큰따옴표 “ ” 는 보여줄 때 낫표 「 」 로 (저장된 글은 그대로) · 짝이 안 맞게 섞인 "도 같이
+function qfix(t){t=String(t??"");if(!/[“”]/.test(t))return t;
+  return t.replace(/[“”"]([^“”"\n]*)[“”"]/g,(m,a)=>/[“”]/.test(m[0]+m[m.length-1])?"「"+a+"」":m).replace(/“/g,"「").replace(/”/g,"」");}
+function hl0(text){text=qfix(text);
   const re=nounRe();
   if(re){let out="",last=0;text=String(text);re.lastIndex=0;let m;
     while((m=re.exec(text))){out+=hlq(esc(text.slice(last,m.index)))+`<span class="nb">${hlq(esc(m[0]))}</span>`;last=m.index+m[0].length;}

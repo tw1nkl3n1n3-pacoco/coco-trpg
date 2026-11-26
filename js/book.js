@@ -65,15 +65,15 @@ function bookBlocks(sc,edit){
     its.forEach(e=>{const b=e.b,bk=bkOf(b);if(st&&b.id===st&&edit)out.push({k:"start",sid:P.sid,day});
       if(bk===2&&!edit)return;const base={id:b.id,ci:e.ci,sid:e.sid,bk,day};
       if(b.s===SEC){if(secLv(b)<=1)out.push({...base,k:"chap",label:"CHAPTER "+(++n),title:b.x||"단락"});else out.push({...base,k:"scene",text:b.x||"",lv:secLv(b)});return;}
-      if(b.s===NOTE){if(!b.x)return;out.push({...base,k:"nar",text:b.x});out.push(...(edit?[]:noteFor(b.x)));return;}
+      if(b.s===NOTE){if(!b.x)return;out.push({...base,k:"nar",text:qfix(b.x)});out.push(...(edit?[]:noteFor(b.x)));return;}
       if(b.s===HAND){out.push({...base,k:"hand",title:b.ti||"핸드아웃",text:b.x||""});return;}
       if(b.s===DICE){const p=b.w?bookSp(sc,b.w):null;out.push({...base,k:"dice",who:b.a||(p?(p.ch||pcSplit(p.name).name):""),text:b.x||"",res:b.r||"",sec:!!b.sec});return;}
       const p=bookSp(sc,b.s)||{name:"?",c:"#888"},gm=p.k===gk,q=pcSplit(p.name||""),ch=b.a||p.ch||"";
       // GM 줄은 늘 'GM'을 캐릭터 이름처럼, 아래 회색으로 닉네임
       const gn=q.name&&!isAnon(p)?q.name:gmw;
       // 타이만 캐릭터: 본문은 캐릭터 이름만 (잡담은 맡은 사람 이름)
-      if(p.chr)out.push({...base,k:"line",gm:false,tai:1,ooc:bk===1,c:p.c,pc:"",player:q.name,char:bk===1?q.name:(b.a||ch||q.name),sub:"",text:b.x||""});
-      else out.push({...base,k:"line",gm,ooc:bk===1,c:p.c,pc:q.n,player:gm?gn:q.name,char:gm?gmw:(ch||q.name),sub:gm?(gn!==gmw?gn:""):(!ch?"":q.name),text:b.x||""});
+      if(p.chr)out.push({...base,k:"line",gm:false,tai:1,ooc:bk===1,c:p.c,pc:"",player:q.name,char:bk===1?q.name:(b.a||ch||q.name),sub:"",text:qfix(b.x||"")});
+      else out.push({...base,k:"line",gm,ooc:bk===1,c:p.c,pc:q.n,player:gm?gn:q.name,char:gm?gmw:(ch||q.name),sub:gm?(gn!==gmw?gn:""):(!ch?"":q.name),text:qfix(b.x||"")});
       if(!edit&&bk!==1)out.push(...noteFor(b.x));
     });
     // 책 고치기: 본세션 끝 줄 바로 뒤에 표시
