@@ -118,10 +118,10 @@ function bookPaginate(blocks,host,startNo){
   const fitLen=x=>{let lo=0,hi=x.text.length;while(lo<hi){const m=(lo+hi+1)>>1;if(fits({...x,text:x.text.slice(0,m)}))lo=m;else hi=m-1;}
     if(lo<=0||lo>=x.text.length)return lo;const h=x.text.slice(0,lo),br=Math.max(h.lastIndexOf("\n"),h.lastIndexOf(" "));return br>lo*.6?br+1:lo;};
   const place=el=>{body.appendChild(el);};
-  // 같은 사람이 이어서 말하면 이름은 처음 한 번만 · 본문과 잡담은 따로 셈 · 쪽이 바뀌면 다시 보여요
+  // 바로 앞 줄과 같은 사람·같은 종류(본문/잡담)면 이름 생략 · 사이에 다른 종류가 끼거나 쪽이 바뀌면 다시 보여요
   let st={m:null,o:null,pg:-1};const spk=x=>x.ooc?x.player:x.char+"|"+(x.sub||"");
   const withSame=x=>{if(st.pg!==pages.length)st={m:null,o:null,pg:pages.length};if(x.k!=="line"||x.cont)return x;return {...x,same:spk(x)===(x.ooc?st.o:st.m)};};
-  const commit=x=>{if(x.k==="line"){if(x.ooc)st.o=spk(x);else st.m=spk(x);}else if(x.k!=="note"){st.m=null;st.o=null;}};
+  const commit=x=>{if(x.k==="line"){if(x.ooc){st.o=spk(x);st.m=null;}else{st.m=spk(x);st.o=null;}}else if(x.k!=="note"){st.m=null;st.o=null;}};
   newPage();
   blocks.forEach(x0=>{
     if(x0.k==="chap"&&body.children.length)newPage();
@@ -223,7 +223,7 @@ function bookRender(){
     m.innerHTML="";
   }else{
     const sh=$("#bksheet");const eb=bookBlocks(sc,true);let lastPg=0,html="",secIds=[];
-    {let m0=null,o0=null;eb.forEach(x=>{if(x.k==="line"){const k=x.ooc?x.player:x.char+"|"+(x.sub||"");if(x.ooc){x.same=k===o0;o0=k;}else{x.same=k===m0;m0=k;}}else if(x.k!=="note"){m0=null;o0=null;}});}
+    {let m0=null,o0=null;eb.forEach(x=>{if(x.k==="line"){const k=x.ooc?x.player:x.char+"|"+(x.sub||"");if(x.ooc){x.same=k===o0;o0=k;m0=null;}else{x.same=k===m0;m0=k;o0=null;}}else if(x.k!=="note"){m0=null;o0=null;}});}
     // 단락별로 묶어 '통째로 빼기' · 다 뺀 단락은 접어 둬요
     const groupsArr=[];let g={head:null,items:[]};eb.forEach(x=>{if(x.k==="chap"||x.k==="scene"){groupsArr.push(g);g={head:x,items:[]};}else g.items.push(x);});groupsArr.push(g);
     groupsArr.forEach((G,gi)=>{if(!G.head&&!G.items.length)return;
