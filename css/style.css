@@ -342,13 +342,13 @@ h1,h2,h3,.scen-h h3,.sc-top h2,.hometop h2{word-break:keep-all;overflow-wrap:any
 .schero-t{display:flex;align-items:flex-end;gap:10px}
 .schero-t h2{flex:1;min-width:0}
 .scmeta{display:inline-flex;align-items:center;gap:6px;flex:none;margin-left:auto}
-.schero-t #scedit{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.45)}
+.schero-t #scedit,.schero-t #scbook{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.45)}
 @media (max-width:640px){
   .sc-top{flex-wrap:nowrap;align-items:flex-start}
   .sc-top h2{flex:1 1 auto}
   .scmeta{gap:5px}
-  .scmeta #scedit{padding:2px 7px;font-size:13px;line-height:1.4}
-  .scmeta #scedit .lbl{display:none}
+  .scmeta #scedit,.scmeta #scbook{padding:2px 7px;font-size:13px;line-height:1.4}
+  .scmeta #scedit .lbl,.scmeta #scbook .lbl{display:none}
 }
 /* 룰 태그는 그 룰의 테마 색으로 (어느 화면에서든 같게) */
 .sys[data-th]{font-weight:600;letter-spacing:.02em;white-space:nowrap}
@@ -651,7 +651,7 @@ body[data-theme=deco][data-page=scen] :is(.sc-page,.rvpage)>.ldr{--ink:#f6e7c8;-
 .cep .st.now{color:#12a35a;font-weight:700}
 .cmore{display:block;width:100%;text-align:left;border:0!important;border-top:1px solid var(--line)!important;background:none!important;padding:9px 0 0!important;margin-top:2px;font-size:13px;color:var(--dim)!important;border-radius:0!important;box-shadow:none!important;clip-path:none!important}
 
-.campline{font-size:13px;color:var(--dim);margin:0 0 6px}.campline a{color:var(--ink);font-weight:700;text-decoration:none}
+.campline{font-size:13px;color:var(--dim);margin:0 0 6px}.campline a{color:inherit;font-weight:700;text-decoration:none;filter:brightness(1.25)}
 .epnav{display:flex;gap:10px;margin:14px 0}
 .epnav a,.epnav span{flex:1}
 .epnav a{border:1px solid var(--line);background:var(--panel,#fff);border-radius:12px;padding:10px 14px;text-decoration:none;color:var(--ink);font-size:13.5px;font-weight:700}
@@ -779,10 +779,6 @@ body[data-theme=deco][data-page=scen] :is(.sc-page,.rvpage)>.ldr{--ink:#f6e7c8;-
 .nedit textarea{width:100%;font:inherit;font-size:13px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;resize:vertical}
 
 /* ===== 리플레이북 ===== */
-.bookbtn{display:inline-flex;align-items:center;gap:2px;padding:4px 10px;border:1px solid var(--line);border-radius:999px;font-size:13px;color:inherit;text-decoration:none;background:var(--card,#fff)}
-.bookbtn:hover{border-color:currentColor}
-.schero-t .bookbtn{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.45)}
-@media(max-width:640px){.scmeta .bookbtn{padding:2px 7px}.scmeta .bookbtn .lbl{display:none}}
 html.booking,body.booking{background:#e9e7e2!important;background-image:none!important}
 body.booking #app{max-width:none!important;padding:0!important;margin:0!important;background:none!important;box-shadow:none!important;border:0!important}
 body.booking #hdr,body.booking .topbar{display:none}
@@ -950,3 +946,4 @@ body.booking #hdr,body.booking .topbar{display:none}
 @media(max-width:560px){.kbgrid{grid-template-columns:1fr}.kbgrid h4{margin-top:6px}}
 .kbgrid kbd,.bselpop kbd,.tsplit kbd,#layer kbd{display:inline-block;min-width:14px;text-align:center;background:var(--panel2,#f3f3f3);border:1px solid var(--line,#ccc);border-bottom-width:2px;border-radius:4px;padding:0 4px;font:600 11px/1.5 ui-monospace,monospace;color:var(--ink,#333)}
 .bselpop kbd{background:#444;border-color:#666;color:#fff;margin-right:2px}
+.scmeta #scbook{margin-right:6px}
