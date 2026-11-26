@@ -94,7 +94,7 @@ function fixPageHTML(f){
       ${S.canAdmin?`<button type="button" class="fxcvpos" id="fxcvpos">${S.fxCvDrag?"✓ 위치 저장":"↕ 위치"}</button>`:""}</div>`:head}
     <div class="fxmeta">${days.length?`${esc(dot(days[0]))} – ${esc(dot(days.at(-1)))} · `:""}<b>${gs.length+cs.reduce((a,c)=>a+campEps(c).length,0)}</b>시나리오 · <b>${days.length}</b>세션${cs.length?` · <b>${cs.length}</b>캠페인`:""}</div>
     ${P.length?`<div class="fxppl">${P.map(p=>`<span class="fxp${fixMe(f)===p.n?" me":""}"${!S.canAdmin&&fixWord(f)!=="자관"?` data-fxme="${esc(p.n)}" title="나로 고르기"`:""} style="--c:${fixC(p.c)}"><i></i><b>${esc(p.n)}</b><small>${[...p.ch].map(esc).join(" · ")}${p.ch.size?" · ":""}${p.cnt.size}탁</small></span>`).join("")}</div>`:""}
-    ${intro||S.canAdmin?`<div class="fxintro${intro?"":" empty"}" id="fxintro">${intro?esc(intro).replace(/\n/g,"<br>"):"고정탁 소개 (선택) — 언제부터 어떤 멤버로 굴리는 탁인지 적어 둘 수 있어요"}${S.canAdmin?` <button class="ghost" id="fxedit" type="button">✎</button>`:""}</div>`:""}
+    ${intro||S.canAdmin?`<div class="fxintro${intro?"":" empty"}" id="fxintro">${intro?esc(intro).replace(/\n/g,"<br>"):`${fixWord(f)} 소개 (선택) — ${fixWord(f)==="자관"?"두 캐릭터가 어떤 사이인지":"언제부터 어떤 멤버로 굴리는 탁인지"} 적어 둘 수 있어요`}${S.canAdmin?` <button class="ghost" id="fxedit" type="button">✎</button>`:""}</div>`:""}
     ${fixTimelineHTML(f,allG,cs)}
     <div id="sesslist" class="fxlist">${items.map(x=>x.h).join("")||`<div class="notice">아직 이 고정탁으로 묶인 세션이 없어요</div>`}</div>
     ${S.db?galHTML(galSrcFix(f),{newest:1,title:"전체 갤러리"}):""}
