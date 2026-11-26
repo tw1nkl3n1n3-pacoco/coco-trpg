@@ -61,6 +61,7 @@ function bookBlocks(sc,edit){
     if(edit)out.push({k:"day",text:fmtDay(P.day)+(multi?` · ${P.part}부`:""),day});
     // 본세션 시작 줄 앞은 따로 고르지 않으면 빼기로 (1·2로 책에 넣을 수 있어요)
     const its=bookItems(P),st=startIdOf(its.map(e=>e.b));preIds(its.map(e=>e.b)).forEach(id=>PRE.book.add(id));
+    const en=endIdOf(its.map(e=>e.b));
     its.forEach(e=>{const b=e.b,bk=bkOf(b);if(st&&b.id===st&&edit)out.push({k:"start",sid:P.sid,day});
       if(bk===2&&!edit)return;const base={id:b.id,ci:e.ci,sid:e.sid,bk,day};
       if(b.s===SEC){if(secLv(b)<=1)out.push({...base,k:"chap",label:"CHAPTER "+(++n),title:b.x||"단락"});else out.push({...base,k:"scene",text:b.x||"",lv:secLv(b)});return;}
@@ -73,6 +74,8 @@ function bookBlocks(sc,edit){
       out.push({...base,k:"line",gm,ooc:bk===1,c:p.c,pc:q.n,player:gm?gn:q.name,char:gm?gmw:(ch||q.name),sub:gm?(gn!==gmw?gn:""):(!ch?"":q.name),text:b.x||""});
       if(!edit&&bk!==1)out.push(...noteFor(b.x));
     });
+    // 책 고치기: 본세션 끝 줄 바로 뒤에 표시
+    if(edit&&en){const i=out.findIndex(x=>x.id===en);if(i>=0)out.splice(i+1,0,{k:"endmk",sid:P.sid,day});}
   });
   if(edit)return out;
   // 내용이 다 빠진 장·단락 제목은 책에서 빼요
@@ -92,6 +95,7 @@ function blockHTML(x,edit){
     case "chap":return `<div class="bchap"><small>${esc(x.label)}</small><b>${esc(x.title)}</b></div>`;
     case "day":return edit?`<div class="bday">${esc(x.text)} 회차</div>`:"";
     case "start":return edit?`<div class="bstartmk">▶ 본세션 시작 · 책은 여기서부터</div>`:"";
+    case "endmk":return edit?`<div class="bstartmk end">■ 본세션 끝 · 책은 여기까지</div>`:"";
     case "scene":return edit?"":`<div class="bscene l${x.lv}">${esc(x.text||"")}</div>`;
     case "nar":return `<p class="bnar${sel}${cut}"${dat}>${tbox||esc(x.text).replace(/\n/g,"<br>")}${tag}</p>`;
     case "hand":return `<div class="bhand${sel}${cut}"${dat}>${x.cont?"":`<b>HANDOUT · ${esc(x.title)}</b>`}${tbox||esc(x.text).replace(/\n/g,"<br>")}${tag}</div>`;
@@ -269,6 +273,12 @@ function bookSetStart(x){
   B.sel=new Set();if(ch.length)bookSet(ch);toast("이 줄부터 본세션 · 앞은 빼기로 돼요");
 }
 // v: 0 본문 · 1 잡담(C) · 2 빼기(X) · toggle이면 이미 다 그 상태일 때 본문으로
+function bookSetEnd(x){
+  const B=S.book,P=B.parts.find(p=>p.sid===x.sid);if(!P)return;
+  const ch=bookItems(P).filter(e=>e.b.bend&&e.b.id!==x.id).map(e=>({sid:e.sid,ci:e.ci,id:e.b.id,f:{bend:undefined}}));
+  const cur=bookItems(P).find(e=>e.b.id===x.id),on=cur&&!cur.b.bend;ch.push({sid:x.sid,ci:x.ci,id:x.id,f:{bend:on?1:undefined}});
+  B.sel=new Set();bookSet(ch);toast(on?"이 줄까지 본세션 · 뒤는 빼기로 돼요":"본세션 끝 표시를 풀었어요");
+}
 function bookSetBk(v,toggle){
   const B=S.book;let xs=B.flat.filter(x=>B.sel.has(x.id));if(v===1)xs=xs.filter(x=>x.k==="line");if(!xs.length)return;
   if(toggle&&xs.every(x=>x.bk===v))v=0;
@@ -321,6 +331,7 @@ document.addEventListener("keydown",e=>{
   if(k==="c"){e.preventDefault();bookSetBk(1,true);return;}
   if(k==="x"){e.preventDefault();bookSetBk(2,true);return;}
   if(k==="b"&&B.sel.size===1){e.preventDefault();const x=B.flat.find(y=>B.sel.has(y.id));if(x)bookSetStart(x);return;}
+  if(k==="e"&&B.sel.size===1){e.preventDefault();const x=B.flat.find(y=>B.sel.has(y.id));if(x)bookSetEnd(x);return;}
   if(k==="Enter"){e.preventDefault();bookEditAt(B.cur||B.anchor);return;}
   if(k==="Escape"){B.sel=new Set();bookPaint();return;}
   if((k==="ArrowDown"||k==="ArrowUp"||k==="j"||k==="k")&&B.flat&&B.flat.length){e.preventDefault();const d=k==="ArrowDown"||k==="j"?1:-1,order=B.flat.map(x=>x.id);let i=order.indexOf(B.cur||B.anchor);i=i<0?0:Math.max(0,Math.min(order.length-1,i+d));

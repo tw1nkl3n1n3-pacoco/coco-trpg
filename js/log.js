@@ -157,7 +157,7 @@ function renderSide(){
     <h3 class="tip usage">자주 쓰는 조작 <button class="ghost tiny" id="help2">전체 보기 <kbd>?</kbd></button></h3>
     <div class="tip usage">
       클릭 고르기 · <kbd>Shift</kbd>+클릭/드래그 여러 줄 · 더블클릭·<kbd>Enter</kbd> 고치기<br>
-      <kbd>1</kbd>~<kbd>9</kbd> 화자 · <kbd>C</kbd> 잡담 · <kbd>X</kbd> 빼기 · <kbd>B</kbd> 본세션 시작<br>
+      <kbd>1</kbd>~<kbd>9</kbd> 화자 · <kbd>C</kbd> 잡담 · <kbd>X</kbd> 빼기 · <kbd>B</kbd>/<kbd>E</kbd> 본세션 시작/끝<br>
       <kbd>N</kbd> 묘사 · <kbd>D</kbd> 주사위 · <kbd>H</kbd> 핸드아웃 · <kbd>S</kbd> 단락 · <kbd>M</kbd> 위와 합치기 · <kbd>Del</kbd> 지우기<br>
       글자를 드래그하면 떼어내기·고유명사 메뉴 · <kbd>Ctrl</kbd>+<kbd>Z</kbd> 되돌리기
     </div>
@@ -204,7 +204,12 @@ function startIdOf(list){
   const f=list.find(b=>b.t>=0);return f?f.id:null;}
 // 본세션 시작 줄 앞은 따로 안 고르면 빼기 (로그 페이지·리플레이북이 각자 채워요)
 const PRE={log:new Set(),book:new Set()};
-function preIds(list){const st=startIdOf(list),out=new Set();if(!st)return out;
+// 본세션 끝 줄: 직접 고른 줄(bend) · 없으면 끝까지
+function endIdOf(list){const e=list.find(b=>b.bend);return e?e.id:null;}
+// 본세션 밖(시작 줄 앞 · 끝 줄 뒤)은 따로 안 고르면 빼기
+function preIds(list){const out=new Set(),en=endIdOf(list);
+  if(en){const j=list.findIndex(b=>b.id===en);for(let k=j+1;k<list.length;k++)out.add(list[k].id);}
+  const st=startIdOf(list);if(!st)return out;
   const i=list.findIndex(b=>b.id===st),keep=new Set();
   // 시작 줄 바로 위의 단락 제목은 본세션 쪽으로 (책에 같이 들어가요) · 사이에 낀 잡담 채널 줄은 건너뛰고 봐요
   for(let j=i-1;j>=0;j--){const b=list[j];if(b.s===SEC){keep.add(b.id);continue;}if(b.tab&&CHAT_TAB.test(b.tab))continue;break;}
@@ -252,14 +257,20 @@ function rowMenu(id,btn){
     if(k==="line")h+=it("who","👤 화자 바꾸기","1~9");else if(k!=="dice"&&!many)h+=it("who","👤 대사로 바꾸기","");
     if(!many){h+=hr+it("note","＋ 아래에 상황 묘사","N")+it("dice","＋ 아래에 주사위","D")+it("hand","＋ 아래에 핸드아웃","H")+it("sec","＋ 위에 단락","S");if(k==="line"||k==="note")h+=it("up","⤒ 위 줄과 합치기","M");}
     h+=hr+(k==="line"?it("ooc","잡담 (책에 작게)","C",bk===1):"")+it("cut","빼기 (책에서 빼기)","X",bk===2);
-    if(!many&&k!=="dice")h+=it("start","▶ 여기서 본세션 시작","B",S.startId===id);
+    if(!many&&k!=="dice")h+=it("start","▶ 여기서 본세션 시작","B",S.startId===id)+it("end","■ 여기까지 본세션","E",S.endId===id);
     h+=hr+it("del","🗑 지우기","Del");
   }
   popAt(btn,`<div class="rmenu">${h}</div>`,p=>{p.querySelectorAll("[data-m]").forEach(x=>x.onclick=()=>{const a=x.dataset.m;closePop();
     if(a==="edit")editRow(id);else if(a==="who")whoMenu(btn,id);else if(a==="note")addNote(id);else if(a==="dice")addDice(id);else if(a==="hand")addHand(id);
     else if(a==="sec"){select(id,false);addSec(1);}else if(a==="up")mergePrev(id);else if(a==="ooc")bkToggle(ids,1);else if(a==="cut")bkToggle(ids,2);
-    else if(a==="start")setStart(id);else if(a==="del")delMany(ids);
+    else if(a==="start")setStart(id);else if(a==="end")setEnd(id);else if(a==="del")delMany(ids);
     else if(/^lv\d$/.test(a)){const l=+a[2];if(secLv(b)!==l){doOps([{ci:e.ci,op:{t:"set",id,f:{lv:l}}}],"단락 단계 바꾸기");updateRow(id);renderSide();loadSecs(true);}}});});
+}
+function setEnd(id){
+  if(!S.canWrite)return;const e=S.byId.get(id);if(!e)return;
+  const ops=S.flat.filter(x=>x.b.bend&&x.b.id!==id).map(x=>({ci:x.ci,op:{t:"set",id:x.b.id,f:{bend:undefined}}}));
+  const on=!e.b.bend;ops.push({ci:e.ci,op:{t:"set",id,f:{bend:on?1:undefined}}});
+  doOps(ops,"본세션 끝 줄 정하기");renderAllRows(true);toast(on?"이 줄까지 본세션 · 뒤는 빼기로 돼요":"본세션 끝 표시를 풀었어요");
 }
 function setStart(id){
   if(!S.canWrite)return;const e=S.byId.get(id);if(!e)return;
@@ -284,7 +295,7 @@ function rowHTML(e,prev){
     <div class="body"><div class="tx">${diceInner(b)}</div></div>
     <div class="act">${cmBtn()}<button class="w more" data-act="more" title="고치기·화자·넣기·지우기… (단축키는 ?)">⋯</button></div></div>`;}
   if(e.b.s===NOTE){const b=e.b;
-    return `<div class="row${bkOf(b)===2?" bk-cut":""} note${b.st?" stat":""}${b.tab?" tabbed":""}${S.startId===b.id?" bstart":""}${isSel(b.id)?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}">
+    return `<div class="row${bkOf(b)===2?" bk-cut":""} note${b.st?" stat":""}${b.tab?" tabbed":""}${S.startId===b.id?" bstart":""}${S.endId===b.id?" bend":""}${isSel(b.id)?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmtLog(b.t)}</button>
     <div class="body"><div class="tx">${b.x?`<span>${b.x.split("\n").map(l=>`<span class="ln">${hl(l)}</span>`).join("<br>")}</span>`:'<span class="ph">상황 묘사</span>'}</div></div>
     <div class="act">${cmBtn()}<button class="w more" data-act="more" title="고치기·화자·넣기·지우기… (단축키는 ?)">⋯</button></div></div>`;}
@@ -294,7 +305,7 @@ function rowHTML(e,prev){
   const pbk=prev?bkOf(prev.b):-1,first=!prev||(pbk===1)!==(bk===1)||prev.b.s!==b.s||(bk!==1&&(prev.b.a||"")!==(b.a||""))||(bk!==1&&(prev.b.tab||"")!==(b.tab||""))||b.t-prev.b.t>120;
   const tx=lines.map((l,i)=>(i?`<button class="cut" data-act="cut" data-line="${i}" tabindex="-1" title="여기서 나눠서 다른 화자로 지정할 수 있게 해요">✂</button>`:"")+`<span class="ln">${hl(l)}</span>`).join(" ");
   const q=pcSplit(s.name),label=(gm?gmTag:q.n?`<span class="pcn">${q.n}</span>`:"")+esc(q.name),sub=bk===1?"":(b.a?esc(b.a):s.ch?esc(s.ch):"")+(b.tab&&!CHAT_TAB.test(b.tab)?`<span class="tabchip">${esc(b.tab)}</span>`:"");
-  return `<div class="row${first?" first":""}${gm?" gm":""}${b.tab?" tabbed":""}${bk===1?" bk-ooc":bk===2?" bk-cut":""}${S.startId===b.id?" bstart":""}${isSel(b.id)?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}" style="--c:${fixC(s.c)}">
+  return `<div class="row${first?" first":""}${gm?" gm":""}${b.tab?" tabbed":""}${bk===1?" bk-ooc":bk===2?" bk-cut":""}${S.startId===b.id?" bstart":""}${S.endId===b.id?" bend":""}${isSel(b.id)?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}" style="--c:${fixC(s.c)}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmtLog(b.t)}</button>
     <div class="body">
       ${first?`<button class="who" data-act="who" title="클릭해서 화자 바꾸기">${label}${sub?`<small>${sub}</small>`:""}</button>`:""}
@@ -317,7 +328,7 @@ function renderAllRows(keepScroll){
     log.innerHTML=S.local||!S.db||(S.loaded&&S.chunksLoaded)?`<div class="notice">아직 대사가 없어요.</div>`:loaderHTML();
     $("#qcount")&&($("#qcount").textContent="");return;
   }
-  const vis=S.flat.filter(visible);{const all=S.flat.map(e=>e.b);S.startId=startIdOf(all);PRE.log=preIds(all);}
+  const vis=S.flat.filter(visible);{const all=S.flat.map(e=>e.b);S.startId=startIdOf(all);S.endId=endIdOf(all);PRE.log=preIds(all);}
   // 고치는 중인 줄은 다시 그리지 않고 그대로 둬요 (다른 사람 수정이 들어와도 입력이 안 날아가게)
   const ed=log.querySelector(".row.editing"),fa=ed&&ed.contains(document.activeElement)?document.activeElement:null;
   const sel=fa&&"selectionStart" in fa?[fa.selectionStart,fa.selectionEnd]:null;
@@ -424,7 +435,7 @@ const KB_HELP=`<div class="kbgrid">
   <h4>글 고치기</h4><div><kbd>더블클릭</kbd> 또는 <kbd>Enter</kbd> 시작 · 고치는 중 <kbd>Enter</kbd> 저장 · <kbd>Shift</kbd>+<kbd>Enter</kbd> 줄바꿈 · <kbd>Esc</kbd> 취소</div>
   <h4>글자 드래그</h4><div>한 줄 안의 글자를 드래그하면 메뉴: <b>떼어서 다른 대사로</b> · <b>상황 묘사로 떼기</b> · <b>고유명사로 바꾸기/등록</b></div>
   <h4>화자</h4><div><kbd>1</kbd>~<kbd>9</kbd> 왼쪽 목록 순서 · <kbd>0</kbd> 전원 (여러 줄도 한 번에) · 로그 페이지만</div>
-  <h4>책에 넣기</h4><div><kbd>C</kbd> 잡담 · <kbd>X</kbd> 빼기 (다시 누르면 본문으로) · <kbd>B</kbd> 여기서 본세션 시작</div>
+  <h4>책에 넣기</h4><div><kbd>C</kbd> 잡담 · <kbd>X</kbd> 빼기 (다시 누르면 본문으로) · <kbd>B</kbd> 여기서 본세션 시작 · <kbd>E</kbd> 여기까지 본세션</div>
   <h4>넣기</h4><div><kbd>N</kbd> 아래에 상황 묘사 · <kbd>D</kbd> 주사위 · <kbd>H</kbd> 핸드아웃 · <kbd>S</kbd> 위에 단락 (단락을 고르고 누르면 대→중→하)</div>
   <h4>정리</h4><div><kbd>M</kbd> 위 줄과 합치기 · <kbd>Delete</kbd> 지우기 · <kbd>Ctrl</kbd>+<kbd>Z</kbd> 되돌리기</div>
   <h4>재생</h4><div><kbd>Space</kbd> 재생/정지 · <kbd>P</kbd> 여기서 재생 · <kbd>[</kbd> <kbd>]</kbd> 5초 뒤로/앞으로</div>
@@ -782,7 +793,7 @@ function bindSession(){
   $("#log").ondblclick=ev=>{const row=ev.target.closest(".row");if(row&&ev.target.closest(".tx")&&!ev.target.closest("textarea,.dform"))editRow(row.dataset.id);};
 }
 // 로그 페이지 단축키 (한글 입력 상태에서도 같은 자리 키로 돼요)
-const KO_KEY={"ㅊ":"c","ㅌ":"x","ㅠ":"b","ㄴ":"s","ㅡ":"m","ㅜ":"n","ㅇ":"d","ㅗ":"h","ㅔ":"p","ㅓ":"j","ㅏ":"k"};
+const KO_KEY={"ㄷ":"e","ㅊ":"c","ㅌ":"x","ㅠ":"b","ㄴ":"s","ㅡ":"m","ㅜ":"n","ㅇ":"d","ㅗ":"h","ㅔ":"p","ㅓ":"j","ㅏ":"k"};
 const keyOf=k=>KO_KEY[k]||(k.length===1?k.toLowerCase():k);
 document.addEventListener("keydown",ev=>{
   if(!S.sid&&!S.local)return;
@@ -805,6 +816,7 @@ document.addEventListener("keydown",ev=>{
   else if(k==="c"&&W){ev.preventDefault();bkToggle(selIds(),1);}
   else if(k==="x"&&W){ev.preventDefault();bkToggle(selIds(),2);}
   else if(k==="b"&&W){ev.preventDefault();setStart(S.sel);}
+  else if(k==="e"&&W){ev.preventDefault();setEnd(S.sel);}
   else if(k==="s"&&W){ev.preventDefault();const e=S.byId.get(S.sel);if(e&&e.b.s===SEC)cycleSec(S.sel);else addSec(1);}
   else if(k==="m"&&W){ev.preventDefault();mergePrev(S.sel);}
   else if(k==="n"&&W){ev.preventDefault();addNote(S.sel);}
