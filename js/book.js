@@ -23,14 +23,14 @@ async function bookLoad(){
     }
   }catch(e){B.err=e.code==="permission-denied"?"로그가 잠겨 있어요. 세션 비밀번호로 들어와 주세요.":"로그를 불러오지 못했어요: "+(e.code||e.message);render();return;}
   if(S.book!==B)return;
-  B.parts=parts;watchRevs(sc.id);render();
+  B.parts=parts;B.ver=(B.ver||0)+1;watchRevs(sc.id);render();
 }
 function bookItems(P){const out=[];Object.keys(P.chunks).map(Number).sort((a,b)=>a-b).forEach(ci=>P.chunks[ci].forEach(b=>out.push({b,ci,sid:P.sid})));return out;}
 // 고친 내용은 세션 로그(chunks)에 바로 저장해요 · 같은 줄을 로그 페이지에서도 보게 돼요
 async function bookSet(changes){
   const B=S.book;if(!B||!B.parts)return;const by={};
   changes.forEach(c=>{const P=B.parts.find(p=>p.sid===c.sid);if(!P)return;const arr=P.chunks[c.ci];const b=arr&&arr.find(x=>x.id===c.id);if(!b)return;
-    Object.keys(c.f).forEach(k=>{if(c.f[k]===undefined)delete b[k];else b[k]=c.f[k];});(by[c.sid+"|"+c.ci]=by[c.sid+"|"+c.ci]||[]).push({t:"set",id:c.id,f:c.f});});
+    Object.keys(c.f).forEach(k=>{if(c.f[k]===undefined)delete b[k];else b[k]=c.f[k];});B.ver=(B.ver||0)+1;(by[c.sid+"|"+c.ci]=by[c.sid+"|"+c.ci]||[]).push({t:"set",id:c.id,f:c.f});});
   bookRender();
   try{for(const key of Object.keys(by)){const [sid,ci]=key.split("|");const ref=S.db.doc(`sessions/${sid}/chunks/${ckey(+ci)}`);
     await S.db.runTransaction(async tx=>{const d=await tx.get(ref);const arr=d.exists?clone(d.data().b||[]):[];by[key].forEach(op=>applyOp(arr,op));tx.set(ref,{i:+ci,b:arr});});}
@@ -88,8 +88,8 @@ function blockHTML(x,edit){
     case "dice":return `<div class="bdice${sel}${cut}"${dat}><b class="t">판정</b><span>${esc([x.who,x.text].filter(Boolean).join(" · "))}</span>${x.sec?'<span class="r">Secret Dice</span>':x.res?`<span class="r">${esc(x.res)}</span>`:""}${tag}</div>`;
     case "note":return `<div class="bmemo"><b>${esc(x.n)}</b>${esc(x.d)}</div>`;
     case "line":
-      if(x.ooc)return `<div class="bln ooc${sel}${cut}"${dat}><span class="sp">${x.cont?"":esc(x.player)}</span><span class="tx">${tbox||esc(x.text).replace(/\n/g,"<br>")}</span>${tag}</div>`;
-      return `<div class="bln${x.gm?" gm":""}${sel}${cut}"${dat} style="--c:${fixC(x.c)}"><span class="sp">${x.cont?"":esc(x.char)+(x.sub?`<small>${esc(x.sub)}</small>`:"")}</span><span class="tx">${tbox||bookTxt(x.text,x.inQ)}</span>${tag}</div>`;
+      if(x.ooc)return `<div class="bln ooc${x.same||x.cont?" same":""}${sel}${cut}"${dat}><span class="sp">${x.cont||x.same?"":esc(x.player)}</span><span class="tx">${tbox||esc(x.text).replace(/\n/g,"<br>")}</span>${tag}</div>`;
+      return `<div class="bln${x.gm?" gm":""}${x.same||x.cont?" same":""}${sel}${cut}"${dat} style="--c:${fixC(x.c)}"><span class="sp">${x.cont||x.same?"":esc(x.char)+(x.sub?`<small>${esc(x.sub)}</small>`:"")}</span><span class="tx">${tbox||bookTxt(x.text,x.inQ)}</span>${tag}</div>`;
   }
   return "";
 }
@@ -109,6 +109,10 @@ function bookPaginate(blocks,host,startNo){
   const fitLen=x=>{let lo=0,hi=x.text.length;while(lo<hi){const m=(lo+hi+1)>>1;if(fits({...x,text:x.text.slice(0,m)}))lo=m;else hi=m-1;}
     if(lo<=0||lo>=x.text.length)return lo;const h=x.text.slice(0,lo),br=Math.max(h.lastIndexOf("\n"),h.lastIndexOf(" "));return br>lo*.6?br+1:lo;};
   const place=el=>{body.appendChild(el);};
+  // 같은 사람이 이어서 말하면 이름은 처음 한 번만 · 본문과 잡담은 따로 셈 · 쪽이 바뀌면 다시 보여요
+  let st={m:null,o:null,pg:-1};const spk=x=>x.ooc?x.player:x.char+"|"+(x.sub||"");
+  const withSame=x=>{if(st.pg!==pages.length)st={m:null,o:null,pg:pages.length};if(x.k!=="line"||x.cont)return x;return {...x,same:spk(x)===(x.ooc?st.o:st.m)};};
+  const commit=x=>{if(x.k==="line"){if(x.ooc)st.o=spk(x);else st.m=spk(x);}else if(x.k!=="note"){st.m=null;st.o=null;}};
   newPage();
   blocks.forEach(x0=>{
     if(x0.k==="chap"&&body.children.length)newPage();
@@ -116,14 +120,15 @@ function bookPaginate(blocks,host,startNo){
     let x=x0,guard=0;
     while(x&&guard++<400){
       if(x.day&&pg().day==null)pg().day=x.day;
+      x=withSame(x);
       const el=mk(x);if(!el)break;place(el);
-      if(!over()){if(x.id)pg().ids.push(x.id);break;}
+      if(!over()){if(x.id)pg().ids.push(x.id);commit(x);break;}
       body.removeChild(el);
       const empty=!body.children.length;
       if(SPLIT.has(x.k)&&x.text&&x.text.length>1){const k=fitLen(x);
         // 쪽 끝에 두 줄쯤 이상 들어가면 나눠 채우고, 아니면 통째로 다음 쪽으로
         if(k>0&&(empty||k>=24&&x.text.length-k>=8)){const [a,b]=piece(x,k);place(mk(a));if(x.id)pg().ids.push(x.id);newPage();x=b;continue;}}
-      if(empty){place(el);if(x.id)pg().ids.push(x.id);break;}
+      if(empty){place(el);if(x.id)pg().ids.push(x.id);commit(x);break;}
       // 단락 제목만 쪽 끝에 홀로 남지 않게 같이 넘겨요
       const last=body.lastElementChild,carry=last&&last.classList.contains("bscene")?last:null;if(carry)body.removeChild(carry);
       newPage();if(carry)place(carry);
@@ -166,18 +171,31 @@ function bookFront(sc){
     ${gm?`<div class="bgm"><b>${gmw}</b>${esc(pcSplit(gm.name).name)}${gm.ch?` · ${esc(gm.ch)}`:""} — 이 이야기의 진행자</div>`:""}</div><div class="bfolio"><span>${esc(sc.name)}</span><span>2</span></div></div>`;
   return {cover,castP};
 }
+// 쪽 나누기는 무거워서, 내용·판형이 그대로면 지난 결과를 다시 써요
+function bookPages(sc){
+  const B=S.book,key=[B.ver||0,B.size,JSON.stringify(sc.sp||[]),JSON.stringify(sc.nouns||[])].join("|");
+  if(B.pc&&B.pc.key===key)return B.pc;
+  const m=$("#bkmeasure");if(!m)return B.pc||null;
+  m.innerHTML="";const blocks=bookBlocks(sc,false),pages=bookPaginate(blocks,m,4);pages.forEach(p=>p.el.remove());
+  const pageOf={};pages.forEach((p,i)=>p.ids.forEach(id=>{if(!pageOf[id])pageOf[id]=4+i;}));
+  B.pc={key,blocks,pages,pageOf};return B.pc;
+}
+function bookPcFresh(sc){const B=S.book;return B.pc&&B.pc.key===[B.ver||0,B.size,JSON.stringify(sc.sp||[]),JSON.stringify(sc.nouns||[])].join("|");}
 function bookRender(){
   const B=S.book;if(!B||!B.parts)return;const sc=scenById(B.scid);if(!sc)return;
   // 글꼴이 다 불러와진 뒤에 쪽을 나눠야 글자가 잘리지 않아요
   if(document.fonts&&document.fonts.status!=="loaded"){document.fonts.ready.then(()=>{if(S.book===B)bookRender();});return;}
   const m=$("#bkmeasure");if(!m)return;
-  const blocks=bookBlocks(sc,false);
-  // 쪽 나누기는 항상 완성본 기준으로 (책 고치기 화면의 쪽 경계 표시에도 써요)
-  m.innerHTML="";const pages=bookPaginate(blocks,m,4);
-  const pageOf={};pages.forEach((p,i)=>p.ids.forEach(id=>pageOf[id]=4+i));
+  let pc;
+  if(B.mode==="view")pc=bookPages(sc);
+  else{pc=B.pc||{pages:[],pageOf:{},blocks:[]};
+    // 책 고치기 중엔 고친 화면을 먼저 보여 주고, 쪽 번호는 잠시 뒤에 다시 맞춰요
+    if(!bookPcFresh(sc)){clearTimeout(B.pgT);B.pgT=setTimeout(()=>{if(S.book!==B||B.mode!=="edit"||B.editing)return;bookPages(sc);bookRender();},B.pc?900:50);}}
+  if(!pc)return;
+  const {blocks,pages,pageOf}=pc;
   const revs=(S.revs[sc.id]||[]).filter(r=>r.html||r.text);
   const cnt=$("#bkcnt");const all=B.parts.flatMap(bookItems),nO=all.filter(e=>bkOf(e.b)===1).length,nC=all.filter(e=>bkOf(e.b)===2).length;
-  if(cnt)cnt.textContent=`${all.length.toLocaleString()}줄 · 잡담 ${nO} · 빼기 ${nC} · ${BOOK_SIZES[B.size].n} 약 ${pages.length+3+(revs.length?1:0)}쪽`;
+  if(cnt)cnt.textContent=`${all.length.toLocaleString()}줄 · 잡담 ${nO} · 빼기 ${nC}`+(pages.length?` · ${BOOK_SIZES[B.size].n} 약 ${pages.length+3+(revs.length?1:0)}쪽`:"");
   if(B.mode==="view"){
     const host=$("#bkpages");const {cover,castP}=bookFront(sc);
     // 차례: 장·단락 제목과 쪽
@@ -195,6 +213,7 @@ function bookRender(){
     m.innerHTML="";
   }else{
     const sh=$("#bksheet");const eb=bookBlocks(sc,true);let lastPg=0,html="",secIds=[];
+    {let m0=null,o0=null;eb.forEach(x=>{if(x.k==="line"){const k=x.ooc?x.player:x.char+"|"+(x.sub||"");if(x.ooc){x.same=k===o0;o0=k;}else{x.same=k===m0;m0=k;}}else if(x.k!=="note"){m0=null;o0=null;}});}
     // 단락별로 묶어 '통째로 빼기' · 다 뺀 단락은 접어 둬요
     const groupsArr=[];let g={head:null,items:[]};eb.forEach(x=>{if(x.k==="chap"||x.k==="scene"){groupsArr.push(g);g={head:x,items:[]};}else g.items.push(x);});groupsArr.push(g);
     groupsArr.forEach((G,gi)=>{if(!G.head&&!G.items.length)return;

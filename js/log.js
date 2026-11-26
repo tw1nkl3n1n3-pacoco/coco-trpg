@@ -36,7 +36,7 @@ function applyTheme(){
 function render(){try{bkAuto();}catch(e){}
   const app=$("#app");
   refreshCanWrite();applyTheme();if(typeof setTitle==="function")setTitle();
-  document.body.classList.toggle("booking",!!S.book);
+  if(document.body.classList.contains("booking")!==!!S.book){document.body.classList.toggle("booking",!!S.book);document.documentElement.classList.toggle("booking",!!S.book);}
   if(S.book){app.innerHTML=bookHTML();bindBook();return;}
   if(S.revPage){app.innerHTML=revPageHTML();return;}
   if(S.up&&!S.sid&&!S.cid){app.innerHTML=upHTML();bindUp();return;}
@@ -254,7 +254,8 @@ function rowHTML(e,prev){
     </div></div>`;}
   const b=e.b,s=spBy(b.s),lines=b.x.split("\n"),gm=isGM(s.k),bk=bkOf(b);
   // 잡담은 이름과 한 줄로(캐릭터 이름 없이), 매 줄 이름을 보여요
-  const first=bk===1||!prev||bkOf(prev.b)===1||prev.b.s!==b.s||(prev.b.a||"")!==(b.a||"")||(prev.b.tab||"")!==(b.tab||"")||b.t-prev.b.t>120;
+  // 잡담은 잡담끼리, 본문은 본문끼리 이어지는지 봐요
+  const pbk=prev?bkOf(prev.b):-1,first=!prev||(pbk===1)!==(bk===1)||prev.b.s!==b.s||(bk!==1&&(prev.b.a||"")!==(b.a||""))||(bk!==1&&(prev.b.tab||"")!==(b.tab||""))||b.t-prev.b.t>120;
   const tx=lines.map((l,i)=>(i?`<button class="cut" data-act="cut" data-line="${i}" tabindex="-1" title="여기서 나눠서 다른 화자로 지정할 수 있게 해요">✂</button>`:"")+`<span class="ln">${hl(l)}</span>`).join(" ");
   const q=pcSplit(s.name),label=(gm?gmTag:q.n?`<span class="pcn">${q.n}</span>`:"")+esc(q.name),sub=bk===1?"":(b.a?esc(b.a):s.ch?esc(s.ch):"")+(b.tab&&!CHAT_TAB.test(b.tab)?`<span class="tabchip">${esc(b.tab)}</span>`:"");
   return `<div class="row${first?" first":""}${gm?" gm":""}${b.tab?" tabbed":""}${bk===1?" bk-ooc":bk===2?" bk-cut":""}${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}" style="--c:${fixC(s.c)}">

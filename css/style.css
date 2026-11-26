@@ -783,7 +783,7 @@ body[data-theme=deco][data-page=scen] :is(.sc-page,.rvpage)>.ldr{--ink:#f6e7c8;-
 .bookbtn:hover{border-color:currentColor}
 .schero-t .bookbtn{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.45)}
 @media(max-width:640px){.scmeta .bookbtn{padding:2px 7px}.scmeta .bookbtn .lbl{display:none}}
-html:has(body.booking),body.booking{background:#e9e7e2!important;background-image:none!important}
+html.booking,body.booking{background:#e9e7e2!important;background-image:none!important}
 body.booking #app{max-width:none!important;padding:0!important;margin:0!important;background:none!important;box-shadow:none!important;border:0!important}
 body.booking #hdr,body.booking .topbar{display:none}
 .bookwrap{--acc:#b0101a;max-width:none;margin:0;padding:0 24px 60px;font-family:"Pretendard",system-ui,sans-serif;color:#1c1c1b}
@@ -813,10 +813,11 @@ body.booking #hdr,body.booking .topbar{display:none}
 .bscene.l2{font-weight:600;color:#555}.bscene.l2::before{width:8px;background:#bbb}
 .bnar{font:inherit;margin:.7em 0;padding-left:.9em;border-left:2px solid #d9d4c8;color:#3b3934}
 .bln{display:grid;grid-template-columns:5.6em 1fr;gap:0 .9em;margin:.32em 0}
-.bln .sp{text-align:right;font:600 .86em/1.9 "Pretendard",sans-serif;color:var(--c,#333)}
+.bln .sp{word-break:keep-all;text-align:right;font:600 .86em/1.9 "Pretendard",sans-serif;color:var(--c,#333)}
 .bln .sp small{display:block;font-weight:400;font-size:.82em;line-height:1.2;color:#999}
 .bln.gm .sp{color:#555}
-.bln .q{color:#1c1c1b}.bln .act{color:#77736b}
+.bln .q{color:#1c1c1b}.bln .act{color:#8a857b;font-size:.93em}
+.bln.same{margin-top:.08em}
 .bln.ooc{display:block;color:#9a9a96;font-size:.86em;margin:.2em 0 .2em 6.5em}
 .bln.ooc .sp{display:inline;text-align:left;font-size:1em;color:#9a9a96;margin-right:.6em;font-weight:500}
 .bdice{display:flex;align-items:center;gap:.7em;margin:.6em 0 .6em 6.5em;padding:.35em .7em;border:1px solid #ddd;border-radius:3px;font:.86em/1.5 "Pretendard",sans-serif}
@@ -900,5 +901,5 @@ body.booking #hdr,body.booking .topbar{display:none}
 .bki span{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bki input{font:inherit;padding:5px 8px;border:1px solid #d6d1c6;border-radius:6px;background:#fff;user-select:text}
 .bki-e{color:#999;font-size:12px}
-.row.bk-ooc .who .gmtag,.row.bk-ooc .who [class*="gm"]{filter:grayscale(1);opacity:.55}
+.row.bk-ooc .who .gmtag{filter:grayscale(1);opacity:.55}
 .bday{margin:18px 0 6px;font:600 11px "Pretendard",sans-serif;color:#a39d90;letter-spacing:.04em}
