@@ -39,27 +39,25 @@ async function bookSet(changes){
 
 // ---------- 책 내용 → 블록 ----------
 function bookSp(sc,k){return (sc.sp||[]).find(p=>p.k===k)||null;}
-function bookTxt(x){
-  const t=esc(x||"").replace(/\n/g,"<br>");
-  if(!/「/.test(x||""))return t;
-  return t.replace(/(「[^」]*」?)/g,'<span class="q">$1</span>').replace(/(^|<\/span>)([^<]+?)(?=<span class="q">|$)/g,(m,a,b)=>a+(b.trim()?`<span class="act">${b}</span>`:b));
+function bookTxt(x,inQ){
+  // 「」 안은 대사, 밖은 행동 묘사(옅게) · 쪽이 나뉘어 「 가 앞쪽에 있으면 inQ
+  x=x||"";if(!/「/.test(x)&&!inQ)return esc(x).replace(/\n/g,"<br>");
+  let pre="";
+  if(inQ){const i=x.indexOf("」");const h=i<0?x:x.slice(0,i+1);pre=`<span class="q">${esc(h)}</span>`;x=i<0?"":x.slice(i+1);}
+  const out=esc(x).replace(/(「[^」]*」?)/g,'\u0001$1\u0002').split(/(\u0001[^\u0002]*\u0002)/).map(t=>!t?"":t[0]==="\u0001"?`<span class="q">${t.slice(1,-1)}</span>`:t.trim()?`<span class="act">${t}</span>`:t).join("");
+  return (pre+out).replace(/\n/g,"<br>");
 }
 function bookBlocks(sc,edit){
+  // 장은 단락(큰 단락)으로만 나눠요 · 회차·부는 쪽 아래 날짜로만 보여요
   const B=S.book,th=themeOf(sc)||"plain",gk=gmKey(sc),gmw=th==="deco"?"DM":"GM";
-  const days=[...new Set(B.parts.map(p=>p.day))];
-  const byDay=days.length>1,out=[];let n=0;
+  const out=[];let n=0;
   const nouns=nounGroupsOf(sc).filter(g=>g.d),noted=new Set();
   const noteFor=txt=>{const r=[];nouns.forEach(g=>{if(noted.has(g.n))return;if([g.n,...g.a].some(w=>w&&(txt||"").includes(w))){noted.add(g.n);r.push({k:"note",n:g.n,d:g.d});}});return r;};
-  B.parts.forEach((P,pi)=>{
-    // 회차가 장 · 한 회차가 여러 부면 부마다 장
-    const multi=B.parts.filter(q=>q.day===P.day).length>1;
-    let items=bookItems(P);
-    {n++;let title=byDay?fmtDay(P.day)+(multi?` · 제${P.part}부`:""):(multi?`제${P.part}부`:fmtDay(P.day));
-      const f=items.find(e=>bkOf(e.b)!==2||edit);
-      if(f&&f.b.s===SEC&&secLv(f.b)===1&&f.b.x){title=f.b.x;items=items.filter(e=>e!==f);}
-      out.push({k:"chap",label:(!byDay&&B.parts.length>1?"PART ":"CHAPTER ")+n,title,id:"ch"+pi});}
-    items.forEach(e=>{const b=e.b,bk=bkOf(b);if(bk===2&&!edit)return;const base={id:b.id,ci:e.ci,sid:e.sid,bk};
-      if(b.s===SEC){out.push({...base,k:"scene",text:b.x||"",lv:secLv(b)});return;}
+  B.parts.forEach(P=>{
+    const multi=B.parts.filter(q=>q.day===P.day).length>1,day=P.day;
+    if(edit)out.push({k:"day",text:fmtDay(P.day)+(multi?` · ${P.part}부`:""),day});
+    bookItems(P).forEach(e=>{const b=e.b,bk=bkOf(b);if(bk===2&&!edit)return;const base={id:b.id,ci:e.ci,sid:e.sid,bk,day};
+      if(b.s===SEC){if(secLv(b)<=1)out.push({...base,k:"chap",label:"CHAPTER "+(++n),title:b.x||"단락"});else out.push({...base,k:"scene",text:b.x||"",lv:secLv(b)});return;}
       if(b.s===NOTE){if(!b.x)return;out.push({...base,k:"nar",text:b.x});out.push(...(edit?[]:noteFor(b.x)));return;}
       if(b.s===HAND){out.push({...base,k:"hand",title:b.ti||"핸드아웃",text:b.x||""});return;}
       if(b.s===DICE){const p=b.w?bookSp(sc,b.w):null;out.push({...base,k:"dice",who:b.a||(p?(p.ch||pcSplit(p.name).name):""),text:b.x||"",res:b.r||"",sec:!!b.sec});return;}
@@ -68,7 +66,13 @@ function bookBlocks(sc,edit){
       if(!edit&&bk!==1)out.push(...noteFor(b.x));
     });
   });
-  return out;
+  if(edit)return out;
+  // 내용이 다 빠진 장·단락 제목은 책에서 빼요
+  const keep=out.map(()=>true);
+  out.forEach((x,i)=>{if(x.k!=="chap"&&x.k!=="scene")return;let has=false;
+    for(let j=i+1;j<out.length;j++){const y=out[j];if(y.k==="chap"||(x.k==="scene"&&y.k==="scene"))break;if(y.k!=="note"&&y.k!=="scene"){has=true;break;}}
+    keep[i]=has;});
+  return out.filter((x,i)=>keep[i]);
 }
 function blockHTML(x,edit){
   const B=S.book,sel=edit&&B.sel.has(x.id)?" sel":"",cut=x.bk===2?" cut":"",dat=edit&&x.id?` data-bid="${esc(x.id)}"`:"";
@@ -77,34 +81,59 @@ function blockHTML(x,edit){
   const tbox=editing?`<textarea class="bked" id="bked">${esc(x.text)}</textarea><div class="bkhint">Enter 저장 · Shift+Enter 줄바꿈 · Esc 취소 · 로그에도 그대로 반영돼요</div>`:null;
   switch(x.k){
     case "chap":return `<div class="bchap"><small>${esc(x.label)}</small><b>${esc(x.title)}</b></div>`;
+    case "day":return edit?`<div class="bday">${esc(x.text)} 회차</div>`:"";
     case "scene":return edit?"":`<div class="bscene l${x.lv}">${esc(x.text||"")}</div>`;
     case "nar":return `<p class="bnar${sel}${cut}"${dat}>${tbox||esc(x.text).replace(/\n/g,"<br>")}${tag}</p>`;
-    case "hand":return `<div class="bhand${sel}${cut}"${dat}><b>HANDOUT · ${esc(x.title)}</b>${tbox||esc(x.text).replace(/\n/g,"<br>")}${tag}</div>`;
+    case "hand":return `<div class="bhand${sel}${cut}"${dat}>${x.cont?"":`<b>HANDOUT · ${esc(x.title)}</b>`}${tbox||esc(x.text).replace(/\n/g,"<br>")}${tag}</div>`;
     case "dice":return `<div class="bdice${sel}${cut}"${dat}><b class="t">판정</b><span>${esc([x.who,x.text].filter(Boolean).join(" · "))}</span>${x.sec?'<span class="r">Secret Dice</span>':x.res?`<span class="r">${esc(x.res)}</span>`:""}${tag}</div>`;
     case "note":return `<div class="bmemo"><b>${esc(x.n)}</b>${esc(x.d)}</div>`;
     case "line":
-      if(x.ooc)return `<div class="bln ooc${sel}${cut}"${dat}><span class="sp">${esc(x.player)}</span><span class="tx">${tbox||esc(x.text).replace(/\n/g,"<br>")}</span>${tag}</div>`;
-      return `<div class="bln${x.gm?" gm":""}${sel}${cut}"${dat} style="--c:${fixC(x.c)}"><span class="sp">${esc(x.char)}${x.sub?`<small>${esc(x.sub)}</small>`:""}</span><span class="tx">${tbox||bookTxt(x.text)}</span>${tag}</div>`;
+      if(x.ooc)return `<div class="bln ooc${sel}${cut}"${dat}><span class="sp">${x.cont?"":esc(x.player)}</span><span class="tx">${tbox||esc(x.text).replace(/\n/g,"<br>")}</span>${tag}</div>`;
+      return `<div class="bln${x.gm?" gm":""}${sel}${cut}"${dat} style="--c:${fixC(x.c)}"><span class="sp">${x.cont?"":esc(x.char)+(x.sub?`<small>${esc(x.sub)}</small>`:"")}</span><span class="tx">${tbox||bookTxt(x.text,x.inQ)}</span>${tag}</div>`;
   }
   return "";
 }
 
 // ---------- 쪽 나누기: 실제 크기의 빈 쪽에 블록을 채워 보며 넘치면 다음 쪽으로 ----------
-function bookPaginate(blocks,host,startNo,folio){
-  const pages=[];let cur=null,body=null,chapTitle="";
-  const newPage=()=>{cur=document.createElement("div");cur.className="bpg";cur.innerHTML=`<div class="bbody"></div><div class="bfolio"><span></span><span></span></div>`;host.appendChild(cur);body=cur.firstChild;pages.push({el:cur,ids:[],chap:chapTitle});};
+function bookPaginate(blocks,host,startNo){
+  // 실제 크기의 빈 쪽에 블록을 하나씩 넣어 보고, 넘치면 긴 글은 쪽 끝에서 나눠 다음 쪽으로 이어요
+  const pages=[];let body=null,day=null;
+  const pg=()=>pages[pages.length-1];
+  const newPage=()=>{const el=document.createElement("div");el.className="bpg";el.innerHTML=`<div class="bbody"></div><div class="bfolio"><span></span><span></span></div>`;host.appendChild(el);body=el.firstChild;pages.push({el,ids:[],chap:null,day:null});};
+  const over=()=>body.scrollHeight>body.clientHeight+1;
+  const mk=x=>{const t=document.createElement("div");t.innerHTML=blockHTML(x,false);return t.firstElementChild;};
+  const SPLIT=new Set(["nar","line","hand"]);
+  const fits=x=>{const el=mk(x);if(!el)return true;body.appendChild(el);const ok=!over();body.removeChild(el);return ok;};
+  const piece=(x,k)=>{const head=x.text.slice(0,k),rest=x.text.slice(k).replace(/^[ \t]+/,"").replace(/^\n/,"");
+    const qs=(x.inQ?"「":"")+head,inQ=qs.lastIndexOf("「")>qs.lastIndexOf("」");return [{...x,text:head.replace(/\s+$/,"")},{...x,text:rest,cont:true,inQ}];};
+  const fitLen=x=>{let lo=0,hi=x.text.length;while(lo<hi){const m=(lo+hi+1)>>1;if(fits({...x,text:x.text.slice(0,m)}))lo=m;else hi=m-1;}
+    if(lo<=0||lo>=x.text.length)return lo;const h=x.text.slice(0,lo),br=Math.max(h.lastIndexOf("\n"),h.lastIndexOf(" "));return br>lo*.6?br+1:lo;};
+  const place=el=>{body.appendChild(el);};
   newPage();
-  blocks.forEach(x=>{
-    if(x.k==="chap"){chapTitle=x.title;if(body.children.length)newPage();pages[pages.length-1].chap=chapTitle;}
-    const tmp=document.createElement("div");tmp.innerHTML=blockHTML(x,false);const el=tmp.firstElementChild;if(!el)return;
-    body.appendChild(el);
-    if(body.scrollHeight>body.clientHeight+1&&body.children.length>1){body.removeChild(el);newPage();body.appendChild(el);}
-    if(x.id)pages[pages.length-1].ids.push(x.id);
+  blocks.forEach(x0=>{
+    if(x0.k==="chap"&&body.children.length)newPage();
+    if(x0.k==="chap")pg().chap=x0.id;
+    let x=x0,guard=0;
+    while(x&&guard++<400){
+      if(x.day&&pg().day==null)pg().day=x.day;
+      const el=mk(x);if(!el)break;place(el);
+      if(!over()){if(x.id)pg().ids.push(x.id);break;}
+      body.removeChild(el);
+      const empty=!body.children.length;
+      if(SPLIT.has(x.k)&&x.text&&x.text.length>1){const k=fitLen(x);
+        // 쪽 끝에 두 줄쯤 이상 들어가면 나눠 채우고, 아니면 통째로 다음 쪽으로
+        if(k>0&&(empty||k>=24&&x.text.length-k>=8)){const [a,b]=piece(x,k);place(mk(a));if(x.id)pg().ids.push(x.id);newPage();x=b;continue;}}
+      if(empty){place(el);if(x.id)pg().ids.push(x.id);break;}
+      // 단락 제목만 쪽 끝에 홀로 남지 않게 같이 넘겨요
+      const last=body.lastElementChild,carry=last&&last.classList.contains("bscene")?last:null;if(carry)body.removeChild(carry);
+      newPage();if(carry)place(carry);
+    }
+    if(x0.day)day=x0.day;
   });
-  pages.forEach((p,i)=>{const f=p.el.querySelector(".bfolio");f.firstChild.textContent=folio(p.chap);f.lastChild.textContent=startNo+i;});
+  void day;
+  let d0=null;pages.forEach((p,i)=>{if(p.day)d0=p.day;const f=p.el.querySelector(".bfolio");f.firstChild.textContent=d0?fmtDay(d0)+" 회차":"";f.lastChild.textContent=startNo+i;});
   return pages;
 }
-
 // ---------- 화면 ----------
 function bookHTML(){
   const B=S.book,sc=scenById(B.scid);
@@ -139,10 +168,12 @@ function bookFront(sc){
 }
 function bookRender(){
   const B=S.book;if(!B||!B.parts)return;const sc=scenById(B.scid);if(!sc)return;
+  // 글꼴이 다 불러와진 뒤에 쪽을 나눠야 글자가 잘리지 않아요
+  if(document.fonts&&document.fonts.status!=="loaded"){document.fonts.ready.then(()=>{if(S.book===B)bookRender();});return;}
   const m=$("#bkmeasure");if(!m)return;
   const blocks=bookBlocks(sc,false);
   // 쪽 나누기는 항상 완성본 기준으로 (책 고치기 화면의 쪽 경계 표시에도 써요)
-  m.innerHTML="";const pages=bookPaginate(blocks,m,4,c=>c||sc.name);
+  m.innerHTML="";const pages=bookPaginate(blocks,m,4);
   const pageOf={};pages.forEach((p,i)=>p.ids.forEach(id=>pageOf[id]=4+i));
   const revs=(S.revs[sc.id]||[]).filter(r=>r.html||r.text);
   const cnt=$("#bkcnt");const all=B.parts.flatMap(bookItems),nO=all.filter(e=>bkOf(e.b)===1).length,nC=all.filter(e=>bkOf(e.b)===2).length;
@@ -150,11 +181,10 @@ function bookRender(){
   if(B.mode==="view"){
     const host=$("#bkpages");const {cover,castP}=bookFront(sc);
     // 차례: 장·단락 제목과 쪽
-    const toc=[];blocks.forEach(x=>{if(x.k==="chap")toc.push({t:x.title,ch:1,id:x.id});else if(x.k==="scene"&&x.lv===1&&x.text)toc.push({t:x.text,id:x.id});});
-    const chapPage={};pages.forEach((p,i)=>{if(p.el.querySelector(".bchap"))chapPage[p.chap]=chapPage[p.chap]||4+i;});
+    const toc=[];blocks.forEach(x=>{if(x.k==="chap")toc.push({t:x.title,ch:1,id:x.id});else if(x.k==="scene"&&x.lv===2&&x.text)toc.push({t:x.text,id:x.id});});
     const revStart=4+pages.length;
     const tocP=`<div class="bpg"><div class="bbody"><h2 class="ph">CONTENTS</h2><h3 class="pt">차례</h3><ul class="btoc"><li class="ch">등장인물<span class="p">2</span></li>
-      ${toc.map(t=>`<li class="${t.ch?"ch":"sc"}">${esc(t.t)}<span class="p">${t.ch?(chapPage[t.t]||""):(pageOf[t.id]||"")}</span></li>`).join("")}
+      ${toc.map(t=>`<li class="${t.ch?"ch":"sc"}">${esc(t.t)}<span class="p">${pageOf[t.id]||""}</span></li>`).join("")}
       ${revs.length?`<li class="ch">플레이어 후기<span class="p">${revStart}</span></li>`:""}</ul></div><div class="bfolio"><span>${esc(sc.name)}</span><span>3</span></div></div>`;
     host.innerHTML=cover+castP+tocP;pages.forEach(p=>host.appendChild(p.el));
     if(revs.length){

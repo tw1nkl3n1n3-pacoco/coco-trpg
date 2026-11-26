@@ -810,7 +810,7 @@ body.booking #hdr,body.booking .topbar{display:none}
 .bscene{font:700 .92em/1.4 "Pretendard",sans-serif;margin:1.6em 0 .8em;display:flex;align-items:center;gap:8px}
 .bscene::before{content:"";width:14px;height:2px;background:var(--acc)}
 .bscene.l2{font-weight:600;color:#555}.bscene.l2::before{width:8px;background:#bbb}
-.bnar{margin:.7em 0;padding-left:.9em;border-left:2px solid #d9d4c8;color:#3b3934}
+.bnar{font:inherit;margin:.7em 0;padding-left:.9em;border-left:2px solid #d9d4c8;color:#3b3934}
 .bln{display:grid;grid-template-columns:5.6em 1fr;gap:0 .9em;margin:.32em 0}
 .bln .sp{text-align:right;font:600 .86em/1.9 "Pretendard",sans-serif;color:var(--c,#333)}
 .bln .sp small{display:block;font-weight:400;font-size:.82em;line-height:1.2;color:#999}
@@ -880,7 +880,9 @@ body.booking #hdr,body.booking .topbar{display:none}
 .bselpop button.on,.bselpop button:hover{background:var(--acc)}
 .bked{width:100%;font:inherit;padding:4px 6px;border:1px solid var(--acc);border-radius:4px;resize:none;background:#fff;user-select:text}
 .bkhint{font:11px "Pretendard";color:#999;margin-top:2px}
-@media(max-width:640px){.bksheet{padding:16px 14px}.bksheet .bln{grid-template-columns:5em 1fr}.bksheet .bln.ooc,.bksheet .bdice{margin-left:0}.bkpages{zoom:.62}}
+@media(max-width:640px){.bksheet{padding:16px 14px}.bksheet .bln{grid-template-columns:5em 1fr}.bksheet .bln.ooc,.bksheet .bdice{margin-left:0}
+  /* 작은 화면은 확대·축소(zoom) 대신 그림처럼 줄여서 보여요 · 쪽 나눔이 바뀌지 않게 */
+  .bkpages{--sc:.64;overflow:hidden;gap:10px}.bkpages .bpg{transform:scale(var(--sc));transform-origin:top center;margin:0 calc(var(--pw)*(var(--sc) - 1)/2) calc(var(--ph)*(var(--sc) - 1))}}
 @media print{
   body.booking{background:#fff}
   body.booking .bkbar,body.booking .toast,body.booking #auth,body.booking footer{display:none!important}
@@ -898,3 +900,4 @@ body.booking #hdr,body.booking .topbar{display:none}
 .bki input{font:inherit;padding:5px 8px;border:1px solid #d6d1c6;border-radius:6px;background:#fff;user-select:text}
 .bki-e{color:#999;font-size:12px}
 .row.bk-ooc .who .gmtag,.row.bk-ooc .who [class*="gm"]{filter:grayscale(1);opacity:.55}
+.bday{margin:18px 0 6px;font:600 11px "Pretendard",sans-serif;color:#a39d90;letter-spacing:.04em}
