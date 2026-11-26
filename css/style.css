@@ -924,3 +924,4 @@ body.booking #hdr,body.booking .topbar{display:none}
 .bstartmk{margin:14px 0 10px;padding-top:5px;border-top:2px solid var(--acc);font:700 12px "Pretendard",sans-serif;color:var(--acc)}
 .bfold.pre{border-style:solid;background:#f1ede4}
 .bksheet .prel{opacity:.45}
+.t0fix{margin:10px 0;font-size:12px}.t0fix button{margin-top:6px;font-size:12px;white-space:normal;text-align:left}

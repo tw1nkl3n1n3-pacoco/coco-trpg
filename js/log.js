@@ -160,6 +160,7 @@ function renderSide(){
       <kbd>N</kbd> 고른 대사 아래에 상황 묘사 넣기 · <kbd>D</kbd> 주사위 · <kbd>H</kbd> 핸드아웃 넣기<br>
       <kbd>↑</kbd><kbd>↓</kbd> 이동 · <kbd>Enter</kbd> 글 수정 · <kbd>P</kbd> 여기서 재생 · <kbd>Space</kbd> 재생/정지 · <kbd>Ctrl</kbd>+<kbd>Z</kbd> 되돌리기
     </div>
+    ${S.meta&&S.meta.src==="ccfolia"&&!S.meta.t0&&S.canWrite?`<div class="tip t0fix">이 로그는 예전에 올려서 실제 시각이 없어요. <button class="ghost" id="t0fix">🕘 코코포리아 html 다시 골라 실제 시각 넣기</button><input type="file" id="t0file" accept=".html,.htm" hidden></div>`:""}
     <div class="homefoot sidefoot"><button class="ghost" id="back" title="세션 목록">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>`;
   bindSide();
 }
@@ -215,6 +216,18 @@ function diceInner(b){
   if(!p&&!b.r&&!b.o&&!b.x&&!b.sec)return '<span class="ph">🎲 주사위 — ✎를 눌러 입력</span>';
   return `<span class="dd">🎲</span>${b.a?`<b class="dw">${esc(b.a)}</b>`:p?`<b class="dw">${esc(p.ch||p.name)}</b>`:""}${b.x?`<span class="dl">${hl(b.x)}</span>`:""}${b.r?`<span class="dr">${hl(b.r)}</span>`:""}${b.sec?`<span class="dres secret">Secret Dice</span>`:""}${b.o&&OUT[b.o]?`<span class="dres ${b.o}">${outLabel(b.o)}</span>`:""}`;
 }
+// 예전에 올린 코코포리아 회차들에 실제 시작 시각(t0)을 넣어요: 같은 시나리오·같은 날짜 회차와 짝지어서
+async function fixT0(html){
+  const parsed=parseCcfolia(html);if(!parsed)throw new Error("코코포리아 로그 html이 아니에요");
+  const cur=S.sessions.find(s=>s.id===S.sid);if(!cur)return 0;const scen=info(cur).scen;
+  const mine=S.sessions.filter(s=>info(s).scen===scen&&s.src==="ccfolia"&&!s.t0);
+  let n=0;
+  for(const s of mine){const i=info(s);
+    const cands=parsed.days.map(d=>d.find(m=>m.ch==="main"&&!m.sys)||d[0]).filter(m=>m&&kst(m.t)===i.day);
+    const m0=cands[(i.part||1)-1]||cands[0];if(!m0)continue;
+    await S.db.doc(`sessions/${s.id}`).update({t0:m0.t});s.t0=m0.t;if(s.id===S.sid&&S.meta)S.meta.t0=m0.t;n++;}
+  renderSide();renderAllRows(true);return n;
+}
 function setStart(id){
   if(!S.canWrite)return;const e=S.byId.get(id);if(!e)return;
   const ops=S.flat.filter(x=>x.b.bstart&&x.b.id!==id).map(x=>({ci:x.ci,op:{t:"set",id:x.b.id,f:{bstart:undefined}}}));
@@ -224,7 +237,7 @@ function setStart(id){
 function rowHTML(e,prev){
   if(e.b.s===SEC){const b=e.b;
     return `<div class="row sec l${secLv(b)}${S.sel===b.id?" sel":""}" data-id="${b.id}">
-    <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
+    <button class="ts" data-act="seek" title="여기서 재생">${fmtLog(b.t)}</button>
     <div class="body"><div class="tx"><span class="ln">${b.x?hl(b.x):'<span class="ph">단락 이름</span>'}</span></div></div>
     <div class="act">
       <button class="w" data-act="edit" title="이름 고치기 (Enter)">✎</button>
@@ -233,7 +246,7 @@ function rowHTML(e,prev){
     </div></div>`;}
   if(e.b.s===HAND){const b=e.b;
     return `<div class="row${bkOf(b)===2?" bk-cut":""} hand${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}">
-    <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
+    <button class="ts" data-act="seek" title="여기서 재생">${fmtLog(b.t)}</button>
     <div class="body"><div class="hlab">📜 ${b.ti?`<b class="hti">${esc(b.ti)}</b>`:"핸드아웃"}</div><div class="tx">${b.x?`<span>${b.x.split("\n").map(l=>`<span class="ln">${handLine(l)}</span>`).join("<br>")}</span>`:'<span class="ph">핸드아웃 내용 · [정보] / [비밀]로 시작하는 줄은 라벨이 붙어요</span>'}</div></div>
     <div class="act">${cmBtn()}
       <button class="w" data-act="edit" title="글 수정 (Enter)">✎</button>
@@ -244,7 +257,7 @@ function rowHTML(e,prev){
     </div></div>`;}
   if(e.b.s===DICE){const b=e.b,p=b.w?spBy(b.w):null;
     return `<div class="row${bkOf(b)===2?" bk-cut":""} dice${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}" style="--c:${p?fixC(p.c):"#8a8178"}">
-    <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
+    <button class="ts" data-act="seek" title="여기서 재생">${fmtLog(b.t)}</button>
     <div class="body"><div class="tx">${diceInner(b)}</div></div>
     <div class="act">${cmBtn()}
       <button class="w" data-act="edit" title="주사위 수정 (Enter)">✎</button>
@@ -254,7 +267,7 @@ function rowHTML(e,prev){
     </div></div>`;}
   if(e.b.s===NOTE){const b=e.b;
     return `<div class="row${bkOf(b)===2?" bk-cut":""} note${b.st?" stat":""}${b.tab?" tabbed":""}${S.startId===b.id?" bstart":""}${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}">
-    <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
+    <button class="ts" data-act="seek" title="여기서 재생">${fmtLog(b.t)}</button>
     <div class="body"><div class="tx">${b.x?`<span>${b.x.split("\n").map(l=>`<span class="ln">${hl(l)}</span>`).join("<br>")}</span>`:'<span class="ph">상황 묘사</span>'}</div></div>
     <div class="act">${cmBtn()}
       <button class="w" data-act="note" title="아래에 상황 묘사 추가 (N)">＋상황</button>
@@ -271,7 +284,7 @@ function rowHTML(e,prev){
   const tx=lines.map((l,i)=>(i?`<button class="cut" data-act="cut" data-line="${i}" tabindex="-1" title="여기서 나눠서 다른 화자로 지정할 수 있게 해요">✂</button>`:"")+`<span class="ln">${hl(l)}</span>`).join(" ");
   const q=pcSplit(s.name),label=(gm?gmTag:q.n?`<span class="pcn">${q.n}</span>`:"")+esc(q.name),sub=bk===1?"":(b.a?esc(b.a):s.ch?esc(s.ch):"")+(b.tab&&!CHAT_TAB.test(b.tab)?`<span class="tabchip">${esc(b.tab)}</span>`:"");
   return `<div class="row${first?" first":""}${gm?" gm":""}${b.tab?" tabbed":""}${bk===1?" bk-ooc":bk===2?" bk-cut":""}${S.startId===b.id?" bstart":""}${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}" style="--c:${fixC(s.c)}">
-    <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
+    <button class="ts" data-act="seek" title="여기서 재생">${fmtLog(b.t)}</button>
     <div class="body">
       ${first?`<button class="who" data-act="who" title="클릭해서 화자 바꾸기">${label}${sub?`<small>${sub}</small>`:""}</button>`:""}
       <div class="tx">${tx}</div>
@@ -687,6 +700,7 @@ function bindHeader(){
   $("#jump").onclick=()=>{setFollow(true);const r=S.playingId&&document.querySelector(`.row[data-id="${S.playingId}"]`);r&&r.scrollIntoView({block:"center",behavior:"smooth"});};
 }
 function bindSide(){
+  {const tb=$("#t0fix"),tf=$("#t0file");if(tb&&tf){tb.onclick=()=>tf.click();tf.onchange=async()=>{const f=tf.files[0];if(!f)return;try{const n=await fixT0(await f.text());toast(n?`${n}개 회차에 실제 시각을 넣었어요`:"이 파일에서 맞는 회차를 못 찾았어요");}catch(e){writeFail(e);}};}}
   const bk=$("#back");if(bk)bk.onclick=()=>{location.hash="";if(S.local){S.local=false;openSession(null);}};
   renderAuth();
   document.querySelectorAll("[data-fold]").forEach(b=>b.onclick=()=>{const k=b.dataset.fold;S[k]=!S[k];b.classList.toggle("open",S[k]);b.nextElementSibling.classList.toggle("open",S[k]);});
