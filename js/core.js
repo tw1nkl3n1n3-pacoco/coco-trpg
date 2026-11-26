@@ -28,6 +28,8 @@ const rid=()=>Math.random().toString(36).slice(2,9);
 // 코코포리아 로그는 실제 시각(한국 시간)으로 · 나머지는 녹음 시간
 const clockT=(t0,t)=>{const d=new Date(t0+(t||0)*1000+9*3600e3);return String(d.getUTCHours()).padStart(2,"0")+":"+String(d.getUTCMinutes()).padStart(2,"0");};
 const fmtLog=t=>S.meta&&S.meta.t0?clockT(S.meta.t0,t):fmt(t);
+// 녹음 조각 번호: ① ② … ('1부' 같은 말 대신)
+const pieceNo=n=>"①②③④⑤⑥⑦⑧⑨⑩"[(+n||1)-1]||`(${n})`;
 const fmt=t=>{if(t<0)return "-"+fmt(-t);t=Math.floor(t||0);const h=Math.floor(t/3600),m=Math.floor(t%3600/60),s=t%60;return (h?h+":":"")+String(m).padStart(h?2:1,"0")+":"+String(s).padStart(2,"0");};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const COLORS=["#a8401f","#2f6690","#4f7a2a","#7a4a9e","#b8691c","#1f7f74","#a83a62","#7d6a14","#3f4fa0","#5c4a3a","#c0392b","#2e6b4f"];

@@ -58,7 +58,7 @@ function bookBlocks(sc,edit){
   const noteFor=txt=>{const r=[];nouns.forEach(g=>{if(noted.has(g.n))return;if([g.n,...g.a].some(w=>nounIn(txt,w))){noted.add(g.n);r.push({k:"note",n:g.n,d:g.d});}});return r;};
   B.parts.forEach(P=>{
     const multi=B.parts.filter(q=>q.day===P.day).length>1,day=P.day;
-    if(edit)out.push({k:"day",text:fmtDay(P.day)+(multi?` · ${P.part}부`:""),day});
+    if(edit)out.push({k:"day",text:fmtDay(P.day)+(multi?` ${pieceNo(P.part)}`:""),day});
     // 본세션 시작 줄 앞은 따로 고르지 않으면 빼기로 (1·2로 책에 넣을 수 있어요)
     const its=bookItems(P),st=startIdOf(its.map(e=>e.b));preIds(its.map(e=>e.b)).forEach(id=>PRE.book.add(id));
     const en=endIdOf(its.map(e=>e.b));

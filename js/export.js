@@ -44,7 +44,7 @@ async function buildDayHTML(scen,day){
     }
     return out.join("\n");
   };
-  const partsHTML=parts=>parts.map(p=>(parts.length>1?`<h2>${p.part}부</h2>`:"")+lines(p.bl,p.sp)).join("\n");
+  const partsHTML=parts=>parts.map(p=>""+lines(p.bl,p.sp)).join("\n");
   const body=all?groups.map(G=>`<section class="dayblk"><h2 class="dayh"><span>${G.nth}회차</span>${esc(fmtDay(G.day))}</h2>\n${partsHTML(G.parts)}</section>`).join("\n"):partsHTML(groups[0].parts);
   const sub=all?`${groups.length}회차 · ${fmtDay(pick[0])} ~ ${fmtDay(pick.at(-1))}`:fmtDay(pick[0]);
   return `<!DOCTYPE html>

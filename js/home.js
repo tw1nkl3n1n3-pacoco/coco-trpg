@@ -71,7 +71,7 @@ function editSessionBox(id){
     if(f.scen!==v.scen){const tgt=findScen(f.scen);if(tgt)patch.scid=tgt.id;const old=findScen(v.scen);patch.sp=JSON.parse(JSON.stringify([...(old?.sp||[]),...((s.sp||[]).filter(o=>!(old?.sp||[]).some(x=>x.k===o.k)))]));}
     try{await retry(()=>S.db.doc("sessions/"+id).update(patch));toast("저장했어요");}catch(e){writeFail(e);toast("저장하지 못했어요");}
   };
-  const d=m.querySelector("[data-del]");if(d)d.onclick=()=>{m.remove();confirmBox(`'${v.scen} ${v.part}부' 녹음의 로그를 지울까요? 모두에게서 사라지고 되돌릴 수 없어요.`,"삭제",()=>deleteSession(id));};
+  const d=m.querySelector("[data-del]");if(d)d.onclick=()=>{m.remove();confirmBox(`'${v.scen} ${fmtDay(v.day)}${v.part>1?" "+pieceNo(v.part):""}' 녹음의 로그를 지울까요? 모두에게서 사라지고 되돌릴 수 없어요.`,"삭제",()=>deleteSession(id));};
 }
 function bindPartEdit(){document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=ev=>{ev.preventDefault();ev.stopPropagation();editSessionBox(b.dataset.edit);});}
 
@@ -189,10 +189,10 @@ function daysHTML(days,gear=true){
     // 온라인(코코포리아) 회차는 한 로그뿐이라 '1부' 칩 없이 한 줄로, 줄 전체가 링크
     if(d.parts.length===1&&d.parts[0].src==="ccfolia"){const p=d.parts[0];
       return `<div class="day oday"><a class="oline" href="#s-${esc(p.id)}"><span class="nth">${i+1}회차</span><span class="odate">${esc(fmtDay(d.day))}</span><span class="ocnt">${p.n?p.n+"개 대사":""}</span><span class="ogo">›</span></a>${set(p)}</div>`;}
-    return `<div class="day">
-    <div class="day-h"><span class="nth">${i+1}회차</span><span>${esc(fmtDay(d.day))}</span></div>
-    <div class="parts">${d.parts.map(p=>`<span class="partw"><a class="part" href="#s-${esc(p.id)}"><b>${p.part}부</b><span>${p.n?p.n+"개 대사":""}</span></a>${gear&&S.canAdmin&&S.db?`<button class="pset" data-edit="${esc(p.id)}" title="시나리오·날짜·순서·녹음 링크 고치기">⚙</button>`:""}</span>`).join("")}</div>${S.db&&d.parts.length?`<button class="ghost dexp" data-exps="${esc(d.parts[0].scen)}" data-expd="${esc(d.day)}" title="이 회차 로그를 HTML 파일로 받기">⬇ HTML</button>`:""}
-  </div>`;  }).join("")+(days.some(d=>d.parts.length)&&days.every(d=>!d.parts.length||d.parts.length===1&&d.parts[0].src==="ccfolia")&&S.db?`<div class="allexp"><button class="ghost dexp all" data-exps="${esc((days.find(d=>d.parts.length)||{parts:[{}]}).parts[0].scen)}" data-expd="*" title="모든 회차를 HTML 파일 하나로 받기">⬇ 전체 HTML</button></div>`:"");
+    // 녹음을 여러 조각으로 나눠 올렸어도 한 회차는 한 줄 · 대사 수는 합쳐서 · 조각은 ①②로만
+    const tot=d.parts.reduce((a,p)=>a+(+p.n||0),0),one=d.parts.length===1;
+    return `<div class="day oday"><a class="oline" href="#s-${esc(d.parts[0].id)}"><span class="nth">${i+1}회차</span><span class="odate">${esc(fmtDay(d.day))}</span><span class="ocnt">${tot?tot.toLocaleString()+"개 대사":""}</span>${one?'<span class="ogo">›</span>':""}</a>
+    ${one?set(d.parts[0]):`<span class="pieces">${d.parts.map((p,j)=>`<span class="partw"><a class="piece" href="#s-${esc(p.id)}" title="녹음 조각 ${j+1}${p.n?" · "+p.n+"개 대사":""}">${pieceNo(j+1)}</a>${set(p)}</span>`).join("")}</span>`}${exp(d)}</div>`;  }).join("")+(days.some(d=>d.parts.length)&&days.every(d=>!d.parts.length||d.parts.length===1&&d.parts[0].src==="ccfolia")&&S.db?`<div class="allexp"><button class="ghost dexp all" data-exps="${esc((days.find(d=>d.parts.length)||{parts:[{}]}).parts[0].scen)}" data-expd="*" title="모든 회차를 HTML 파일 하나로 받기">⬇ 전체 HTML</button></div>`:"");
 }
 async function gotoScen(name,edit){
   let sc=findScen(name);
@@ -266,10 +266,10 @@ function bindHome(){
     const box=$("#bulkres");
     const pairs=[],miss=[];
     files.forEach(f=>{const s=S.sessions.find(x=>normT(x.title)===normT(f.name));if(s)pairs.push([f,s]);else miss.push(f.name);});
-    box.innerHTML=`${pairs.map(([f,s],i)=>`<div id="ba${i}">⏳ ${esc(f.name)} → ${esc(info(s).scen)} ${info(s).part}부</div>`).join("")}${miss.length?`<div style="color:var(--bad)">짝을 못 찾음: ${miss.map(esc).join(", ")} (⚙에서 하나씩 올릴 수 있어요)</div>`:""}`;
+    box.innerHTML=`${pairs.map(([f,s],i)=>`<div id="ba${i}">⏳ ${esc(f.name)} → ${esc(info(s).scen)} ${pieceNo(info(s).part)}</div>`).join("")}${miss.length?`<div style="color:var(--bad)">짝을 못 찾음: ${miss.map(esc).join(", ")} (⚙에서 하나씩 올릴 수 있어요)</div>`:""}`;
     S.importing=true;
     for(let i=0;i<pairs.length;i++){const [f,s]=pairs[i];const row=$("#ba"+i);
-      try{await uploadAudio(s,f,(p,st)=>row.textContent=`⬆ ${f.name} → ${info(s).scen} ${info(s).part}부 · ${st==="zip"?"줄이는 중 ":""}${p}%`);row.textContent=`✓ ${f.name} → ${info(s).scen} ${info(s).part}부`;}
+      try{await uploadAudio(s,f,(p,st)=>row.textContent=`⬆ ${f.name} → ${info(s).scen} ${pieceNo(info(s).part)} · ${st==="zip"?"줄이는 중 ":""}${p}%`);row.textContent=`✓ ${f.name} → ${info(s).scen} ${pieceNo(info(s).part)}`;}
       catch(e){row.textContent=`✗ ${f.name}: ${e.code||e.message}`;row.style.color="var(--bad)";}}
     S.bulkMsg=box.innerHTML;S.importing=false;render();
   }
@@ -320,7 +320,7 @@ async function takeFiles(all,opt){
     box.innerHTML=`<div class="notice">${items.map(r=>`<b>${esc(r.title)}</b> · 대사 ${r.blocks.length}개 · 화자 ${new Set(r.blocks.map(b=>b.s)).size}명${audioFor(r)?` · 🎧 ${esc(audioFor(r).name)}`:audios.length?` · <span style="color:var(--faint)">녹음 없음</span>`:""}`).join("<br>")}
       ${unmatched.length?`<br><span style="color:var(--bad)">짝을 못 찾은 녹음: ${unmatched.map(a=>esc(a.name)).join(", ")} (txt와 파일 이름을 같게 해 주세요)</span>`:""}</div>
       ${infoFields(v)}
-      ${items.length>1?`<div class="tip">파일 이름 순서대로 ${v.part}부부터 차례로 붙여요.</div>`:""}
+      ${items.length>1?`<div class="tip">파일 이름 순서대로 녹음 조각 ${pieceNo(v.part)}부터 차례로 붙여요.</div>`:""}
       <div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="pri" id="igo">${S.db&&S.canWrite?"올리기":"미리보기"}</button></div><div id="iprog" class="tip" style="margin-top:6px"></div>`;
     if(opt.scen){const fs=$("#f-scen");if(fs){fs.value=opt.scen;fs.closest("label").style.display="none";}}
     $("#igo").onclick=async()=>{

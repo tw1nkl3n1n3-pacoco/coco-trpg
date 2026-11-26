@@ -74,7 +74,7 @@ function renderHeader(){
       ${S.meta?(()=>{const i=info(S.meta);const sib=siblings();const n=dayIndex();return `
       <div class="crumb"><h1 title="세션 페이지 보기"><a class="scl" href="#c-${esc(curScen()?.id||"")}">${esc(i.scen)}</a></h1>
         <span class="status">${n?n+"회차 · ":""}${esc(fmtDay(i.day))}</span></div>
-      <div class="pnav">${(sib.length?sib:[{id:S.sid,part:i.part}]).map(p=>`<a class="pchip${p.id===S.sid?" on":""}" href="#s-${esc(p.id)}">${p.part}부</a>`).join("")}</div>
+      ${sib.length>1?`<div class="pnav" title="같은 회차의 녹음 조각">${sib.map((p,j)=>`<a class="pchip${p.id===S.sid?" on":""}" href="#s-${esc(p.id)}">${pieceNo(j+1)}</a>`).join("")}</div>`:""}
 `;})():`<h1>${S.local?"미리보기":"불러오는 중…"}</h1>`}
       <span class="sp"></span>
       <span class="status" id="save"></span>
@@ -143,7 +143,7 @@ function renderSide(){
         return ss.map(x=>{const h=multi&&x.day!==last?`<div class="secday">${days.indexOf(x.day)+1}회차 · ${esc(fmtDay(x.day))}</div>`:"";last=x.day;
           if(x.par&&!S.secOpen.has(x.par))return h;
           const k=kids[x.id],open=S.secOpen.has(x.id);
-          return h+`<div class="secr"><button class="secb l${x.lv}${x.sid===S.sid?"":" other"}" data-sec="${x.sid}|${x.id}"><span class="sp">${x.part}부</span>${esc(x.x||"(이름 없음)")}</button>${k?`<button class="sectog${open?" open":""}" data-sectog="${x.id}" title="'하' 단락 ${k}개 ${open?"접기":"펼치기"}"><span class="car">▸</span>${k}</button>`:""}</div>`;}).join("")})()||'<div class="tip" style="padding:2px 4px 6px">아직 나눈 단락이 없어요</div>'}</div>
+          return h+`<div class="secr"><button class="secb l${x.lv}${x.sid===S.sid?"":" other"}" data-sec="${x.sid}|${x.id}">${pieceTag(x.day,x.part)?`<span class="sp">${pieceTag(x.day,x.part)}</span>`:""}${esc(x.x||"(이름 없음)")}</button>${k?`<button class="sectog${open?" open":""}" data-sectog="${x.id}" title="'하' 단락 ${k}개 ${open?"접기":"펼치기"}"><span class="car">▸</span>${k}</button>`:""}</div>`;}).join("")})()||'<div class="tip" style="padding:2px 4px 6px">아직 나눈 단락이 없어요</div>'}</div>
       ${S.canWrite?`<div class="secadd"><span>대사를 골라 두고 누르면, 그 대사 위에 단락이 생겨요</span><button class="ghost" id="addsec" data-lv="1" title="큰 단락 (예: 메인 페이즈)">＋ 상</button><button class="ghost" data-lv="2" title="중간 단락 (예: 1사이클)">＋ 중</button><button class="ghost" data-lv="3" title="작은 단락 (예: 씬)">＋ 하</button></div>`:""}
     </div>`;})()}
     ${curScen()?`<button class="foldh${S.openNoun?" open":""}" data-fold="openNoun"><span class="car">▸</span>고유명사 <span class="fc">${nounGroups().length}</span><span class="fsub">글자를 드래그해서 바꿔요</span></button>
@@ -153,7 +153,7 @@ function renderSide(){
     </div>`:""}
     ${(()=>{const hs=allHands();const days=[...new Set(S.sessions.map(info).filter(i=>S.meta&&i.scen===info(S.meta).scen).map(i=>i.day))].sort();const multi=new Set(hs.map(x=>x.day)).size>1;
       return `<button class="foldh${S.openHand?" open":""}" data-fold="openHand"><span class="car">▸</span>핸드아웃 <span class="fc">${hs.length}</span><span class="fsub">세션 전체 · 누르면 이동</span></button>
-    <div class="fold${S.openHand?" open":""}"><div class="secs">${hs.map(h=>`<button class="secb${h.sid===S.sid?"":" other"}" data-sec="${h.sid}|${h.id}" title="${esc((h.x||"").slice(0,80))}"><span class="sp">${multi?(days.indexOf(h.day)+1)+"회 ":""}${h.part}부</span>📜 ${esc(h.ti||(h.x||"").split("\n")[0].slice(0,24)||"(제목 없음)")}</button>`).join("")||'<div class="tip" style="padding:2px 4px 6px">아직 핸드아웃이 없어요. 대사를 고르고 <kbd>H</kbd>를 눌러 넣어요.</div>'}</div></div>`;})()}
+    <div class="fold${S.openHand?" open":""}"><div class="secs">${hs.map(h=>`<button class="secb${h.sid===S.sid?"":" other"}" data-sec="${h.sid}|${h.id}" title="${esc((h.x||"").slice(0,80))}">${multi||pieceTag(h.day,h.part)?`<span class="sp">${multi?(days.indexOf(h.day)+1)+"회 ":""}${pieceTag(h.day,h.part)}</span>`:""}📜 ${esc(h.ti||(h.x||"").split("\n")[0].slice(0,24)||"(제목 없음)")}</button>`).join("")||'<div class="tip" style="padding:2px 4px 6px">아직 핸드아웃이 없어요. 대사를 고르고 <kbd>H</kbd>를 눌러 넣어요.</div>'}</div></div>`;})()}
     <h3 class="tip usage">자주 쓰는 조작 <button class="ghost tiny" id="help2">전체 보기 <kbd>?</kbd></button></h3>
     <div class="tip usage">
       클릭 고르기 · <kbd>Shift</kbd>+클릭/드래그 여러 줄 · 더블클릭·<kbd>Enter</kbd> 고치기<br>
@@ -165,6 +165,8 @@ function renderSide(){
     <div class="homefoot sidefoot"><button class="ghost" id="back" title="세션 목록">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>`;
   bindSide();
 }
+// 같은 날 녹음 조각이 여럿일 때만 ①② 표시
+function pieceTag(day,part){if(!S.meta)return "";const sc=info(S.meta).scen;const n=S.sessions.filter(o=>{const i=info(o);return i.scen===sc&&i.day===day;}).length;return n>1?pieceNo(part):"";}
 function renderSideCounts(){const c=counts();document.querySelectorAll("[data-cnt]").forEach(el=>el.textContent=c[el.dataset.cnt]||0);}
 
 // 등록된 고유명사는 로그 화면에서만 블럭으로 표시 (HTML로 받을 땐 안 보여요)
