@@ -192,6 +192,11 @@ function hl0(text){
 const NOTE="__note",DICE="__dice",HAND="__hand",SEC="__sec";
 // 리플레이북 표시: bk 0=본문 1=잡담 2=빼기 · 코코포리아 잡담 채널은 따로 안 고르면 잡담
 const CHAT_TAB=/잡담|雑談|chat|other/i;
+// 본세션 시작 줄: 직접 고른 줄(bstart) · 없으면 코코포리아처럼 0:00 앞 줄이 있을 때 0:00 첫 줄 · 그것도 없으면 처음부터
+function startIdOf(list){
+  const e=list.find(b=>b.bstart);if(e)return e.id;
+  if(!list.length||!(list[0].t<0))return null;
+  const f=list.find(b=>b.t>=0);return f?f.id:null;}
 function bkOf(b){if(!b)return 0;if(b.bk!=null)return b.bk;return b.tab&&CHAT_TAB.test(b.tab)&&![NOTE,DICE,HAND,SEC].includes(b.s)?1:0;}
 const OUT={success:"Success",failure:"Failure",critical:"Critical",fumble:"Fumble"};
 // 룰에 맞춘 표기: 인세인은 크리티컬 대신 스페셜
@@ -209,6 +214,12 @@ function diceInner(b){
   const p=b.w?spBy(b.w):null;
   if(!p&&!b.r&&!b.o&&!b.x&&!b.sec)return '<span class="ph">🎲 주사위 — ✎를 눌러 입력</span>';
   return `<span class="dd">🎲</span>${b.a?`<b class="dw">${esc(b.a)}</b>`:p?`<b class="dw">${esc(p.ch||p.name)}</b>`:""}${b.x?`<span class="dl">${hl(b.x)}</span>`:""}${b.r?`<span class="dr">${hl(b.r)}</span>`:""}${b.sec?`<span class="dres secret">Secret Dice</span>`:""}${b.o&&OUT[b.o]?`<span class="dres ${b.o}">${outLabel(b.o)}</span>`:""}`;
+}
+function setStart(id){
+  if(!S.canWrite)return;const e=S.byId.get(id);if(!e)return;
+  const ops=S.flat.filter(x=>x.b.bstart&&x.b.id!==id).map(x=>({ci:x.ci,op:{t:"set",id:x.b.id,f:{bstart:undefined}}}));
+  if(!e.b.bstart)ops.push({ci:e.ci,op:{t:"set",id,f:{bstart:1}}});
+  if(!ops.length)return;doOps(ops,"본세션 시작 줄 정하기");renderAllRows(true);toast("이 줄부터 본세션 · 리플레이북도 여기서 시작해요");
 }
 function rowHTML(e,prev){
   if(e.b.s===SEC){const b=e.b;
@@ -242,7 +253,7 @@ function rowHTML(e,prev){
       <button class="w" data-act="del" title="삭제">🗑</button>
     </div></div>`;}
   if(e.b.s===NOTE){const b=e.b;
-    return `<div class="row${bkOf(b)===2?" bk-cut":""} note${b.st?" stat":""}${b.tab?" tabbed":""}${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}">
+    return `<div class="row${bkOf(b)===2?" bk-cut":""} note${b.st?" stat":""}${b.tab?" tabbed":""}${S.startId===b.id?" bstart":""}${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
     <div class="body"><div class="tx">${b.x?`<span>${b.x.split("\n").map(l=>`<span class="ln">${hl(l)}</span>`).join("<br>")}</span>`:'<span class="ph">상황 묘사</span>'}</div></div>
     <div class="act">${cmBtn()}
@@ -250,6 +261,7 @@ function rowHTML(e,prev){
       <button class="w" data-act="dice" title="아래에 주사위 추가 (D)">＋🎲</button>
       <button class="w" data-act="who" title="대사로 바꾸기">👤</button>
       <button class="w" data-act="edit" title="글 수정 (Enter)">✎</button>
+      <button class="w" data-act="bstart" title="여기서 본세션 시작 · 리플레이북은 이 줄부터">▶</button>
       <button class="w" data-act="del" title="삭제">🗑</button>
     </div></div>`;}
   const b=e.b,s=spBy(b.s),lines=b.x.split("\n"),gm=isGM(s.k),bk=bkOf(b);
@@ -258,7 +270,7 @@ function rowHTML(e,prev){
   const pbk=prev?bkOf(prev.b):-1,first=!prev||(pbk===1)!==(bk===1)||prev.b.s!==b.s||(bk!==1&&(prev.b.a||"")!==(b.a||""))||(bk!==1&&(prev.b.tab||"")!==(b.tab||""))||b.t-prev.b.t>120;
   const tx=lines.map((l,i)=>(i?`<button class="cut" data-act="cut" data-line="${i}" tabindex="-1" title="여기서 나눠서 다른 화자로 지정할 수 있게 해요">✂</button>`:"")+`<span class="ln">${hl(l)}</span>`).join(" ");
   const q=pcSplit(s.name),label=(gm?gmTag:q.n?`<span class="pcn">${q.n}</span>`:"")+esc(q.name),sub=bk===1?"":(b.a?esc(b.a):s.ch?esc(s.ch):"")+(b.tab&&!CHAT_TAB.test(b.tab)?`<span class="tabchip">${esc(b.tab)}</span>`:"");
-  return `<div class="row${first?" first":""}${gm?" gm":""}${b.tab?" tabbed":""}${bk===1?" bk-ooc":bk===2?" bk-cut":""}${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}" style="--c:${fixC(s.c)}">
+  return `<div class="row${first?" first":""}${gm?" gm":""}${b.tab?" tabbed":""}${bk===1?" bk-ooc":bk===2?" bk-cut":""}${S.startId===b.id?" bstart":""}${S.sel===b.id?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}" style="--c:${fixC(s.c)}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmt(b.t)}</button>
     <div class="body">
       ${first?`<button class="who" data-act="who" title="클릭해서 화자 바꾸기">${label}${sub?`<small>${sub}</small>`:""}</button>`:""}
@@ -270,6 +282,7 @@ function rowHTML(e,prev){
       <button class="w" data-act="up" title="위 대사와 합치기">⤒</button>
       <button class="w" data-act="note" title="아래에 상황 묘사 추가 (N)">＋상황</button>
       <button class="w" data-act="dice" title="아래에 주사위 추가 (D)">＋🎲</button>
+      <button class="w" data-act="bstart" title="여기서 본세션 시작 · 리플레이북은 이 줄부터">▶</button>
       <button class="w" data-act="del" title="삭제">🗑</button>
     </div></div>`;
 }
@@ -288,7 +301,7 @@ function renderAllRows(keepScroll){
     log.innerHTML=S.local||!S.db||(S.loaded&&S.chunksLoaded)?`<div class="notice">아직 대사가 없어요.</div>`:loaderHTML();
     $("#qcount")&&($("#qcount").textContent="");return;
   }
-  const vis=S.flat.filter(visible);
+  const vis=S.flat.filter(visible);S.startId=startIdOf(S.flat.map(e=>e.b));
   // 고치는 중인 줄은 다시 그리지 않고 그대로 둬요 (다른 사람 수정이 들어와도 입력이 안 날아가게)
   const ed=log.querySelector(".row.editing"),fa=ed&&ed.contains(document.activeElement)?document.activeElement:null;
   const sel=fa&&"selectionStart" in fa?[fa.selectionStart,fa.selectionEnd]:null;
@@ -707,6 +720,7 @@ function bindSession(){
     if(act==="cut"){if(S.canWrite)splitBlock(id,+ev.target.dataset.line);return;}
     if(act==="edit"){editRow(id);return;}
     if(act==="up"){mergePrev(id);return;}
+    if(act==="bstart"){setStart(id);return;}
     if(act==="del"){delBlock(id);return;}
     if(act==="note"){addNote(id);return;}
     if(act==="dice"){addDice(id);return;}

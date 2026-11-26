@@ -56,7 +56,10 @@ function bookBlocks(sc,edit){
   B.parts.forEach(P=>{
     const multi=B.parts.filter(q=>q.day===P.day).length>1,day=P.day;
     if(edit)out.push({k:"day",text:fmtDay(P.day)+(multi?` · ${P.part}부`:""),day});
-    bookItems(P).forEach(e=>{const b=e.b,bk=bkOf(b);if(bk===2&&!edit)return;const base={id:b.id,ci:e.ci,sid:e.sid,bk,day};
+    // 본세션 시작 줄 앞은 책에 안 들어가요 (책 고치기에선 접어서 보여요)
+    const its=bookItems(P),st=startIdOf(its.map(e=>e.b));let pre=!!st;
+    its.forEach(e=>{const b=e.b,bk=bkOf(b);if(pre&&b.id===st){pre=false;if(edit)out.push({k:"start",sid:P.sid,day});}
+      if(pre&&!edit)return;if(bk===2&&!edit)return;const base={id:b.id,ci:e.ci,sid:e.sid,bk,day,...(pre?{pre:P.sid}:{})};
       if(b.s===SEC){if(secLv(b)<=1)out.push({...base,k:"chap",label:"CHAPTER "+(++n),title:b.x||"단락"});else out.push({...base,k:"scene",text:b.x||"",lv:secLv(b)});return;}
       if(b.s===NOTE){if(!b.x)return;out.push({...base,k:"nar",text:b.x});out.push(...(edit?[]:noteFor(b.x)));return;}
       if(b.s===HAND){out.push({...base,k:"hand",title:b.ti||"핸드아웃",text:b.x||""});return;}
@@ -84,6 +87,7 @@ function blockHTML(x,edit){
   switch(x.k){
     case "chap":return `<div class="bchap"><small>${esc(x.label)}</small><b>${esc(x.title)}</b></div>`;
     case "day":return edit?`<div class="bday">${esc(x.text)} 회차</div>`:"";
+    case "start":return edit?`<div class="bstartmk">▶ 본세션 시작 · 책은 여기서부터</div>`:"";
     case "scene":return edit?"":`<div class="bscene l${x.lv}">${esc(x.text||"")}</div>`;
     case "nar":return `<p class="bnar${sel}${cut}"${dat}>${tbox||esc(x.text).replace(/\n/g,"<br>")}${tag}</p>`;
     case "hand":return `<div class="bhand${sel}${cut}"${dat}>${x.cont?"":`<b>HANDOUT · ${esc(x.title)}</b>`}${tbox||esc(x.text).replace(/\n/g,"<br>")}${tag}</div>`;
@@ -214,7 +218,7 @@ function bookRender(){
         body.appendChild(el);if(body.scrollHeight>body.clientHeight+1&&body.children.length>1){body.removeChild(el);body=np();body.appendChild(el);}});}
     m.innerHTML="";
   }else{
-    const sh=$("#bksheet");const eb=bookBlocks(sc,true);let lastPg=0,html="",secIds=[];
+    const sh=$("#bksheet");const eb=bookBlocks(sc,true);let lastPg=0,html="",secIds=[];const preShown=new Set();
     {let m0=null,o0=null;eb.forEach(x=>{if(x.k==="line"){const k=x.ooc?x.player:x.char+"|"+(x.sub||"");if(x.ooc){x.same=k===o0;o0=k;}else{x.same=k===m0;m0=k;}}else if(x.k!=="note"){m0=null;o0=null;}});}
     // 단락별로 묶어 '통째로 빼기' · 다 뺀 단락은 접어 둬요
     const groupsArr=[];let g={head:null,items:[]};eb.forEach(x=>{if(x.k==="chap"||x.k==="scene"){groupsArr.push(g);g={head:x,items:[]};}else g.items.push(x);});groupsArr.push(g);
@@ -223,7 +227,11 @@ function bookRender(){
       if(G.head){const h=G.head;const pg=G.items.map(x=>pageOf[x.id]).filter(Boolean);
         html+=`<div class="bsec${h.k==="chap"?" chap":""}${allCut?" cut":""}"><b>${h.k==="chap"?esc(h.label)+" · ":""}${esc(h.k==="chap"?h.title:(h.text||"단락"))}</b><small>${allCut?`뺀 단락 · ${ids.length}줄`:pg.length?`완성본 ${Math.min(...pg)}${Math.max(...pg)>Math.min(...pg)?"–"+Math.max(...pg):""}쪽`:""}</small>${ids.length?`<button class="ghost" data-bsec="${gi}">${allCut?"다시 넣기":"이 단락 통째로 빼기"}</button>`:""}</div>`;}
       if(allCut&&!open){html+=`<button class="bfold" data-bfold="${gi}">뺀 단락 ${ids.length}줄은 접혀 있어요 · 펼치기 ▾</button>`;return;}
-      G.items.forEach(x=>{const p=pageOf[x.id];if(p&&p!==lastPg){if(lastPg)html+=`<div class="bpbreak">완성본 ${p}쪽</div>`;lastPg=p;}html+=blockHTML(x,true);});
+      G.items.forEach(x=>{
+        if(x.pre){const open=B.preOpen&&B.preOpen[x.pre];
+          if(!preShown.has(x.pre)){preShown.add(x.pre);const n=eb.filter(y=>y.pre===x.pre&&y.id).length;html+=`<button class="bfold pre" data-bpre="${esc(x.pre)}">본세션 전 ${n}줄 · 책에 안 들어가요 · ${open?"접기 ▴":"펼치기 ▾"}</button>`;}
+          if(open)html+=blockHTML(x,true).replace(/^<(\w+) class="/,'<$1 class="prel ');return;}
+        const p=pageOf[x.id];if(p&&p!==lastPg){if(lastPg)html+=`<div class="bpbreak">완성본 ${p}쪽</div>`;lastPg=p;}html+=blockHTML(x,true);});
       secIds[gi]=ids;});
     // 책 앞부분 정보: 등장인물 한 줄 소개 · 고유명사 설명(처음 나오는 쪽에 메모)
     const gk=gmKey(sc),pcs=(sc.sp||[]).filter(p=>p.k!==ALL&&p.k!==gk&&(!isAnon(p)&&!/&/.test(p.name)||p.ch));
@@ -245,9 +253,16 @@ function bookSelPop(){
   const els=[...document.querySelectorAll("#bksheet [data-bid].sel")];if(!els.length)return;
   const xs=B.flat.filter(x=>B.sel.has(x.id)),speech=xs.every(x=>x.k==="line"),cur=xs.every(x=>x.bk===xs[0].bk)?xs[0].bk:-1;
   const pop=document.createElement("div");pop.className="bselpop";
-  pop.innerHTML=`${xs.length>1?`<em>${xs.length}줄</em>`:""}<button data-bk="0" class="${cur===0?"on":""}">1 본문</button>${speech?`<button data-bk="1" class="${cur===1?"on":""}">2 잡담</button>`:""}<button data-bk="2" class="${cur===2?"on":""}">3 빼기</button>`;
+  pop.innerHTML=`${xs.length>1?`<em>${xs.length}줄</em>`:""}<button data-bk="0" class="${cur===0?"on":""}">1 본문</button>${speech?`<button data-bk="1" class="${cur===1?"on":""}">2 잡담</button>`:""}<button data-bk="2" class="${cur===2?"on":""}">3 빼기</button>${xs.length===1&&xs[0].k!=="dice"?`<button data-bst="1" title="이 줄부터 본세션 · 앞은 책에 안 들어가요">▶ 여기서 시작</button>`:""}`;
   const first=els[0];first.style.position="relative";first.appendChild(pop);
-  pop.onmousedown=e=>{const b=e.target.closest("[data-bk]");if(!b)return;e.preventDefault();e.stopPropagation();bookSetBk(+b.dataset.bk);};
+  pop.onmousedown=e=>{const st=e.target.closest("[data-bst]");if(st){e.preventDefault();e.stopPropagation();bookSetStart(xs[0]);return;}
+    const b=e.target.closest("[data-bk]");if(!b)return;e.preventDefault();e.stopPropagation();bookSetBk(+b.dataset.bk);};
+}
+function bookSetStart(x){
+  const B=S.book,P=B.parts.find(p=>p.sid===x.sid);if(!P)return;
+  const ch=bookItems(P).filter(e=>e.b.bstart&&e.b.id!==x.id).map(e=>({sid:e.sid,ci:e.ci,id:e.b.id,f:{bstart:undefined}}));
+  const cur=bookItems(P).find(e=>e.b.id===x.id);if(cur&&!cur.b.bstart)ch.push({sid:x.sid,ci:x.ci,id:x.id,f:{bstart:1}});
+  B.sel=new Set();if(ch.length)bookSet(ch);toast("이 줄부터 본세션 · 앞은 책에 안 들어가요");
 }
 function bookSetBk(v){
   const B=S.book;const xs=B.flat.filter(x=>B.sel.has(x.id));if(!xs.length)return;
@@ -261,6 +276,7 @@ function bindBookEdit(sc){
   sh.onclick=e=>{
     const sb=e.target.closest("[data-bsec]");if(sb){const ids=B.secIds[+sb.dataset.bsec]||[];const xs=B.flat.filter(x=>ids.includes(x.id));const allCut=xs.every(x=>x.bk===2);
       B.sel=new Set(ids);bookSetBk(allCut?0:2);B.sel=new Set();return;}
+    const pb=e.target.closest("[data-bpre]");if(pb){const k=pb.dataset.bpre;B.preOpen={...(B.preOpen||{}),[k]:!(B.preOpen&&B.preOpen[k])};bookRender();return;}
     const fb=e.target.closest("[data-bfold]");if(fb){B.unfold={...(B.unfold||{}),[fb.dataset.bfold]:true};bookRender();return;}
     const el=e.target.closest("[data-bid]");if(!el||B.editing)return;const id=el.dataset.bid;
     if(e.shiftKey&&B.anchor){const order=B.flat.map(x=>x.id),a=order.indexOf(B.anchor),z=order.indexOf(id);const [i,j]=a<z?[a,z]:[z,a];B.sel=new Set(order.slice(i,j+1));}
