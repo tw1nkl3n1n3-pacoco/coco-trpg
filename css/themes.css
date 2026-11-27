@@ -236,3 +236,79 @@ body[data-theme=plain] .upcard{border-color:#a8a8a4!important;border-radius:12px
 body[data-theme=plain] .upcard.on{border-color:#1c1c1b!important}
 body[data-theme=deco] .homefoot{--ink:#f6e7c8;--dim:#e2cfa8;--faint:#c4ad86;--line:#6e2020;color:#f6e7c8}
 body[data-theme=deco] .homefoot button.ghost{color:#e2cfa8}
+
+/* --- 자관(1:1 자캐 관계) 테마 (key: jg) — 신청서 포스터 느낌 · 색 4개는 자관마다(--jbg 배경 · --jacc 포인트 · --ja/--jb 두 캐릭터) --- */
+body[data-theme=jg]{--jbg:#1b1b1c;--jacc:#efc11a;--ja:#d9577d;--jb:#2e9a8c;--jdisp:"Anton","Black Han Sans","Noto Sans KR",sans-serif;--jhk:"Black Han Sans","Noto Sans KR",sans-serif;
+  --bg:var(--jbg);--panel:#f4f3ef;--panel2:#e9e7e1;--line:#d6d3cb;--ink:#141414;--dim:#4c4a45;--faint:#8b8880;--acc:var(--jacc);--acc2:var(--ja);--sel:color-mix(in srgb,var(--jacc) 22%,#fff);--play:color-mix(in srgb,var(--jb) 14%,#fff);--gold:var(--jacc);--ok:var(--jb);
+  background:var(--jbg);background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px)}
+body[data-theme=jg] .mono,body[data-theme=jg] .ts,body[data-theme=jg] .nth,body[data-theme=jg] .gmtag{font-family:var(--jdisp);letter-spacing:.06em}
+/* 머리줄·아래 막대: 검은 띠에 노란 제목 */
+body[data-theme=jg] header,body[data-theme=jg] #pbar{background:#111;border:0;box-shadow:none;--ink:#f1efe9;--dim:#bdbab3;--faint:#8b8880;--line:#333;--panel:#222;--panel2:#222;color:#f1efe9}
+body[data-theme=jg] header{box-shadow:0 3px 0 var(--jacc)}
+body[data-theme=jg] header h1,body[data-theme=jg] header .scl{font-family:var(--jhk);font-weight:400;letter-spacing:.02em;color:var(--jacc)!important}
+body[data-theme=jg] .pchip{border-radius:0!important;background:#222!important;border:1px solid #3a3a3a!important;color:#bdbab3!important;font-family:var(--jdisp)}
+body[data-theme=jg] .pchip.on{background:var(--jacc)!important;border-color:var(--jacc)!important;color:#111!important}
+body[data-theme=jg] button{border-radius:0}
+body[data-theme=jg] button.pri{background:var(--jacc);border-color:var(--jacc);color:#111;font-weight:800}
+body[data-theme=jg] input[type=text],body[data-theme=jg] input[type=search],body[data-theme=jg] select,body[data-theme=jg] textarea{border-radius:0;background:#fff}
+/* 왼쪽 목록은 어두운 띠 */
+body[data-theme=jg] aside{background:#151516;border-right:1px solid #2c2c2e!important;--ink:#f1efe9;--dim:#bdbab3;--faint:#8b8880;--line:#2c2c2e;--panel:#1f1f21;--panel2:#262628;color:#f1efe9}
+body[data-theme=jg] aside kbd{background:#262628;color:#f1efe9;border-color:#3a3a3c}
+body[data-theme=jg] .foldh{font-family:var(--jdisp);letter-spacing:.08em}
+body[data-theme=jg] .foldh .car,body[data-theme=jg] .foldh .fc{color:var(--jacc)}
+body[data-theme=jg] :is(.foldh .fsub,.secadd,.secb .sp,.sectog){color:#8b8880}
+body[data-theme=jg] .spk{border-radius:0}
+body[data-theme=jg] :is(.sc-top,.homefoot,.tools,.lockpage .homefoot){--ink:#f1efe9;--dim:#bdbab3;--faint:#8b8880;--line:#333;--panel:#222;--panel2:#2a2a2c;color:var(--ink)}
+body[data-theme=jg] .lkbox .homefoot{--ink:#141414;--dim:#4c4a45;--faint:#8b8880;--line:#d6d3cb;color:var(--ink)}
+body[data-theme=jg] .tools input{background:#222;color:#f1efe9;border-color:#3a3a3c}
+/* 로그: 종이색 판 · 두 주인공은 각자 색 굵은 띠 */
+body[data-theme=jg] #log,body[data-theme=jg] .sc-sec,body[data-theme=jg] .card{border:0;border-radius:0;box-shadow:0 0 0 1px #000,6px 6px 0 rgba(0,0,0,.35);background:var(--panel)}
+body[data-theme=jg] .row{border-radius:0}
+body[data-theme=jg] .row:hover{background:rgba(0,0,0,.035)}
+body[data-theme=jg] .row.sel{background:var(--sel);border-color:var(--jacc)}
+body[data-theme=jg] .body{box-shadow:inset 3px 0 0 color-mix(in srgb,var(--c) 70%,#bbb)}
+body[data-theme=jg] .row.chr:not(.chat) .body{box-shadow:inset 6px 0 0 var(--c);padding-left:16px}
+body[data-theme=jg] .row.chr .body{background:none}
+body[data-theme=jg] .who{font-family:var(--jhk);font-weight:400;font-size:15px;letter-spacing:.02em;color:color-mix(in srgb,var(--c) 80%,#000)}
+body[data-theme=jg] .who small{font-family:var(--jdisp);font-weight:400;color:var(--faint);letter-spacing:.06em}
+body[data-theme=jg] .tx{color:var(--ink)}
+body[data-theme=jg] .ts{color:var(--faint);font-size:12px}
+body[data-theme=jg] .row.gm{background:rgba(0,0,0,.03)}
+body[data-theme=jg] .row.gm .body{box-shadow:inset 3px 0 0 #9a978f}
+body[data-theme=jg] .row.gm.chr .body{box-shadow:inset 6px 0 0 var(--c)}
+body[data-theme=jg] .row.gm.chr .who{color:color-mix(in srgb,var(--c) 80%,#000)}
+body[data-theme=jg] .row.chat .tx{color:var(--dim)}body[data-theme=jg] .row.chat .who{color:var(--faint)}
+body[data-theme=jg] .gmtag{background:#111;color:var(--jacc);-webkit-text-fill-color:var(--jacc);border-radius:0}
+body[data-theme=jg] .row.sec .tx{font-family:var(--jhk);font-weight:400;font-style:normal}
+body[data-theme=jg] .row.sec.l1 .tx{display:block;text-align:center;font-size:26px;letter-spacing:.02em;border:0;padding:16px 0 12px;color:var(--ink)}
+body[data-theme=jg] .row.sec.l1 .tx .ln{display:inline-block;background:#111;color:var(--jacc);padding:4px 18px;box-shadow:5px 5px 0 var(--ja)}
+body[data-theme=jg] .row.sec.l2 .tx{border-left:0;padding-left:0;font-size:19px}
+body[data-theme=jg] .row.sec.l2 .tx .ln::before{content:"";display:inline-block;width:12px;height:12px;background:var(--jacc);margin-right:10px;vertical-align:1px;box-shadow:3px 3px 0 #111}
+body[data-theme=jg] .row.sec.l3 .tx .ln::before{content:"▸ ";color:var(--jb)}
+body[data-theme=jg] .row.note .tx{color:var(--dim);font-style:normal}
+body[data-theme=jg] .row.dice .tx{background:#111;color:#f1efe9;border:0;border-radius:0;clip-path:none;box-shadow:inset 4px 0 0 var(--jacc)}
+body[data-theme=jg] .row.dice .dw{color:#fff}body[data-theme=jg] .row.dice .dl{color:#bdbab3}
+body[data-theme=jg] .row.dice .dr{font-family:var(--jdisp);color:var(--jacc);letter-spacing:.04em}
+body[data-theme=jg] .dres{border-radius:0;font-family:var(--jdisp);font-weight:400;letter-spacing:.08em}
+body[data-theme=jg] .dres.success{background:var(--jb);color:#fff}
+body[data-theme=jg] .dres.critical{background:var(--jacc);color:#111}
+body[data-theme=jg] .dres.failure{background:#55534e;color:#fff}
+body[data-theme=jg] .dres.fumble{background:#fff;color:var(--ja);box-shadow:inset 0 0 0 2px var(--ja)}
+body[data-theme=jg] .row.hand .body{background:#fff;border:3px solid #111;border-radius:0;box-shadow:6px 6px 0 var(--jacc);clip-path:none}
+body[data-theme=jg] .row.hand .hlab{background:#111;color:var(--jacc);margin:-12px -18px 10px;padding:6px 18px;font-family:var(--jdisp);letter-spacing:.14em}
+body[data-theme=jg] .row.hand .hlab .hti{color:#fff;font-family:"Noto Sans KR",sans-serif;letter-spacing:.02em}
+body[data-theme=jg] .nb{background:transparent;box-shadow:none;border-bottom:3px solid var(--jacc);border-radius:0}
+/* 세션 페이지 */
+body[data-theme=jg] .sc-page{counter-reset:jgsec}
+body[data-theme=jg] .sc-sec h4{display:flex;align-items:baseline;gap:12px;font-family:var(--jhk);font-weight:400;font-size:20px;letter-spacing:.02em;font-style:normal;color:var(--ink)}
+body[data-theme=jg] .sc-sec h4::before{counter-increment:jgsec;content:counter(jgsec,decimal-leading-zero);font-family:var(--jdisp);font-size:15px;color:#111;background:var(--jacc);padding:0 6px}
+body[data-theme=jg] .sc-sec h4::after{content:attr(data-en);margin-left:auto;font-family:var(--jdisp);font-size:13px;letter-spacing:.2em;color:var(--faint)}
+body[data-theme=jg] .sc-top h2{font-family:var(--jhk);font-weight:400;letter-spacing:.01em;color:var(--jacc)!important;font-size:40px}
+body[data-theme=jg] .sc-top .orig,body[data-theme=jg] .schero-t .orig{font-family:var(--jdisp)!important;letter-spacing:.16em;color:#bdbab3!important}
+body[data-theme=jg] .schero-t{background:linear-gradient(transparent,rgba(17,17,17,.92));box-shadow:none;padding-top:46px;border-bottom:3px solid var(--jacc)}
+body[data-theme=jg] .schero-t h2{font-family:var(--jhk);font-weight:400;color:var(--jacc)!important;font-size:38px}
+body[data-theme=jg] .day-h .nth,body[data-theme=jg] .oday .nth{border-radius:0;background:#111!important;color:var(--jacc)!important}
+body[data-theme=jg] :is(.castc .av,.rvcard,.galg .im,.galadd,.glb .fr img,.gebox,.gei,.lkbox){border-radius:0}
+body[data-theme=jg] .galadd i,body[data-theme=jg] .galg figcaption .c{color:var(--ja)}
+body[data-theme=jg] .glb .top .ac,body[data-theme=jg] .glb .meta .k{color:var(--ja);font-family:var(--jdisp)}
+body[data-theme=jg] .lkbox{box-shadow:0 0 0 1px #000,8px 8px 0 var(--jacc)}
