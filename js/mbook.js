@@ -106,7 +106,9 @@ function mbRender(){const M=S.mbook;if(!M||!M.data)return;const host=$("#bkpages
   host.appendChild(cov);const tocAnchor=document.createElement("div");host.appendChild(tocAnchor);
   // 5) 본문: 쪽 번호는 표지(1)·차례(T) 다음부터 이어져요
   let p=2+T;const pageOfKey={},pageOfId={};
-  const partPage=(cls,html,folio)=>{const el=document.createElement("div");el.className="bpg mbpart "+cls;el.innerHTML=`<div class="bbody">${html}</div><div class="bfolio"><span>${esc(folio)}</span><span>${p}</span></div>`;host.appendChild(el);return p++;};
+  // 부·편 속표지는 늘 오른쪽(홀수 쪽)에서 시작 · 모자라면 빈 쪽을 하나 넣어요
+  const recto=()=>{if(p%2===0){const el=document.createElement("div");el.className="bpg bblank";host.appendChild(el);p++;}};
+  const partPage=(cls,html,folio)=>{recto();const el=document.createElement("div");el.className="bpg mbpart "+cls;el.innerHTML=`<div class="bbody">${html}</div><div class="bfolio"><span>${esc(folio)}</span><span>${p}</span></div>`;host.appendChild(el);return p++;};
   const sysOf=sc=>effSys(sc)?sysLabel(effSys(sc)):"";
   parts.forEach((P,pi)=>{const first=P.items[0].sc,ds=P.items.flatMap(it=>it.parts.map(x=>x.day)).filter(Boolean).sort();
     pageOfKey["p"+pi]=partPage(P.c?"cp":"",`<div class="n">${String(pi+1).padStart(2,"0")}</div><h2>${esc(P.c?P.c.name:first.name)}</h2><p>${esc([P.c?"캠페인":"",sysOf(first),ds.length?ds[0].replace(/-/g,". ")+(ds.length>1&&ds.at(-1)!==ds[0]?" – "+ds.at(-1).slice(5).replace(/-/g,". "):""):"",P.c?`${P.items.length}편`:""].filter(Boolean).join(" · "))}</p>`,title);
@@ -119,5 +121,5 @@ function mbRender(){const M=S.mbook;if(!M||!M.data)return;const host=$("#bkpages
         it.revs.forEach(r=>{const w=revWho(sc,r);const el=document.createElement("div");el.className="brv";el.innerHTML=`<b>${esc(w.name)}</b><small>${esc(w.gm?gmWord(sc):w.ch?w.ch+" 역":"")}</small><div class="rb">${r.html?richView(r.html):esc(r.text||"").replace(/\n/g,"<br>")}</div>`;
           body.appendChild(el);if(body.scrollHeight>body.clientHeight&&body.children.length>1){body.removeChild(el);np();body.appendChild(el);}});}});});
   // 6) 차례를 맨 앞(표지 다음)에 · 쪽 번호 채워서
-  const tp=tocPages(t=>t.key?pageOfKey[t.key]:pageOfId[t.sid+"|"+t.id]);tp.forEach(el=>host.insertBefore(el,tocAnchor));tocAnchor.remove();meas.innerHTML="";
+  const tp=tocPages(t=>t.key?pageOfKey[t.key]:pageOfId[t.sid+"|"+t.id]);tp.forEach(el=>host.insertBefore(el,tocAnchor));tocAnchor.remove();meas.innerHTML="";bookSides(host);
   const cnt=$("#bkcnt");if(cnt)cnt.textContent=`${parts.length}부 · ${items.length}시나리오 · ${BOOK_SIZES[M.size].n} ${p-1+(T-tp.length)}쪽`;}

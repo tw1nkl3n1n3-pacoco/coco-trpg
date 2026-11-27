@@ -202,6 +202,8 @@ function bookPages(sc){
   B.pc={key,blocks,pages,pageOf};return B.pc;
 }
 function bookPcFresh(sc){const B=S.book;return B.pc&&B.pc.key===[B.ver||0,B.size,JSON.stringify(sc.sp||[]),JSON.stringify(sc.nouns||[])].join("|");}
+// 책은 1쪽(표지)이 오른쪽 · 짝수 쪽은 왼쪽 → 쪽 번호는 늘 바깥쪽 모서리에
+function bookSides(host){[...host.children].filter(x=>x.classList.contains("bpg")).forEach((el,i)=>el.classList.toggle("lp",i%2===1));}
 function bookRender(){
   const B=S.book;if(!B||!B.parts)return;const sc=scenById(B.scid);if(!sc)return;
   // 글꼴이 다 불러와진 뒤에 쪽을 나눠야 글자가 잘리지 않아요
@@ -232,7 +234,7 @@ function bookRender(){
       let body=np();body.innerHTML=`<h2 class="ph">AFTERWORD</h2><h3 class="pt">플레이어 후기</h3>`;
       revs.forEach(r=>{const w=revWho(sc,r);const el=document.createElement("div");el.className="brv";el.innerHTML=`<b>${esc(w.name)}</b><small>${esc(w.gm?gmWord(sc):w.ch?w.ch+" 역":"")}</small><div class="rb">${r.html?richView(r.html):esc(r.text||"").replace(/\n/g,"<br>")}</div>`;
         body.appendChild(el);if(body.scrollHeight>body.clientHeight+1&&body.children.length>1){body.removeChild(el);body=np();body.appendChild(el);}});}
-    m.innerHTML="";
+    m.innerHTML="";bookSides(host);
   }else{
     const sh=$("#bksheet");const eb=bookBlocks(sc,true);let lastPg=0,html="",secIds=[];
     {let m0=null,o0=null;eb.forEach(x=>{if(x.k==="line"){const k=x.ooc?x.player:x.char+"|"+(x.sub||"");if(x.ooc){x.same=k===o0;o0=k;m0=null;}else{x.same=k===m0;m0=k;o0=null;}}else if(x.k!=="note"){m0=null;o0=null;}});}

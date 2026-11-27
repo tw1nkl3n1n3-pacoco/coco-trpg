@@ -1429,3 +1429,13 @@ body[data-theme=dx] :is(.cphero,.cep2 .th,.pc2,.cpown){border-radius:0}
 .mbook{--acc:#b5172e}
 .mbtoc li.pt{font-weight:800;border-bottom:1px solid #222;margin-top:.5em}.mbtoc li small{font-weight:400;color:#888;font-size:.8em}
 @media(max-width:760px){.mbpick .mbgrid{grid-template-columns:1fr}.mbsel li{grid-template-columns:26px minmax(0,1fr) auto}.mbsel li .th{display:none}.mbsel li.ep{padding-left:24px}}
+
+/* 펼침면: 1쪽은 오른쪽부터 · 쪽 번호는 바깥쪽 (홀수=오른쪽 끝, 짝수=왼쪽 끝) */
+.bpg.lp .bfolio{flex-direction:row-reverse}
+@media screen and (min-width:1220px){
+  .bookwrap.mode-view .bkpages{max-width:calc(var(--pw)*2);margin:0 auto;justify-content:flex-start;column-gap:0;row-gap:26px}
+  .bookwrap.mode-view .bkpages::before{content:"";width:var(--pw);height:var(--ph);flex:none}
+  .bookwrap.mode-view .bkpages .bpg.lp{box-shadow:-4px 2px 10px rgba(0,0,0,.12),inset -10px 0 14px -10px rgba(0,0,0,.12)}
+  .bookwrap.mode-view .bkpages .bpg:not(.lp){box-shadow:4px 2px 10px rgba(0,0,0,.12),inset 10px 0 14px -10px rgba(0,0,0,.12)}}
+@media print{.bookwrap .bkpages::before{display:none!important}}
+.bpg.bblank{background:#fffdf8}
