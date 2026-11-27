@@ -9,7 +9,8 @@ function jgSides(f){const P=fixPeopleList(f),pr=(jgDoc(f).prof)||{};
   const mk=(key,p)=>{const q=pr[key]||{},ch=p?[...p.ch][0]||p.n:"";return {key,p,pr:q,nm:q.nm||ch||(key==="a"?"A":"B"),en:q.en||q.nm||ch||"",own:p?p.n:""};};
   return [mk("a",A),mk("b",B)];}
 function jgFixData(f){
-  const gs=groups().filter(g=>g.sc&&fixOfScen(g.sc)===f);
+  // 세션 목록이 안 보이는 사람(비밀번호 안 넣음)은 시나리오에 적힌 플레이 날짜(pdays)로
+  const gs=groups().filter(g=>g.sc&&fixOfScen(g.sc)===f).map(g=>{if(g.days.length)return g;const ds=g.sc.pdays&&g.sc.pdays.length?g.sc.pdays:g.sc.lastDay?[g.sc.lastDay]:[];return ds.length?{...g,days:ds.map(d=>({day:d,parts:[],nolog:false})),last:ds.at(-1)}:g;});
   const days=gs.flatMap(g=>g.days.map(d=>d.day)).filter(Boolean).sort();
   const cs=S.camps.filter(c=>(c.fix||"")===f);
   return {gs,days,cs,stories:gs.filter(g=>!g.sc.camp).length+cs.length};}
@@ -73,8 +74,7 @@ function jgPageHTML(f){const d=jgDoc(f),[A,B]=jgSides(f),fields=d.fields&&d.fiel
         ${A.pr.cut?.u?`<div class="jgcut a"><img src="${esc(A.pr.cut.u)}" alt=""></div>`:""}${B.pr.cut?.u?`<div class="jgcut b"><img src="${esc(B.pr.cut.u)}" alt=""></div>`:""}
         <div class="jgtitle"><h1>${esc(f)}</h1><p>${esc(A.en)} × ${esc(B.en)}</p></div>
       </div></section>
-    <div class="jgwrap">${jgRO(f)?`<form class="jgunlock" id="jgunlock"><span>🔒 페어 비밀번호를 넣으면 글을 올리고, 기록을 더하고, 댓글을 달 수 있어요</span><input type="text" id="jgpw" placeholder="페어 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button><small id="jgmsg"></small></form>`:""}${S.canAdmin?`<div class="jgtop"><a class="ghost ownonly" href="#">← 첫 화면</a><span style="flex:1"></span><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":"✎ 페어 수정"}</button></div>`:""}
-      ${S.jgEdit&&S.canAdmin?jgEditHTML(f):""}
+    <div class="jgwrap">
       <div class="jgtri">${jgCardHTML(A,fields)}
         <div class="jgmid"><div class="k">RELATION</div><div class="rel">${d.rel?esc(d.rel):`<span class="tip">관계 한 줄을 적어 주세요</span>`}</div>
           <div class="nums"><div><b>${data.stories}</b><span>이야기</span></div><div><b>${data.days.length}</b><span>세션</span></div><div><b>${jgDaysSince(data.days[0])}</b><span>함께한 날</span></div></div>
@@ -82,7 +82,10 @@ function jgPageHTML(f){const d=jgDoc(f),[A,B]=jgSides(f),fields=d.fields&&d.fiel
         ${jgCardHTML(B,fields)}</div>
       <div class="jgsplit">${jgTimelineHTML(f,data,items)}${jgLogHTML(f,data)}</div>
       ${postsH}
-      ${fixAccHTML(f)}
+      ${S.canAdmin?`<div class="jgtop jgbot"><a class="ghost ownonly" href="#">← 첫 화면</a><span style="flex:1"></span><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":"✎ 페어 수정"}</button></div>`:""}
+      ${S.jgEdit&&S.canAdmin?jgEditHTML(f):""}
+      ${fixAccHTML(f)}${jgRO(f)?`<div class="sc-sec fxacc jgacc"><h4 data-en="ACCESS">페어 비밀번호</h4><div class="tip">페어 비밀번호를 넣으면 글을 올리고, 기록을 더하고, 댓글을 달 수 있어요. 안의 모든 세션도 같이 열려요.</div>
+        <form class="pwrow" id="jgunlock"><input type="text" id="jgpw" placeholder="페어 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form><div class="tip" id="jgmsg"></div></div>`:""}
     </div></div>`;}
 // fixes 문서에 합쳐 쓰고 화면 쪽 사본도 맞추기
 async function jgPut(f,upd){const fk=fixKey(f);if(!S.authUser)await S.auth.signInAnonymously();await S.db.doc("fixes/"+fk).set(upd,{merge:true});S.fixDocs[fk]={...(S.fixDocs[fk]||{}),...upd};}
@@ -157,7 +160,7 @@ function jgRecBox(f,rec){const w=document.createElement("div");w.className="gedi
     const recs=rec?cur.map(x=>x.id===rec.id?r:x):[...cur,r];
     try{await jgPut(f,{recs});w.remove();render();}catch(e){toast("저장하지 못했어요"+(e.code==="permission-denied"?" (페어 비밀번호로 다시 열어 주세요)":""));}};}
 function bindJgPage(f){
-  const e=$("#jgedit");if(e)e.onclick=()=>{S.jgEdit=!S.jgEdit;S.jgDraft=null;if(!S.jgEdit)jgColors(f);render();};
+  const e=$("#jgedit");if(e)e.onclick=()=>{S.jgEdit=!S.jgEdit;S.jgDraft=null;if(!S.jgEdit)jgColors(f);render();if(S.jgEdit)document.querySelector(".jgedit")?.scrollIntoView({block:"start",behavior:"smooth"});};
   if(S.jgEdit)bindJgEdit(f);
   document.querySelectorAll("[data-jgtl]").forEach(b=>b.onclick=()=>{S.jgTl=b.dataset.jgtl;render();});
   document.querySelectorAll("[data-jgfold]").forEach(b=>b.onclick=()=>{S.jgAll={...(S.jgAll||{}),[b.dataset.jgfold]:!(S.jgAll||{})[b.dataset.jgfold]};render();});

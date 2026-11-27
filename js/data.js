@@ -78,11 +78,11 @@ async function _ownerMaintain(){
     const sc=findScen(info(s).scen);
     if(sc&&s.scid!==sc.id){try{await S.db.doc("sessions/"+s.id).update({scid:sc.id});}catch(e){}}
   }
-  // 시나리오마다 회차 수·마지막 플레이 날짜를 적어둬요 (로그인 안 한 사람의 목록 정렬용)
+  // 시나리오마다 회차 수·마지막 플레이 날짜·플레이한 날들(pdays)을 적어둬요 (로그인 안 한 사람의 목록 정렬 · 페어 페이지 숫자용)
   for(const sc of S.scens){
     const days=[...new Set([...S.sessions.filter(x=>info(x).scen===sc.name).map(x=>info(x).day),...(sc.plays||[])].filter(Boolean))].sort();
     const lastDay=days.length?days[days.length-1]:"";
-    if((sc.lastDay||"")!==lastDay||(sc.nDays||0)!==days.length){try{await S.db.doc("scenarios/"+sc.id).update({lastDay,nDays:days.length});}catch(e){}}
+    if((sc.lastDay||"")!==lastDay||(sc.nDays||0)!==days.length||(sc.pdays||[]).join()!==days.join()){try{await S.db.doc("scenarios/"+sc.id).update({lastDay,nDays:days.length,pdays:days});}catch(e){}}
   }
   for(const sc of [...S.scens,...S.camps]){
     if(!S.secrets[sc.id]&&!_pwMade.has(sc.id)){_pwMade.add(sc.id);try{const ex=await S.db.doc("secrets/"+sc.id).get();if(!ex.exists)await S.db.doc("secrets/"+sc.id).set({pw:genPw()});}catch(e){_pwMade.delete(sc.id);}}

@@ -510,7 +510,7 @@ body[data-theme=jg] .cep2 .n{font-family:var(--jdisp)}body[data-theme=jg] .cpher
 /* 첫 화면: 그림은 화면 가로를 꽉 채우고, 글자·전신은 가운데 1180 안에 */
 .jgtag.a{left:max(48px,calc(50% - 542px))}.jgtag.b{right:max(48px,calc(50% - 542px))}
 .jgcut.a{left:max(40px,calc(50% - 550px))}.jgcut.b{right:max(30px,calc(50% - 560px))}
-.jgtop{max-width:1180px;margin:14px auto 0;padding:0}
+.jgtop{max-width:1180px;margin:22px auto 0;padding:0}
 .jgbpick{display:flex;gap:6px;align-items:center;flex-wrap:wrap;flex-basis:100%;margin-left:162px}
 .jgbpick button{width:74px;height:42px;padding:0;border:2px solid transparent;background:#ddd;cursor:pointer}
 .jgbpick button img{width:100%;height:100%;object-fit:cover;display:block}
@@ -530,3 +530,5 @@ body[data-theme=jg] .cep2 .n{font-family:var(--jdisp)}body[data-theme=jg] .cpher
 .jgunlock .pri{background:var(--jacc)!important;color:#111!important;border:0!important;border-radius:0}
 .jgunlock small{flex-basis:100%;color:var(--jacc)}.jgunlock small:empty{display:none}
 @media(max-width:900px){.jgcut{display:none}.jgunder{padding:18px 12px 6px}}
+.jgacc .pwrow input{background:var(--jbg);color:var(--jtx);border:1px solid var(--ln);padding:7px 10px}.jgacc .pri{background:var(--jacc)!important;color:#111!important;border:0!important;border-radius:0}
+.jgacc .pwrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.jgacc .pwrow input{flex:1;max-width:280px;width:auto}
