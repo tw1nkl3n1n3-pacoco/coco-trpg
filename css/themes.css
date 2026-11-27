@@ -1412,3 +1412,11 @@ body[data-page=nf]:not(.axskin) .nfend .fxacc .pri{background:#fff!important;col
 body[data-page=nf]:not(.axskin) .nfend .fxacc .ghost{color:#b3b3b3!important}
 body[data-page=nf]:not(.axskin) .nfend .fxacc input{background:#242424;border:1px solid #3a3a3a;border-radius:4px;color:#fff}
 body[data-page=nf] .jgsw:has(input[data-jgc=acc]){display:none!important}
+.jgpf .pi.bustbg img,.jgpf .pi .ph.mid{width:64px;height:84px;object-fit:cover;object-position:50% 12%}
+/* 프로필: 전신·흉상·두상 바꿔 보기 */
+.nfmodal .shots{position:absolute;z-index:3;left:18px;bottom:18px;display:flex;gap:8px}
+.nfmodal .shots button{width:58px;padding:0!important;background:rgba(0,0,0,.55)!important;border:2px solid transparent!important;border-radius:6px!important;overflow:hidden;cursor:pointer;color:#ddd!important}
+.nfmodal .shots button.on{border-color:#fff!important}
+.nfmodal .shots img{position:static!important;width:100%!important;height:58px!important;object-fit:cover!important;object-position:50% 10%!important;padding:0!important;display:block}
+.nfmodal .shots span{display:block;font-size:10.5px;padding:2px 0;text-align:center}
+.nfmodal .pic:not(.cut)>img{object-fit:cover;object-position:50% 15%}

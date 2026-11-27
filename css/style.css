@@ -1445,3 +1445,9 @@ body[data-theme=dx] :is(.cphero,.cep2 .th,.pc2,.cpown){border-radius:0}
 .jgfch button.on{border-color:#1c1c1b;box-shadow:inset 0 0 0 1px #1c1c1b;background:#fff}
 .jgfch button small{font:400 10px "Noto Sans KR",sans-serif;color:#888;margin-left:4px}
 .jgscan{display:flex;align-items:center;gap:6px;font-size:13px;margin-left:8px}.jgscan .tip{font-size:11.5px}
+/* 귓속말 (롤20 whisper) */
+.row.wh .body{border-left:3px solid #8a6fd1!important}
+.row.wh .tx{color:#6b4fa8;font-style:italic}
+.row.wh .who small,.row.wh .sub{color:#8a6fd1!important}
+.row.wh.first .who::after{content:"귓속말";margin-left:6px;font:700 10px "Noto Sans KR",sans-serif;font-style:normal;color:#fff;background:#8a6fd1;padding:1px 6px;border-radius:3px;vertical-align:1px}
+body[data-theme=nf] #log .row.wh .tx{color:#6b4fa8}

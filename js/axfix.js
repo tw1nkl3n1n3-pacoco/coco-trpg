@@ -4,8 +4,8 @@
 function axSh(i,ko,en,right){return `<div class="hx-sh"><span class="hx-m hx-idx">${String(i).padStart(2,"0")}</span><h2>${ko}<small>${en}</small></h2><span class="hx-ln"></span>${right||""}</div>`;}
 function axFile(m,fields,lab){const q=m.q||{},num=v=>v&&!/\D/.test(v)?v:v||"—";
   const cells=[["AGE",q.age],["HEIGHT",q.ht],["SEX",q.sex],["MBTI",q.mbti]].filter(x=>x[1]);
-  const pic=q.cut?.u||q.icon?.u||"",tags=(q.tags||[]).filter(t=>t&&t!==q.mbti).slice(0,4),secs=fields.filter(k=>(q.sec||{})[k]);
-  return `<div class="axdc" id="nfm-${esc(m.n)}" style="--c:${m.c}"><div class="ph${q.cut?.u?" cut":""}"><span class="no hx-m">${esc(lab)}</span>${pic?`<img src="${esc(pic)}" alt="" loading="lazy">`:`<i>${esc([...(m.nm||"?")][0])}</i>`}</div>
+  const pic=q.bust?.u||q.cut?.u||q.icon?.u||"",tags=(q.tags||[]).filter(t=>t&&t!==q.mbti).slice(0,4),secs=fields.filter(k=>(q.sec||{})[k]);
+  return `<div class="axdc" id="nfm-${esc(m.n)}" style="--c:${m.c}"><div class="ph${!q.bust?.u&&q.cut?.u?" cut":""}"><span class="no hx-m">${esc(lab)}</span>${pic?`<img src="${esc(pic)}" alt="" loading="lazy">`:`<i>${esc([...(m.nm||"?")][0])}</i>`}</div>
     <div class="bd"><span class="hx-tag" style="--c:${m.c}">${esc(m.en||m.nm)}</span><h3>${esc(m.nm)}</h3>${q.rn||q.ren?`<div class="rn">${[q.rn,q.ren&&q.ren.toUpperCase()].filter(Boolean).map(esc).join(" · ")}</div>`:""}
       ${cells.length?`<dl>${cells.map(([k,v])=>`<div><dt class="hx-m">${k}</dt><dd>${esc(num(v))}</dd></div>`).join("")}</dl>`:""}
       ${tags.length?`<div class="tags">${tags.map(t=>`<span class="hx-tag o">${esc(String(t).toUpperCase())}</span>`).join("")}</div>`:""}

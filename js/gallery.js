@@ -98,7 +98,9 @@ async function galPut(src,f,id,onp){
   await task;const o=await or.getDownloadURL();
   let u=o,p="",w=0,h=0;
   try{const img=await galImg(f);w=img.naturalWidth;h=img.naturalHeight;URL.revokeObjectURL(img.src);
-    if(Math.max(w,h)>1400||f.size>700*1024){const tb=await galThumb(img);const tr=S.storage.ref(dir+id+"_t.jpg");await tr.put(tb,{contentType:"image/jpeg",cacheControl:"public,max-age=31536000"});u=await tr.getDownloadURL();p=tr.fullPath;}}
+    // 움짤(GIF)은 썸네일(JPG)로 바꾸면 멈춰서 원본 그대로 보여요
+    const anim=/gif/i.test(f.type||"")||/\.gif$/i.test(f.name||"");
+    if(!anim&&(Math.max(w,h)>1400||f.size>700*1024)){const tb=await galThumb(img);const tr=S.storage.ref(dir+id+"_t.jpg");await tr.put(tb,{contentType:"image/jpeg",cacheControl:"public,max-age=31536000"});u=await tr.getDownloadURL();p=tr.fullPath;}}
   catch(e){} // 브라우저가 못 여는 형식(HEIC 등)은 원본만
   return {u,o,p,op:or.fullPath,w,h,fn:(f.name||"").slice(0,120),sz:f.size};
 }

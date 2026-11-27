@@ -44,10 +44,10 @@ function nfFromToCap(){document.querySelectorAll(".nfposts .galg figure,.axposts
 // 프로필 모달 (첫 화면 아이콘을 누르면)
 function nfMem(f){if(jgPair(f)){const [A,B]=jgSides(f);return [A,B].map(s=>({n:s.own||s.key,nm:s.nm,en:s.en,q:s.pr,own:s.own,c:s.key==="a"?"var(--ja)":"var(--jb)"}));}return fxMembers(f).map(m=>({...m,own:m.n}));}
 function nfModalOpen(f,n){const d=jgDoc(f),fields=d.fields&&d.fields.length?d.fields:JG_F0,M=nfMem(f),i=Math.max(0,M.findIndex(m=>m.n===n)),m=M[i],q=m.q||{};
-  document.querySelector(".nfmodal")?.remove();const pic=q.cut?.u||q.icon?.u||"",dl=[q.age&&(/\D/.test(q.age)?q.age:q.age+"세"),q.ht&&(/\D/.test(q.ht)?q.ht:q.ht+"cm"),q.sex,q.mbti].filter(Boolean);
+  document.querySelector(".nfmodal")?.remove();const shots=[["cut","전신",q.cut],["bust","흉상",q.bust],["icon","두상",q.icon]].filter(x=>x[2]&&x[2].u),pic=shots[0]?shots[0][2].u:"",dl=[q.age&&(/\D/.test(q.age)?q.age:q.age+"세"),q.ht&&(/\D/.test(q.ht)?q.ht:q.ht+"cm"),q.sex,q.mbti].filter(Boolean);
   const el=document.createElement("div");el.className="nfmodal";el.style.setProperty("--c",m.c);
   el.innerHTML=`<div class="box" role="dialog" aria-label="${esc(m.nm)} 프로필"><button type="button" class="x" aria-label="닫기">✕</button>
-    <div class="pic${q.cut?.u?" cut":""}">${pic?`<img src="${esc(pic)}" alt="">`:`<i>${esc([...(m.nm||"?")][0])}</i>`}</div>
+    <div class="pic${q.cut?.u?" cut":""}">${pic?`<img src="${esc(pic)}" alt="">`:`<i>${esc([...(m.nm||"?")][0])}</i>`}${shots.length>1?`<div class="shots">${shots.map(([k,lab,x],j)=>`<button type="button" class="${j?"":"on"}" data-shot="${k}" data-u="${esc(x.u)}" title="${lab}"><img src="${esc(x.u)}" alt=""><span>${lab}</span></button>`).join("")}</div>`:""}</div>
     <div class="info"><div class="tag">${esc(m.en||"")}</div><h2>${esc(m.nm)}</h2>${q.rn||q.ren?`<div class="rn">${[q.rn,q.ren].filter(Boolean).map(esc).join(" · ")}</div>`:""}
       <div class="meta">${dl.map(x=>`<span>${esc(x)}</span>`).join("")}${m.own?`<span class="own">플레이어 ${esc(m.own)}</span>`:""}</div>
       ${(q.tags||[]).length?`<div class="tags">${q.tags.slice(0,5).map(t=>`<span>${esc(t)}</span>`).join("")}</div>`:""}
@@ -55,7 +55,8 @@ function nfModalOpen(f,n){const d=jgDoc(f),fields=d.fields&&d.fields.length?d.fi
     ${M.length>1?`<div class="nav">${M.map((x,j)=>`<button type="button" class="${j===i?"on":""}" data-nfp="${esc(x.n)}" style="--c:${x.c}">${esc(x.nm)}</button>`).join("")}</div>`:""}</div>`;
   document.body.appendChild(el);document.body.classList.add("nfmodal-on");
   const close=()=>{el.remove();document.body.classList.remove("nfmodal-on");document.removeEventListener("keydown",esc_);};const esc_=e=>{if(e.key==="Escape")close();};
-  el.onclick=e=>{if(e.target===el||e.target.closest(".x"))close();const b=e.target.closest("[data-nfp]");if(b){close();nfModalOpen(f,b.dataset.nfp);}};document.addEventListener("keydown",esc_);}
+  el.onclick=e=>{const sb=e.target.closest("[data-shot]");if(sb){const pc=el.querySelector(".pic"),im=pc.querySelector(":scope>img");if(im)im.src=sb.dataset.u;pc.classList.toggle("cut",sb.dataset.shot==="cut");el.querySelectorAll("[data-shot]").forEach(b=>b.classList.toggle("on",b===sb));return;}
+    if(e.target===el||e.target.closest(".x"))close();const b=e.target.closest("[data-nfp]");if(b){close();nfModalOpen(f,b.dataset.nfp);}};document.addEventListener("keydown",esc_);}
 function bindNfPage(f){if(jgPair(f))bindJgPage(f);else bindFxPage(f);
   nfFromToCap();
   // 포스트: 전부 펼친 격자 + 쪽 넘기기 (PC 6×2 · 폰 3×2)

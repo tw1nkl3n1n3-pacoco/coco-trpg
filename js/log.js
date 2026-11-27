@@ -350,7 +350,7 @@ function rowHTML(e,prev){
   // 타이만 캐릭터: 본문은 캐릭터 이름만, 잡담은 맡은 사람 이름
   const tch=s.chr&&s.ch&&bk!==1&&!(b.tab&&CHAT_TAB.test(b.tab));
   const q=pcSplit(s.name),label=tch?esc(b.a||s.ch):(gm&&!s.chr?gmTag:q.n?`<span class="pcn">${q.n}</span>`:"")+esc(q.name),sub=bk===1||tch||s.chr?"":(b.a?esc(b.a):s.ch?esc(s.ch):"")+(b.tab&&!CHAT_TAB.test(b.tab)?`<span class="tabchip">${esc(b.tab)}</span>`:"");
-  return `<div class="row${first?" first":""}${gm?" gm":""}${tch?" chr":""}${b.tab&&CHAT_TAB.test(b.tab)?" chat":""}${b.tab?" tabbed":""}${bk===1?" bk-ooc":bk===2?" bk-cut":""}${S.startId===b.id?" bstart":""}${S.endId===b.id?" bend":""}${isSel(b.id)?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}" style="--c:${fixC(s.c)}">
+  return `<div class="row${first?" first":""}${gm?" gm":""}${tch?" chr":""}${b.tab&&CHAT_TAB.test(b.tab)?" chat":""}${b.tab?" tabbed":""}${b.tab==="귓속말"?" wh":""}${bk===1?" bk-ooc":bk===2?" bk-cut":""}${S.startId===b.id?" bstart":""}${S.endId===b.id?" bend":""}${isSel(b.id)?" sel":""}${S.playingId===b.id?" playing":""}" data-id="${b.id}" style="--c:${fixC(s.c)}">
     <button class="ts" data-act="seek" title="여기서 재생">${fmtLog(b.t)}</button>
     <div class="body">
       ${first?`<button class="who" data-act="who" title="클릭해서 화자 바꾸기">${label}${sub?`<small>${sub}</small>`:""}</button>`:""}

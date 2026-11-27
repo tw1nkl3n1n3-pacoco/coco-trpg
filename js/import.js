@@ -86,6 +86,9 @@ function parseRoll20(text){
       if(prev&&prev.sp===sp&&prev.x===xs&&prev.rr===rr&&t-prev.t<10000)continue;
       msgs.push({sys:false,ch:"main",cn:"",sp,c:"",t,x:xs,rc:oc,rr,r20:1});continue;}
     const x=r20Text(e);if(!x||!sp)continue;
+    // 귓속말: 롤20은 말한 사람 대신 "(To GM)"·"(From GM)"으로 남겨요 → 귓속말 탭으로 두고, 누가 말했는지는 아래에서 채워요
+    const wm=cl.contains("whisper")&&sp.match(/^\((To|From)\s+(.+?)\)$/i);
+    if(wm){msgs.push({sys:false,ch:"wh",cn:"귓속말",sp:"",wh:{dir:wm[1].toLowerCase(),who:wm[2].trim()},c:"",t,x,rc:null,rr:null});continue;}
     if(!(sp in avOf))avOf[sp]=av;
     msgs.push({sys:false,ch:"main",cn:"",sp,c:"",t,x,rc:null,rr:null});}
   if(!msgs.length)return null;
@@ -104,6 +107,10 @@ function parseRoll20(text){
   // 내가 PL이면 내 PC의 플레이어는 내 닉네임 (사이트 설정의 '내 닉네임'에 있는 이름을 먼저)
   if(!iAmGM){const myO=ooc.filter(mine),nk=new Set((site().nicks||[]).map(x=>String(x).trim()));const me=myO.find(n=>nk.has(n))||myO.sort((a,b)=>cnt[b]-cnt[a])[0];
     if(me)pcs.filter(mine).forEach(n=>{if(!plOf[n])plOf[n]=me;});}
+  // 귓속말 말한 사람: GM에게서 온 건 GM, 내가 보낸 건 내 PC (없으면 내 닉네임)
+  {const myPC=pcs.find(mine)||ooc.filter(mine)[0]||"",gmOf=w=>/^(GM|KP|DM)$/i.test(w)?(gmName||w):w;
+    msgs.forEach(m=>{if(!m.wh)return;m.sp=m.wh.dir==="from"?gmOf(m.wh.who):(myPC||"나");if(m.sp)cnt[m.sp]=(cnt[m.sp]||0)+1;});
+    for(let i=msgs.length-1;i>=0;i--)if(msgs[i].wh&&!msgs[i].sp)msgs.splice(i,1);}
   const title=(doc.title||"").replace(/^\s*Chat Log for\s*/i,"").trim()||"롤20 로그";
   const sys=ccGuessSys(msgs,title)||(doc.querySelector('[class*="rolltemplate-coc"]')&&/극단적\s*성공|어려운\s*성공/.test(text)?"크툴루의 부름 7판":"");
   // 크툴루에 PC가 둘 이하이면 타이만(1:1)으로 짐작

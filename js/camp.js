@@ -12,7 +12,9 @@ const campWord=c=>isCamp(c)?"캠프":"캠페인";
 function campEps(c){const pos=new Map((c.eps||[]).map((id,i)=>[id,i]));
   // 캠프는 넣은 순서가 아니라 플레이한 날짜 순서
   if(c.kind==="camp")return S.scens.filter(s=>s.camp===c.id).sort((a,b)=>(a.lastDay||"").localeCompare(b.lastDay||"")||(pos.has(a.id)?pos.get(a.id):1e9)-(pos.has(b.id)?pos.get(b.id):1e9));
-  return S.scens.filter(s=>s.camp===c.id).sort((a,b)=>(pos.has(a.id)?pos.get(a.id):1e9)-(pos.has(b.id)?pos.get(b.id):1e9)||(a.lastDay||"").localeCompare(b.lastDay||""));}
+  // 캠페인도 플레이한 날짜 순서 (첫 플레이 날 · 같은 날이면 넣은 순서) — 넣은 순서가 뒤죽박죽이어도 편 번호가 안 꼬이게
+  const d0=x=>(x.pdays&&x.pdays[0])||x.lastDay||"9999";
+  return S.scens.filter(s=>s.camp===c.id).sort((a,b)=>d0(a).localeCompare(d0(b))||(pos.has(a.id)?pos.get(a.id):1e9)-(pos.has(b.id)?pos.get(b.id):1e9));}
 function epLabel(c,sc){if(isCamp(c))return "";if(sc.gaiden)return "외전";let n=0;for(const e of campEps(c)){if(!e.gaiden)n++;if(e.id===sc.id)return n+"편";}return "";}
 function campCount(c){if(isCamp(c))return `탁 ${campEps(c).length}개`;const es=campEps(c),g=es.filter(e=>e.gaiden).length;return `${es.length-g}편${g?` + 외전 ${g}`:""}`;}
 function campLast(c){return campEps(c).map(e=>e.lastDay||"").sort().pop()||"";}
