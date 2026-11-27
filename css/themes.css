@@ -1302,3 +1302,32 @@ body.nfmodal-on{overflow:hidden}
   .nfx .nfrow{margin-bottom:28px}
 }
 body.axskin .nfcastrow{display:none!important}
+/* 짭플릭스 포스트: 전부 격자 + 쪽 넘기기 */
+.nfx .nfposts .galg{grid-auto-flow:row!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;grid-auto-columns:auto!important;overflow:visible!important;scroll-snap-type:none!important}
+.nfx .nfposts .galg figure[hidden]{display:none!important}
+.nfx .nfposts .nfscr .nfarw,.nfx .nfposts .nfallb{display:none!important}
+.nfpager{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:16px}
+.nfpager button{min-width:34px;height:34px;padding:0 10px;border-radius:4px!important;background:#1f1f1f!important;color:#b3b3b3!important;border:1px solid #333!important;font:700 13px "Noto Sans KR",sans-serif;cursor:pointer}
+.nfpager button.on{background:#e5e5e5!important;color:#141414!important;border-color:#e5e5e5!important}
+.nfpager button:disabled{opacity:.35;cursor:default}
+.nfpager span{margin-left:8px;font-size:12px;color:#808080}
+@media(max-width:760px){.nfx .nfposts .galg{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}}
+/* 가로 스크롤바 없애기 (PC는 화살표 · 폰은 밀기) */
+.nfx .nfcards,.nfx .nftl.wide .tl,.nfsite .nfcards,.nfpplw,.nftops,.nfmodal .nav{scrollbar-width:none!important;-ms-overflow-style:none}
+.nfx .nfcards::-webkit-scrollbar,.nfx .nftl.wide .tl::-webkit-scrollbar,.nfsite .nfcards::-webkit-scrollbar,.nfpplw::-webkit-scrollbar,.nftops::-webkit-scrollbar,.nfmodal .nav::-webkit-scrollbar{display:none!important}
+/* 프로필: 풀페이지 */
+.nfmodal{padding:0!important;align-items:stretch!important;background:#141414!important}
+.nfmodal .box{width:100%!important;max-width:none!important;height:100vh;max-height:none!important;border-radius:0!important;box-shadow:none!important;grid-template-columns:minmax(0,46%) minmax(0,1fr)!important;grid-template-rows:minmax(0,1fr) auto;background:#141414!important}
+.nfmodal .pic{border-radius:0!important;min-height:0!important;max-height:none!important;position:relative;background:radial-gradient(120% 90% at 50% 100%,color-mix(in srgb,var(--c) 55%,#141414),#141414 70%)!important}
+.nfmodal .pic img{position:absolute;inset:0;width:100%;height:100%}
+.nfmodal .pic.cut img{object-fit:contain!important;object-position:50% 100%!important;max-height:none!important;padding-top:40px}
+.nfmodal .pic::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 70%,#141414);pointer-events:none}
+.nfmodal .info{overflow-y:auto;padding:clamp(40px,8vh,90px) clamp(24px,5vw,72px) 40px!important;align-self:stretch}
+.nfmodal h2{font-size:clamp(40px,5vw,68px)!important}
+.nfmodal p{max-width:640px}
+.nfmodal .x{position:fixed!important;right:22px!important;top:18px!important;width:44px!important;height:44px!important;background:rgba(0,0,0,.6)!important;font-size:18px!important}
+.nfmodal .nav{grid-column:1/-1;justify-content:center;background:#0f0f0f;border-top:1px solid #222}
+@media(max-width:760px){.nfmodal .box{grid-template-columns:1fr!important;grid-template-rows:auto auto auto;height:auto;min-height:100vh;overflow-y:auto}
+  .nfmodal{overflow-y:auto}.nfmodal .pic{height:58vh}.nfmodal .pic::after{background:linear-gradient(transparent 60%,#141414)}
+  .nfmodal .info{overflow:visible;padding:8px 20px 30px!important}.nfmodal h2{font-size:38px!important}
+  .nfmodal .nav{position:sticky;bottom:0;justify-content:flex-start}}
