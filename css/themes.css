@@ -315,3 +315,5 @@ body[data-theme=jg] .sc-sec::before{content:"";position:absolute;left:-1px;top:-
 body[data-theme=jg] .sc-sec::after{content:"";position:absolute;right:-1px;bottom:-1px;width:40px;height:3px;background:var(--jb)}
 body[data-theme=jg] .castc .av{border-radius:0}
 body[data-theme=jg] .nth{letter-spacing:.06em}
+body[data-theme=jg] .row.gm.chr .body{box-shadow:inset 3px 0 0 var(--c)}
+body[data-theme=jg] .row.gm.chr .who{color:color-mix(in srgb,var(--c) 78%,#000)}
