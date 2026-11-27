@@ -23,7 +23,7 @@ function publish(){
   const all=[];Object.values(SUB.sessData).forEach(m=>Object.values(m).forEach(x=>all.push(x)));
   S.sessions=all.sort((a,b)=>String(a.title).localeCompare(String(b.title),"ko",{numeric:true}));
   const cwChanged=refreshCanWrite();
-  if(S.fix&&location.hash.startsWith("#f-")){const r=fixFromHash(location.hash.slice(3));if(r!==S.fix)S.fix=r;if(fixCode(r)&&location.hash!==fixHref(r))try{history.replaceState(null,"",fixHref(r));}catch(e){}}
+  if(S.fix&&location.hash.startsWith("#f-")&&!S.nf){const r=fixFromHash(location.hash.slice(3));if(r!==S.fix)S.fix=r;if(fixCode(r)&&location.hash!==fixHref(r))try{history.replaceState(null,"",fixHref(r));}catch(e){}}
   if(S.sid){if(cwChanged)render();else{renderSide();renderAllRows(true);renderHeader();}maybeEnsure();if(S.chunksLoaded)loadSecs();}
   else if(!S.importing&&!S.scEdit)render();
   if(S.canAdmin)ownerMaintain();
@@ -153,8 +153,10 @@ function route(){
   if(pid){if(!S.postPage||S.postPage.key!==pid){S.fix=null;S.gid=null;S.revPage=null;S.up=null;S.admin=false;if(S.sid||S.cid){S.cid=null;closeSession();S.sid=null;}openPostPage(pid);}return;}
   if(S.postPage){S.postPage=null;if(!sid&&!cid&&!h.startsWith("f-")&&!h.startsWith("g-")&&!h.startsWith("r-"))render();}
   // 고정탁 페이지 (#f-이름)
-  const fid=h.startsWith("f-")?fixFromHash(h.slice(2)):null;
-  if(fid&&fixCode(fid)&&h.slice(2)!==fixCode(fid))try{history.replaceState(null,"",fixHref(fid));}catch(e){}
+  // #nf-코드 = 넷플릭스식 미리보기 (같은 고정탁·페어)
+  const nfh=h.startsWith("nf-");if(nfh!==!!S.nf){S.nf=nfh;S.jgEdit=false;S.jgDraft=null;if(S.fix&&fixFromHash(h.slice(nfh?3:2))===S.fix){render();window.scrollTo(0,0);}}
+  const fid=h.startsWith("f-")||nfh?fixFromHash(h.slice(nfh?3:2)):null;
+  if(!nfh&&fid&&fixCode(fid)&&h.slice(2)!==fixCode(fid))try{history.replaceState(null,"",fixHref(fid));}catch(e){}
   if(fid){if(S.fix!==fid){S.fix=fid;S.revPage=null;S.gid=null;S.up=null;S.admin=false;if(S.sid||S.cid){S.cid=null;openSession(null);}else render();window.scrollTo(0,0);}return;}
   if(S.fix){S.fix=null;if(!sid&&!cid&&!h)render();}
   if(gid){if(S.gid!==gid||S.revPage){S.revPage=null;S.gid=gid;S.campEdit=false;S.up=null;S.admin=false;if(S.sid||S.cid){S.cid=null;openSession(null);}else render();window.scrollTo(0,0);}return;}

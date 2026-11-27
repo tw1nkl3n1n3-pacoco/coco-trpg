@@ -61,7 +61,7 @@ function applyTheme(){{const sc=S.cid?scenById(S.cid):S.sid&&S.meta?curScen():S.
 document.body.classList.toggle("own",!!S.canAdmin);
   {const hx=!S.gid&&!S.cid&&!S.sid&&!S.revPage&&!S.postPage&&!S.admin&&!S.up&&!S.book&&!S.mbook&&!S.fix&&isHX();if(document.body.classList.contains("hxhome")!==hx){document.body.classList.toggle("hxhome",hx);document.documentElement.classList.toggle("hxhome",hx);}}
   if(S.postPage){const t=postPageTheme();if(document.body.dataset.theme!==t)document.body.dataset.theme=t;document.body.dataset.page="post";if(t==="jg")jgColors(S.postPage.name);return;}
-  if(S.fix&&!S.sid&&!S.cid&&!S.gid&&typeof fixWord==="function"){if(document.body.dataset.theme!=="jg")document.body.dataset.theme="jg";document.body.dataset.page="fix";jgColors(S.fix);return;}
+  if(S.fix&&!S.sid&&!S.cid&&!S.gid&&typeof fixWord==="function"){if(document.body.dataset.theme!=="jg")document.body.dataset.theme="jg";document.body.dataset.page=S.nf?"nf":"fix";if(S.nf){const fd=S.fixDocs[fixKey(S.fix)]||{};jgColors(S.fix,{...(fd.colors||{}),bg:NF_BG,box:""});document.body.classList.add("jnoscan");}else jgColors(S.fix);return;}
   if(S.gid&&!S.sid&&!S.cid){const c=campById(S.gid);const pj=c&&!isCamp(c)&&c.fix&&fixWord(c.fix)==="페어";const t=pj?"jg":c&&c.system?themeOf({system:c.system}):"plain";if(pj)jgColors(c.fix);if((document.body.dataset.theme||"")!==t)document.body.dataset.theme=t;document.body.dataset.page="scen";return;}
   const sc=S.revPage?S.revPage.sc:S.cid?(S.scEdit&&S.scDraft?S.scDraft:scenById(S.cid)):(S.sid&&S.meta?curScen():null);
   // 시나리오 정보가 아직 안 왔으면 양피지 대신 메인 화면 색으로 기다려요
@@ -80,7 +80,7 @@ function render(){try{bkAuto();}catch(e){}
   if(S.revPage){app.innerHTML=revPageHTML();return;}
   if(S.postPage){app.innerHTML=postPageHTML();bindPostPage();return;}
   if(S.up&&!S.sid&&!S.cid){app.innerHTML=upHTML();bindUp();return;}
-  if(S.fix&&!S.sid&&!S.cid){{const ae=document.activeElement;if(S.jgEdit&&ae&&ae.closest&&ae.closest(".jgedit")&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName)&&ae.type!=="file"&&$(".jgedit"))return;if(fixWord(S.fix)==="페어"){app.innerHTML=jgPageHTML(S.fix);bindJgPage(S.fix);}else{app.innerHTML=fxPageHTML(S.fix);bindFxPage(S.fix);}return;}}
+  if(S.fix&&!S.sid&&!S.cid){{const ae=document.activeElement;if(S.jgEdit&&ae&&ae.closest&&ae.closest(".jgedit")&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName)&&ae.type!=="file"&&$(".jgedit"))return;if(S.nf){app.innerHTML=nfPageHTML(S.fix);bindNfPage(S.fix);}else if(fixWord(S.fix)==="페어"){app.innerHTML=jgPageHTML(S.fix);bindJgPage(S.fix);}else{app.innerHTML=fxPageHTML(S.fix);bindFxPage(S.fix);}return;}}
   if(S.gid&&!S.sid&&!S.cid){app.innerHTML=campPageHTML();bindCamp();return;}
   if(S.cid){app.innerHTML=scenHTML();bindScen();return;}
   if(!S.sid&&S.admin){app.innerHTML=adminHTML();bindAdmin();return;}

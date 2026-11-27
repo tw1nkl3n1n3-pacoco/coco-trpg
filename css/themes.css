@@ -585,3 +585,63 @@ body[data-theme=jg] .jgp .fxacc h4::after{display:none!important}
 body:not(.jbox) .jgp .fxacc{border:1px solid var(--ln)!important}
 /* 고정탁 첫 화면 그림: 페어용 양옆 캐릭터색 그라데이션 없이 · 위아래 어둡게/바탕으로만 */
 .fxpg .jgban::before{background:linear-gradient(rgba(0,0,0,.28),transparent 38%),linear-gradient(transparent 55%,var(--jbg))}
+/* ===== 넷플릭스식 페어·고정탁 (#nf-) ===== */
+body[data-page=nf]{background:#141414!important}
+body[data-page=nf] header{box-shadow:none}
+.nfx{--nfw:max(4vw,16px);font-size:15px;padding-bottom:40px}
+.nfhero{position:relative;height:min(76vh,640px);min-height:470px;overflow:hidden;background:#000}
+.nfhero .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.nfhero .bg.empty{background:linear-gradient(110deg,color-mix(in srgb,var(--ja) 60%,#000),#111 50%,color-mix(in srgb,var(--jb) 60%,#000))}
+.nfhero::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(20,20,20,.94) 0,rgba(20,20,20,.6) 38%,rgba(20,20,20,.1) 70%),linear-gradient(rgba(0,0,0,.4),transparent 22%,transparent 62%,#141414)}
+.nfx.pair .nfhero .bg{filter:brightness(.6) blur(1px)}
+.nfin{position:absolute;z-index:3;left:var(--nfw);bottom:15%;max-width:min(560px,52%)}
+.nfin .tag{font:700 12px "Noto Sans KR",sans-serif;letter-spacing:.2em;color:#ddd}
+.nfin h1{margin:10px 0 12px;font:400 clamp(52px,8vw,100px)/1.02 var(--jhk);color:#fff;text-shadow:0 2px 16px rgba(0,0,0,.5);word-break:keep-all}
+.nfin .meta{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;font-size:14px;color:#ddd}
+.nfin .meta .new{color:#46d369;font-weight:700}.nfin .meta .bx{border:1px solid #8a8a8a;padding:0 6px;font-size:12px;border-radius:2px}
+.nfin p{margin:12px 0 18px;font-size:16px;color:#e8e8e8;text-shadow:0 1px 6px rgba(0,0,0,.6);word-break:keep-all}
+.nfin .btns{display:flex;gap:10px;flex-wrap:wrap}.nfin .btns a{display:inline-flex;align-items:center;gap:8px;padding:9px 22px;border-radius:4px;font-weight:700;font-size:15px;text-decoration:none}
+.nfin .b1{background:#fff;color:#111}.nfin .b1:hover{background:#ddd}.nfin .b2{background:rgba(109,109,110,.7);color:#fff}.nfin .b2:hover{background:rgba(109,109,110,.5)}
+.nfduo{position:absolute;z-index:2;right:3%;bottom:0;height:94%;display:flex;align-items:flex-end}
+.nfduo div{position:relative;height:100%;width:min(300px,22vw);display:flex;justify-content:center;margin-left:-50px}
+.nfduo img{height:90%;width:100%;object-fit:contain;object-position:bottom;align-self:flex-end;margin-bottom:6%;filter:drop-shadow(0 0 26px rgba(0,0,0,.65))}
+.nfduo b{position:absolute;bottom:7%;font:400 22px var(--jhk);color:#fff;text-shadow:0 2px 10px #000}.nfduo small{position:absolute;bottom:3.5%;font:400 11px var(--jdisp);letter-spacing:.12em;color:#ddd;text-shadow:0 1px 6px #000}
+.nfduo div::after{content:"";position:absolute;left:12%;right:12%;bottom:1%;height:4px;background:var(--c)}
+.nfcast{position:absolute;z-index:3;right:var(--nfw);bottom:15%;display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end;max-width:40%}
+.nfcast button{background:none;border:0;padding:0;width:74px;text-align:center;color:#ddd;font-size:12px;cursor:pointer}
+.nfcast img,.nfcast i{display:grid;place-items:center;width:60px;height:60px;margin:0 auto 6px;border-radius:50%;object-fit:cover;font:400 22px var(--jhk);font-style:normal;color:#fff;background:var(--c);box-shadow:0 0 0 2px #141414,0 0 0 4px var(--c)}
+.nfcast b{display:block;font-weight:700}.nfcast small{display:block;color:#8a8a8a;font-size:11px}
+.nfrow{padding:0 var(--nfw);margin:8px 0 36px;position:relative;z-index:3}
+.nfrow>h3{margin:0 0 10px;font-size:19px;font-weight:700;color:#f2f2f2;display:flex;align-items:baseline;gap:10px}.nfrow>h3 small{font-size:13px;color:#a3a3a3;font-weight:400}.nfrow>h3 a{margin-left:auto;font-size:13px;color:#a3a3a3;font-weight:400;text-decoration:none}.nfrow>h3 a:hover{color:#fff}
+.nfrow .empty{color:#8a8a8a;font-size:14px}
+.nfpfs{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}.nfpfs.two{grid-template-columns:1fr 1fr}
+.nfpf{display:grid;grid-template-columns:96px minmax(0,1fr);gap:16px;padding:16px;border-radius:4px;border-left:4px solid var(--c);background:linear-gradient(120deg,color-mix(in srgb,var(--c) 30%,#1c1c1c),#1c1c1c 70%);color:#eee;height:100%}
+.nfpf>img,.nfpf>i{width:96px;height:96px;border-radius:4px;object-fit:cover;object-position:top;display:grid;place-items:center;font:400 34px var(--jhk);font-style:normal;color:#fff;background:var(--c)}
+.nfpf b{font-size:19px}.nfpf small{display:block;color:#a3a3a3;font-size:12.5px;margin-top:1px}.nfpf p{margin:6px 0;font-size:13px;color:#ccc}
+.nfpf details{margin-top:4px;border-top:1px solid rgba(255,255,255,.08);padding-top:4px}.nfpf summary{cursor:pointer;font-size:13px;color:var(--jacc);list-style:none}.nfpf summary::before{content:"＋ "}.nfpf details[open] summary::before{content:"－ "}
+.nfpf details p{white-space:normal;color:#d4d4d4;line-height:1.65}
+.nfcards{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(250px,calc((100% - 24px)/4));gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px;scrollbar-width:thin}
+.nfcd{position:relative;aspect-ratio:16/9;border-radius:4px;overflow:hidden;background:#2a2a2a;color:#fff;text-decoration:none;scroll-snap-align:start;transition:transform .2s}
+.nfcd:hover{transform:scale(1.03);z-index:2}
+.nfcd img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.nfcd::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 40%,rgba(0,0,0,.88))}
+.nfcd b{position:absolute;z-index:1;left:10px;right:10px;bottom:22px;font-size:14.5px;line-height:1.35;word-break:keep-all}
+.nfcd small{position:absolute;z-index:1;left:10px;bottom:7px;font-size:11px;color:#ccc}
+.nfcd .tp{position:absolute;z-index:1;top:8px;left:8px;font:700 10px "Noto Sans KR",sans-serif;background:var(--jacc);color:color-mix(in srgb,var(--jacc) 8%,#111);padding:1px 6px;border-radius:2px}
+.nfcd .pg{position:absolute;z-index:1;left:0;right:0;bottom:0;height:3px;background:#555}.nfcd .pg i{display:block;height:100%;background:var(--jacc)}
+/* 타임라인 · 포스트 · 비밀번호: 기존 부품을 어두운 판 없이 */
+.nfx .nftl .jgsec,.nfx .nfposts>.sc-sec{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0!important}
+.nfx .nftl .jgsec>h4{font:700 19px "Noto Sans KR",sans-serif;letter-spacing:0}
+.nfx .nfposts>.sc-sec h4{font:700 19px "Noto Sans KR",sans-serif!important;letter-spacing:0!important;color:#f2f2f2!important}
+.nfx .nfend .fxacc{background:#1c1c1c!important;border:0!important}
+.nfx .nfend .jgbot{border-top:1px solid #262626;padding-top:16px}
+@media(max-width:760px){
+  .nfhero{height:auto;min-height:0;padding-top:250px}.nfhero .bg{height:330px;bottom:auto}
+  .nfhero::before{background:linear-gradient(rgba(0,0,0,.35),transparent 30%,#141414 330px)}
+  .nfin{position:relative;left:0;bottom:0;max-width:none;padding:0 5%}.nfin h1{font-size:50px}
+  .nfx.pair .nfhero{padding-top:0}.nfx.pair .nfhero .bg{height:100%}
+  .nfduo{position:relative;right:auto;height:330px;justify-content:center}.nfduo div{width:46%;margin-left:-20px}
+  .nfx.pair .nfin{margin-top:-30px}
+  .nfcast{position:relative;right:auto;bottom:auto;max-width:none;justify-content:flex-start;padding:16px 5% 0}
+  .nfpfs.two{grid-template-columns:1fr}.nfpf{grid-template-columns:72px minmax(0,1fr)}.nfpf>img,.nfpf>i{width:72px;height:72px}
+  .nfcards{grid-auto-columns:68%}}
