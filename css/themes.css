@@ -1085,3 +1085,4 @@ body.axskin .nfsplit{align-items:start}
 body.axskin .nfend .fxacc .pri{background:#14171c!important;color:#c8f031!important}
 body.axskin .nfend .fxacc .pw{background:#fafbf7;border:1px dashed #c5c9c5;color:#5f7d00;font-family:var(--axm)}
 body.axskin .nfend a.ghost{text-decoration:none}
+@media(min-width:761px){.nfin{max-width:min(560px,48%)}.nfcast{max-width:34%}}
