@@ -91,7 +91,7 @@ function render(){try{bkAuto();}catch(e){}
   if(S.revPage){app.innerHTML=revPageHTML();return;}
   if(S.postPage){app.innerHTML=postPageHTML();bindPostPage();return;}
   if(S.up&&!S.sid&&!S.cid){app.innerHTML=upHTML();bindUp();return;}
-  if(S.fix&&!S.sid&&!S.cid){{const ae=document.activeElement;if(S.jgEdit&&ae&&ae.closest&&ae.closest(".jgedit")&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName)&&ae.type!=="file"&&$(".jgedit"))return;if(S.nf||isNF()||isAX()){app.innerHTML=nfPageHTML(S.fix);bindNfPage(S.fix);}else if(fixWord(S.fix)==="페어"){app.innerHTML=jgPageHTML(S.fix);bindJgPage(S.fix);}else{app.innerHTML=fxPageHTML(S.fix);bindFxPage(S.fix);}return;}}
+  if(S.fix&&!S.sid&&!S.cid){{const ae=document.activeElement;if(S.jgEdit&&ae&&ae.closest&&ae.closest(".jgedit")&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName)&&ae.type!=="file"&&$(".jgedit"))return;if(isAX()&&!S.nf){app.innerHTML=axPageHTML(S.fix);bindAxPage(S.fix);}else if(S.nf||isNF()){app.innerHTML=nfPageHTML(S.fix);bindNfPage(S.fix);}else if(fixWord(S.fix)==="페어"){app.innerHTML=jgPageHTML(S.fix);bindJgPage(S.fix);}else{app.innerHTML=fxPageHTML(S.fix);bindFxPage(S.fix);}return;}}
   if(S.gid&&!S.sid&&!S.cid){app.innerHTML=campPageHTML();bindCamp();return;}
   if(S.cid){app.innerHTML=scenHTML();bindScen();return;}
   if(!S.sid&&S.admin){app.innerHTML=adminHTML();bindAdmin();return;}
