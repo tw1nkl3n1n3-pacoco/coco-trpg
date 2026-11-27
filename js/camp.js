@@ -63,7 +63,7 @@ function fixAccHTML(f){if(!S.canAdmin)return "";const W=fixWord(f);
       <div class="tip">이 비밀번호 하나로 ${W} 안의 모든 세션·캠페인이 열려요. ${W}에 묶인 세션은 자동으로 이 비밀번호를 따라가요. 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
       <div class="pwrow"><code class="pw">${esc(S.secrets?.[fixKey(f)]||"만드는 중…")}</code><button class="pri" id="fxcopy">링크+비밀번호 복사</button><button class="ghost" id="fxnewpw">새로 만들기</button></div></div>`;}
 function bindFixAcc(f){const W=fixWord(f);
-  const fc=$("#fxcopy");if(fc)fc.onclick=()=>copyText(`[${W} ${f}] TRPG 로그\n${location.origin+location.pathname}${fixHref(f)}\n비밀번호: ${S.secrets?.[fixKey(f)]||""}`,"링크와 비밀번호를 복사했어요");
+  const fc=$("#fxcopy");if(fc)fc.onclick=()=>copyText(`[${W} ${f}] TRPG 로그\n${shareUrl("f-"+(fixCode(f)||encodeURIComponent(f)))}\n비밀번호: ${S.secrets?.[fixKey(f)]||""}`,"링크와 비밀번호를 복사했어요");
   const fn=$("#fxnewpw");if(fn)fn.onclick=()=>confirmBox(`${W} 비밀번호를 새로 만들까요? 안의 모든 세션 비밀번호가 같이 바뀌고, 예전 비밀번호로 연 사람은 다시 잠겨요.`,"새로 만들기",async()=>{try{await S.db.doc("secrets/"+fixKey(f)).set({pw:genPw()});ownerMaintain();toast("새 비밀번호를 만들었어요");}catch(err){writeFail(err);}});}
 function campTagHTML(c){return c.system?`<span class="sys" data-th="${themeOf({system:c.system})}">${esc(sysLabel(c.system))}</span>`:"";}
 function campCardHTML(c){
