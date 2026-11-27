@@ -20,7 +20,7 @@ function nfPageHTML(f){const pair=jgPair(f),d=jgDoc(f),fields=d.fields&&d.fields
   const last=data.days.at(-1),lastG=last?data.gs.find(g=>g.days.some(x=>x.day===last)):null,code=fixCode(f)||encodeURIComponent(f);
   const meta=[last?`<span class="new">최근 세션 ${esc(jgDot(last.slice(5)))}</span>`:"",data.days.length?`<span>${esc(jgDot(data.days[0]).slice(0,7))} –</span>`:"",sys?`<span class="bx">${esc(sys)}</span>`:"",`<span>이야기 ${data.stories}</span>`,`<span>세션 ${data.days.length}</span>`,data.days.length?`<span>함께한 날 ${jgDaysSince(data.days[0])}</span>`:""].join("");
   const line=pair?d.rel:d.tag;
-  const right=`<div class="nfcast">${mem.map(m=>`<button type="button" data-nfgo="${esc(m.n)}" style="--c:${m.c}">${m.q.icon?.u?`<img src="${esc(m.q.icon.u)}" alt="">`:`<i>${esc(m.nm.slice(0,1))}</i>`}<b>${esc(m.nm)}</b><small>${esc(m.n)}</small></button>`).join("")}</div>`;
+  const right=`<div class="nfcast">${mem.map(m=>`<button type="button" data-nfprof="${esc(m.n)}" style="--c:${m.c}">${m.q.icon?.u?`<img src="${esc(m.q.icon.u)}" alt="">`:`<i>${esc(m.nm.slice(0,1))}</i>`}<b>${esc(m.nm)}</b><small>${esc(m.n)}</small><em>프로필 ›</em></button>`).join("")}</div>`;
   const st=nfStories(f,data);
   return `<div class="jgp nfx${pair?" pair":""}">
     <section class="nfhero">${ban?.u?`<img class="bg" src="${esc(ban.u)}" alt="" style="object-position:50% ${+ban.y>=0?+ban.y:40}%">`:`<div class="bg empty"></div>`}
@@ -30,8 +30,7 @@ function nfPageHTML(f){const pair=jgPair(f),d=jgDoc(f),fields=d.fields&&d.fields
       ${right}</section>
     <div class="nfrow"><h3>${pair?"함께한 이야기":"이야기"} <small>${st.length} · 오래된 것부터</small><span class="nfh">${st.length>4?`<button type="button" data-nfall="st">${(S.nfAll||{}).st?"접기 ▴":"모두 보기 ›"}</button>`:""}${st.length?`<a href="#mb-f-${esc(code)}">📖 리플레이북 합본</a>`:""}</span></h3>
       ${st.length?`<div class="nfscr${(S.nfAll||{}).st?" all":""}"><button type="button" class="nfarw l" data-nfarw="-1" aria-label="이전">‹</button><div class="nfcards">${st.map(s=>`<a class="nfcd" href="${esc(s.href)}">${s.cv?`<img src="${esc(s.cv)}" alt="" loading="lazy">`:""}${s.tag?`<span class="tp">${esc(s.tag)}</span>`:""}<b>${esc(s.name)}</b><small>${esc(s.sub)}</small><span class="pg"><i style="width:${s.pg}%"></i></span></a>`).join("")}</div><button type="button" class="nfarw r" data-nfarw="1" aria-label="다음">›</button></div>`:`<div class="empty">아직 세션이 없어요</div>`}</div>
-    <div class="nfrow nfsplit"><div><h3>${pair?"두 사람":"멤버"}</h3><div class="nfpfs">${mem.map(m=>`<div id="nfm-${esc(m.n)}">${nfCard(m,fields)}</div>`).join("")}</div></div>
-      <div class="nftl">${jgTimelineHTML(f,data,items).replace("<h4>TIMELINE","<h4>타임라인")}</div></div>
+    <div class="nfrow nftl wide">${jgTimelineHTML(f,data,items).replace("<h4>TIMELINE","<h4>타임라인")}</div>
     <div class="nfrow nfposts${(S.nfAll||{}).po?" all":""}">${postsH}</div>
     <div class="nfrow nfend">
       ${S.canAdmin?`<div class="jgtop jgbot"><a class="ghost ownonly" href="#">← 첫 화면</a>${isNF()||isAX()?"":`<a class="ghost" href="#f-${esc(code)}">지금 디자인으로 보기</a>`}<span style="flex:1"></span><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":`✎ ${W} 수정`}</button></div>`:""}
@@ -39,6 +38,21 @@ function nfPageHTML(f){const pair=jgPair(f),d=jgDoc(f),fields=d.fields&&d.fields
       ${fixAccHTML(f)}${jgRO(f)?(pair?`<div class="sc-sec fxacc jgacc"><h4 data-en="ACCESS">페어 비밀번호</h4><div class="tip">페어 비밀번호를 넣으면 글을 올리고, 기록을 더하고, 댓글을 달 수 있어요.</div><form class="pwrow" id="jgunlock"><input type="text" id="jgpw" placeholder="페어 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form><div class="tip" id="jgmsg"></div></div>`
         :`<div class="sc-sec fxacc jgacc"><h4 data-en="ACCESS">고정탁 비밀번호</h4><div class="tip">누구로 들어갈지 고르고 비밀번호를 넣어요.</div><div class="fxpk">${mem.map(m=>`<button type="button" class="${S.fxPick===m.n?"on":""}" data-fxpick="${esc(m.n)}" style="--c:${m.c}"><i></i>${esc(m.nm)} · ${esc(m.n)}</button>`).join("")}<button type="button" class="${S.fxPick==="ext"?"on":""}" data-fxpick="ext">외부인으로</button></div><form class="pwrow" id="jgunlock"><input type="text" id="jgpw" placeholder="고정탁 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form><div class="tip" id="jgmsg"></div></div>`):""}
     </div></div>`;}
+// 프로필 모달 (첫 화면 아이콘을 누르면)
+function nfMem(f){if(jgPair(f)){const [A,B]=jgSides(f);return [A,B].map(s=>({n:s.own||s.key,nm:s.nm,en:s.en,q:s.pr,own:s.own,c:s.key==="a"?"var(--ja)":"var(--jb)"}));}return fxMembers(f).map(m=>({...m,own:m.n}));}
+function nfModalOpen(f,n){const d=jgDoc(f),fields=d.fields&&d.fields.length?d.fields:JG_F0,M=nfMem(f),i=Math.max(0,M.findIndex(m=>m.n===n)),m=M[i],q=m.q||{};
+  document.querySelector(".nfmodal")?.remove();const pic=q.cut?.u||q.icon?.u||"",dl=[q.age&&(/\D/.test(q.age)?q.age:q.age+"세"),q.ht&&(/\D/.test(q.ht)?q.ht:q.ht+"cm"),q.sex,q.mbti].filter(Boolean);
+  const el=document.createElement("div");el.className="nfmodal";el.style.setProperty("--c",m.c);
+  el.innerHTML=`<div class="box" role="dialog" aria-label="${esc(m.nm)} 프로필"><button type="button" class="x" aria-label="닫기">✕</button>
+    <div class="pic${q.cut?.u?" cut":""}">${pic?`<img src="${esc(pic)}" alt="">`:`<i>${esc([...(m.nm||"?")][0])}</i>`}</div>
+    <div class="info"><div class="tag">${esc(m.en||"")}</div><h2>${esc(m.nm)}</h2>${q.rn||q.ren?`<div class="rn">${[q.rn,q.ren].filter(Boolean).map(esc).join(" · ")}</div>`:""}
+      <div class="meta">${dl.map(x=>`<span>${esc(x)}</span>`).join("")}${m.own?`<span class="own">플레이어 ${esc(m.own)}</span>`:""}</div>
+      ${(q.tags||[]).length?`<div class="tags">${q.tags.slice(0,5).map(t=>`<span>${esc(t)}</span>`).join("")}</div>`:""}
+      ${fields.filter(k=>(q.sec||{})[k]).map(k=>`<h4>${esc(k)}</h4><p>${esc(q.sec[k]).replace(/\n/g,"<br>")}</p>`).join("")}</div>
+    ${M.length>1?`<div class="nav">${M.map((x,j)=>`<button type="button" class="${j===i?"on":""}" data-nfp="${esc(x.n)}" style="--c:${x.c}">${esc(x.nm)}</button>`).join("")}</div>`:""}</div>`;
+  document.body.appendChild(el);document.body.classList.add("nfmodal-on");
+  const close=()=>{el.remove();document.body.classList.remove("nfmodal-on");document.removeEventListener("keydown",esc_);};const esc_=e=>{if(e.key==="Escape")close();};
+  el.onclick=e=>{if(e.target===el||e.target.closest(".x"))close();const b=e.target.closest("[data-nfp]");if(b){close();nfModalOpen(f,b.dataset.nfp);}};document.addEventListener("keydown",esc_);}
 function bindNfPage(f){if(jgPair(f))bindJgPage(f);else bindFxPage(f);
   // 포스트: 줄 양옆 화살표 + 모두 보기 (갤러리 부품 바깥에서 붙여요)
   const gs=document.querySelector(".nfposts .galsec"),gg=gs&&gs.querySelector(".galg");
@@ -53,7 +67,12 @@ function bindNfPage(f){if(jgPair(f))bindJgPage(f);else bindFxPage(f);
   document.querySelectorAll("[data-nfall]").forEach(b=>b.onclick=()=>{S.nfAll={...(S.nfAll||{}),[b.dataset.nfall]:!(S.nfAll||{})[b.dataset.nfall]};render();});
   document.querySelectorAll(".nfscr").forEach(w=>{const sc=w.querySelector(".nfcards,.galg");if(!sc)return;const up=()=>{w.classList.toggle("atl",sc.scrollLeft<4);w.classList.toggle("atr",sc.scrollLeft+sc.clientWidth>=sc.scrollWidth-4);};
     sc.addEventListener("scroll",up,{passive:true});up();w.querySelectorAll("[data-nfarw]").forEach(b=>b.onclick=()=>sc.scrollBy({left:+b.dataset.nfarw*sc.clientWidth*.9,behavior:"smooth"}));});
-  document.querySelectorAll("[data-nfgo]").forEach(b=>b.onclick=()=>document.getElementById("nfm-"+b.dataset.nfgo)?.scrollIntoView({block:"center",behavior:"smooth"}));}
+  document.querySelectorAll("[data-nfprof]").forEach(b=>b.onclick=()=>nfModalOpen(f,b.dataset.nfprof));
+  // 가로 타임라인: 양옆 화살표로 넘겨요 (포스트 줄과 같은 방식)
+  {const tw=document.querySelector(".nftl.wide .tl");if(tw&&!tw.parentElement.classList.contains("nfscr")){const w=document.createElement("div");w.className="nfscr nftlscr";tw.before(w);
+    w.append(Object.assign(document.createElement("button"),{type:"button",className:"nfarw l",textContent:"‹"}),tw,Object.assign(document.createElement("button"),{type:"button",className:"nfarw r",textContent:"›"}));
+    const up=()=>{w.classList.toggle("atl",tw.scrollLeft<4);w.classList.toggle("atr",tw.scrollLeft+tw.clientWidth>=tw.scrollWidth-4);};tw.addEventListener("scroll",up,{passive:true});up();
+    w.querySelector(".l").onclick=()=>tw.scrollBy({left:-tw.clientWidth*.85,behavior:"smooth"});w.querySelector(".r").onclick=()=>tw.scrollBy({left:tw.clientWidth*.85,behavior:"smooth"});}}}
 // ===== 짭플릭스: 사이트 전체 테마 (관리 → 사이트 테마) · 끄면 원래 테마 그대로 =====
 function isNF(){return site().skin==="nf";}
 function nfQ(x){return String(x||"").toLowerCase().replace(/\s+/g,"");}

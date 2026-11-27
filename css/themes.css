@@ -1231,3 +1231,59 @@ body.axskin .axp .jgedit{border-radius:0}
   body.axskin .axaccw .axacc{grid-template-columns:1fr}}
 body.axskin .axtl .tl li>.d{align-self:start}
 @media(max-width:760px){.axp .hx-bar>.hx-m:not(:last-child){display:none}.axp .hx-bar b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60vw;display:block}.axp .hx-sh>.hx-m:last-child:not(.hx-idx){display:none}.axp .hx-sh h2{white-space:nowrap}}
+/* ══ 짭플릭스: 가로 타임라인 (한 줄 전체 폭) ══ */
+.nfx .nftl.wide .jgsec{position:relative}
+.nfx .nftl.wide .jgtl{max-height:none!important;overflow:visible!important}
+.nfx .nftl.wide .jgtl::after,.nfx .nftl.wide .jgmore{display:none!important}
+.nfx .nftl.wide .tl{display:flex!important;flex-direction:row;align-items:stretch;overflow-x:auto;overflow-y:hidden;margin:6px 0 0!important;padding:0 0 10px!important;scroll-snap-type:x proximity;scrollbar-width:thin;scrollbar-color:#444 transparent}
+.nfx .nftl.wide .tl::-webkit-scrollbar{height:6px}.nfx .nftl.wide .tl::-webkit-scrollbar-thumb{background:#444;border-radius:3px}
+.nfx .nftl.wide .tl li{display:block!important;flex:0 0 250px;position:relative;padding:42px 18px 6px 0!important;border:0!important;border-radius:0!important;scroll-snap-align:start;background:none!important}
+.nfx .nftl.wide .tl li:hover{background:none!important}
+/* 가로 선과 점 */
+.nfx .nftl.wide .tl li::before{content:""!important;display:block!important;position:absolute!important;left:0;right:0;top:26px;height:2px;background:#333;transform:none!important;width:auto!important;border:0!important}
+.nfx .nftl.wide .tl li::after{content:"";position:absolute;left:0;top:21px;width:12px;height:12px;border-radius:50%;background:#141414;border:2px solid #8a8a8a;box-sizing:border-box}
+.nfx .nftl.wide .tl li:has(.t>a[href^="#c-"])::after{background:var(--jacc);border-color:var(--jacc);box-shadow:0 0 0 4px rgba(255,255,255,.06)}
+.nfx .nftl.wide .tl li>.d{position:absolute;left:0;top:0;margin:0!important;font:700 13px "Noto Sans KR",sans-serif!important;color:#d4d4d4!important;grid-row:auto!important}
+.nfx .nftl.wide .tl li.m{flex:0 0 auto;padding:42px 22px 0 0!important}
+.nfx .nftl.wide .tl li.m::after{width:2px;height:20px;top:17px;border-radius:0;border:0;background:#8a8a8a}
+.nfx .nftl.wide .tl li.m .d{position:static;writing-mode:vertical-rl;transform:rotate(180deg);font:900 15px "Noto Sans KR",sans-serif!important;color:#fff!important;letter-spacing:.04em;margin-top:8px!important}
+.nfx .nftl.wide .tl li.m+li .d{left:0}
+.nfx .nftl.wide .t{font-size:15px}.nfx .nftl.wide .t small{display:block;margin-top:2px}
+.nfx .nftl.wide .t a{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.nfx .nftl.wide .th{display:grid!important;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:8px}
+.nfx .nftl.wide .th img{width:100%!important;height:auto!important;aspect-ratio:1;object-fit:cover;border-radius:3px}
+.nfx .nftl.wide .th img:first-child{grid-column:1/-1;aspect-ratio:16/9}
+.nfx .nftl.wide .th img:nth-child(n+5){display:none}
+.nfx .nftl.wide .th span{font-size:11px;color:#8a8a8a;align-self:center}
+.nfx .nftl.wide .note,.nfx .nftl.wide .tcard{margin-top:8px;font-size:12.5px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.nfx .nftl.wide .tl li.fold{flex:0 0 auto;padding-top:30px!important}.nfx .nftl.wide .tl li.fold::after{display:none}
+.nfx .nftl.wide .rx{white-space:nowrap}
+.nfx .nftlscr .nfarw{top:0;bottom:10px}
+@media(max-width:760px){.nfx .nftl.wide .tl li{flex-basis:72%}.nfx .nftl.wide .tl{scrollbar-width:none}.nfx .nftl.wide .tl::-webkit-scrollbar{display:none}}
+/* 첫 화면 출연 아이콘: 누르면 프로필 */
+.nfcast button em{display:block;font-style:normal;font-size:10.5px;color:var(--jacc);margin-top:2px;opacity:0;transition:opacity .15s}
+.nfcast button:hover em{opacity:1}
+@media(hover:none){.nfcast button em{opacity:1}}
+/* 프로필 모달 */
+body.nfmodal-on{overflow:hidden}
+.nfmodal{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:24px;animation:nfmIn .18s ease-out}
+@keyframes nfmIn{from{opacity:0}to{opacity:1}}
+.nfmodal .box{position:relative;width:min(880px,100%);max-height:calc(100vh - 48px);overflow:auto;background:#181818;color:#e8e8e8;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.6);display:grid;grid-template-columns:300px minmax(0,1fr);animation:nfmUp .22s ease-out}
+@keyframes nfmUp{from{transform:translateY(16px);opacity:.6}to{transform:none;opacity:1}}
+@media(prefers-reduced-motion:reduce){.nfmodal,.nfmodal .box{animation:none}}
+.nfmodal .x{position:absolute;right:12px;top:12px;z-index:3;width:36px;height:36px;border-radius:50%!important;background:#181818!important;color:#fff!important;border:0!important;font-size:16px;cursor:pointer}
+.nfmodal .pic{background:linear-gradient(180deg,color-mix(in srgb,var(--c) 45%,#181818),#181818);display:flex;align-items:flex-end;justify-content:center;min-height:380px;border-radius:8px 0 0 8px;overflow:hidden}
+.nfmodal .pic img{width:100%;height:100%;object-fit:cover;object-position:top}.nfmodal .pic.cut img{object-fit:contain;object-position:bottom;max-height:520px}
+.nfmodal .pic i{margin:auto;width:120px;height:120px;border-radius:50%;display:grid;place-items:center;background:var(--c);color:#fff;font:900 46px "Noto Sans KR",sans-serif;font-style:normal}
+.nfmodal .info{padding:34px 34px 28px}
+.nfmodal .tag{font:700 12px "Noto Sans KR",sans-serif;letter-spacing:.2em;color:var(--c);filter:brightness(1.4)}
+.nfmodal h2{margin:6px 0 2px;font:900 38px/1.1 var(--jhk,"Noto Sans KR"),sans-serif;color:#fff}
+.nfmodal .rn{color:#a3a3a3;font-size:14px}
+.nfmodal .meta{display:flex;flex-wrap:wrap;gap:8px 12px;margin:14px 0 0;font-size:14px;color:#ddd}.nfmodal .meta .own{color:#46d369}
+.nfmodal .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}.nfmodal .tags span{font-size:12px;border:1px solid #444;border-radius:999px;padding:1px 10px;color:#ccc}
+.nfmodal h4{margin:22px 0 6px;font-size:14px;color:#a3a3a3;font-weight:700}
+.nfmodal p{margin:0;font-size:15px;line-height:1.8;color:#e5e5e5}
+.nfmodal .nav{grid-column:1/-1;display:flex;gap:8px;padding:12px 18px 16px;border-top:1px solid #262626;overflow-x:auto}
+.nfmodal .nav button{flex:none;background:#242424!important;color:#ccc!important;border:0!important;border-radius:999px!important;padding:5px 14px;font-size:13px;box-shadow:inset 3px 0 var(--c)}
+.nfmodal .nav button.on{background:#e5e5e5!important;color:#141414!important}
+@media(max-width:760px){.nfmodal{padding:0;align-items:flex-end}.nfmodal .box{grid-template-columns:1fr;max-height:92vh;border-radius:12px 12px 0 0}.nfmodal .pic{min-height:240px;max-height:300px;border-radius:12px 12px 0 0}.nfmodal .info{padding:22px 20px}.nfmodal h2{font-size:30px}}
