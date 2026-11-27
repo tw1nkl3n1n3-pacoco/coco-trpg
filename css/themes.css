@@ -310,7 +310,7 @@ body[data-theme=jg] .schero-t h2{font-family:var(--jhk);font-weight:400;color:va
 body[data-theme=jg] .day-h .nth,body[data-theme=jg] .oday .nth{border-radius:0;background:#111!important;color:var(--jacc)!important}
 body[data-theme=jg] :is(.castc .av,.rvcard,.galg .im,.galup,.glb .top .tb,.gelock,.gelock .sw,.gelock .sw::after,.gebox,.gei,.lkbox){border-radius:0}
 body[data-theme=jg] .glpaper{box-shadow:0 0 0 1px #000,8px 8px 0 var(--jacc)}body[data-theme=jg] .glpaper h1,body[data-theme=jg] .psth h2{font-family:var(--jhk);font-weight:400}
-body[data-theme=jg] .pstpage{--ink:var(--jtx);color:var(--jtx)}body[data-theme=jg] .psttop b{font-family:var(--jhk);font-weight:400;color:var(--jacc)}body[data-theme=jg] .psttop small{font-family:var(--jdisp)}
+body[data-theme=jg] .pstpage{--ink:var(--jtx);color:var(--jtx)}body[data-theme=jg] .pstbar{background:#111;border-bottom:3px solid var(--jacc)}body[data-theme=jg] .pstbar b{font-family:var(--jhk);font-weight:400;color:var(--jacc)}body[data-theme=jg] .pstbar small{font-family:var(--jdisp);color:#8b8880}body[data-theme=jg] .pstbar .k{background:var(--jacc);color:#111;border-radius:0;font-family:var(--jdisp);letter-spacing:.08em}body[data-theme=jg] .pstbar button{background:transparent;color:#ddd;border-color:#444;border-radius:0}
 body[data-theme=jg] .pstft{border-color:#444}body[data-theme=jg] .pstlock .ic{font-family:var(--jdisp);color:var(--jacc)}
 body[data-theme=jg] .galadd i,body[data-theme=jg] .galg figcaption .c{color:var(--ja)}
 body[data-theme=jg] .glb .top .ac,body[data-theme=jg] .glb .meta .k{color:var(--ja);font-family:var(--jdisp)}
@@ -475,3 +475,7 @@ body[data-theme=jg] .jgp .galsec .gcnt{font-family:var(--jdisp);color:var(--fj);
 }
 
 .jgp .galg .glnk{display:none}
+body[data-theme=jg] .jrt,body[data-theme=jg] .jrt.on::after{border-radius:0}
+.jgtl .tcard{display:block;margin-top:8px;max-width:520px;background:#f4f2ec;color:#333;padding:10px 14px;font-size:13px;line-height:1.65;text-decoration:none;box-shadow:4px 4px 0 var(--jacc)}
+.jgtl .tcard b{display:block;color:#111;font-size:14px;margin-bottom:2px}
+.jgtl .th.big{position:relative;display:inline-flex}.jgtl .th.big span{position:absolute;right:6px;bottom:6px;background:rgba(0,0,0,.6);color:#fff;font-size:11px;padding:0 6px}

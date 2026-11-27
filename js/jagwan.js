@@ -34,7 +34,9 @@ function jgTimelineHTML(f,data,items){const d=jgDoc(f),tab=S.jgTl||"main",canRec
     return mh+`<li><div class="d">${dd}</div><div class="t"><a href="#" data-gal="${esc(p.id)}">${esc(p.title||"텍스트")}</a> <small>텍스트${p.by?" · "+esc(p.by):""}</small></div><div class="note">${esc(String(p.body||"").slice(0,90))}…</div></li>`;}).join("");};
   // 서브: 직접 쓰는 기록
   const R=(d.recs||[]).map(r=>({...r,k:jgNorm(r.d),dl:r.d})).sort((a,b)=>b.k.localeCompare(a.k));
-  const subLi=list=>list.map(r=>`<li><div class="d">${esc(r.d||"")}</div><div class="t">${esc(r.t||"")}${canRec?`<button type="button" class="rx" data-jgrecx="${esc(r.id)}" title="지우기">✕</button><button type="button" class="rx" data-jgrece="${esc(r.id)}" title="고치기">✎</button>`:""}</div>${r.img?`<div class="th big"><img src="${esc(r.img)}" alt="" loading="lazy"></div>`:""}${r.note?`<div class="note">${esc(r.note).replace(/\n/g,"<br>")}</div>`:""}</li>`).join("");
+  const subLi=list=>list.map(r=>{const p=jgRecPost(r,items),pt=p&&galT(p);
+    const att=p?(pt==="txt"?`<a href="#" class="tcard" data-gal="${esc(p.id)}"><b>${esc(p.title||"텍스트")}</b>${esc(String(p.body||"").slice(0,110))}…</a>`:`<div class="th big"><img src="${esc(galImgs(p)[0].u||galImgs(p)[0].o)}" alt="" loading="lazy" data-gal="${esc(p.id)}" style="cursor:zoom-in">${galImgs(p).length>1?`<span>+${galImgs(p).length-1}</span>`:""}</div>`):r.img?`<div class="th big"><img src="${esc(r.img)}" alt="" loading="lazy"></div>`:"";
+    return `<li><div class="d">${esc(r.d||"")}</div><div class="t">${esc(r.t||"")}${canRec?`<button type="button" class="rx" data-jgrecx="${esc(r.id)}" title="지우기">✕</button><button type="button" class="rx" data-jgrece="${esc(r.id)}" title="고치기">✎</button>`:""}</div>${r.note?`<div class="note">${esc(r.note).replace(/\n/g,"<br>")}</div>`:""}${att}</li>`;}).join("");
   return `<section class="jgsec jgtl"><h4>TIMELINE<span class="jgtabs"><button type="button" data-jgtl="main" class="${tab==="main"?"on":""}">메인</button><button type="button" data-jgtl="sub" class="${tab==="sub"?"on":""}">서브</button></span>${tab==="sub"&&canRec?`<button type="button" class="jgadd" id="jgaddrec">＋ 기록 더하기</button>`:""}</h4>
     ${tab==="main"?`<div class="tip2">세션 날짜와 갤러리 날짜로 자동으로 만들어져요</div>${M.length?`<ol class="tl">${jgFold(M,"main",mainLi)}</ol>`:`<div class="empty">아직 기록이 없어요</div>`}`
       :`<div class="tip2">＋ 기록 더하기로 직접 쓰는 타임라인 · 글이나 갤러리 그림을 끼워 넣어요</div>${R.length?`<ol class="tl">${jgFold(R,"sub",subLi)}</ol>`:`<div class="empty">아직 기록이 없어요</div>`}`}</section>`;}
@@ -115,18 +117,27 @@ function bindJgEdit(f){const box=document.querySelector(".jgedit");if(!box)retur
     const upd={rel:clean.rel||"",colors:clean.colors||{},fields:clean.fields,prof:clean.prof,banner:clean.banner||null};
     try{await jgPut(f,upd);S.jgEdit=false;S.jgDraft=null;toast("저장했어요");render();}catch(e){writeFail(e);}};}
 // ---------- 서브 타임라인 기록 ----------
-function jgRecBox(f,rec){const w=document.createElement("div");w.className="gedit";const imgs=galAll(galSrcFix(f),1).flatMap(p=>galT(p)==="txt"?[]:galImgs(p).map(q=>q.u||q.o)).filter(Boolean);let pick=rec?.img||"";
-  w.innerHTML=`<div class="gebox"><div class="geh"><b>${rec?"기록 고치기":"기록 더하기"}</b><button type="button" class="x" data-x>✕</button></div>
-    <div class="gerow"><div><div class="gelab">날짜 <span class="tip">· 2026.06.29 · 2025.03 처럼</span></div><input type="text" id="jrd" value="${esc(rec?.d||"")}" placeholder="2026.06.29"></div><div><div class="gelab">제목</div><input type="text" id="jrt" maxlength="80" value="${esc(rec?.t||"")}"></div></div>
-    <div class="gelab">메모</div><textarea id="jrn" rows="4" style="width:100%">${esc(rec?.note||"")}</textarea>
-    <div class="gelab">갤러리 그림 끼워 넣기 <span class="tip">· 하나 고르기 (다시 누르면 빼기)</span></div>
-    <div class="jrpick">${imgs.map(u=>`<img src="${esc(u)}" class="${u===pick?"on":""}" data-u="${esc(u)}" loading="lazy">`).join("")||`<span class="tip">갤러리에 그림이 없어요</span>`}</div>
-    <div class="gefoot"><span style="flex:1"></span><button type="button" class="ghost" data-x>취소</button><button type="button" class="pri" id="jrs">저장</button></div></div>`;
-  document.body.appendChild(w);w.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>w.remove());
-  w.querySelectorAll(".jrpick img").forEach(im=>im.onclick=()=>{pick=pick===im.dataset.u?"":im.dataset.u;w.querySelectorAll(".jrpick img").forEach(x=>x.classList.toggle("on",x.dataset.u===pick));});
+// 서브 타임라인 기록: 날짜·제목·메모 + 게시물 하나(이미지·텍스트 다) 끼워 넣기 · rec.post={src,id}
+function jgRecPost(r,items){return r.post?items.find(p=>p.id===r.post.id&&p.src===r.post.src):null;}
+function jgRecBox(f,rec){const w=document.createElement("div");w.className="gedit";const items=galAll(galSrcFix(f),1);
+  let pick=rec?.post||null;const today=jgDot(galYmd());
+  const tile=p=>{const on=pick&&pick.id===p.id&&pick.src===p.src,t=galT(p),q=galImgs(p)[0];
+    return `<button type="button" class="jrt${on?" on":""}${t==="txt"?" tx":""}" data-src="${esc(p.src)}" data-id="${esc(p.id)}">${t==="txt"?`<span class="tt"><b>${esc(p.title||"텍스트")}</b>${esc(String(p.body||"").slice(0,60))}</span>`:`<img src="${esc(q.u||q.o)}" alt="" loading="lazy">${galImgs(p).length>1?`<i>${galImgs(p).length}</i>`:""}`}<span class="cap">${esc(galTitle(p)||GAL_T[t])}<small>${galDate(p.at)}</small></span></button>`;};
+  w.innerHTML=`<div class="gebox jgrec"><div class="geh"><b>${rec?"기록 고치기":"기록 더하기"}</b><button type="button" class="x" data-x>✕</button></div>
+    <div class="jrf"><label><span>날짜</span><input type="text" id="jrd" value="${esc(rec?.d||today)}" placeholder="2026.06.29"><small>2026.06.29 · 2025.03 처럼</small></label>
+      <label class="w"><span>제목</span><input type="text" id="jrt" maxlength="80" value="${esc(rec?.t||"")}" placeholder="그날 있었던 일"></label></div>
+    <label class="jrm"><span>메모</span><textarea id="jrn" rows="3" placeholder="(선택)">${esc(rec?.note||"")}</textarea></label>
+    <div class="jrh"><b>게시물 끼워 넣기</b><span class="tip">이미지 · 텍스트 중 하나 (다시 누르면 빼기)</span></div>
+    <div class="jrgrid">${items.map(tile).join("")||`<span class="tip">아직 게시물이 없어요</span>`}</div>
+    <div class="gefoot"><span class="tip" id="jrsel"></span><span style="flex:1"></span><button type="button" class="ghost" data-x>취소</button><button type="button" class="pri" id="jrs">저장</button></div></div>`;
+  document.body.appendChild(w);w.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>w.remove());w.onclick=e=>{if(e.target===w)w.remove();};
+  const sel=()=>{const p=pick&&items.find(x=>x.id===pick.id&&x.src===pick.src);w.querySelector("#jrsel").textContent=p?`끼워 넣을 게시물: ${galTitle(p)||GAL_T[galT(p)]}`:"";};sel();
+  w.querySelectorAll(".jrt").forEach(b=>b.onclick=()=>{const k={src:b.dataset.src,id:b.dataset.id};const same=pick&&pick.id===k.id&&pick.src===k.src;pick=same?null:k;
+    w.querySelectorAll(".jrt").forEach(x=>x.classList.toggle("on",!!pick&&x.dataset.id===pick.id&&x.dataset.src===pick.src));
+    if(pick){const p=items.find(x=>x.id===k.id&&x.src===k.src),ti=w.querySelector("#jrt");if(p&&!ti.value.trim())ti.value=galTitle(p);}sel();});
   w.querySelector("#jrs").onclick=async()=>{const d=w.querySelector("#jrd").value.trim(),t=w.querySelector("#jrt").value.trim(),note=w.querySelector("#jrn").value.trim();
     if(!jgNorm(d)){toast("날짜를 2026.06.29 처럼 써 주세요");return;}if(!t&&!note&&!pick){toast("제목이나 메모를 써 주세요");return;}
-    const cur=(jgDoc(f).recs||[]).slice(),r={id:rec?.id||Date.now().toString(36)+rid4(),d,t,note,img:pick||""};
+    const cur=(jgDoc(f).recs||[]).slice(),r={id:rec?.id||Date.now().toString(36)+rid4(),d,t,note,...(pick?{post:pick}:{})};
     const recs=rec?cur.map(x=>x.id===rec.id?r:x):[...cur,r];
     try{await jgPut(f,{recs});w.remove();render();}catch(e){toast("저장하지 못했어요"+(e.code==="permission-denied"?" (페어 비밀번호로 다시 열어 주세요)":""));}};}
 function bindJgPage(f){

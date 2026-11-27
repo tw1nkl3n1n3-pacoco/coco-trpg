@@ -287,11 +287,12 @@ function postPageHTML(){const P=S.postPage||{};
   if(P.err)return `<div class="pstpage"><div class="notice bad">${esc(P.err)}</div></div>`;
   const p=P.p,t=galT(p),IM=galImgs(p),W=P.fx?fixWord(P.name):"세션",go=P.fx?`#f-${encodeURIComponent(P.name)}`:`#c-${P.src}`;
   const ft=`<div class="pstft"><a class="pri" href="${go}" data-pstgo>${esc(W)} 페이지로 →</a><span>${esc(W)} 비밀번호로 들어가면 이 게시물의 댓글을 보고 달 수 있어요</span></div>`;
-  const head=`<div class="psttop"><b>${esc(P.name)}</b>${P.fx&&W==="페어"?`<small>${jgSides(P.name).map(x=>esc(x.en)).join(" × ")}</small>`:""}</div>`;
+  const head=`<div class="pstbar"><b>${esc(P.name)}</b>${P.fx&&W==="페어"?`<small>${jgSides(P.name).map(x=>esc(x.en)).join(" × ")}</small>`:""}<span class="sp"></span>${!p.nolink?`<span class="k">${GAL_T[t]}</span>`:""}${!p.nolink&&t==="txt"?`<button type="button" data-pstfs="-">가 −</button><button type="button" data-pstfs="+">가 +</button>`:""}</div>`;
   if(p.nolink)return `<div class="pstpage">${head}<div class="pstlock"><div class="ic">LOCKED</div><p>이 게시물은 링크로 볼 수 없어요</p></div>${ft}</div>`;
   const len=String(p.body||"").replace(/\s/g,"").length;
   return `<div class="pstpage">${head}
     ${t==="txt"?`<article class="glpaper" style="--fs:${S.grdFs||17}px"><div class="tk">TEXT</div><h1>${esc(p.title||"제목 없음")}</h1><div class="pm">${esc(p.by||"")}${p.by?" · ":""}${p.at?new Date(p.at).toLocaleDateString("ko-KR"):""} · ${len.toLocaleString()}자</div>${galTxtHTML(p.body)}</article>`
       :`<div class="psth"><h2>${esc(galTitle(p)||"")}</h2><div class="pm">${esc(p.by||"")}${p.by?" · ":""}${p.at?new Date(p.at).toLocaleDateString("ko-KR"):""}${IM.length>1?` · ${IM.length}장`:""}</div></div><div class="pstimgs">${IM.map(q=>`<img src="${esc(q.u||q.o)}" alt="" loading="lazy" decoding="async">`).join("")}</div>`}
     ${ft}</div>`;}
-function bindPostPage(){const a=document.querySelector("[data-pstgo]"),P=S.postPage;if(a&&P&&P.p)a.onclick=()=>{try{sessionStorage.setItem("galGo",JSON.stringify({src:P.src,id:P.p.id,at:Date.now()}));}catch(e){}};}
+function bindPostPage(){document.querySelectorAll("[data-pstfs]").forEach(b=>b.onclick=()=>{S.grdFs=Math.max(13,Math.min(24,(S.grdFs||17)+(b.dataset.pstfs==="+"?1:-1)));const a=document.querySelector(".pstpage .glpaper");if(a)a.style.setProperty("--fs",S.grdFs+"px");});
+  const a=document.querySelector("[data-pstgo]"),P=S.postPage;if(a&&P&&P.p)a.onclick=()=>{try{sessionStorage.setItem("galGo",JSON.stringify({src:P.src,id:P.p.id,at:Date.now()}));}catch(e){}};}
