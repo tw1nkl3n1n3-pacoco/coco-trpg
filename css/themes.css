@@ -1459,3 +1459,27 @@ body[data-page=nf] .jgsw:has(input[data-jgc=acc]){display:none!important}
 .nfresg .notice{grid-column:1/-1}
 @media(max-width:760px){.nfsearchw{order:5;flex:1 1 100%;width:auto}.nfres{margin-top:150px}.nfresg{grid-template-columns:1fr 1fr}}
 .jgtl .th.gonly{margin-top:2px}
+/* 짭플릭스 QA: 캠페인 편 카드엔 캠페인 이름 · TOP5 모바일 간격 · 그림 없는 포스터 */
+.nfcd .cmn{position:absolute;z-index:2;left:8px;top:8px;max-width:calc(100% - 16px);font-style:normal;font-size:10.5px;font-weight:700;color:#fff;background:rgba(0,0,0,.7);padding:2px 6px;border-radius:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nfcd .cmn.low{top:32px}
+.nftop{position:relative}
+.nftop em{position:absolute;right:0;bottom:-18px;width:min(110px,52%);font-style:normal;font-size:10.5px;color:#8c8c8c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nftops{padding-bottom:18px}
+.nftop .pt i{background:linear-gradient(160deg,#3a0a0d,#1c1c1c 60%);font-size:15px;line-height:1.35;letter-spacing:-.02em}
+@media(max-width:760px){
+  .nftops{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:max-content;gap:2px;overflow-x:auto}
+  .nftop .n{font-size:96px;margin-right:-12px}
+  .nftop .pt,.nftop em{width:92px}
+}
+body.nfskin .dexp,body.nfskin .dexp.all{color:#e5e5e5!important;border-color:#404040!important;background:transparent!important}
+body.nfskin .dexp:hover{background:#262626!important}
+body.nfskin code.pw{background:#0f0f0f!important;color:#fff!important;border:1px solid #404040!important;letter-spacing:.18em}
+body.nfskin .pwrow .ghost{color:#b3b3b3!important}
+body.nfskin .fsub{color:#8c8c8c!important}
+body.nfskin .upsteps span.on{background:#fff!important;color:#141414!important;border-color:#fff!important;font-weight:700}
+body.nfskin input[type=checkbox],body.nfskin input[type=radio]{accent-color:#e50914}
+/* 타임라인: 갤러리만 있는 날은 좁게 (네모 크기만큼) */
+.nfx .nftl.wide .tl li:has(.th.gonly){flex:0 0 auto!important;min-width:110px}
+.nfx .nftl.wide .th.gonly{display:flex!important;gap:4px}
+.nfx .nftl.wide .th.gonly img{width:64px!important;height:64px!important;aspect-ratio:1!important;grid-column:auto!important}
+/* 페어 첫 화면: 배너 글씨와 제목이 겹치지 않게 아래쪽 그라데이션을 진하게 */
+@media(max-width:760px){body:not(.axskin) .nfx .nfhero::before{background:linear-gradient(rgba(0,0,0,.35),transparent 28%,transparent 130px,rgba(20,20,20,.82) 220px,#141414 300px)!important}}

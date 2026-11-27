@@ -91,9 +91,9 @@ function isNF(){return site().skin==="nf";}
 function nfQ(x){return String(x||"").toLowerCase().replace(/\s+/g,"");}
 function nfScHay(sc){return sc?nfQ([sc.name,sc.orig,sc.fix,effSys(sc),sysLabel(effSys(sc)),...(sc.sp||[]).flatMap(p=>[pcSplit(p.name||"").name,p.ch])].join("|")):"";}
 function nfGCard(g,o={}){const sc=g.sc||{name:g.scen},open=!g.sc||isOpen(g.sc.id),cv=coverOf(sc),d0=g.days[0]?.day||sc.lastDay||"",dl=g.last||d0;
-  const fx=g.sc?fixOfScen(g.sc):"";
+  const fx=g.sc?fixOfScen(g.sc):"",cm=g.sc?campOf(g.sc):null,ep=cm&&!isCamp(cm)?epLabel(cm,g.sc):"";
   return `<a class="nfcd" href="${g.sc?"#c-"+esc(g.sc.id):"#"}" data-q="${esc(nfScHay(g.sc))}">${cv?`<img src="${esc(cv.u)}" alt="" loading="lazy" style="object-position:50% ${+cv.y>=0?cv.y:50}%">`:`<span class="ph">${esc([...(sc.name||"?")][0])}</span>`}
-    ${o.isNew?`<span class="tp r">NEW</span>`:!open?`<span class="tp">🔒 잠김</span>`:""}<b>${esc(sc.name)}</b><small>${esc([g.sc&&effSys(g.sc)?sysLabel(effSys(g.sc)):"",dl?jgDot(dl.slice(2)):"",`${g.days.length||sc.nDays||1}회차`,fx?"◆ "+fx:""].filter(Boolean).join(" · "))}</small><span class="pg"><i style="width:${sc.done?100:g.days.length?60:0}%"></i></span></a>`;}
+    ${o.isNew?`<span class="tp r">NEW</span>`:!open?`<span class="tp">🔒 잠김</span>`:""}${cm?`<em class="cmn${o.isNew||!open?" low":""}">${esc(cm.name)}${ep?" · "+esc(ep):""}</em>`:""}<b>${esc(sc.name)}</b><small>${esc([g.sc&&effSys(g.sc)?sysLabel(effSys(g.sc)):"",dl?jgDot(dl.slice(2)):"",`${g.days.length||sc.nDays||1}회차`,fx?"◆ "+fx:""].filter(Boolean).join(" · "))}</small><span class="pg"><i style="width:${sc.done?100:g.days.length?60:0}%"></i></span></a>`;}
 function nfCCard(c){const es=campEps(c),cm=isCamp(c),done=cm?campEnded(c):!!c.done,cv=campCover(c,es),fin=es.filter(e=>e.done||done).length;
   return `<a class="nfcd" href="#g-${esc(c.id)}" data-q="${esc(nfQ([c.name,c.orig,c.place,c.fix,c.system].join("|"))+"|"+es.map(nfScHay).join("|"))}">${cv?`<img src="${esc(cv.u)}" alt="" loading="lazy">`:`<span class="ph">${esc([...(c.name||"?")][0])}</span>`}
     <span class="tp">${cm?"캠프":"캠페인"} · ${cm?(done?"종료":esc(c.place||"진행")):(done?"완주":"진행 중")}</span><b>${esc(c.name)}</b><small>${es.length}${cm?"탁":"편"}${c.system?" · "+esc(sysLabel(c.system)):""}</small><span class="pg"><i style="width:${es.length?Math.round(fin/es.length*100):0}%"></i></span></a>`;}
@@ -110,7 +110,7 @@ function nfHomeHTML(o){const all=o.all.filter(g=>g.sc),byLast=all.slice().sort((
   const newIds=new Set(byLast.slice(0,1).map(g=>g.sc.id));
   const recent=byLast.slice(0,15).map(g=>nfGCard(g,{isNew:newIds.has(g.sc.id)}));
   const topN=all.slice().sort((a,b)=>(b.days.length||b.sc.nDays||0)-(a.days.length||a.sc.nDays||0)).slice(0,5);
-  const top5=topN.map((g,i)=>{const cv=coverOf(g.sc);return `<a class="nftop" href="#c-${esc(g.sc.id)}" data-q="${esc(nfScHay(g.sc))}"><span class="n">${i+1}</span><span class="pt">${cv?`<img src="${esc(cv.u)}" alt="" loading="lazy">`:`<i>${esc(g.sc.name)}</i>`}</span></a>`;});
+  const top5=topN.map((g,i)=>{const cv=coverOf(g.sc);return `<a class="nftop" href="#c-${esc(g.sc.id)}" data-q="${esc(nfScHay(g.sc))}"><span class="n">${i+1}</span><span class="pt">${cv?`<img src="${esc(cv.u)}" alt="" loading="lazy">`:`<i>${esc(g.sc.name)}</i>`}</span>${campOf(g.sc)?`<em>${esc(campOf(g.sc).name)}</em>`:""}</a>`;});
   const camps=S.camps.slice().sort((a,b)=>(campLast(b)||"").localeCompare(campLast(a)||"")).map(nfCCard);
   const fixes=[...new Set(all.map(g=>fixOfScen(g.sc)).filter(Boolean))].map(f=>{const gs=all.filter(g=>fixOfScen(g.sc)===f),lg=gs.slice().sort((a,b)=>(b.last||"").localeCompare(a.last||""))[0],cv=lg&&coverOf(lg.sc),n=fixPeopleList(f).filter(p=>!/^(GM|KP|DM|수호자|키퍼)$/i.test(p.n)).length;
     return {k:lg?.last||"",h:`<a class="nfcd" href="${esc(fixHref(f))}" data-q="${esc(nfQ(f))}">${cv?`<img src="${esc(cv.u)}" alt="" loading="lazy">`:`<span class="ph">${esc([...f][0])}</span>`}<span class="tp">${esc(fixWord(f))}${fixWord(f)==="페어"?"":` · ${n}명`}</span><b>${esc(f)}</b><small>이야기 ${gs.length}</small></a>`};}).sort((a,b)=>b.k.localeCompare(a.k)).map(x=>x.h);
