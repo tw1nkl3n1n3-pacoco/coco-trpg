@@ -1431,3 +1431,30 @@ body[data-page=nf] .jgsw:has(input[data-jgc=acc]){display:none!important}
 .nfx .nftl.wide .th{grid-template-columns:repeat(4,1fr)!important}
 .nfx .nftl.wide .th img:first-child{grid-column:auto!important;aspect-ratio:1!important}
 .nfx .nftl.wide .th img:nth-child(n+5){display:none}
+.jgpf .pi.more{position:relative}.jgpf .pi .pix{position:absolute;right:-4px;top:-4px;width:18px;height:18px;border-radius:50%;padding:0;border:0;background:#141414;color:#fff;font-size:10px;line-height:18px;cursor:pointer}
+.jgpf .pimgs{flex-wrap:wrap;max-width:100%}
+/* 프로필: 흉상·두상을 전신과 한 화면에 */
+.nfmodal .busts{display:flex;gap:12px;align-items:flex-end;margin-bottom:22px}
+.nfmodal .busts figure{margin:0;border-radius:6px;overflow:hidden;background:color-mix(in srgb,var(--c) 30%,#1c1c1c);position:relative}
+.nfmodal .busts figure.bust{width:min(190px,40%);aspect-ratio:3/4}
+.nfmodal .busts figure.face{width:min(120px,26%);aspect-ratio:1}
+.nfmodal .busts img{width:100%;height:100%;object-fit:cover;object-position:50% 15%;display:block}
+.nfmodal .busts figcaption{position:absolute;left:6px;bottom:6px;font-size:10.5px;font-weight:700;color:#fff;background:rgba(0,0,0,.6);padding:1px 6px;border-radius:2px}
+@media(max-width:760px){.nfmodal .busts{margin:6px 0 16px}}
+/* 짭플릭스 홈 검색: 기본 테마와 같은 검색창(드롭다운)을 어둡게 */
+.nfsearchw{width:min(360px,40vw)}
+.nfsearchw .hsearch{margin:0}
+.nfsearchw .hsearch input{height:38px;background:rgba(0,0,0,.6)!important;border:1px solid #555!important;border-radius:4px!important;color:#fff!important;font-size:13.5px;padding-left:38px}
+.nfsearchw .hsearch input:focus{border-color:#e5e5e5!important}
+.nfsearchw .hq-ic{color:#ddd!important;left:12px}
+.nfsearchw .hq-chip{background:#e50914!important;border-radius:3px}.nfsearchw .hq-chip button{color:#fff!important}
+.nfsearchw .hq-drop{background:#181818!important;border:1px solid #333!important;border-radius:6px!important;color:#e5e5e5;box-shadow:0 12px 40px rgba(0,0,0,.6)!important}
+.nfsearchw .hq-h{color:#808080!important}
+.nfsearchw .hq-it{color:#e5e5e5!important}.nfsearchw .hq-it small{color:#8a8a8a!important}
+.nfsearchw .hq-it:hover,.nfsearchw .hq-it.on{background:#262626!important}
+.nfsearchw .hq-foot,.nfsearchw .hq-none{color:#808080!important;border-color:#2a2a2a!important}
+.nfsearchw .hq-more{color:#b3b3b3!important;background:none!important}
+.nfres{margin-top:90px}
+.nfresg{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.nfresg .notice{grid-column:1/-1}
+@media(max-width:760px){.nfsearchw{order:5;flex:1 1 100%;width:auto}.nfres{margin-top:150px}.nfresg{grid-template-columns:1fr 1fr}}

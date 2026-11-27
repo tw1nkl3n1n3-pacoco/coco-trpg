@@ -44,18 +44,22 @@ function nfFromToCap(){document.querySelectorAll(".nfposts .galg figure,.axposts
 // 프로필 모달 (첫 화면 아이콘을 누르면)
 function nfMem(f){if(jgPair(f)){const [A,B]=jgSides(f);return [A,B].map(s=>({n:s.own||s.key,nm:s.nm,en:s.en,q:s.pr,own:s.own,c:s.key==="a"?"var(--ja)":"var(--jb)"}));}return fxMembers(f).map(m=>({...m,own:m.n}));}
 function nfModalOpen(f,n){const d=jgDoc(f),fields=d.fields&&d.fields.length?d.fields:JG_F0,M=nfMem(f),i=Math.max(0,M.findIndex(m=>m.n===n)),m=M[i],q=m.q||{};
-  document.querySelector(".nfmodal")?.remove();const shots=[["cut","전신",q.cut],["bust","흉상",q.bust],["icon","두상",q.icon]].filter(x=>x[2]&&x[2].u),pic=shots[0]?shots[0][2].u:"",dl=[q.age&&(/\D/.test(q.age)?q.age:q.age+"세"),q.ht&&(/\D/.test(q.ht)?q.ht:q.ht+"cm"),q.sex,q.mbti].filter(Boolean);
+  document.querySelector(".nfmodal")?.remove();
+  // 전신은 여러 장일 수 있어요 (cut + cuts) · 흉상·두상은 오른쪽에 같이
+  const fulls=[q.cut,...(q.cuts||[])].filter(x=>x&&x.u),main=fulls[0]||q.bust||q.icon||null,dl=[q.age&&(/\D/.test(q.age)?q.age:q.age+"세"),q.ht&&(/\D/.test(q.ht)?q.ht:q.ht+"cm"),q.sex,q.mbti].filter(Boolean);
+  const side=[[q.bust,"흉상","bust"],[q.icon,"두상","face"]].filter(x=>x[0]&&x[0].u&&x[0]!==main);
   const el=document.createElement("div");el.className="nfmodal";el.style.setProperty("--c",m.c);
   el.innerHTML=`<div class="box" role="dialog" aria-label="${esc(m.nm)} 프로필"><button type="button" class="x" aria-label="닫기">✕</button>
-    <div class="pic${q.cut?.u?" cut":""}">${pic?`<img src="${esc(pic)}" alt="">`:`<i>${esc([...(m.nm||"?")][0])}</i>`}${shots.length>1?`<div class="shots">${shots.map(([k,lab,x],j)=>`<button type="button" class="${j?"":"on"}" data-shot="${k}" data-u="${esc(x.u)}" title="${lab}"><img src="${esc(x.u)}" alt=""><span>${lab}</span></button>`).join("")}</div>`:""}</div>
-    <div class="info"><div class="tag">${esc(m.en||"")}</div><h2>${esc(m.nm)}</h2>${q.rn||q.ren?`<div class="rn">${[q.rn,q.ren].filter(Boolean).map(esc).join(" · ")}</div>`:""}
+    <div class="pic${fulls.length?" cut":""}">${main?`<img src="${esc(main.u)}" alt="">`:`<i>${esc([...(m.nm||"?")][0])}</i>`}${fulls.length>1?`<div class="shots">${fulls.map((x,j)=>`<button type="button" class="${j?"":"on"}" data-shot="${j}" data-u="${esc(x.u)}" title="전신 ${j+1}"><img src="${esc(x.u)}" alt=""><span>전신 ${j+1}</span></button>`).join("")}</div>`:""}</div>
+    <div class="info">${side.length?`<div class="busts">${side.map(([x,lab,k])=>`<figure class="${k}"><img src="${esc(x.u)}" alt=""><figcaption>${lab}</figcaption></figure>`).join("")}</div>`:""}
+      <div class="tag">${esc(m.en||"")}</div><h2>${esc(m.nm)}</h2>${q.rn||q.ren?`<div class="rn">${[q.rn,q.ren].filter(Boolean).map(esc).join(" · ")}</div>`:""}
       <div class="meta">${dl.map(x=>`<span>${esc(x)}</span>`).join("")}${m.own?`<span class="own">플레이어 ${esc(m.own)}</span>`:""}</div>
       ${(q.tags||[]).length?`<div class="tags">${q.tags.slice(0,5).map(t=>`<span>${esc(t)}</span>`).join("")}</div>`:""}
       ${fields.filter(k=>(q.sec||{})[k]).map(k=>`<h4>${esc(k)}</h4><p>${esc(q.sec[k]).replace(/\n/g,"<br>")}</p>`).join("")}</div>
     ${M.length>1?`<div class="nav">${M.map((x,j)=>`<button type="button" class="${j===i?"on":""}" data-nfp="${esc(x.n)}" style="--c:${x.c}">${esc(x.nm)}</button>`).join("")}</div>`:""}</div>`;
   document.body.appendChild(el);document.body.classList.add("nfmodal-on");
   const close=()=>{el.remove();document.body.classList.remove("nfmodal-on");document.removeEventListener("keydown",esc_);};const esc_=e=>{if(e.key==="Escape")close();};
-  el.onclick=e=>{const sb=e.target.closest("[data-shot]");if(sb){const pc=el.querySelector(".pic"),im=pc.querySelector(":scope>img");if(im)im.src=sb.dataset.u;pc.classList.toggle("cut",sb.dataset.shot==="cut");el.querySelectorAll("[data-shot]").forEach(b=>b.classList.toggle("on",b===sb));return;}
+  el.onclick=e=>{const sb=e.target.closest("[data-shot]");if(sb){const im=el.querySelector(".pic>img");if(im)im.src=sb.dataset.u;el.querySelectorAll("[data-shot]").forEach(b=>b.classList.toggle("on",b===sb));return;}
     if(e.target===el||e.target.closest(".x"))close();const b=e.target.closest("[data-nfp]");if(b){close();nfModalOpen(f,b.dataset.nfp);}};document.addEventListener("keydown",esc_);}
 function bindNfPage(f){if(jgPair(f))bindJgPage(f);else bindFxPage(f);
   nfFromToCap();
@@ -118,11 +122,12 @@ function nfHomeHTML(o){const all=o.all.filter(g=>g.sc),byLast=all.slice().sort((
   const ppl=Object.values(P).sort((a,b)=>b.s-a.s);
   return `<div class="nfx nfsite">
     <nav class="nfnav"><a class="logo" href="#">${esc(site().title)}</a><a href="#nfr-recent">세션</a>${camps.length?`<a href="#nfr-camp">캠페인</a>`:""}${fixes.length?`<a href="#nfr-fix">페어 · 고정탁</a>`:""}<span class="sp"></span>
-      <label class="nfsearch"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" id="nfq" placeholder="제목 · 사람 · 캐릭터 · 시스템" value="${esc(S.nfq||"")}"></label>
+      <div class="nfsearchw">${o.search||""}</div>
       ${o.can?`<a class="up" href="#up">＋ 세션 올리기</a>`:""}</nav>
-    ${hero}
+    ${o.q?"":hero}
     <div class="nfnotice">${o.notices}</div>
-    <div class="nfhrows">
+    ${o.q?`<div class="nfrow nfres"><h3>검색 결과 <small>${(o.gs||[]).length+(o.cs||[]).length}</small></h3><div id="sesslist" class="nfresg">${[...(o.gs||[]).map(g=>({k:g.last||"",h:nfGCard(g)})),...(o.cs||[]).map(c=>({k:campKey(c),h:nfCCard(c)}))].sort((a,b)=>b.k.localeCompare(a.k)).map(x=>x.h).join("")||o.emptyMsg}</div></div>`:`<div id="sesslist" hidden></div>`}
+    <div class="nfhrows"${o.q?" hidden":""}>
     ${nfRow("최근 올라온 세션",recent,{id:"nfr-recent"})}
     ${top5.length>=3?`<div class="nfrow nfhrow"><h3>세션 수 TOP ${top5.length} <small>회차가 많은 이야기</small></h3><div class="nftops">${top5.join("")}</div></div>`:""}
     ${nfRow("캠페인 · 캠프",camps,{id:"nfr-camp"})}
@@ -138,6 +143,7 @@ function nfFilter(){const q=nfQ(S.nfq||"");let any=false;
   const hero=document.querySelector(".nfsite .nfhome");if(hero)hero.hidden=!!q;const no=document.querySelector(".nfsite .nfnone");if(no)no.hidden=!q||any;}
 function nfScrollBind(){document.querySelectorAll(".nfscr").forEach(w=>{const sc=w.querySelector(".nfcards,.galg");if(!sc||w.dataset.b)return;w.dataset.b=1;const up=()=>{w.classList.toggle("atl",sc.scrollLeft<4);w.classList.toggle("atr",sc.scrollLeft+sc.clientWidth>=sc.scrollWidth-4);};
   sc.addEventListener("scroll",up,{passive:true});up();w.querySelectorAll("[data-nfarw]").forEach(b=>b.onclick=()=>sc.scrollBy({left:+b.dataset.nfarw*sc.clientWidth*.9,behavior:"smooth"}));});}
-function bindNfHome(){nfScrollBind();const q=$("#nfq");if(q){q.oninput=()=>{S.nfq=q.value;nfFilter();};if(S.nfq)nfFilter();}
-  document.querySelectorAll("[data-nfwho]").forEach(b=>b.onclick=()=>{S.nfq=b.dataset.nfwho;const i=$("#nfq");if(i)i.value=S.nfq;nfFilter();window.scrollTo({top:0,behavior:"smooth"});});
+function bindNfHome(){nfScrollBind();
+  // 검색은 기본 테마와 같은 부품(.hsearch · 드롭다운 · Enter로 결과 · 사람 칩) · 결과만 넷플릭스 카드로
+  document.querySelectorAll("[data-nfwho]").forEach(b=>b.onclick=()=>{S.homePerson=b.dataset.nfwho;S.homeQ="";S.homeQc="";render();window.scrollTo({top:0,behavior:"smooth"});});
   document.querySelectorAll('.nfnav a[href^="#nfr-"]').forEach(a=>a.onclick=ev=>{ev.preventDefault();document.getElementById(a.getAttribute("href").slice(1))?.scrollIntoView({behavior:"smooth",block:"start"});});}

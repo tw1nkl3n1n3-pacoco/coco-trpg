@@ -114,7 +114,9 @@ const isImgIcon=v=>/^(data:image\/|https?:\/\/)/.test(v||"");
 function iconHTML(v,cls="sicon"){if(!v)return "";return isImgIcon(v)?`<img class="${cls}" src="${esc(v)}" alt="">`:`<span class="${cls}">${esc(v)}</span>`;}
 // 브라우저 탭 제목: 메인은 사이트 이름, 시나리오·로그는 "시나리오 · 사이트 이름"
 function setTitle(){const st=site();const sc=S.cid?scenById(S.cid):(S.sid&&S.meta?curScen():null);
-  const t=sc&&sc.name?`${sc.name} · ${st.title}`:st.title;if(document.title!==t)document.title=t;}
+  // 페어·고정탁 페이지는 그 이름만 · 캠페인은 캠페인 이름 · 게시물 링크는 게시물 제목
+  const fx=S.fix&&!S.sid&&!S.cid&&!S.gid?S.fix:"",cp=S.gid&&!S.sid&&!S.cid&&typeof campById==="function"?campById(S.gid):null;
+  const t=fx?fx:cp?`${cp.name} · ${st.title}`:sc&&sc.name?`${sc.name} · ${st.title}`:st.title;if(document.title!==t)document.title=t;}
 function applySite(){
   const st=site();setTitle();
   let href;
