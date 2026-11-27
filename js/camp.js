@@ -98,9 +98,15 @@ function fixPageHTML(f){
     ${fixTimelineHTML(f,allG,cs)}
     <div id="sesslist" class="fxlist">${items.map(x=>x.h).join("")||`<div class="notice">아직 이 고정탁으로 묶인 세션이 없어요</div>`}</div>
     ${S.db?galHTML(galSrcFix(f),{newest:1,title:"전체 갤러리"}):""}
-    ${S.canAdmin?`<div class="sc-sec fxacc"><h4 data-en="ACCESS">${fixWord(f)} 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
-      <div class="tip">이 비밀번호 하나로 고정탁 안의 모든 세션·캠페인이 열려요. 고정탁을 붙인 세션은 자동으로 이 비밀번호를 따라가요. 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
-      <div class="pwrow"><code class="pw">${esc(S.secrets?.[fixKey(f)]||"만드는 중…")}</code><button class="pri" id="fxcopy">링크+비밀번호 복사</button><button class="ghost" id="fxnewpw">새로 만들기</button></div></div>`:""}</div>`;}
+    ${fixAccHTML(f)}</div>`;}
+// 고정탁·페어 비밀번호 칸 (주인만)
+function fixAccHTML(f){if(!S.canAdmin)return "";const W=fixWord(f);
+  return `<div class="sc-sec fxacc"><h4 data-en="ACCESS">${W} 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
+      <div class="tip">이 비밀번호 하나로 ${W} 안의 모든 세션·캠페인이 열려요. ${W}에 묶인 세션은 자동으로 이 비밀번호를 따라가요. 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
+      <div class="pwrow"><code class="pw">${esc(S.secrets?.[fixKey(f)]||"만드는 중…")}</code><button class="pri" id="fxcopy">링크+비밀번호 복사</button><button class="ghost" id="fxnewpw">새로 만들기</button></div></div>`;}
+function bindFixAcc(f){const W=fixWord(f);
+  const fc=$("#fxcopy");if(fc)fc.onclick=()=>copyText(`[${W} ${f}] TRPG 로그\n${location.origin+location.pathname}#f-${encodeURIComponent(f)}\n비밀번호: ${S.secrets?.[fixKey(f)]||""}`,"링크와 비밀번호를 복사했어요");
+  const fn=$("#fxnewpw");if(fn)fn.onclick=()=>confirmBox(`${W} 비밀번호를 새로 만들까요? 안의 모든 세션 비밀번호가 같이 바뀌고, 예전 비밀번호로 연 사람은 다시 잠겨요.`,"새로 만들기",async()=>{try{await S.db.doc("secrets/"+fixKey(f)).set({pw:genPw()});ownerMaintain();toast("새 비밀번호를 만들었어요");}catch(err){writeFail(err);}});}
 function bindFixPage(){homeMasonry();{const m=$("#fxtlmore");if(m)m.onclick=()=>{S.fxTlAll=!S.fxTlAll;render();};}
   {const b=$("#fxcvpos"),box=$("#fxcover"),im=box&&box.querySelector("img");if(b&&im){const fk=fixKey(S.fix);
     b.onclick=async()=>{if(!S.fxCvDrag){S.fxCvDrag=true;render();return;}S.fxCvDrag=false;const y=parseFloat(im.style.objectPosition.split(" ")[1])||50;
@@ -109,8 +115,7 @@ function bindFixPage(){homeMasonry();{const m=$("#fxtlmore");if(m)m.onclick=()=>
       box.onpointermove=e=>{if(sy==null)return;const ex=im.naturalWidth?im.clientWidth*im.naturalHeight/im.naturalWidth-im.clientHeight:0;if(ex<=0)return;const v=Math.max(0,Math.min(100,y0-(e.clientY-sy)/ex*100));im.style.objectPosition=`50% ${v}%`;};
       box.onpointerup=box.onpointercancel=()=>{sy=null;};}}}
   document.querySelectorAll("[data-fxme]").forEach(b=>b.onclick=()=>{fixSetMe(S.fix,b.dataset.fxme);toast(`${b.dataset.fxme}(으)로 골랐어요 · 안의 모든 세션에 적용돼요`);render();});if(S.db)bindGal(galSrcFix(S.fix));
-  const fc=$("#fxcopy");if(fc)fc.onclick=()=>copyText(`[고정탁 ${S.fix}] TRPG 로그\n${location.origin+location.pathname}#f-${encodeURIComponent(S.fix)}\n비밀번호: ${S.secrets?.[fixKey(S.fix)]||""}`,"링크와 비밀번호를 복사했어요");
-  const fn=$("#fxnewpw");if(fn)fn.onclick=()=>confirmBox("고정탁 비밀번호를 새로 만들까요? 고정탁 안의 모든 세션 비밀번호가 같이 바뀌고, 예전 비밀번호로 연 사람은 다시 잠겨요.","새로 만들기",async()=>{try{await S.db.doc("secrets/"+fixKey(S.fix)).set({pw:genPw()});ownerMaintain();toast("새 비밀번호를 만들었어요");}catch(err){writeFail(err);}});bindPartEdit&&bindPartEdit();if(isHX())bindHX();
+  bindFixAcc(S.fix);bindPartEdit&&bindPartEdit();if(isHX())bindHX();
   document.querySelectorAll(".fxpage [data-scen]").forEach(a=>a.onclick=ev=>{ev.preventDefault();gotoScen(a.dataset.scen);});
   const e=$("#fxedit");if(e)e.onclick=()=>{const f=S.fix,cur=(site().fixes||{})[f]||"";const box=$("#fxintro");
     box.innerHTML=`<textarea id="fxta" rows="3" style="width:100%">${esc(cur)}</textarea><div style="display:flex;gap:6px;justify-content:flex-end;margin-top:6px"><button class="ghost" id="fxx" type="button">취소</button><button class="pri" id="fxok" type="button">저장</button></div>`;

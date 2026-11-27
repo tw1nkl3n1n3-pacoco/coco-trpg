@@ -27,7 +27,7 @@ function jgTimelineHTML(f,data,items){const d=jgDoc(f),tab=S.jgTl||"main",canRec
   const lastOf={};M.forEach(e=>{if(e.type==="s"&&!lastOf[e.g.sc.id])lastOf[e.g.sc.id]=e;});
   const mainLi=list=>{let ym="";return list.map(e=>{const m=e.k.slice(0,7),mh=m!==ym?(ym=m,`<li class="m"><div class="d">${esc(jgDot(m))}</div></li>`):"";const dd=esc(jgDot(e.k.slice(5)));
     if(e.type==="s"){const sc=e.g.sc,done=lastOf[sc.id]===e&&sc.done,open=isOpen(sc.id)&&e.sid;
-      return mh+`<li><div class="d">${dd}</div><div class="t"><a href="#" data-scen="${esc(sc.id)}">${esc(sc.name)}</a> <small>${e.n>1?`${e.i}회차 / ${e.n}`:"1회차"}${effSys(sc)?" · "+esc(sysLabel(effSys(sc))):""}</small>${done?"<em>완주</em>":""}</div></li>`;}
+      return mh+`<li><div class="d">${dd}</div><div class="t"><a href="${e.sid?`#s-${esc(e.sid)}`:`#c-${esc(sc.id)}`}">${esc(sc.name)}</a> <small>${e.n>1?`${e.i}회차 / ${e.n}`:"1회차"}${effSys(sc)?" · "+esc(sysLabel(effSys(sc))):""}</small>${done?"<em>완주</em>":""}</div></li>`;}
     if(e.type==="g"){const ims=e.posts.flatMap(p=>galImgs(p).map(q=>({p,q})));
       return mh+`<li><div class="d">${dd}</div><div class="t">갤러리 <small>사진 ${ims.length}장${e.by?" · "+esc(e.by):""}</small></div><div class="th">${ims.slice(0,8).map(x=>`<img src="${esc(x.q.u||x.q.o)}" alt="" loading="lazy" data-gal="${esc(x.p.id)}">`).join("")}${ims.length>8?`<span>+${ims.length-8}</span>`:""}</div></li>`;}
     const p=e.p,t=galT(p),im=galImgs(p);
@@ -45,7 +45,7 @@ function jgCardHTML(s,fields){const q=s.pr,dl=[["나이",q.age&&(/\D/.test(q.age
     ${dl.length?`<dl>${dl.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>`:""}
     ${secs.map((k,i)=>`<details${i?"":" open"}><summary>${esc(k)}</summary><p>${esc(q.sec[k]).replace(/\n/g,"<br>")}</p></details>`).join("")}</div>`;}
 function jgPageHTML(f){const d=jgDoc(f),[A,B]=jgSides(f),fields=d.fields&&d.fields.length?d.fields:JG_F0,data=jgFixData(f),ban=d.banner;
-  const postsH=S.db?galHTML(galSrcFix(f),{newest:1,title:"POSTS",en:"POSTS",kinds:1}):"";const items=S.galTab&&S.galTab!=="all"?galSrcFix(f).flatMap(s=>s.list.map(p=>({...p,src:s.id,kind:s.kind,label:s.label}))):S.galItems;
+  const srcs=S.db?galSrcFix(f):[],postsH=S.db?galHTML(srcs,{newest:1,title:"POSTS",en:"POSTS",kinds:1}):"",items=galAll(srcs,1);
   const tagH=(s,cls)=>`<div class="jgtag ${cls}"><div class="nm">${esc(s.en)}</div>${(s.pr.tags||[]).filter(Boolean).length?`<ul>${s.pr.tags.filter(Boolean).map(t=>`<li>${esc(t)}</li>`).join("")}</ul>`:""}</div>`;
   const logs=data.gs.slice().sort((a,b)=>(b.last||"").localeCompare(a.last||""));
   return `<div class="jgp">${S.canAdmin?`<div class="jgtop"><a class="ghost ownonly" href="#">← 첫 화면</a><span style="flex:1"></span><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":"✎ 페어 수정"}</button></div>`:""}
@@ -63,13 +63,13 @@ function jgPageHTML(f){const d=jgDoc(f),[A,B]=jgSides(f),fields=d.fields&&d.fiel
           <div class="nums"><div><b>${data.gs.length}</b><span>이야기</span></div><div><b>${data.days.length}</b><span>세션</span></div><div><b>${jgDaysSince(data.days[0])}</b><span>함께한 날</span></div></div>
           ${data.days.length?`<div class="vs"><i></i>${esc(jgDot(data.days[0]))} — ${esc(jgDot(data.days.at(-1)))}<i></i></div>`:""}</div>
         ${jgCardHTML(B,fields)}</div>
-      ${jgTimelineHTML(f,data,items||[])}
-      <section class="jgsec jglog"><h4>LOG</h4><ul>${logs.map(g=>`<li><a href="#" data-scen="${esc(g.sc.id)}">${esc(g.sc.name)}</a><small>${esc(jgDot(g.days[0]?.day||""))}${g.days.length>1?` – ${esc(jgDot(g.last||""))}`:""} · ${g.days.length}세션${g.sc.done?" · 완주":""}</small></li>`).join("")||`<li class="empty">아직 세션이 없어요</li>`}</ul></section>
+      ${jgTimelineHTML(f,data,items)}
+      <section class="jgsec jglog"><h4>LOG</h4><ul>${logs.map(g=>`<li><a href="#c-${esc(g.sc.id)}">${esc(g.sc.name)}</a><small>${esc(jgDot(g.days[0]?.day||""))}${g.days.length>1?` – ${esc(jgDot(g.last||""))}`:""} · ${g.days.length}세션${g.sc.done?" · 완주":""}</small></li>`).join("")||`<li class="empty">아직 세션이 없어요</li>`}</ul></section>
       ${postsH}
-      ${S.canAdmin?`<div class="sc-sec fxacc"><h4 data-en="ACCESS">페어 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
-        <div class="tip">이 비밀번호 하나로 페어 안의 모든 세션이 열려요. 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
-        <div class="pwrow"><code class="pw">${esc(S.secrets?.[fixKey(f)]||"만드는 중…")}</code><button class="pri" id="fxcopy">링크+비밀번호 복사</button><button class="ghost" id="fxnewpw">새로 만들기</button></div></div>`:""}
+      ${fixAccHTML(f)}
     </div></div>`;}
+// fixes 문서에 합쳐 쓰고 화면 쪽 사본도 맞추기
+async function jgPut(f,upd){const fk=fixKey(f);if(!S.authUser)await S.auth.signInAnonymously();await S.db.doc("fixes/"+fk).set(upd,{merge:true});S.fixDocs[fk]={...(S.fixDocs[fk]||{}),...upd};}
 // ---------- 페어 수정 (주인) ----------
 function jgDraft(f){if(!S.jgDraftF||S.jgDraftF!==f||!S.jgDraft){const d=jgDoc(f),[A,B]=jgSides(f);
   S.jgDraftF=f;S.jgDraft=JSON.parse(JSON.stringify({banner:d.banner||null,rel:d.rel||"",colors:d.colors||{},fields:d.fields&&d.fields.length?d.fields:JG_F0,
@@ -110,12 +110,12 @@ function bindJgEdit(f){const box=document.querySelector(".jgedit");if(!box)retur
     try{const q=await jgUpImg(f,file),k=i.dataset.jgimg;if(k==="banner")D.banner={...q,y:40};else{const [s,fld]=k.split(".");D.prof[s][fld]=q;}render();}catch(e){toast("그림을 올리지 못했어요");if(m)m.textContent="";}});
   box.querySelectorAll("[data-jgfadd]").forEach(b=>b.onclick=()=>{const i=$("#jgfnew-"+b.dataset.jgfadd),v=(i.value||"").trim();if(!v)return;if(D.fields.includes(v)){toast("이미 있는 항목이에요");return;}D.fields=[...D.fields,v];render();});
   box.querySelectorAll("[data-jgfdel]").forEach(b=>b.onclick=()=>{const k=D.fields[+b.dataset.jgfdel];confirmBox(`'${k}' 항목을 양쪽에서 지울까요? 적어 둔 글도 같이 지워져요.`,"지우기",()=>{D.fields=D.fields.filter(x=>x!==k);["a","b"].forEach(s=>{if(D.prof[s]?.sec)delete D.prof[s].sec[k];});render();});});
-  $("#jgsave").onclick=async()=>{const fk=fixKey(f);const clean=JSON.parse(JSON.stringify(D));
+  $("#jgsave").onclick=async()=>{const clean=JSON.parse(JSON.stringify(D));
     ["a","b"].forEach(s=>{const q=clean.prof[s]||{};if(q.sec)Object.keys(q.sec).forEach(k=>{if(!clean.fields.includes(k)||!String(q.sec[k]).trim())delete q.sec[k];});if(q.tags&&!q.tags.some(Boolean))delete q.tags;});
     const upd={rel:clean.rel||"",colors:clean.colors||{},fields:clean.fields,prof:clean.prof,banner:clean.banner||null};
-    try{await S.db.doc("fixes/"+fk).set(upd,{merge:true});S.fixDocs[fk]={...(S.fixDocs[fk]||{}),...upd};S.jgEdit=false;S.jgDraft=null;toast("저장했어요");render();}catch(e){writeFail(e);}};}
+    try{await jgPut(f,upd);S.jgEdit=false;S.jgDraft=null;toast("저장했어요");render();}catch(e){writeFail(e);}};}
 // ---------- 서브 타임라인 기록 ----------
-function jgRecBox(f,rec){const w=document.createElement("div");w.className="gedit";const imgs=(S.galItems||[]).flatMap(p=>galT(p)==="txt"?[]:galImgs(p).map(q=>q.u||q.o)).filter(Boolean);let pick=rec?.img||"";
+function jgRecBox(f,rec){const w=document.createElement("div");w.className="gedit";const imgs=galAll(galSrcFix(f),1).flatMap(p=>galT(p)==="txt"?[]:galImgs(p).map(q=>q.u||q.o)).filter(Boolean);let pick=rec?.img||"";
   w.innerHTML=`<div class="gebox"><div class="geh"><b>${rec?"기록 고치기":"기록 더하기"}</b><button type="button" class="x" data-x>✕</button></div>
     <div class="gerow"><div><div class="gelab">날짜 <span class="tip">· 2026.06.29 · 2025.03 처럼</span></div><input type="text" id="jrd" value="${esc(rec?.d||"")}" placeholder="2026.06.29"></div><div><div class="gelab">제목</div><input type="text" id="jrt" maxlength="80" value="${esc(rec?.t||"")}"></div></div>
     <div class="gelab">메모</div><textarea id="jrn" rows="4" style="width:100%">${esc(rec?.note||"")}</textarea>
@@ -126,9 +126,9 @@ function jgRecBox(f,rec){const w=document.createElement("div");w.className="gedi
   w.querySelectorAll(".jrpick img").forEach(im=>im.onclick=()=>{pick=pick===im.dataset.u?"":im.dataset.u;w.querySelectorAll(".jrpick img").forEach(x=>x.classList.toggle("on",x.dataset.u===pick));});
   w.querySelector("#jrs").onclick=async()=>{const d=w.querySelector("#jrd").value.trim(),t=w.querySelector("#jrt").value.trim(),note=w.querySelector("#jrn").value.trim();
     if(!jgNorm(d)){toast("날짜를 2026.06.29 처럼 써 주세요");return;}if(!t&&!note&&!pick){toast("제목이나 메모를 써 주세요");return;}
-    const fk=fixKey(f),cur=(jgDoc(f).recs||[]).slice(),r={id:rec?.id||Date.now().toString(36)+rid4(),d,t,note,img:pick||""};
+    const cur=(jgDoc(f).recs||[]).slice(),r={id:rec?.id||Date.now().toString(36)+rid4(),d,t,note,img:pick||""};
     const recs=rec?cur.map(x=>x.id===rec.id?r:x):[...cur,r];
-    try{if(!S.authUser)await S.auth.signInAnonymously();await S.db.doc("fixes/"+fk).set({recs},{merge:true});S.fixDocs[fk]={...(S.fixDocs[fk]||{}),recs};w.remove();render();}catch(e){toast("저장하지 못했어요"+(e.code==="permission-denied"?" (페어 비밀번호로 다시 열어 주세요)":""));}};}
+    try{await jgPut(f,{recs});w.remove();render();}catch(e){toast("저장하지 못했어요"+(e.code==="permission-denied"?" (페어 비밀번호로 다시 열어 주세요)":""));}};}
 function bindJgPage(f){
   const e=$("#jgedit");if(e)e.onclick=()=>{S.jgEdit=!S.jgEdit;S.jgDraft=null;if(!S.jgEdit)jgColors(f);render();};
   if(S.jgEdit)bindJgEdit(f);
@@ -136,13 +136,11 @@ function bindJgPage(f){
   document.querySelectorAll("[data-jgfold]").forEach(b=>b.onclick=()=>{S.jgAll={...(S.jgAll||{}),[b.dataset.jgfold]:!(S.jgAll||{})[b.dataset.jgfold]};render();});
   const ar=$("#jgaddrec");if(ar)ar.onclick=()=>jgRecBox(f);
   document.querySelectorAll("[data-jgrece]").forEach(b=>b.onclick=()=>jgRecBox(f,(jgDoc(f).recs||[]).find(r=>r.id===b.dataset.jgrece)));
-  document.querySelectorAll("[data-jgrecx]").forEach(b=>b.onclick=()=>confirmBox("이 기록을 지울까요?","지우기",async()=>{const fk=fixKey(f),recs=(jgDoc(f).recs||[]).filter(r=>r.id!==b.dataset.jgrecx);
-    try{await S.db.doc("fixes/"+fk).set({recs},{merge:true});S.fixDocs[fk]={...(S.fixDocs[fk]||{}),recs};render();}catch(err){toast("지우지 못했어요");}}));
-  document.querySelectorAll(".jgp [data-scen]").forEach(a=>a.onclick=ev=>{ev.preventDefault();gotoScen(a.dataset.scen);});
+  document.querySelectorAll("[data-jgrecx]").forEach(b=>b.onclick=()=>confirmBox("이 기록을 지울까요?","지우기",async()=>{const recs=(jgDoc(f).recs||[]).filter(r=>r.id!==b.dataset.jgrecx);
+    try{await jgPut(f,{recs});render();}catch(err){toast("지우지 못했어요");}}));
   document.querySelectorAll(".jgtl [data-gal]").forEach(x=>x.onclick=ev=>{ev.preventDefault();galOpenAt(x.dataset.gal);});
   if(S.db)bindGal(galSrcFix(f));
-  const fc=$("#fxcopy");if(fc)fc.onclick=()=>copyText(`[페어 ${f}] TRPG 로그\n${location.origin+location.pathname}#f-${encodeURIComponent(f)}\n비밀번호: ${S.secrets?.[fixKey(f)]||""}`,"링크와 비밀번호를 복사했어요");
-  const fn=$("#fxnewpw");if(fn)fn.onclick=()=>confirmBox("페어 비밀번호를 새로 만들까요? 안의 모든 세션 비밀번호가 같이 바뀌고, 예전 비밀번호로 연 사람은 다시 잠겨요.","새로 만들기",async()=>{try{await S.db.doc("secrets/"+fixKey(f)).set({pw:genPw()});ownerMaintain();toast("새 비밀번호를 만들었어요");}catch(err){writeFail(err);}});
+  bindFixAcc(f);
 }
 // 바탕색 밝기에 맞춰 글자색
 function jgTextColor(){const st=document.body.style,bg=(st.getPropertyValue("--jbg")||"#1b1b1c").trim();const m=bg.match(/^#?([0-9a-f]{6})$/i);let lum=0.1;

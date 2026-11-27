@@ -42,8 +42,10 @@ function galCardHTML(p,i){const t=galT(p),im=galImgs(p);
     :`<img src="${esc(im[0]?.u||im[0]?.o||"")}" alt="${esc(p.cap||"")}" loading="lazy" decoding="async">`;
   return `<figure data-gal="${esc(p.id)}" class="gt-${t}"><div class="im">${media}${t!=="img"?`<span class="gk">${GAL_T[t]}</span>`:""}${p.label?`<span class="from">${esc(p.label)}</span>`:""}</div>
       <figcaption><span class="t">${esc(t==="img"?(p.cap||""):(p.title||""))}</span><span class="c" data-galc="${esc(p.id)}"></span><span class="m">${esc(p.by||"")}${p.by?" · ":""}${galDate(p.at)}</span></figcaption></figure>`;}
+// 여러 곳(세션들 + 고정탁/페어 자체)의 게시물을 한 줄로
+function galAll(srcs,newest){return srcs.flatMap(s=>s.list.map(p=>({...p,src:s.id,kind:s.kind,label:s.label}))).sort((a,b)=>newest?(b.at||0)-(a.at||0):(a.at||0)-(b.at||0));}
 function galHTML(srcs,o={}){
-  const all=srcs.flatMap(s=>s.list.map(p=>({...p,src:s.id,kind:s.kind,label:s.label}))).sort((a,b)=>o.newest?(b.at||0)-(a.at||0):(a.at||0)-(b.at||0));
+  const all=galAll(srcs,o.newest);
   const tab=o.kinds?(S.galTab||"all"):"all",items=tab==="all"?all:all.filter(p=>galT(p)===tab);
   S.galItems=items;const up=srcs.find(s=>s.up);
   if(!all.length&&!up)return "";
