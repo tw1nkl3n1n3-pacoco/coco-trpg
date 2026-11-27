@@ -239,7 +239,8 @@ body[data-theme=deco] .homefoot button.ghost{color:#e2cfa8}
 
 /* --- 자관(1:1 자캐 관계) 테마 (key: jg) — 두 캐릭터 색(--ja · --jb)이 주인공 --- */
 body[data-theme=jg]{--ja:#e7799b;--jb:#2f7f86;--bg:#f7f6f3;--panel:#fff;--panel2:#f4f3f0;--line:#e4e2de;--ink:#15171b;--dim:#5b6068;--faint:#9aa0a8;--acc:var(--ja);--acc2:var(--jb);--sel:color-mix(in srgb,var(--ja) 12%,#fff);--play:color-mix(in srgb,var(--jb) 10%,#fff);--gold:var(--ja);--ok:var(--jb);--jgrad:linear-gradient(90deg,var(--ja),var(--jb));--jmono:"Chakra Petch","Noto Sans KR",ui-monospace,monospace;
-  background-color:#f7f6f3;background-image:linear-gradient(rgba(21,23,27,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(21,23,27,.045) 1px,transparent 1px);background-size:28px 28px}
+  background-color:#f7f6f3;background-attachment:fixed;
+  background-image:linear-gradient(rgba(21,23,27,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(21,23,27,.045) 1px,transparent 1px),linear-gradient(105deg,color-mix(in srgb,var(--ja) 16%,transparent),transparent 34%,transparent 66%,color-mix(in srgb,var(--jb) 16%,transparent));background-size:28px 28px,28px 28px,100% 100%}
 body[data-theme=jg] .mono,body[data-theme=jg] .ts,body[data-theme=jg] .nth,body[data-theme=jg] .gmtag{font-family:var(--jmono)}
 body[data-theme=jg] header,body[data-theme=jg] #pbar{background:rgba(255,255,255,.94);border:0;box-shadow:none;backdrop-filter:blur(8px)}
 body[data-theme=jg] header{border-bottom:0;position:relative}
@@ -301,3 +302,14 @@ body[data-theme=jg] .castc,body[data-theme=jg] .rvcard,body[data-theme=jg] .galg
 body[data-theme=jg] .galadd i,body[data-theme=jg] .galg figcaption .c{color:var(--ja)}
 body[data-theme=jg] .glb .top .ac,body[data-theme=jg] .glb .meta .k{color:var(--ja);font-family:var(--jmono)}
 body[data-theme=jg] .lkbox{border-radius:0;border-top:3px solid;border-image:var(--jgrad) 1}
+body[data-theme=jg] header h1,body[data-theme=jg] .sc-top h2{color:var(--ink)!important;font-family:"Noto Sans KR",sans-serif}
+body[data-theme=jg] header h1 small,body[data-theme=jg] header .scl small{font-family:var(--jmono);letter-spacing:.06em}
+body[data-theme=jg] .sc-top .orig{font-family:var(--jmono)!important;letter-spacing:.14em;color:var(--faint)!important}
+/* 두 주인공 대사는 각자 색으로 옅게 물들여요 */
+body[data-theme=jg] .row.chr:not(.chat) .body{background:color-mix(in srgb,var(--c) 7%,#fff)}
+body[data-theme=jg] .row.chat .tx,body[data-theme=jg] .row.chat .who{color:var(--faint)}
+body[data-theme=jg] .sc-sec{position:relative}
+body[data-theme=jg] .sc-sec::before{content:"";position:absolute;left:-1px;top:-1px;width:40px;height:3px;background:var(--ja)}
+body[data-theme=jg] .sc-sec::after{content:"";position:absolute;right:-1px;bottom:-1px;width:40px;height:3px;background:var(--jb)}
+body[data-theme=jg] .castc .av{border-radius:0}
+body[data-theme=jg] .nth{letter-spacing:.06em}
