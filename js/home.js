@@ -140,6 +140,7 @@ function homeHTML(){
   const search=`${S.loaded&&plainGs.length+S.camps.length>0?`<div class="hsearch${who?" haschip":""}"><svg class="hq-ic" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>${who?`<span class="hq-chip">👤 ${esc(who)}<button type="button" id="hq-who-x" title="풀기">✕</button></span>`:""}<input type="search" id="hq" value="${esc(S.homeQ||"")}" placeholder="${who?"더 좁혀 보기":"세션 · 룰 · 플레이어 · 캐릭터 검색"}" autocomplete="off">${terms.length||who?`<span class="hq-n">${live.length+items.length}개</span>`:""}${S.hqOpen&&tterms.length?hqDropHTML(tterms,nq):""}</div>`:""}`;
   const emptyMsg=terms.length?`<div class="notice">'${esc(String(S.homeQc||"").trim())}'에 맞는 세션이 없어요.</div>`:S.ready&&S.db&&S.loaded?`<div class="notice">아직 올린 세션이 없어요.${S.canAdmin?" ＋ 세션 올리기로 올려 주세요.":""}</div>`:"";
   const adminBtn=S.canAdmin&&S.db?`<a class="ghost adminbtn" href="#admin" title="관리자 페이지">⚙ 관리${adminAlert()?'<i class="dot-alert"></i>':""}</a>`:"";
+  if(isNF())return nfHomeHTML({all,can,notices,adminBtn});
   if(hx)return hxHomeHTML({all,live,can,notices,search,list:listHTML||(live.length?"":emptyMsg),n:items.length,adminBtn});
   return `<div class="home hmain">
     <div class="hometop"><h2>${iconHTML(site().icon)}${esc(site().title)}</h2></div>
@@ -288,7 +289,7 @@ function homeMasonry(){const L=$("#sesslist");if(!L)return;
   L.querySelectorAll("img:not([data-hm])").forEach(im=>{im.dataset.hm=1;if(!im.complete)im.addEventListener("load",()=>{clearTimeout(homeMasonry._t);homeMasonry._t=setTimeout(homeMasonry,80);},{once:true});});}
 [HM_TWO,HM_THREE,HM_HX2].forEach(m=>m.addEventListener("change",homeMasonry));
 function bindHome(){
-  homeMasonry();bindPartEdit();renderAuth();if(isHX())bindHX();
+  homeMasonry();bindPartEdit();renderAuth();if(isNF())bindNfHome();else if(isHX())bindHX();
   document.querySelectorAll("[data-cmore]").forEach(b=>b.onclick=()=>{const id=b.dataset.cmore;S.campMore[id]=!S.campMore[id];render();});
   bindBackup();
   async function bulkAudio(files){

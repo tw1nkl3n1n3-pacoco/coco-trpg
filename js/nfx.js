@@ -34,7 +34,7 @@ function nfPageHTML(f){const pair=jgPair(f),d=jgDoc(f),fields=d.fields&&d.fields
       <div class="nftl">${jgTimelineHTML(f,data,items).replace("<h4>TIMELINE","<h4>타임라인")}</div></div>
     <div class="nfrow nfposts${(S.nfAll||{}).po?" all":""}">${postsH}</div>
     <div class="nfrow nfend">
-      ${S.canAdmin?`<div class="jgtop jgbot"><a class="ghost ownonly" href="#">← 첫 화면</a><a class="ghost" href="#f-${esc(code)}">지금 디자인으로 보기</a><span style="flex:1"></span><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":`✎ ${W} 수정`}</button></div>`:""}
+      ${S.canAdmin?`<div class="jgtop jgbot"><a class="ghost ownonly" href="#">← 첫 화면</a>${isNF()?"":`<a class="ghost" href="#f-${esc(code)}">지금 디자인으로 보기</a>`}<span style="flex:1"></span><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":`✎ ${W} 수정`}</button></div>`:""}
       ${S.jgEdit&&S.canAdmin?jgEditHTML(f):""}
       ${fixAccHTML(f)}${jgRO(f)?(pair?`<div class="sc-sec fxacc jgacc"><h4 data-en="ACCESS">페어 비밀번호</h4><div class="tip">페어 비밀번호를 넣으면 글을 올리고, 기록을 더하고, 댓글을 달 수 있어요.</div><form class="pwrow" id="jgunlock"><input type="text" id="jgpw" placeholder="페어 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form><div class="tip" id="jgmsg"></div></div>`
         :`<div class="sc-sec fxacc jgacc"><h4 data-en="ACCESS">고정탁 비밀번호</h4><div class="tip">누구로 들어갈지 고르고 비밀번호를 넣어요.</div><div class="fxpk">${mem.map(m=>`<button type="button" class="${S.fxPick===m.n?"on":""}" data-fxpick="${esc(m.n)}" style="--c:${m.c}"><i></i>${esc(m.nm)} · ${esc(m.n)}</button>`).join("")}<button type="button" class="${S.fxPick==="ext"?"on":""}" data-fxpick="ext">외부인으로</button></div><form class="pwrow" id="jgunlock"><input type="text" id="jgpw" placeholder="고정탁 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form><div class="tip" id="jgmsg"></div></div>`):""}
@@ -54,3 +54,62 @@ function bindNfPage(f){if(jgPair(f))bindJgPage(f);else bindFxPage(f);
   document.querySelectorAll(".nfscr").forEach(w=>{const sc=w.querySelector(".nfcards,.galg");if(!sc)return;const up=()=>{w.classList.toggle("atl",sc.scrollLeft<4);w.classList.toggle("atr",sc.scrollLeft+sc.clientWidth>=sc.scrollWidth-4);};
     sc.addEventListener("scroll",up,{passive:true});up();w.querySelectorAll("[data-nfarw]").forEach(b=>b.onclick=()=>sc.scrollBy({left:+b.dataset.nfarw*sc.clientWidth*.9,behavior:"smooth"}));});
   document.querySelectorAll("[data-nfgo]").forEach(b=>b.onclick=()=>document.getElementById("nfm-"+b.dataset.nfgo)?.scrollIntoView({block:"center",behavior:"smooth"}));}
+// ===== 짭플릭스: 사이트 전체 테마 (관리 → 사이트 테마) · 끄면 원래 테마 그대로 =====
+function isNF(){return site().skin==="nf";}
+function nfQ(x){return String(x||"").toLowerCase().replace(/\s+/g,"");}
+function nfScHay(sc){return sc?nfQ([sc.name,sc.orig,sc.fix,effSys(sc),sysLabel(effSys(sc)),...(sc.sp||[]).flatMap(p=>[pcSplit(p.name||"").name,p.ch])].join("|")):"";}
+function nfGCard(g,o={}){const sc=g.sc||{name:g.scen},open=!g.sc||isOpen(g.sc.id),cv=coverOf(sc),d0=g.days[0]?.day||sc.lastDay||"",dl=g.last||d0;
+  const fx=g.sc?fixOfScen(g.sc):"";
+  return `<a class="nfcd" href="${g.sc?"#c-"+esc(g.sc.id):"#"}" data-q="${esc(nfScHay(g.sc))}">${cv?`<img src="${esc(cv.u)}" alt="" loading="lazy" style="object-position:50% ${+cv.y>=0?cv.y:50}%">`:`<span class="ph">${esc([...(sc.name||"?")][0])}</span>`}
+    ${o.isNew?`<span class="tp r">NEW</span>`:!open?`<span class="tp">🔒 잠김</span>`:""}<b>${esc(sc.name)}</b><small>${esc([g.sc&&effSys(g.sc)?sysLabel(effSys(g.sc)):"",dl?jgDot(dl.slice(2)):"",`${g.days.length||sc.nDays||1}회차`,fx?"◆ "+fx:""].filter(Boolean).join(" · "))}</small><span class="pg"><i style="width:${sc.done?100:g.days.length?60:0}%"></i></span></a>`;}
+function nfCCard(c){const es=campEps(c),cm=isCamp(c),done=cm?campEnded(c):!!c.done,cv=campCover(c,es),fin=es.filter(e=>e.done||done).length;
+  return `<a class="nfcd" href="#g-${esc(c.id)}" data-q="${esc(nfQ([c.name,c.orig,c.place,c.fix,c.system].join("|"))+"|"+es.map(nfScHay).join("|"))}">${cv?`<img src="${esc(cv.u)}" alt="" loading="lazy">`:`<span class="ph">${esc([...(c.name||"?")][0])}</span>`}
+    <span class="tp">${cm?"캠프":"캠페인"} · ${cm?(done?"종료":esc(c.place||"진행")):(done?"완주":"진행 중")}</span><b>${esc(c.name)}</b><small>${es.length}${cm?"탁":"편"}${c.system?" · "+esc(sysLabel(c.system)):""}</small><span class="pg"><i style="width:${es.length?Math.round(fin/es.length*100):0}%"></i></span></a>`;}
+function nfRow(title,cards,o={}){if(!cards.length)return "";return `<div class="nfrow nfhrow"${o.id?` id="${o.id}"`:""}><h3>${title}${o.sub?` <small>${o.sub}</small>`:""}</h3><div class="nfscr"><button type="button" class="nfarw l" data-nfarw="-1" aria-label="이전">‹</button><div class="nfcards${o.cls?" "+o.cls:""}">${cards.join("")}</div><button type="button" class="nfarw r" data-nfarw="1" aria-label="다음">›</button></div></div>`;}
+function nfHomeHTML(o){const all=o.all.filter(g=>g.sc),byLast=all.slice().sort((a,b)=>(b.last||b.sc.lastDay||"").localeCompare(a.last||a.sc.lastDay||""));
+  const top=byLast[0],t=homeStats(o.all),pad=n=>String(n).padStart(2,"0");
+  let hero="";if(top){const sc=top.sc,cv=coverOf(sc),open=isOpen(sc.id),ld=top.days.at(-1),sid=ld&&ld.parts[0]?.id,gm=(sc.sp||[]).find(p=>p.k===gmKey(sc));
+    hero=`<section class="nfhero nfhome">${cv?`<img class="bg" src="${esc(cv.u)}" alt="" style="object-position:50% ${+cv.y>=0?cv.y:40}%">`:`<div class="bg empty"></div>`}
+      <div class="nfin"><div class="tag">최근 세션${effSys(sc)?" · "+esc(sysLabel(effSys(sc))):""}${fixOfScen(sc)?" · ◆ "+esc(fixOfScen(sc)):""}</div><h1>${esc(sc.name)}</h1>${sc.orig?`<div class="orig">${esc(sc.orig)}</div>`:""}
+        <div class="meta">${top.last?`<span class="new">새 세션 ${esc(jgDot(top.last.slice(5)))}</span>`:""}<span>${top.days.length||sc.nDays||1}회차</span>${effSys(sc)?`<span class="bx">${esc(sysLabel(effSys(sc)))}</span>`:""}${gm?`<span>${gmAb(sc)} ${esc(pcSplit(gm.name).name)}</span>`:""}${sc.done?"<span>완주</span>":""}</div>
+        ${sc.summary?`<p class="sum">${esc(sc.summary)}</p>`:""}
+        <div class="btns">${open&&sid?`<a class="b1" href="#s-${esc(sid)}">▶ 로그 보기</a>`:""}<a class="b2" href="#c-${esc(sc.id)}">ⓘ 상세 정보</a></div></div>
+      <div class="nfstat"><div><b>${pad(t.scen)}</b><small>시나리오</small></div><div><b>${pad(t.ses)}</b><small>세션</small></div><div><b>${pad(t.cpn)}</b><small>캠페인</small></div><div><b>${pad(t.ppl)}</b><small>함께한 사람</small></div></div></section>`;}
+  const newIds=new Set(byLast.slice(0,1).map(g=>g.sc.id));
+  const recent=byLast.slice(0,15).map(g=>nfGCard(g,{isNew:newIds.has(g.sc.id)}));
+  const topN=all.slice().sort((a,b)=>(b.days.length||b.sc.nDays||0)-(a.days.length||a.sc.nDays||0)).slice(0,5);
+  const top5=topN.map((g,i)=>{const cv=coverOf(g.sc);return `<a class="nftop" href="#c-${esc(g.sc.id)}" data-q="${esc(nfScHay(g.sc))}"><span class="n">${i+1}</span><span class="pt">${cv?`<img src="${esc(cv.u)}" alt="" loading="lazy">`:`<i>${esc(g.sc.name)}</i>`}</span></a>`;});
+  const camps=S.camps.slice().sort((a,b)=>(campLast(b)||"").localeCompare(campLast(a)||"")).map(nfCCard);
+  const fixes=[...new Set(all.map(g=>fixOfScen(g.sc)).filter(Boolean))].map(f=>{const gs=all.filter(g=>fixOfScen(g.sc)===f),lg=gs.slice().sort((a,b)=>(b.last||"").localeCompare(a.last||""))[0],cv=lg&&coverOf(lg.sc),n=fixPeopleList(f).filter(p=>!/^(GM|KP|DM|수호자|키퍼)$/i.test(p.n)).length;
+    return {k:lg?.last||"",h:`<a class="nfcd" href="${esc(fixHref(f))}" data-q="${esc(nfQ(f))}">${cv?`<img src="${esc(cv.u)}" alt="" loading="lazy">`:`<span class="ph">${esc([...f][0])}</span>`}<span class="tp">${esc(fixWord(f))}${fixWord(f)==="페어"?"":` · ${n}명`}</span><b>${esc(f)}</b><small>이야기 ${gs.length}</small></a>`};}).sort((a,b)=>b.k.localeCompare(a.k)).map(x=>x.h);
+  const sysm={};all.forEach(g=>{const s=effSys(g.sc)?sysLabel(effSys(g.sc)):"기타";(sysm[s]=sysm[s]||[]).push(g);});
+  const sysRows=Object.entries(sysm).sort((a,b)=>b[1].length-a[1].length).map(([s,gs])=>nfRow(esc(s),gs.sort((a,b)=>(b.last||"").localeCompare(a.last||"")).map(g=>nfGCard(g)),{sub:`${gs.length}`})).join("");
+  // 함께한 사람: 세션 수 순
+  const ns=new Set((site().nicks||[]).map(x=>String(x).trim().toLowerCase())),P={};
+  all.forEach(g=>(g.sc.sp||[]).forEach(p=>{if(p.chr&&!p.ch||/&/.test(p.name||"")||isAnon(p))return;const n=pcSplit(p.name||"").name;if(!n||ns.has(n.toLowerCase()))return;const q=P[n]=P[n]||{n,c:fixC(p.c),s:0,gm:0};q.s+=g.days.length||1;if(p.k===gmKey(g.sc))q.gm++;}));
+  const ppl=Object.values(P).sort((a,b)=>b.s-a.s);
+  return `<div class="nfx nfsite">
+    <nav class="nfnav"><a class="logo" href="#">${esc(site().title)}</a><a href="#nfr-recent">세션</a>${camps.length?`<a href="#nfr-camp">캠페인</a>`:""}${fixes.length?`<a href="#nfr-fix">페어 · 고정탁</a>`:""}<span class="sp"></span>
+      <label class="nfsearch"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" id="nfq" placeholder="제목 · 사람 · 캐릭터 · 시스템" value="${esc(S.nfq||"")}"></label>
+      ${o.can?`<a class="up" href="#up">＋ 세션 올리기</a>`:""}</nav>
+    ${hero}
+    <div class="nfnotice">${o.notices}</div>
+    <div class="nfhrows">
+    ${nfRow("최근 올라온 세션",recent,{id:"nfr-recent"})}
+    ${top5.length>=3?`<div class="nfrow nfhrow"><h3>세션 수 TOP ${top5.length} <small>회차가 많은 이야기</small></h3><div class="nftops">${top5.join("")}</div></div>`:""}
+    ${nfRow("캠페인 · 캠프",camps,{id:"nfr-camp"})}
+    ${nfRow("페어 · 고정탁",fixes,{id:"nfr-fix"})}
+    ${sysRows}
+    ${ppl.length?`<div class="nfrow nfhrow nfppl"><h3>함께한 사람 <small>${ppl.length}</small></h3><div class="nfpplw">${ppl.map(p=>`<button type="button" data-nfwho="${esc(p.n)}" data-q="${esc(nfQ(p.n))}" style="--c:${p.c}"><i>${esc([...p.n][0])}</i><b>${esc(p.n)}</b><small>${p.s}세션${p.gm?` · GM ${p.gm}`:""}</small></button>`).join("")}</div></div>`:""}
+    <div class="nfrow nfnone" hidden><div class="empty">맞는 세션이 없어요.</div></div>
+    </div>
+    <div class="nfrow nffoot"><span>${esc(site().title)} © ${new Date().getFullYear()}</span><span class="sp"></span>${o.adminBtn}<span class="authbox"></span></div>
+  </div>`;}
+function nfFilter(){const q=nfQ(S.nfq||"");let any=false;
+  document.querySelectorAll(".nfsite .nfhrow").forEach(r=>{let n=0;r.querySelectorAll("[data-q]").forEach(c=>{const ok=!q||c.dataset.q.includes(q);c.hidden=!ok;if(ok)n++;});r.hidden=!!q&&!n;if(n)any=true;});
+  const hero=document.querySelector(".nfsite .nfhome");if(hero)hero.hidden=!!q;const no=document.querySelector(".nfsite .nfnone");if(no)no.hidden=!q||any;}
+function nfScrollBind(){document.querySelectorAll(".nfscr").forEach(w=>{const sc=w.querySelector(".nfcards,.galg");if(!sc||w.dataset.b)return;w.dataset.b=1;const up=()=>{w.classList.toggle("atl",sc.scrollLeft<4);w.classList.toggle("atr",sc.scrollLeft+sc.clientWidth>=sc.scrollWidth-4);};
+  sc.addEventListener("scroll",up,{passive:true});up();w.querySelectorAll("[data-nfarw]").forEach(b=>b.onclick=()=>sc.scrollBy({left:+b.dataset.nfarw*sc.clientWidth*.9,behavior:"smooth"}));});}
+function bindNfHome(){nfScrollBind();const q=$("#nfq");if(q){q.oninput=()=>{S.nfq=q.value;nfFilter();};if(S.nfq)nfFilter();}
+  document.querySelectorAll("[data-nfwho]").forEach(b=>b.onclick=()=>{S.nfq=b.dataset.nfwho;const i=$("#nfq");if(i)i.value=S.nfq;nfFilter();window.scrollTo({top:0,behavior:"smooth"});});
+  document.querySelectorAll('.nfnav a[href^="#nfr-"]').forEach(a=>a.onclick=ev=>{ev.preventDefault();document.getElementById(a.getAttribute("href").slice(1))?.scrollIntoView({behavior:"smooth",block:"start"});});}

@@ -59,9 +59,13 @@ function jgBox(box,bg,acc){const st=document.body.style,on=!!(box&&/^#[0-9a-f]{6
   if(/^#[0-9a-f]{6}$/i.test(c))for(let t=0.1;jgCon(c,box)<3&&t<1;t+=0.1)c=mix(jgCon(acc,box)>=jgCon(bg,box)?acc:bg,tx,t);st.setProperty("--jboxacc",c);}
 function applyTheme(){{const sc=S.cid?scenById(S.cid):S.sid&&S.meta?curScen():S.gid?campById(S.gid):null;if(sc&&gmAb(sc)==="KP")document.body.dataset.kp="1";else delete document.body.dataset.kp;}
 document.body.classList.toggle("own",!!S.canAdmin);
+  // 짭플릭스(사이트 테마): 리플레이북(종이)만 빼고 모두 어두운 nf 테마 · 페어·고정탁은 jg 위에 넷플릭스 화면
+  const nfOn=typeof isNF==="function"&&isNF()&&!S.book&&!S.mbook;document.body.classList.toggle("nfskin",nfOn);
+  if(nfOn&&!(S.fix&&!S.sid&&!S.cid&&!S.gid)){if(document.body.dataset.theme!=="nf")document.body.dataset.theme="nf";["--ja","--jb","--jbg","--jacc","--jtx","--jdk","--jdisp","--jhk"].forEach(k=>document.body.style.removeProperty(k));document.body.classList.remove("hxhome");document.documentElement.classList.remove("hxhome");
+    document.body.dataset.page=S.postPage?"post":S.gid?"scen":S.revPage?"scen":S.cid?"scen":S.sid?"log":S.admin?"admin":S.up?"up":"home";return;}
   {const hx=!S.gid&&!S.cid&&!S.sid&&!S.revPage&&!S.postPage&&!S.admin&&!S.up&&!S.book&&!S.mbook&&!S.fix&&isHX();if(document.body.classList.contains("hxhome")!==hx){document.body.classList.toggle("hxhome",hx);document.documentElement.classList.toggle("hxhome",hx);}}
   if(S.postPage){const t=postPageTheme();if(document.body.dataset.theme!==t)document.body.dataset.theme=t;document.body.dataset.page="post";if(t==="jg")jgColors(S.postPage.name);return;}
-  if(S.fix&&!S.sid&&!S.cid&&!S.gid&&typeof fixWord==="function"){if(document.body.dataset.theme!=="jg")document.body.dataset.theme="jg";document.body.dataset.page=S.nf?"nf":"fix";if(S.nf){const fd=S.fixDocs[fixKey(S.fix)]||{};jgColors(S.fix,{...(fd.colors||{}),bg:NF_BG,box:""});document.body.classList.add("jnoscan");}else jgColors(S.fix);return;}
+  if(S.fix&&!S.sid&&!S.cid&&!S.gid&&typeof fixWord==="function"){if(document.body.dataset.theme!=="jg")document.body.dataset.theme="jg";const nfv=S.nf||nfOn;document.body.dataset.page=nfv?"nf":"fix";if(nfv){const fd=S.fixDocs[fixKey(S.fix)]||{};jgColors(S.fix,{...(fd.colors||{}),bg:NF_BG,box:""});document.body.classList.add("jnoscan");}else jgColors(S.fix);return;}
   if(S.gid&&!S.sid&&!S.cid){const c=campById(S.gid);const pj=c&&!isCamp(c)&&c.fix&&fixWord(c.fix)==="페어";const t=pj?"jg":c&&c.system?themeOf({system:c.system}):"plain";if(pj)jgColors(c.fix);if((document.body.dataset.theme||"")!==t)document.body.dataset.theme=t;document.body.dataset.page="scen";return;}
   const sc=S.revPage?S.revPage.sc:S.cid?(S.scEdit&&S.scDraft?S.scDraft:scenById(S.cid)):(S.sid&&S.meta?curScen():null);
   // 시나리오 정보가 아직 안 왔으면 양피지 대신 메인 화면 색으로 기다려요
@@ -80,7 +84,7 @@ function render(){try{bkAuto();}catch(e){}
   if(S.revPage){app.innerHTML=revPageHTML();return;}
   if(S.postPage){app.innerHTML=postPageHTML();bindPostPage();return;}
   if(S.up&&!S.sid&&!S.cid){app.innerHTML=upHTML();bindUp();return;}
-  if(S.fix&&!S.sid&&!S.cid){{const ae=document.activeElement;if(S.jgEdit&&ae&&ae.closest&&ae.closest(".jgedit")&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName)&&ae.type!=="file"&&$(".jgedit"))return;if(S.nf){app.innerHTML=nfPageHTML(S.fix);bindNfPage(S.fix);}else if(fixWord(S.fix)==="페어"){app.innerHTML=jgPageHTML(S.fix);bindJgPage(S.fix);}else{app.innerHTML=fxPageHTML(S.fix);bindFxPage(S.fix);}return;}}
+  if(S.fix&&!S.sid&&!S.cid){{const ae=document.activeElement;if(S.jgEdit&&ae&&ae.closest&&ae.closest(".jgedit")&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName)&&ae.type!=="file"&&$(".jgedit"))return;if(S.nf||isNF()){app.innerHTML=nfPageHTML(S.fix);bindNfPage(S.fix);}else if(fixWord(S.fix)==="페어"){app.innerHTML=jgPageHTML(S.fix);bindJgPage(S.fix);}else{app.innerHTML=fxPageHTML(S.fix);bindFxPage(S.fix);}return;}}
   if(S.gid&&!S.sid&&!S.cid){app.innerHTML=campPageHTML();bindCamp();return;}
   if(S.cid){app.innerHTML=scenHTML();bindScen();return;}
   if(!S.sid&&S.admin){app.innerHTML=adminHTML();bindAdmin();return;}

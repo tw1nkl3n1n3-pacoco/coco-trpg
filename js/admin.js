@@ -92,8 +92,9 @@ function adminHTML(){
           <input type="text" id="s-icon" value="${isImgIcon(st.icon)?"":esc(st.icon)}" placeholder="예: 🎲" style="width:80px">
           <button type="button" id="s-up">이미지 올리기</button><button type="button" class="ghost" id="s-clr">없애기</button>
           <input type="file" id="s-file" accept="image/*" style="display:none"></div>
-        <label>홈 테마</label>
-        <select id="s-home"><option value=""${st.home==="x"?"":" selected"}>기본</option><option value="x"${st.home==="x"?" selected":""}>아카이브 (밝은 플랫 · 3줄 카드)</option></select>
+        <label>사이트 테마 · 짭플릭스로 바꿔도 언제든 기본으로 되돌릴 수 있어요</label>
+        <select id="s-skin"><option value=""${st.skin==="nf"?"":" selected"}>기본 (시스템마다 테마)</option><option value="nf"${st.skin==="nf"?" selected":""}>짭플릭스 (사이트 전체 어둡게 · 넷플릭스식)</option></select>
+        <label>홈 테마 · 기본 사이트 테마일 때</label><select id="s-home"><option value=""${st.home==="x"?"":" selected"}>기본</option><option value="x"${st.home==="x"?" selected":""}>아카이브 (밝은 플랫 · 3줄 카드)</option></select>
         <label>내 닉네임 · 여러 개면 쉼표로 (예: AA, BB) · 세션마다 이 이름의 플레이어가 자동으로 '나'가 돼요</label>
         <input type="text" id="s-nicks" value="${esc((st.nicks||[]).join(", "))}" placeholder="AA, BB">
         ${S.storage?`<label class="zchk"><input type="checkbox" id="s-z"${S.site&&S.site.noz?"":" checked"} style="width:auto"> 녹음을 올릴 때 용량 줄이기 <span class="tip" style="display:inline">· 말소리용 opus로 바꿔 보통 1/2~1/3 크기 · 크롬·엣지 권장</span></label>`:""}
@@ -166,7 +167,7 @@ function bindAdmin(){bindRuleAdm();
   $("#s-up").onclick=()=>$("#s-file").click();
   $("#s-file").onchange=async ev=>{const f=ev.target.files[0];if(!f)return;try{icon=await shrinkImage(f,128,"image/png");$("#s-icon").value="";prev();}catch(e){toast("이미지를 읽지 못했어요");}};
   $("#s-ok").onclick=async()=>{
-    const v={title:$("#s-title").value.trim(),sub:$("#s-sub").value.trim(),icon:icon||"",nicks:[...new Set($("#s-nicks").value.split(/[,，、\n]/).map(x=>x.trim()).filter(Boolean))],home:$("#s-home").value,...($("#s-z")?{noz:!$("#s-z").checked}:{})};
+    const v={title:$("#s-title").value.trim(),sub:$("#s-sub").value.trim(),icon:icon||"",nicks:[...new Set($("#s-nicks").value.split(/[,，、\n]/).map(x=>x.trim()).filter(Boolean))],home:$("#s-home").value,skin:$("#s-skin").value,...($("#s-z")?{noz:!$("#s-z").checked}:{})};
     S.site={...S.site,...v};applySite();
     try{await S.db.doc("scenarios/_site").set(v,{merge:true});toast("저장했어요");}catch(e){writeFail(e);}
     render();
