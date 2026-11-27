@@ -1411,3 +1411,4 @@ body[data-page=nf]:not(.axskin) .nfend .fxacc .pw{background:#242424!important;b
 body[data-page=nf]:not(.axskin) .nfend .fxacc .pri{background:#fff!important;color:#141414!important;border:0!important;border-radius:4px!important}
 body[data-page=nf]:not(.axskin) .nfend .fxacc .ghost{color:#b3b3b3!important}
 body[data-page=nf]:not(.axskin) .nfend .fxacc input{background:#242424;border:1px solid #3a3a3a;border-radius:4px;color:#fff}
+body[data-page=nf] .jgsw:has(input[data-jgc=acc]){display:none!important}
