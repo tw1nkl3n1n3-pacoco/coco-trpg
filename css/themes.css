@@ -532,3 +532,4 @@ body[data-theme=jg] .cep2 .n{font-family:var(--jdisp)}body[data-theme=jg] .cpher
 @media(max-width:900px){.jgcut{display:none}.jgunder{padding:18px 12px 6px}}
 .jgacc .pwrow input{background:var(--jbg);color:var(--jtx);border:1px solid var(--ln);padding:7px 10px}.jgacc .pri{background:var(--jacc)!important;color:#111!important;border:0!important;border-radius:0}
 .jgacc .pwrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.jgacc .pwrow input{flex:1;max-width:280px;width:auto}
+body[data-theme=jg] .sc-sec h4{color:var(--jbg)!important}
