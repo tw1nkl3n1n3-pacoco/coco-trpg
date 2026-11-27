@@ -43,8 +43,10 @@ function fixCount(f){return S.scens.filter(x=>(x.fix||"")===f&&!(x.camp&&campByI
 function fixOpen(f){if(S.canAdmin)return true;const ids=fixPwIds(f);return ids.length>0&&ids.every(id=>campById(id)?campOpen(campById(id)):isOpen(id));}
 function fixTagsHTML(){const fs=allFixes().sort((a,b)=>a.localeCompare(b,"ko"));return fs.length?`<div class="fxtags">${fs.map(f=>`<a href="${fixHref(f)}">${esc(f)}<small>${fixCount(f)}</small></a>`).join("")}</div>`:"";}
 // 멤버가 2명이면 페어(1:1 자캐 관계)으로 불러요
-function fixPeople(f){const ns=new Set();S.scens.filter(x=>fixOfScen(x)===f).forEach(sc=>(sc.sp||[]).forEach(p=>{if(p.chr&&!p.ch||isAnon(p)||/&/.test(p.name||""))return;ns.add(pcSplit(p.name).name);}));return ns;}
-function fixPeopleList(f){const m={};S.scens.filter(x=>fixOfScen(x)===f).forEach(sc=>(sc.sp||[]).forEach(p=>{if(p.chr&&!p.ch||isAnon(p)||/&/.test(p.name||""))return;const n=pcSplit(p.name).name;const o=m[n]=m[n]||{n,c:p.c,ch:new Set()};if(p.ch)o.ch.add(p.ch);}));return Object.values(m);}
+// 이름이 그냥 GM·KP인 화자(모르는 분이 돌려준 탁의 GM)는 페어·고정탁 사람 수에 안 세요
+const fixGMOnly=p=>/^(GM|KP|DM|수호자|키퍼)$/i.test(pcSplit(p.name||"").name);
+function fixPeople(f){const ns=new Set();S.scens.filter(x=>fixOfScen(x)===f).forEach(sc=>(sc.sp||[]).forEach(p=>{if(p.chr&&!p.ch||isAnon(p)||/&/.test(p.name||"")||fixGMOnly(p))return;ns.add(pcSplit(p.name).name);}));return ns;}
+function fixPeopleList(f){const m={};S.scens.filter(x=>fixOfScen(x)===f).forEach(sc=>(sc.sp||[]).forEach(p=>{if(p.chr&&!p.ch||isAnon(p)||/&/.test(p.name||"")||fixGMOnly(p))return;const n=pcSplit(p.name).name;const o=m[n]=m[n]||{n,c:p.c,ch:new Set()};if(p.ch)o.ch.add(p.ch);}));return Object.values(m);}
 // 고정탁에서 고른 '나'를 안에 든 모든 세션에 (세션마다 그 사람의 화자로)
 function fixSetMe(f,who){S.scens.filter(x=>fixOfScen(x)===f).forEach(sc=>{if(who==="ext"){setMe(sc.id,"ext");return;}const p=(sc.sp||[]).find(x=>pcSplit(x.name||"").name===who);if(p)setMe(sc.id,p.k);});}
 // 페어: 둘 중 내 닉네임이 아닌 쪽 = 비밀번호를 받은 상대
