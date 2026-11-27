@@ -1331,3 +1331,5 @@ body.axskin .nfcastrow{display:none!important}
   .nfmodal{overflow-y:auto}.nfmodal .pic{height:58vh}.nfmodal .pic::after{background:linear-gradient(transparent 60%,#141414)}
   .nfmodal .info{overflow:visible;padding:8px 20px 30px!important}.nfmodal h2{font-size:38px!important}
   .nfmodal .nav{position:sticky;bottom:0;justify-content:flex-start}}
+.nfin .btns button.b2{display:inline-flex;align-items:center;gap:8px;padding:9px 22px;border-radius:4px!important;font-weight:700;font-size:15px;background:rgba(109,109,110,.7)!important;color:#fff!important;border:0!important;cursor:pointer;font-family:"Noto Sans KR",sans-serif}
+.nfin .btns button.b2:hover{background:rgba(109,109,110,.5)!important}

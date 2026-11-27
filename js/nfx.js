@@ -26,7 +26,7 @@ function nfPageHTML(f){const pair=jgPair(f),d=jgDoc(f),fields=d.fields&&d.fields
     <section class="nfhero">${ban?.u?`<img class="bg" src="${esc(ban.u)}" alt="" style="object-position:50% ${+ban.y>=0?+ban.y:40}%">`:`<div class="bg empty"></div>`}
       <div class="nfin"><div class="tag">${pair?`페어 · ${esc(mem[0].en)} × ${esc(mem[1].en)}`:`고정탁 · ${mem.length}명`}</div><h1>${esc(f)}</h1>
         <div class="meta">${meta}</div>${line?`<p>${esc(line)}</p>`:""}
-        <div class="btns">${lastG?`<a class="b1" href="#c-${esc(lastG.sc.id)}">▶ 최근 로그</a>`:""}${st.length?`<a class="b2" href="#mb-f-${esc(code)}">📖 리플레이북</a>`:""}</div></div>
+        <div class="btns">${lastG?`<a class="b1" href="#c-${esc(lastG.sc.id)}">▶ 최근 로그</a>`:""}<button type="button" class="b2" data-nfup>＋ 포스트 올리기</button></div></div>
       ${right}</section>
     <div class="nfrow nfcastrow"><h3>출연</h3><div class="nfcastr">${mem.map(m=>`<button type="button" data-nfprof="${esc(m.n)}" style="--c:${m.c}">${m.q.icon?.u?`<img src="${esc(m.q.icon.u)}" alt="">`:`<i>${esc([...m.nm][0])}</i>`}<span><b>${esc(m.nm)}</b><small>${esc([m.en&&m.en!==m.nm?m.en:"",m.own].filter(Boolean).join(" · "))}</small></span><em>›</em></button>`).join("")}</div></div>
     <div class="nfrow"><h3>${pair?"함께한 이야기":"이야기"} <small>${st.length} · 오래된 것부터</small><span class="nfh">${st.length>4?`<button type="button" data-nfall="st">${(S.nfAll||{}).st?"접기 ▴":"모두 보기 ›"}</button>`:""}${st.length?`<a href="#mb-f-${esc(code)}">📖 리플레이북 합본</a>`:""}</span></h3>
@@ -71,6 +71,10 @@ function bindNfPage(f){if(jgPair(f))bindJgPage(f);else bindFxPage(f);
   document.querySelectorAll(".nfscr").forEach(w=>{const sc=w.querySelector(".nfcards,.galg");if(!sc)return;const up=()=>{w.classList.toggle("atl",sc.scrollLeft<4);w.classList.toggle("atr",sc.scrollLeft+sc.clientWidth>=sc.scrollWidth-4);};
     sc.addEventListener("scroll",up,{passive:true});up();w.querySelectorAll("[data-nfarw]").forEach(b=>b.onclick=()=>sc.scrollBy({left:+b.dataset.nfarw*sc.clientWidth*.9,behavior:"smooth"}));});
   document.querySelectorAll("[data-nfprof]").forEach(b=>b.onclick=()=>nfModalOpen(f,b.dataset.nfprof));
+  // 첫 화면 두 번째 버튼: 올릴 수 있으면 포스트 올리기, 아니면 프로필
+  {const b=document.querySelector("[data-nfup]");if(b){const up=document.querySelector(".nfposts .galup");
+    if(up)b.onclick=()=>{document.querySelector(".nfposts").scrollIntoView({block:"start",behavior:"smooth"});setTimeout(()=>up.click(),350);};
+    else{const m=document.querySelector("[data-nfprof]");if(m){b.textContent="ⓘ 프로필";b.onclick=()=>nfModalOpen(f,m.dataset.nfprof);}else b.remove();}}}
   // 가로 타임라인: 양옆 화살표로 넘겨요 (포스트 줄과 같은 방식)
   {const tw=document.querySelector(".nftl.wide .tl");if(tw&&!tw.parentElement.classList.contains("nfscr")){const w=document.createElement("div");w.className="nfscr nftlscr";tw.before(w);
     w.append(Object.assign(document.createElement("button"),{type:"button",className:"nfarw l",textContent:"‹"}),tw,Object.assign(document.createElement("button"),{type:"button",className:"nfarw r",textContent:"›"}));
