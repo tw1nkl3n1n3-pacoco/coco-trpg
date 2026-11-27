@@ -1420,3 +1420,14 @@ body[data-page=nf] .jgsw:has(input[data-jgc=acc]){display:none!important}
 .nfmodal .shots img{position:static!important;width:100%!important;height:58px!important;object-fit:cover!important;object-position:50% 10%!important;padding:0!important;display:block}
 .nfmodal .shots span{display:block;font-size:10.5px;padding:2px 0;text-align:center}
 .nfmodal .pic:not(.cut)>img{object-fit:cover;object-position:50% 15%}
+/* 짭플릭스 포스트: 6×2 격자를 가로로 넘기기 (타임라인처럼 화살표) */
+.nfx .nfposts .galg{grid-auto-flow:column!important;grid-template-rows:repeat(2,auto)!important;grid-template-columns:none!important;grid-auto-columns:calc((100% - 40px)/6)!important;overflow-x:auto!important;scroll-snap-type:x mandatory!important;scrollbar-width:none!important}
+.nfx .nfposts .galg::-webkit-scrollbar{display:none}
+.nfx .nfposts .galg figure{scroll-snap-align:start}
+.nfx .nfposts .nfpager{display:none!important}
+.nfx .nfposts .nfscr .nfarw{display:block!important}
+@media(max-width:760px){.nfx .nfposts .galg{grid-auto-columns:calc((100% - 12px)/3)!important}}
+/* 타임라인 그림은 작은 네모로만 */
+.nfx .nftl.wide .th{grid-template-columns:repeat(4,1fr)!important}
+.nfx .nftl.wide .th img:first-child{grid-column:auto!important;aspect-ratio:1!important}
+.nfx .nftl.wide .th img:nth-child(n+5){display:none}

@@ -153,7 +153,7 @@ function galLBRefresh(force){
       ${t==="txt"?`<button type="button" class="tb" data-glb="fs-">가 −</button><button type="button" class="tb" data-glb="fs+">가 +</button>`:""}
       ${p.nolink?`<span class="tb off" title="외부 링크를 막은 게시물">🔒 링크 막음</span>`:`<button type="button" class="tb" data-glb="link">🔗 링크</button>`}
       ${t==="img"?`<a id="glbo" href="${esc(q.o||q.u)}" target="_blank" rel="noopener" title="원본 열기">⤓ 원본</a>`:""}<button type="button" class="x" data-glb="x" title="닫기">✕</button></div>
-    <div class="stage">${t==="txt"?`<article class="glpaper" style="--fs:${fs}px"><div class="tk">TEXT</div><h1>${esc(p.title||"제목 없음")}</h1><div class="pm">${esc(p.by||"")}${p.by?" · ":""}${p.at?new Date(p.at).toLocaleDateString("ko-KR"):""} · ${len.toLocaleString()}자</div>${galTxtHTML(p.body)}</article>`
+    <div class="stage">${t==="txt"?`<article class="glpaper" style="--fs:${fs}px"><div class="tk">TEXT</div><h1>${esc(p.title||"제목 없음")}</h1><div class="pm">${esc(p.by||"")}${p.by?" · ":""}${p.at?new Date(p.at).toLocaleDateString("ko-KR"):""} · ${len.toLocaleString()}자</div>${galBodyHTML(p)}</article>`
         :`<div class="col">${IM.map((x,k)=>`<img src="${esc(x.u||x.o)}" alt="" data-k="${k}"${k>1?' loading="lazy"':""} decoding="async">`).join("")}</div>`}
       ${IM.length>1?`<div class="ipg"><b>${S.galImg+1}</b><i></i>${IM.length}</div>`:""}</div>
     ${L.length>1?`<button type="button" class="nv l" data-glb="prev" title="이전 게시물">‹</button><button type="button" class="nv r" data-glb="next" title="다음 게시물">›</button>`:""}
@@ -265,23 +265,27 @@ window.addEventListener("hashchange",()=>{if(S.galOpen)galClose();galUnwatch();}
 
 function galLockRow(on){return `<label class="gelock"><input type="checkbox" id="genl"${on?" checked":""}><span class="sw"></span><span><b>외부 링크 막기</b><small>켜면 🔗 링크가 안 나오고, 링크로 들어와도 안 보여요 · 목록에서는 흐리게 보여요</small></span></label>`;}
 // ---------- 텍스트 쓰기·고치기 ----------
-function galTxtNew(kind,src){galTxtBox({title:"",body:""},async v=>{const who=galWho(kind,src)||{by:"",k:""};
+function galTxtNew(kind,src){galTxtBox({title:"",body:"",src},async v=>{const who=galWho(kind,src)||{by:"",k:""};
   try{if(!S.authUser)await S.auth.signInAnonymously();
-    await galAdd(kind,src,{id:Date.now().toString(36)+rid4(),t:"txt",title:v.title,body:v.body,...(v.nolink?{nolink:true}:{}),cap:"",by:who.by,k:who.k||"",uid:myUid(),at:Date.now()});toast("텍스트를 올렸어요");return true;}
+    await galAdd(kind,src,{id:Date.now().toString(36)+rid4(),t:"txt",title:v.title,body:v.body,...(v.html?{html:v.html}:{}),...(v.nolink?{nolink:true}:{}),cap:"",by:who.by,k:who.k||"",uid:myUid(),at:Date.now()});toast("텍스트를 올렸어요");return true;}
   catch(e){toast("올리지 못했어요");return false;}});}
-function galTxtEdit(p){galTxtBox(p,async v=>{try{await galMutate(p,g=>g.map(x=>{if(x.id!==p.id)return x;const y={...x,title:v.title,body:v.body};if(v.nolink)y.nolink=true;else delete y.nolink;return y;}));toast("저장했어요");galLBRefresh(true);return true;}catch(err){toast("저장하지 못했어요");return false;}},
+function galTxtEdit(p){galTxtBox(p,async v=>{try{await galMutate(p,g=>g.map(x=>{if(x.id!==p.id)return x;const y={...x,title:v.title,body:v.body};if(v.html)y.html=v.html;else delete y.html;if(v.nolink)y.nolink=true;else delete y.nolink;return y;}));toast("저장했어요");galLBRefresh(true);return true;}catch(err){toast("저장하지 못했어요");return false;}},
   ()=>confirmBox("이 텍스트를 지울까요? 달린 댓글도 같이 사라져요.","지우기",async()=>{try{const cms=galCmsOf(p);await galMutate(p,g=>g.filter(x=>x.id!==p.id));cms.filter(c=>S.canAdmin||c.uid===myUid()).forEach(c=>S.db.doc("comments/"+c.id).delete().catch(()=>{}));document.querySelector(".gedit")?.remove();toast("지웠어요");}catch(err){toast("지우지 못했어요");}}));}
 function galTxtBox(v,onSave,onDel){const w=document.createElement("div");w.className="gedit";
   w.innerHTML=`<div class="gebox gtxt"><div class="geh"><b>텍스트</b><button type="button" class="x" data-x>✕</button></div>
     <div class="gelab">제목</div><input type="text" id="gtt" maxlength="80" value="${esc(v.title||"")}">
-    <div class="gelab">본문 <span class="tip">· 문단은 빈 줄로 · *** 은 장면 구분선 · 최대 20만 자</span></div><textarea id="gtb" rows="16">${esc(v.body||"")}</textarea>
+    <div class="gelab">본문 <span class="tip">· 굵게·색·소제목·인용·사진 넣기 · 최대 20만 자</span></div>${wedHTML("gtw",v.html||galTxtHTML(v.body))}
     ${galLockRow(!!v.nolink)}
     <div class="gefoot">${onDel?`<button type="button" class="ghost danger" id="gtd">지우기</button>`:""}<span class="tip" id="gtn"></span><span style="flex:1"></span><button type="button" class="ghost" data-x>취소</button><button type="button" class="pri" id="gts">저장</button></div></div>`;
-  document.body.appendChild(w);const tb=w.querySelector("#gtb"),n=w.querySelector("#gtn");const cnt=()=>n.textContent=`${tb.value.replace(/\s/g,"").length.toLocaleString()}자`;cnt();tb.oninput=cnt;
+  document.body.appendChild(w);const ed=w.querySelector("#gtw"),wb=ed.querySelector(".wbody"),n=w.querySelector("#gtn");wb.dataset.ph="본문을 써 주세요 · 🖼 로 사진도 넣을 수 있어요";bindWed(ed,v.src||"misc");
+  const plain=()=>galPlain(wedValue(ed));const cnt=()=>n.textContent=`${plain().replace(/\s/g,"").length.toLocaleString()}자`;cnt();wb.addEventListener("input",cnt);
   w.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>w.remove());
   const d=w.querySelector("#gtd");if(d)d.onclick=onDel;
-  w.querySelector("#gts").onclick=async()=>{const t=w.querySelector("#gtt").value.trim(),b=tb.value;if(!t&&!b.trim()){toast("제목이나 본문을 써 주세요");return;}
-    if(await onSave({title:t.slice(0,80),body:b.slice(0,200000),nolink:w.querySelector("#genl").checked})!==false)w.remove();};}
+  w.querySelector("#gts").onclick=async()=>{const t=w.querySelector("#gtt").value.trim(),html=wedValue(ed),b=galPlain(html);if(!t&&!b.trim()&&!/<img/i.test(html)){toast("제목이나 본문을 써 주세요");return;}
+    if(await onSave({title:t.slice(0,80),body:b.slice(0,200000),html:html.length<900000?html:"",nolink:w.querySelector("#genl").checked})!==false)w.remove();};}
+// 편집기 HTML → 미리보기·글자 수용 줄글
+function galPlain(html){const d=document.createElement("div");d.style.cssText="position:fixed;left:-9999px;top:0;white-space:pre-wrap";d.innerHTML=html||"";document.body.appendChild(d);const t=d.innerText;d.remove();return t.replace(/\n{3,}/g,"\n\n").trim();}
+function galBodyHTML(p){return p.html?`<div class="rich">${richView(p.html)}</div>`:galTxtHTML(p.body);}
 function galTxtHTML(b){return String(b||"").replace(/\r/g,"").split(/\n\s*\n+/).map(par=>/^\s*(\*\s*){3,}\s*$/.test(par)?`<div class="sep">◆ ◆ ◆</div>`:`<p>${esc(qfix(par.trim())).replace(/\n/g,"<br>")}</p>`).join("");}
 // ---------- 게시물 하나만 보는 페이지 (#p-출처~id) — 비밀번호 없이 · 댓글은 페이지로 들어가서 ----------
 async function openPostPage(key){let [src,id]=key.split("~");S.postPage={key,loading:true};render();
@@ -306,7 +310,7 @@ function postPageHTML(){const P=S.postPage||{};
   if(p.nolink)return `<div class="pstpage">${head}<div class="pstlock"><div class="ic">LOCKED</div><p>이 게시물은 링크로 볼 수 없어요</p></div>${ft}</div>`;
   const len=String(p.body||"").replace(/\s/g,"").length;
   return `<div class="pstpage">${head}
-    ${t==="txt"?`<article class="glpaper" style="--fs:${S.grdFs||17}px"><div class="tk">TEXT</div><h1>${esc(p.title||"제목 없음")}</h1><div class="pm">${esc(p.by||"")}${p.by?" · ":""}${p.at?new Date(p.at).toLocaleDateString("ko-KR"):""} · ${len.toLocaleString()}자</div>${galTxtHTML(p.body)}</article>`
+    ${t==="txt"?`<article class="glpaper" style="--fs:${S.grdFs||17}px"><div class="tk">TEXT</div><h1>${esc(p.title||"제목 없음")}</h1><div class="pm">${esc(p.by||"")}${p.by?" · ":""}${p.at?new Date(p.at).toLocaleDateString("ko-KR"):""} · ${len.toLocaleString()}자</div>${galBodyHTML(p)}</article>`
       :`<div class="psth"><h2>${esc(galTitle(p)||"")}</h2><div class="pm">${esc(p.by||"")}${p.by?" · ":""}${p.at?new Date(p.at).toLocaleDateString("ko-KR"):""}${IM.length>1?` · ${IM.length}장`:""}</div></div><div class="pstimgs">${IM.map(q=>`<img src="${esc(q.u||q.o)}" alt="" loading="lazy" decoding="async">`).join("")}</div>`}
     ${ft}</div>`;}
 function bindPostPage(){

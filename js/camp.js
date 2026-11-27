@@ -130,9 +130,12 @@ function campPageHTML(){
   if(!c)return S.loaded?`<div class="sc-page"><div class="notice">캠페인·캠프를 찾을 수 없어요.</div><button class="ghost ownonly" onclick="location.hash=''">← 목록</button></div>`:`<div class="sc-page">${loaderHTML()}</div>`;
   const cm=isCamp(c),W=campWord(c),es=campEps(c),open=campOpen(c),ed=S.campEdit&&S.canAdmin;
   const rows=cm?[]:campRuns(c);
+  // 페어·고정탁에 묶인 캠페인이면 누구에게나 그 페이지로 돌아가는 버튼 (목록으로는 주인만)
+  const cpFix=c.fix||es.map(e=>fixOfScen(e)).find(Boolean)||"";
   // 캠프 목록은 날짜 최신순 (같은 날이면 이름순)
   const list=cm?es.slice().sort((a,b)=>(b.lastDay||"").localeCompare(a.lastDay||"")||a.name.localeCompare(b.name,"ko")):es.slice().reverse();
   return `<div class="sc-page campage">
+    ${cpFix&&!ed?`<a class="cpfixtop" href="${esc(fixHref(cpFix))}">← ${esc(cpFix)} ${esc(fixWord(cpFix))}</a>`:""}
     ${ed?`<div class="sc-top"><h2>${W} 수정</h2><button class="ghost" id="g-x">취소</button><button class="pri" id="g-save">저장</button></div>
       <div class="sc-sec"><div class="fields" style="margin:0">
         <label>${W} 이름<input type="text" id="g-name" value="${esc(c.name)}"></label>
@@ -145,7 +148,7 @@ function campPageHTML(){
       <div class="sc-sec"><h4 data-en="INTRO">소개</h4><textarea id="g-intro" placeholder="${cm?"언제 어디서 모인 캠프인지 적어 주세요 (선택)":"어떤 캠페인인지 적어 주세요 (선택)"}">${esc(c.intro||"")}</textarea></div>
       ${es.length?"":`<div class="sc-sec"><h4 data-en="DELETE">${W} 지우기</h4><div class="tip" style="margin-bottom:8px">${cm?"탁이":"편이"} 하나도 없을 때만 지울 수 있어요.</div><button class="ghost" id="g-del">이 ${W} 지우기</button></div>`}`
       :campViewHTML(c,es,rows,open)}
-    <div class="homefoot"><button class="ghost ownonly" onclick="location.hash=''">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
+    <div class="homefoot">${cpFix?`<a class="ghost cpfixback" href="${esc(fixHref(cpFix))}">← ${esc(cpFix)} ${esc(fixWord(cpFix))} 페이지</a>`:""}<button class="ghost ownonly" onclick="location.hash=''">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
   </div>`;
 }
 // ---------- 캠프: 날짜가 정해진 모임 (당일치기·며칠) · 여러 탁 · 캠프 후기 ----------

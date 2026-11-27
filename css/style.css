@@ -1451,3 +1451,9 @@ body[data-theme=dx] :is(.cphero,.cep2 .th,.pc2,.cpown){border-radius:0}
 .row.wh .who small,.row.wh .sub{color:#8a6fd1!important}
 .row.wh.first .who::after{content:"귓속말";margin-left:6px;font:700 10px "Noto Sans KR",sans-serif;font-style:normal;color:#fff;background:#8a6fd1;padding:1px 6px;border-radius:3px;vertical-align:1px}
 body[data-theme=nf] #log .row.wh .tx{color:#6b4fa8}
+.glpaper .rich{font-size:var(--fs,17px);line-height:1.9}
+.glpaper .rich img{max-width:100%;height:auto;display:block;margin:14px auto;border-radius:4px}
+.glpaper .rich h3{font-size:1.15em;margin:1.4em 0 .4em}.glpaper .rich blockquote{margin:1em 0;padding:4px 14px;border-left:3px solid #ccc;color:#555}
+.gedit .wed .wbody{min-height:300px}
+.cpfixtop{display:inline-flex;align-items:center;gap:4px;margin:0 0 10px;font-size:13px;font-weight:700;color:var(--dim);text-decoration:none}.cpfixtop:hover{color:var(--ink)}
+.homefoot .cpfixback{text-decoration:none;font-weight:700}

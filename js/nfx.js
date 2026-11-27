@@ -59,13 +59,11 @@ function nfModalOpen(f,n){const d=jgDoc(f),fields=d.fields&&d.fields.length?d.fi
     if(e.target===el||e.target.closest(".x"))close();const b=e.target.closest("[data-nfp]");if(b){close();nfModalOpen(f,b.dataset.nfp);}};document.addEventListener("keydown",esc_);}
 function bindNfPage(f){if(jgPair(f))bindJgPage(f);else bindFxPage(f);
   nfFromToCap();
-  // 포스트: 전부 펼친 격자 + 쪽 넘기기 (PC 6×2 · 폰 3×2)
-  {const gg=document.querySelector(".nfposts .galsec .galg");if(gg){const figs=[...gg.children].filter(x=>x.tagName==="FIGURE"),per=matchMedia("(max-width:760px)").matches?6:12,pages=Math.ceil(figs.length/per);
-    S.nfPg=Math.min(S.nfPg||0,Math.max(0,pages-1));const show=()=>{figs.forEach((x,k)=>x.hidden=Math.floor(k/per)!==S.nfPg);const pg=gg.parentElement.querySelector(".nfpager");if(pg)pg.querySelectorAll("[data-pg]").forEach(b=>b.classList.toggle("on",+b.dataset.pg===S.nfPg));
-      const pv=pg&&pg.querySelector(".pv"),nx=pg&&pg.querySelector(".nx");if(pv)pv.disabled=S.nfPg<=0;if(nx)nx.disabled=S.nfPg>=pages-1;};
-    if(pages>1&&!gg.parentElement.querySelector(".nfpager")){gg.insertAdjacentHTML("afterend",`<div class="nfpager"><button type="button" class="pv" aria-label="이전 쪽">‹</button>${Array.from({length:pages},(_,k)=>`<button type="button" data-pg="${k}">${k+1}</button>`).join("")}<button type="button" class="nx" aria-label="다음 쪽">›</button><span>${figs.length}개</span></div>`);
-      const pg=gg.parentElement.querySelector(".nfpager");pg.onclick=e=>{const b=e.target.closest("button");if(!b||b.disabled)return;S.nfPg=b.classList.contains("pv")?S.nfPg-1:b.classList.contains("nx")?S.nfPg+1:+b.dataset.pg;show();gg.closest(".nfrow").scrollIntoView({block:"start",behavior:"smooth"});};}
-    show();}}
+  // 포스트: 6×2 격자를 가로로 넘기기 (양옆 화살표 · 폰은 밀기)
+  {const gg=document.querySelector(".nfposts .galsec .galg");if(gg&&!gg.parentElement.classList.contains("nfscr")){const w=document.createElement("div");w.className="nfscr nfpscr";gg.before(w);
+    w.append(Object.assign(document.createElement("button"),{type:"button",className:"nfarw l",textContent:"‹"}),gg,Object.assign(document.createElement("button"),{type:"button",className:"nfarw r",textContent:"›"}));
+    const up=()=>{w.classList.toggle("atl",gg.scrollLeft<4);w.classList.toggle("atr",gg.scrollLeft+gg.clientWidth>=gg.scrollWidth-4);};gg.addEventListener("scroll",up,{passive:true});up();
+    w.querySelector(".l").onclick=()=>gg.scrollBy({left:-gg.clientWidth-8,behavior:"smooth"});w.querySelector(".r").onclick=()=>gg.scrollBy({left:gg.clientWidth+8,behavior:"smooth"});}}
   // 타임라인은 왼쪽 멤버 칸 높이만큼 보여 주고 더 보기 (모바일은 520px)
   {const tl=document.querySelector(".nftl .jgtl"),pf=document.querySelector(".nfsplit>div:first-child"),key=S.jgTl||"main";
     if(tl&&pf&&!(S.jgAll||{})[key]){const two=getComputedStyle(tl.closest(".nfsplit")).gridTemplateColumns.split(" ").length>1,cap=two?Math.max(pf.offsetHeight,420):520;
