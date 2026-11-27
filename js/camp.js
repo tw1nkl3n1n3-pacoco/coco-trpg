@@ -35,18 +35,18 @@ function fixPwIds(f){return [...new Set([...S.scens.filter(x=>(x.fix||"")===f).m
 function fixCount(f){return S.scens.filter(x=>(x.fix||"")===f&&!(x.camp&&campById(x.camp)&&campById(x.camp).fix===f)).length+S.camps.filter(c=>(c.fix||"")===f).length;}
 function fixOpen(f){if(S.canAdmin)return true;const ids=fixPwIds(f);return ids.length>0&&ids.every(id=>campById(id)?campOpen(campById(id)):isOpen(id));}
 function fixTagsHTML(){const fs=allFixes().sort((a,b)=>a.localeCompare(b,"ko"));return fs.length?`<div class="fxtags">${fs.map(f=>`<a href="#f-${encodeURIComponent(f)}">${esc(f)}<small>${fixCount(f)}</small></a>`).join("")}</div>`:"";}
-// 멤버가 2명이면 자관(1:1 자캐 관계)으로 불러요
+// 멤버가 2명이면 페어(1:1 자캐 관계)으로 불러요
 function fixPeople(f){const ns=new Set();S.scens.filter(x=>fixOfScen(x)===f).forEach(sc=>(sc.sp||[]).forEach(p=>{if(p.chr&&!p.ch||isAnon(p)||/&/.test(p.name||""))return;ns.add(pcSplit(p.name).name);}));return ns;}
 function fixPeopleList(f){const m={};S.scens.filter(x=>fixOfScen(x)===f).forEach(sc=>(sc.sp||[]).forEach(p=>{if(p.chr&&!p.ch||isAnon(p)||/&/.test(p.name||""))return;const n=pcSplit(p.name).name;const o=m[n]=m[n]||{n,c:p.c,ch:new Set()};if(p.ch)o.ch.add(p.ch);}));return Object.values(m);}
 // 고정탁에서 고른 '나'를 안에 든 모든 세션에 (세션마다 그 사람의 화자로)
 function fixSetMe(f,who){S.scens.filter(x=>fixOfScen(x)===f).forEach(sc=>{if(who==="ext"){setMe(sc.id,"ext");return;}const p=(sc.sp||[]).find(x=>pcSplit(x.name||"").name===who);if(p)setMe(sc.id,p.k);});}
 function fixMe(f){for(const sc of S.scens.filter(x=>fixOfScen(x)===f)){const k=myK(sc.id);if(k==="ext")return "ext";const p=(sc.sp||[]).find(x=>x.k===k);if(p)return pcSplit(p.name).name;}return "";}
-// 자관: 둘 중 내 닉네임이 아닌 쪽 = 비밀번호를 받은 상대
+// 페어: 둘 중 내 닉네임이 아닌 쪽 = 비밀번호를 받은 상대
 function fixOther(f){const ns=(site().nicks||[]).map(rnorm);const o=fixPeopleList(f).filter(p=>!ns.includes(rnorm(p.n)));return o.length===1?o[0].n:"";}
-function fixWord(f){return fixPeople(f).size===2?"자관":"고정탁";}
+function fixWord(f){return fixPeople(f).size===2?"페어":"고정탁";}
 function fixLockHTML(f){const W=fixWord(f);
   const ns=[...S.scens.filter(x=>(x.fix||"")===f&&!x.camp).map(x=>x.name),...S.camps.filter(c=>(c.fix||"")===f).map(c=>c.name)];
-  const other=W==="자관"?fixOther(f):"",pick=other||S.fxPick||"",P=fixPeopleList(f),po=P.find(p=>p.n===pick);
+  const other=W==="페어"?fixOther(f):"",pick=other||S.fxPick||"",P=fixPeopleList(f),po=P.find(p=>p.n===pick);
   return `<div class="sc-page lockpage"><div class="lkwrap"><div class="lkbox">
     <div class="lockicon">🔒</div><div class="tip fxk">${W}</div><h2>${esc(f)}</h2>${ns.length?`<div class="tip">${ns.map(esc).join(" · ")}</div>`:""}
     ${other?"":`<div class="q">누구로 들어갈까요?</div><div class="lklist">${P.map(p=>`<button type="button" class="lkc${p.n===pick?" mine":""}" data-fxpick="${esc(p.n)}" style="--c:${fixC(p.c)}"><i></i><span class="nm">${esc([...p.ch].join(" · ")||p.n)}</span><span class="pl">${p.ch.size?esc(p.n):""}</span></button>`).join("")}</div>
@@ -60,7 +60,7 @@ function bindFixLock(){const f=S.fix;
   const form=$("#fxunlock");if(!form)return;const inp=$("#fxpw");setTimeout(()=>inp.focus(),0);
   form.onsubmit=async ev=>{ev.preventDefault();const pw=inp.value.trim();if(!pw)return;const m=$("#fxmsg");m.textContent="확인하는 중…";const ids=fixPwIds(f);
     try{await unlockScen(ids[0],pw);await Promise.all(ids.slice(1).map(id=>unlockScen(id,pw).catch(()=>{})));
-      try{await S.db.doc(`unlocks/${fixKey(f)}_${S.auth.currentUser.uid}`).set({scid:fixKey(f),uid:S.auth.currentUser.uid,pw,at:Date.now()});}catch(e){}const who=fixWord(f)==="자관"&&fixOther(f)||S.fxPick;if(who)fixSetMe(f,who);S.fxPick=null;
+      try{await S.db.doc(`unlocks/${fixKey(f)}_${S.auth.currentUser.uid}`).set({scid:fixKey(f),uid:S.auth.currentUser.uid,pw,at:Date.now()});}catch(e){}const who=fixWord(f)==="페어"&&fixOther(f)||S.fxPick;if(who)fixSetMe(f,who);S.fxPick=null;
       m.textContent="열렸어요!";refreshCanWrite();render();}
     catch(err){m.textContent=err&&err.code==="permission-denied"?"비밀번호가 틀렸어요.":"열지 못했어요: "+(err.code||err.message);}};}
 // 타임라인: 고정탁 안의 모든 세션을 날짜순(최근이 위)으로 · 시나리오 첫 세션에 갤러리 사진 하나
@@ -93,8 +93,8 @@ function fixPageHTML(f){
     ${cv?`<div class="fxcover cv${S.fxCvDrag?" drag":""}" id="fxcover"><img src="${esc(cv.u)}" alt="" draggable="false" style="object-position:50% ${+cv.y>=0?+cv.y:50}%"><div class="fxct">${head}</div>
       ${S.canAdmin?`<button type="button" class="fxcvpos" id="fxcvpos">${S.fxCvDrag?"✓ 위치 저장":"↕ 위치"}</button>`:""}</div>`:head}
     <div class="fxmeta">${days.length?`${esc(dot(days[0]))} – ${esc(dot(days.at(-1)))} · `:""}<b>${gs.length+cs.reduce((a,c)=>a+campEps(c).length,0)}</b>시나리오 · <b>${days.length}</b>세션${cs.length?` · <b>${cs.length}</b>캠페인`:""}</div>
-    ${P.length?`<div class="fxppl">${P.map(p=>`<span class="fxp${fixMe(f)===p.n?" me":""}"${!S.canAdmin&&fixWord(f)!=="자관"?` data-fxme="${esc(p.n)}" title="나로 고르기"`:""} style="--c:${fixC(p.c)}"><i></i><b>${esc(p.n)}</b><small>${[...p.ch].map(esc).join(" · ")}${p.ch.size?" · ":""}${p.cnt.size}탁</small></span>`).join("")}</div>`:""}
-    ${intro||S.canAdmin?`<div class="fxintro${intro?"":" empty"}" id="fxintro">${intro?esc(intro).replace(/\n/g,"<br>"):`${fixWord(f)} 소개 (선택) — ${fixWord(f)==="자관"?"두 캐릭터가 어떤 사이인지":"언제부터 어떤 멤버로 굴리는 탁인지"} 적어 둘 수 있어요`}${S.canAdmin?` <button class="ghost" id="fxedit" type="button">✎</button>`:""}</div>`:""}
+    ${P.length?`<div class="fxppl">${P.map(p=>`<span class="fxp${fixMe(f)===p.n?" me":""}"${!S.canAdmin&&fixWord(f)!=="페어"?` data-fxme="${esc(p.n)}" title="나로 고르기"`:""} style="--c:${fixC(p.c)}"><i></i><b>${esc(p.n)}</b><small>${[...p.ch].map(esc).join(" · ")}${p.ch.size?" · ":""}${p.cnt.size}탁</small></span>`).join("")}</div>`:""}
+    ${intro||S.canAdmin?`<div class="fxintro${intro?"":" empty"}" id="fxintro">${intro?esc(intro).replace(/\n/g,"<br>"):`${fixWord(f)} 소개 (선택) — ${fixWord(f)==="페어"?"두 캐릭터가 어떤 사이인지":"언제부터 어떤 멤버로 굴리는 탁인지"} 적어 둘 수 있어요`}${S.canAdmin?` <button class="ghost" id="fxedit" type="button">✎</button>`:""}</div>`:""}
     ${fixTimelineHTML(f,allG,cs)}
     <div id="sesslist" class="fxlist">${items.map(x=>x.h).join("")||`<div class="notice">아직 이 고정탁으로 묶인 세션이 없어요</div>`}</div>
     ${S.db?galHTML(galSrcFix(f),{newest:1,title:"전체 갤러리"}):""}
@@ -273,7 +273,7 @@ function bindCamp(){
   const ag=$("#g-addgo");if(ag)ag.onclick=async()=>{const id=$("#g-addsel").value;if(!id){toast("넣을 세션을 골라 주세요");return;}
     ag.disabled=true;try{await setEpCamp(id,c.id,"",!!$("#g-addgai")?.checked);toast(isCamp(c)?"캠프에 넣었어요":"캠페인에 넣었어요");}catch(err){ag.disabled=false;writeFail(err);}};
   const uf=$("#g-unlock");if(uf)uf.onsubmit=async ev=>{ev.preventDefault();const pw=$("#g-pw").value.trim();if(!pw)return;const m=$("#g-msg");m.textContent="확인하는 중…";
-    try{await unlockScen(c.id,pw);const who=fixWord(f)==="자관"&&fixOther(f)||S.fxPick;if(who)fixSetMe(f,who);S.fxPick=null;
+    try{await unlockScen(c.id,pw);const who=fixWord(f)==="페어"&&fixOther(f)||S.fxPick;if(who)fixSetMe(f,who);S.fxPick=null;
       m.textContent="열렸어요!";refreshCanWrite();render();}catch(err){m.textContent=err&&err.code==="permission-denied"?"비밀번호가 틀렸어요.":"열지 못했어요: "+(err.code||err.message);}};
 }
 // 세션을 캠페인에 넣기·빼기·순서 (주인)

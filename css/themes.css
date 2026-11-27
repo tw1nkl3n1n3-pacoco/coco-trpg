@@ -237,7 +237,7 @@ body[data-theme=plain] .upcard.on{border-color:#1c1c1b!important}
 body[data-theme=deco] .homefoot{--ink:#f6e7c8;--dim:#e2cfa8;--faint:#c4ad86;--line:#6e2020;color:#f6e7c8}
 body[data-theme=deco] .homefoot button.ghost{color:#e2cfa8}
 
-/* --- 자관(1:1 자캐 관계) 테마 (key: jg) — 신청서 포스터 느낌 · 색 4개는 자관마다(--jbg 배경 · --jacc 포인트 · --ja/--jb 두 캐릭터) --- */
+/* --- 페어(1:1 자캐 관계) 테마 (key: jg) — 신청서 포스터 느낌 · 색 4개는 페어마다(--jbg 배경 · --jacc 포인트 · --ja/--jb 두 캐릭터) --- */
 body[data-theme=jg]{--jbg:#1b1b1c;--jacc:#efc11a;--ja:#d9577d;--jb:#2e9a8c;--jdisp:"Anton","Black Han Sans","Noto Sans KR",sans-serif;--jhk:"Black Han Sans","Noto Sans KR",sans-serif;
   --bg:var(--jbg);--panel:#f4f3ef;--panel2:#e9e7e1;--line:#d6d3cb;--ink:#141414;--dim:#4c4a45;--faint:#8b8880;--acc:var(--jacc);--acc2:var(--ja);--sel:color-mix(in srgb,var(--jacc) 22%,#fff);--play:color-mix(in srgb,var(--jb) 14%,#fff);--gold:var(--jacc);--ok:var(--jb);
   background:var(--jbg);background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px)}
@@ -312,7 +312,7 @@ body[data-theme=jg] :is(.castc .av,.rvcard,.galg .im,.galadd,.glb .fr img,.gebox
 body[data-theme=jg] .galadd i,body[data-theme=jg] .galg figcaption .c{color:var(--ja)}
 body[data-theme=jg] .glb .top .ac,body[data-theme=jg] .glb .meta .k{color:var(--ja);font-family:var(--jdisp)}
 body[data-theme=jg] .lkbox{box-shadow:0 0 0 1px #000,8px 8px 0 var(--jacc)}
-/* --- 자관 페이지 (포스터) --- */
+/* --- 페어 페이지 (포스터) --- */
 .jgp{--p1:color-mix(in srgb,var(--jbg) 90%,var(--jtx));--p2:color-mix(in srgb,var(--jbg) 85%,var(--jtx));--ln:color-mix(in srgb,var(--jbg) 78%,var(--jtx));--dimj:color-mix(in srgb,var(--jtx) 65%,var(--jbg));--fj:color-mix(in srgb,var(--jtx) 45%,var(--jbg));
   --ink:var(--jtx);--dim:var(--dimj);--faint:var(--fj);--line:var(--ln);--panel:var(--p1);--panel2:var(--p2);color:var(--jtx);margin:-10px -18px 0;font-size:15px;line-height:1.65}
 body[data-theme=jg]{--jtx:#f1efe9}
@@ -412,7 +412,7 @@ body[data-theme=jg] .jgp .galsec .gcnt{font-family:var(--jdisp);color:var(--fj);
 .jgp .galg figcaption{color:var(--jtx)}.jgp .galg figcaption .m{color:var(--fj)}
 .jgp .fxacc{background:var(--p1);border:1px solid var(--ln);box-shadow:none;margin-top:16px;color:var(--jtx)}
 .jgp .fxacc h4{color:var(--jtx)!important}body[data-theme=jg] .jgp .fxacc h4::before{display:none}
-/* 자관 수정 */
+/* 페어 수정 */
 .jgedit{max-width:1180px;margin:16px auto;background:#f4f3ef;color:#141414;box-shadow:0 0 0 1px #000,8px 8px 0 var(--jacc);padding:18px 22px;--ink:#141414;--dim:#4c4a45;--faint:#8b8880;--line:#d6d3cb}
 .jgedit .eh{font:400 22px var(--jhk);margin-bottom:8px}.jgedit .eh small{font:500 13px "Noto Sans KR";color:#777}
 .jgedit .erow{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 0;border-top:1px solid #d6d3cb}
@@ -451,3 +451,4 @@ body[data-theme=jg] .jgp .galsec .gcnt{font-family:var(--jdisp);color:var(--fj);
   .jgtitle{position:relative;left:auto;top:auto;transform:none;width:auto;padding:0 0 10px}.jgtitle h1{font-size:52px}.jgtitle p{font-size:11px;letter-spacing:.2em}
   .jgtri,.jgpfs{grid-template-columns:1fr}.jgwrap{padding:0 12px 50px}.jgsec{padding:16px}.jgedit .erow>label:first-child{width:100%}
 }
+@media(max-width:900px){.jgmid{order:-1}}

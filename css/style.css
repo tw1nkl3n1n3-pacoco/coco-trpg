@@ -1288,7 +1288,7 @@ body[data-theme=dx] .gelab,body[data-theme=dx] .geh b{font-family:"Chakra Petch"
 body[data-theme=deco] .geh b{font-family:"Gowun Batang",serif}
 .hx .fxtags a{border-radius:0;font-family:var(--hx-mono);border-color:var(--hx-ln);background:var(--hx-p1);color:var(--hx-tx)}.hx .fxtags a small{color:var(--hx-faint)}
 
-/* 고정탁·자관 커버 */
+/* 고정탁·페어 커버 */
 .fxcover{position:relative;margin:12px 0 10px;border-radius:12px;overflow:hidden;background:var(--panel2)}
 .fxcover img{width:100%;display:block;max-height:min(40cqw,440px);object-fit:cover;user-select:none;-webkit-user-drag:none}
 .fxcover .fxct{position:absolute;left:0;right:0;bottom:0;padding:44px 22px 16px;background:linear-gradient(transparent,rgba(0,0,0,.6));color:#fff}

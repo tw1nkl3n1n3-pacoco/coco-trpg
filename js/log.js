@@ -24,7 +24,7 @@ function stampHTML(sc,word){
   return `<span class="donestamp${word==="종료"?" end":""}" style="${st}" title="${word||"완주"}${sc.doneAt?" · "+esc(sc.doneAt):""}">${word||"완주"}</span>`;
 }
 function themeOf(sc){
-  {const f=typeof fixOfScen==="function"&&sc?fixOfScen(sc):"";if(f&&fixWord(f)==="자관")return "jg";}
+  {const f=typeof fixOfScen==="function"&&sc?fixOfScen(sc):"";if(f&&fixWord(f)==="페어")return "jg";}
   {const ru=ruleOf(typeof effSys==="function"?effSys(sc):sc&&sc.system);if(ru&&ru.th)return ru.th;}
   const r=String(effSys(sc)).toLowerCase().replace(/\s+/g,"");
   if(/인세인|insane/.test(r))return "wa";
@@ -32,15 +32,15 @@ function themeOf(sc){
   if(/더블크로스|doublecross|덥크|^dx(\d|$)|^dx3/.test(r))return "dx";
   return "plain";
 }
-// 자관 두 캐릭터 색 (고정탁 문서의 colors가 있으면 그걸로)
-// 자관 색 4개: 고정탁 문서 colors = {bg, acc, a, b} (없으면 두 캐릭터의 로그 색)
+// 페어 두 캐릭터 색 (고정탁 문서의 colors가 있으면 그걸로)
+// 페어 색 4개: 고정탁 문서 colors = {bg, acc, a, b} (없으면 두 캐릭터의 로그 색)
 function jgColors(f,over){const fd=(S.fixDocs||{})[typeof fixKey==="function"?fixKey(f):""]||{},c=over||fd.colors||{};
   const sd=typeof jgSides==="function"?jgSides(f):[],cc=x=>x&&(typeof fixC==="function"?fixC(x):x),st=document.body.style;
   st.setProperty("--ja",c.a||cc(sd[0]&&sd[0].p&&sd[0].p.c)||"#d9577d");st.setProperty("--jb",c.b||cc(sd[1]&&sd[1].p&&sd[1].p.c)||"#2e9a8c");
   st.setProperty("--jbg",c.bg||"#1b1b1c");st.setProperty("--jacc",c.acc||"#efc11a");if(typeof jgTextColor==="function")jgTextColor();}
 function applyTheme(){document.body.classList.toggle("own",!!S.canAdmin);
-  {const hx=!S.gid&&!S.cid&&!S.sid&&!S.revPage&&!S.admin&&!S.up&&!S.book&&!(S.fix&&typeof fixWord==="function"&&fixWord(S.fix)==="자관")&&isHX();if(document.body.classList.contains("hxhome")!==hx){document.body.classList.toggle("hxhome",hx);document.documentElement.classList.toggle("hxhome",hx);}}
-  if(S.fix&&!S.sid&&!S.cid&&!S.gid&&typeof fixWord==="function"&&fixWord(S.fix)==="자관"){if(document.body.dataset.theme!=="jg")document.body.dataset.theme="jg";document.body.dataset.page="fix";jgColors(S.fix);return;}
+  {const hx=!S.gid&&!S.cid&&!S.sid&&!S.revPage&&!S.admin&&!S.up&&!S.book&&!(S.fix&&typeof fixWord==="function"&&fixWord(S.fix)==="페어")&&isHX();if(document.body.classList.contains("hxhome")!==hx){document.body.classList.toggle("hxhome",hx);document.documentElement.classList.toggle("hxhome",hx);}}
+  if(S.fix&&!S.sid&&!S.cid&&!S.gid&&typeof fixWord==="function"&&fixWord(S.fix)==="페어"){if(document.body.dataset.theme!=="jg")document.body.dataset.theme="jg";document.body.dataset.page="fix";jgColors(S.fix);return;}
   if(S.gid&&!S.sid&&!S.cid){const c=campById(S.gid);const t=c&&c.system?themeOf({system:c.system}):"plain";if((document.body.dataset.theme||"")!==t)document.body.dataset.theme=t;document.body.dataset.page="scen";return;}
   const sc=S.revPage?S.revPage.sc:S.cid?(S.scEdit&&S.scDraft?S.scDraft:scenById(S.cid)):(S.sid&&S.meta?curScen():null);
   // 시나리오 정보가 아직 안 왔으면 양피지 대신 메인 화면 색으로 기다려요
@@ -57,7 +57,7 @@ function render(){try{bkAuto();}catch(e){}
     app.innerHTML=bookHTML();bindBook();return;}
   if(S.revPage){app.innerHTML=revPageHTML();return;}
   if(S.up&&!S.sid&&!S.cid){app.innerHTML=upHTML();bindUp();return;}
-  if(S.fix&&!S.sid&&!S.cid){if(!fixOpen(S.fix)){app.innerHTML=fixLockHTML(S.fix);bindFixLock();return;}if(fixWord(S.fix)==="자관"){const ae=document.activeElement;if(S.jgEdit&&ae&&ae.closest&&ae.closest(".jgedit")&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName)&&ae.type!=="file"&&$(".jgedit"))return;app.innerHTML=jgPageHTML(S.fix);bindJgPage(S.fix);return;}app.innerHTML=fixPageHTML(S.fix);bindFixPage();return;}
+  if(S.fix&&!S.sid&&!S.cid){if(!fixOpen(S.fix)){app.innerHTML=fixLockHTML(S.fix);bindFixLock();return;}if(fixWord(S.fix)==="페어"){const ae=document.activeElement;if(S.jgEdit&&ae&&ae.closest&&ae.closest(".jgedit")&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName)&&ae.type!=="file"&&$(".jgedit"))return;app.innerHTML=jgPageHTML(S.fix);bindJgPage(S.fix);return;}app.innerHTML=fixPageHTML(S.fix);bindFixPage();return;}
   if(S.gid&&!S.sid&&!S.cid){app.innerHTML=campPageHTML();bindCamp();return;}
   if(S.cid){app.innerHTML=scenHTML();bindScen();return;}
   if(!S.sid&&S.admin){app.innerHTML=adminHTML();bindAdmin();return;}

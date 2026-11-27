@@ -1,5 +1,5 @@
-// 자관(1:1 자캐 관계) 페이지 — 고정탁 멤버가 2명이면 고정탁 페이지 대신 이 페이지
-// 자관 정보: fixes/{fx_이름} = {banner:{u,p,y}, rel, colors:{bg,acc,a,b}, fields:["외모","성격",…],
+// 페어(1:1 자캐 관계) 페이지 — 고정탁 멤버가 2명이면 고정탁 페이지 대신 이 페이지
+// 페어 정보: fixes/{fx_이름} = {banner:{u,p,y}, rel, colors:{bg,acc,a,b}, fields:["외모","성격",…],
 //   prof:{a:{own,nm,en,rn,ren,age,ht,sex,mbti,tags:[3],icon:{u,p},cut:{u,p},sec:{항목:글}}, b:{…}}, recs:[{id,d,t,note,img}]}
 const JG_F0=["외모","성격"];
 function jgDoc(f){const fk=fixKey(f);fixDocWatch(fk);return S.fixDocs[fk]||{};}
@@ -48,7 +48,7 @@ function jgPageHTML(f){const d=jgDoc(f),[A,B]=jgSides(f),fields=d.fields&&d.fiel
   const postsH=S.db?galHTML(galSrcFix(f),{newest:1,title:"POSTS",en:"POSTS",kinds:1}):"";const items=S.galTab&&S.galTab!=="all"?galSrcFix(f).flatMap(s=>s.list.map(p=>({...p,src:s.id,kind:s.kind,label:s.label}))):S.galItems;
   const tagH=(s,cls)=>`<div class="jgtag ${cls}"><div class="nm">${esc(s.en)}</div>${(s.pr.tags||[]).filter(Boolean).length?`<ul>${s.pr.tags.filter(Boolean).map(t=>`<li>${esc(t)}</li>`).join("")}</ul>`:""}</div>`;
   const logs=data.gs.slice().sort((a,b)=>(b.last||"").localeCompare(a.last||""));
-  return `<div class="jgp">${S.canAdmin?`<div class="jgtop"><a class="ghost ownonly" href="#">← 첫 화면</a><span style="flex:1"></span><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":"✎ 자관 수정"}</button></div>`:""}
+  return `<div class="jgp">${S.canAdmin?`<div class="jgtop"><a class="ghost ownonly" href="#">← 첫 화면</a><span style="flex:1"></span><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":"✎ 페어 수정"}</button></div>`:""}
     ${S.jgEdit&&S.canAdmin?jgEditHTML(f):""}
     <section class="jgposter">
       <div class="jgban${ban?.u?"":" empty"}">${ban?.u?`<img src="${esc(ban.u)}" alt="" style="object-position:50% ${+ban.y>=0?+ban.y:40}%">`:`<div class="fb"><span>${esc(A.en)}</span><span>${esc(B.en)}</span></div>`}</div>
@@ -66,11 +66,11 @@ function jgPageHTML(f){const d=jgDoc(f),[A,B]=jgSides(f),fields=d.fields&&d.fiel
       ${jgTimelineHTML(f,data,items||[])}
       <section class="jgsec jglog"><h4>LOG</h4><ul>${logs.map(g=>`<li><a href="#" data-scen="${esc(g.sc.id)}">${esc(g.sc.name)}</a><small>${esc(jgDot(g.days[0]?.day||""))}${g.days.length>1?` – ${esc(jgDot(g.last||""))}`:""} · ${g.days.length}세션${g.sc.done?" · 완주":""}</small></li>`).join("")||`<li class="empty">아직 세션이 없어요</li>`}</ul></section>
       ${postsH}
-      ${S.canAdmin?`<div class="sc-sec fxacc"><h4 data-en="ACCESS">자관 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
-        <div class="tip">이 비밀번호 하나로 자관 안의 모든 세션이 열려요. 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
+      ${S.canAdmin?`<div class="sc-sec fxacc"><h4 data-en="ACCESS">페어 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
+        <div class="tip">이 비밀번호 하나로 페어 안의 모든 세션이 열려요. 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
         <div class="pwrow"><code class="pw">${esc(S.secrets?.[fixKey(f)]||"만드는 중…")}</code><button class="pri" id="fxcopy">링크+비밀번호 복사</button><button class="ghost" id="fxnewpw">새로 만들기</button></div></div>`:""}
     </div></div>`;}
-// ---------- 자관 수정 (주인) ----------
+// ---------- 페어 수정 (주인) ----------
 function jgDraft(f){if(!S.jgDraftF||S.jgDraftF!==f||!S.jgDraft){const d=jgDoc(f),[A,B]=jgSides(f);
   S.jgDraftF=f;S.jgDraft=JSON.parse(JSON.stringify({banner:d.banner||null,rel:d.rel||"",colors:d.colors||{},fields:d.fields&&d.fields.length?d.fields:JG_F0,
     prof:{a:{own:A.own,...(d.prof||{}).a},b:{own:B.own,...(d.prof||{}).b}}}));}return S.jgDraft;}
@@ -86,13 +86,13 @@ function jgEditHTML(f){const D=jgDraft(f),[A,B]=jgSides(f),c=D.colors||{};
       <div class="f3"><span>태그 세 줄 (첫 화면)${[0,1,2].map(i=>`<input data-jgtag="${key}.${i}" value="${esc((q.tags||[])[i]||"")}">`).join("")}</span></div></div></div>
     <div class="pfs">${D.fields.map((k,i)=>`<div><div class="fh"><b>${esc(k)}</b>${D.fields.length>1?`<button type="button" data-jgfdel="${i}" title="이 항목 지우기 (양쪽)">✕</button>`:""}</div><textarea rows="3" data-jgsec="${key}|${esc(k)}">${esc((q.sec||{})[k]||"")}</textarea></div>`).join("")}
       <div class="addf"><input id="jgfnew-${key}" placeholder="새 항목 이름 (예: 능력)"><button type="button" data-jgfadd="${key}">＋ 항목 더하기</button><small>양쪽에 같이 생겨요</small></div></div></div>`;};
-  return `<section class="jgedit"><div class="eh">자관 수정 <small>· 주인만</small></div>
+  return `<section class="jgedit"><div class="eh">페어 수정 <small>· 주인만</small></div>
     <div class="erow"><label>첫 화면 그림<span>가로로 긴 그림</span></label><label class="eup">${D.banner?.u?"바꾸기":"＋ 올리기"}<input type="file" accept="image/*" hidden data-jgimg="banner"></label>
       ${D.banner?.u?`<span class="eup2">위치 <input type="range" min="0" max="100" value="${+D.banner.y>=0?+D.banner.y:40}" data-jgby></span><button type="button" class="ghost" data-jgbandel>빼기</button>`:""}<span class="tip" id="jgupmsg"></span></div>
     <div class="erow"><label>관계 한 줄</label><input class="ein" data-jgrel value="${esc(D.rel||"")}" placeholder="두 캐릭터가 어떤 사이인지"></div>
     <div class="erow"><label>색<span>테마 2 + 캐릭터 2</span></label>${cv("bg","#1b1b1c","테마 바탕")}${cv("acc","#efc11a","테마 포인트")}${cv("a",fixC(A.p?.c)||"#d9577d","A")}${cv("b",fixC(B.p?.c)||"#2e9a8c","B")}<button type="button" class="ghost" data-jgcreset>기본으로</button></div>
     <div class="jgpfs">${pf("a",A)}${pf("b",B)}</div>
-    <div class="eft"><span>비워 둔 칸은 페이지에 안 나와요 · 이 색은 자관에 묶인 모든 세션 페이지·로그에도 적용돼요</span><button type="button" class="pri" id="jgsave">저장</button></div></section>`;}
+    <div class="eft"><span>비워 둔 칸은 페이지에 안 나와요 · 이 색은 페어에 묶인 모든 세션 페이지·로그에도 적용돼요</span><button type="button" class="pri" id="jgsave">저장</button></div></section>`;}
 async function jgUpImg(f,file){const fk=fixKey(f);if(!S.authUser)await S.auth.signInAnonymously();
   const q=await galPut(fk,file,"jg"+Date.now().toString(36)+rid4());return {u:q.o,o:q.o,p:q.p,op:q.op,w:q.w,h:q.h};}
 function bindJgEdit(f){const box=document.querySelector(".jgedit");if(!box)return;const D=jgDraft(f);
@@ -128,7 +128,7 @@ function jgRecBox(f,rec){const w=document.createElement("div");w.className="gedi
     if(!jgNorm(d)){toast("날짜를 2026.06.29 처럼 써 주세요");return;}if(!t&&!note&&!pick){toast("제목이나 메모를 써 주세요");return;}
     const fk=fixKey(f),cur=(jgDoc(f).recs||[]).slice(),r={id:rec?.id||Date.now().toString(36)+rid4(),d,t,note,img:pick||""};
     const recs=rec?cur.map(x=>x.id===rec.id?r:x):[...cur,r];
-    try{if(!S.authUser)await S.auth.signInAnonymously();await S.db.doc("fixes/"+fk).set({recs},{merge:true});S.fixDocs[fk]={...(S.fixDocs[fk]||{}),recs};w.remove();render();}catch(e){toast("저장하지 못했어요"+(e.code==="permission-denied"?" (자관 비밀번호로 다시 열어 주세요)":""));}};}
+    try{if(!S.authUser)await S.auth.signInAnonymously();await S.db.doc("fixes/"+fk).set({recs},{merge:true});S.fixDocs[fk]={...(S.fixDocs[fk]||{}),recs};w.remove();render();}catch(e){toast("저장하지 못했어요"+(e.code==="permission-denied"?" (페어 비밀번호로 다시 열어 주세요)":""));}};}
 function bindJgPage(f){
   const e=$("#jgedit");if(e)e.onclick=()=>{S.jgEdit=!S.jgEdit;S.jgDraft=null;if(!S.jgEdit)jgColors(f);render();};
   if(S.jgEdit)bindJgEdit(f);
@@ -141,8 +141,8 @@ function bindJgPage(f){
   document.querySelectorAll(".jgp [data-scen]").forEach(a=>a.onclick=ev=>{ev.preventDefault();gotoScen(a.dataset.scen);});
   document.querySelectorAll(".jgtl [data-gal]").forEach(x=>x.onclick=ev=>{ev.preventDefault();galOpenAt(x.dataset.gal);});
   if(S.db)bindGal(galSrcFix(f));
-  const fc=$("#fxcopy");if(fc)fc.onclick=()=>copyText(`[자관 ${f}] TRPG 로그\n${location.origin+location.pathname}#f-${encodeURIComponent(f)}\n비밀번호: ${S.secrets?.[fixKey(f)]||""}`,"링크와 비밀번호를 복사했어요");
-  const fn=$("#fxnewpw");if(fn)fn.onclick=()=>confirmBox("자관 비밀번호를 새로 만들까요? 안의 모든 세션 비밀번호가 같이 바뀌고, 예전 비밀번호로 연 사람은 다시 잠겨요.","새로 만들기",async()=>{try{await S.db.doc("secrets/"+fixKey(f)).set({pw:genPw()});ownerMaintain();toast("새 비밀번호를 만들었어요");}catch(err){writeFail(err);}});
+  const fc=$("#fxcopy");if(fc)fc.onclick=()=>copyText(`[페어 ${f}] TRPG 로그\n${location.origin+location.pathname}#f-${encodeURIComponent(f)}\n비밀번호: ${S.secrets?.[fixKey(f)]||""}`,"링크와 비밀번호를 복사했어요");
+  const fn=$("#fxnewpw");if(fn)fn.onclick=()=>confirmBox("페어 비밀번호를 새로 만들까요? 안의 모든 세션 비밀번호가 같이 바뀌고, 예전 비밀번호로 연 사람은 다시 잠겨요.","새로 만들기",async()=>{try{await S.db.doc("secrets/"+fixKey(f)).set({pw:genPw()});ownerMaintain();toast("새 비밀번호를 만들었어요");}catch(err){writeFail(err);}});
 }
 // 바탕색 밝기에 맞춰 글자색
 function jgTextColor(){const st=document.body.style,bg=(st.getPropertyValue("--jbg")||"#1b1b1c").trim();const m=bg.match(/^#?([0-9a-f]{6})$/i);let lum=0.1;
