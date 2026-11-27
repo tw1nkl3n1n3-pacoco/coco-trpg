@@ -308,7 +308,10 @@ body[data-theme=jg] .sc-top .orig,body[data-theme=jg] .schero-t .orig{font-famil
 body[data-theme=jg] .schero-t{background:linear-gradient(transparent,rgba(17,17,17,.92));box-shadow:none;padding-top:46px;border-bottom:3px solid var(--jacc)}
 body[data-theme=jg] .schero-t h2{font-family:var(--jhk);font-weight:400;color:var(--jacc)!important;font-size:38px}
 body[data-theme=jg] .day-h .nth,body[data-theme=jg] .oday .nth{border-radius:0;background:#111!important;color:var(--jacc)!important}
-body[data-theme=jg] :is(.castc .av,.rvcard,.galg .im,.galadd,.glb .fr img,.gebox,.gei,.lkbox){border-radius:0}
+body[data-theme=jg] :is(.castc .av,.rvcard,.galg .im,.galup,.glb .top .tb,.gelock,.gelock .sw,.gelock .sw::after,.gebox,.gei,.lkbox){border-radius:0}
+body[data-theme=jg] .glpaper{box-shadow:0 0 0 1px #000,8px 8px 0 var(--jacc)}body[data-theme=jg] .glpaper h1,body[data-theme=jg] .psth h2{font-family:var(--jhk);font-weight:400}
+body[data-theme=jg] .pstpage{--ink:var(--jtx);color:var(--jtx)}body[data-theme=jg] .psttop b{font-family:var(--jhk);font-weight:400;color:var(--jacc)}body[data-theme=jg] .psttop small{font-family:var(--jdisp)}
+body[data-theme=jg] .pstft{border-color:#444}body[data-theme=jg] .pstlock .ic{font-family:var(--jdisp);color:var(--jacc)}
 body[data-theme=jg] .galadd i,body[data-theme=jg] .galg figcaption .c{color:var(--ja)}
 body[data-theme=jg] .glb .top .ac,body[data-theme=jg] .glb .meta .k{color:var(--ja);font-family:var(--jdisp)}
 body[data-theme=jg] .lkbox{box-shadow:0 0 0 1px #000,8px 8px 0 var(--jacc)}
@@ -401,13 +404,12 @@ body[data-theme=jg] .jgp .galsec{background:var(--p1);border:1px solid var(--ln)
 body[data-theme=jg] .jgp .galsec h4{font:400 22px var(--jdisp);letter-spacing:.14em;color:var(--jtx)!important}
 body[data-theme=jg] .jgp .galsec h4::before,body[data-theme=jg] .jgp .galsec h4::after{display:none}
 body[data-theme=jg] .jgp .galsec .gcnt{font-family:var(--jdisp);color:var(--fj);font-size:14px}
-.jgp .galtabs button{border-radius:0;border-color:var(--ln);color:var(--fj);font-family:var(--jhk);letter-spacing:.04em}
-.jgp .galtabs button.on{background:var(--jacc);border-color:var(--jacc);color:#111}
-.jgp .galkinds{background:transparent;border:1px dashed var(--ln);color:var(--dimj);padding:8px 12px}
-.jgp .galkinds button{border-radius:0;background:transparent;border-color:var(--ln);color:var(--jtx)}
-.jgp .galkinds button:hover{background:var(--jacc);color:#111;border-color:var(--jacc)}
+.jgp .galup{background:var(--jacc);border-color:var(--jacc);color:#111;border-radius:0}
+.jgp .galmenu{border-radius:0;background:#f4f3ef;box-shadow:0 0 0 1px #000,5px 5px 0 var(--jacc);--ink:#141414;--panel:#f4f3ef;--panel2:#e9e7e1;--line:#dcd9d1;--faint:#888}
+.jgp .galmenu b{background:#111;color:var(--jacc);border-radius:0;font:400 11px var(--jdisp);letter-spacing:.08em}
 .jgp .galg .im{background:var(--p2);box-shadow:inset 0 0 0 1px var(--ln)}
 .jgp .galg .gk{background:var(--jacc);color:#111;border-radius:0;font-family:var(--jdisp);letter-spacing:.08em}
+.jgp .galg .glnk{border-radius:0}.jgp .galg .lk b{color:var(--jacc);font-family:var(--jdisp)}
 .jgp .galg figcaption{color:var(--jtx)}.jgp .galg figcaption .m{color:var(--fj)}
 .jgp .fxacc{background:var(--p1);border:1px solid var(--ln);box-shadow:none;margin-top:16px;color:var(--jtx)}
 .jgp .fxacc h4{color:var(--jtx)!important}body[data-theme=jg] .jgp .fxacc h4::before{display:none}

@@ -1169,11 +1169,9 @@ body.glbon{overflow:hidden}
 .glb .top{grid-column:1/3;display:flex;align-items:center;gap:12px;padding:0 14px 0 20px;border-bottom:1px solid var(--line);font-size:12px;font-weight:600;letter-spacing:.06em;font-variant-numeric:tabular-nums}
 .glb .top .ac{color:var(--acc)}.glb .top .sp{flex:1}.glb .top a{color:var(--ink);text-decoration:none;border:1px solid var(--line);border-radius:6px;padding:3px 9px;background:var(--panel)}
 .glb .top .x{background:none;border:0;font-size:18px;padding:4px 8px;color:var(--ink)}
-.glb .stage{position:relative;display:flex;align-items:center;justify-content:center;padding:24px 60px;min-height:0}
-.glb .fr{position:relative;max-width:100%;max-height:100%;display:flex}
-.glb .fr img{max-width:100%;max-height:calc(100vh - 48px - 72px - 48px);object-fit:contain;border-radius:4px;box-shadow:0 14px 40px -18px rgba(0,0,0,.4);display:block;background:var(--panel)}
-.glb .nv{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border:1px solid var(--line);border-radius:50%;display:grid;place-items:center;background:var(--panel);font-size:18px;color:var(--ink);padding:0}
-.glb .nv.l{left:12px}.glb .nv.r{right:12px}
+.glb .stage{position:relative;grid-row:2/4;grid-column:1;overflow-y:auto;overscroll-behavior:contain;padding:24px 64px 90px;min-height:0;scrollbar-width:thin}
+.glb .nv{position:fixed;top:50%;z-index:2;transform:translateY(-50%);width:38px;height:38px;border:1px solid var(--line);border-radius:50%;display:grid;place-items:center;background:var(--panel);font-size:18px;color:var(--ink);padding:0}
+.glb .nv.l{left:12px}.glb .nv.r{right:352px}
 .glb .side{grid-row:2/4;grid-column:2;border-left:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;min-height:0}
 .glb .meta{padding:18px 18px 14px;border-bottom:1px solid var(--line)}
 .glb .meta .k{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--acc)}
@@ -1192,17 +1190,17 @@ body.glbon{overflow:hidden}
 .glb .cmx{float:right;background:none;border:0;color:var(--faint);font-size:11px;padding:0 2px}.glb .cmx:hover{color:var(--bad)}
 .glb .cin{display:flex;gap:6px;padding:12px 14px;border-top:1px solid var(--line);margin:0}
 .glb .cin input{flex:1;min-width:0;font-size:13px}.glb .cin .pri{white-space:nowrap}
-.glb .strip{grid-column:1;display:flex;gap:8px;align-items:center;padding:0 16px;border-top:1px solid var(--line);overflow-x:auto;justify-content:safe center}
+.glb .strip{grid-column:1;grid-row:3;z-index:2;background:color-mix(in srgb,var(--panel2) 92%,transparent);display:flex;gap:8px;align-items:center;padding:0 16px;border-top:1px solid var(--line);overflow-x:auto;justify-content:safe center}
 .glb .strip button{flex:none;width:50px;height:38px;border:0;padding:0;border-radius:4px;overflow:hidden;opacity:.45;background:var(--panel)}
 .glb .strip button img{width:100%;height:100%;object-fit:cover;display:block}
 .glb .strip button.on{opacity:1;outline:2px solid var(--acc);outline-offset:2px}
 /* 테마별 맛 */
 body[data-theme=dx] .glb .top,body[data-theme=dx] .glb .meta .k,body[data-theme=dx] .glb .ch,body[data-theme=dx] .galg .no{font-family:"Chakra Petch",ui-monospace,monospace}
-body[data-theme=dx] .galg .im,body[data-theme=dx] .glb .fr img,body[data-theme=dx] .galadd{border-radius:0}
-body[data-theme=wa] .galg .im,body[data-theme=wa] .glb .fr img{border-radius:0;box-shadow:4px 4px 0 #111}
+body[data-theme=dx] .galg .im,body[data-theme=dx] .glb .col img,body[data-theme=dx] .galadd{border-radius:0}
+body[data-theme=wa] .galg .im,body[data-theme=wa] .glb .col img{border-radius:0;box-shadow:4px 4px 0 #111}
 body[data-theme=deco] .glb .meta h3,body[data-theme=deco] .galg figcaption .t{font-family:"Gowun Batang",serif}
 @media(max-width:760px){.glb{display:flex;flex-direction:column;overflow:auto}.glb .top{flex:none;height:46px;padding:0 8px 0 14px}
-  .glb .stage{flex:none;padding:14px 12px}.glb .fr img{max-height:68vh}.glb .nv{display:none}
+  .glb .stage{flex:none;overflow:visible;padding:12px 10px}.glb .nv{display:none}.glb .ipg{display:none}
   .glb .strip{flex:none;height:58px;justify-content:flex-start;padding:0 12px;border:0;order:2}.glb .strip button{width:44px;height:34px}
   .glb .side{flex:1 0 auto;border-left:0;border-top:1px solid var(--line);order:3}.glb .cl{overflow:visible}}
 .fxpage .galg .from{display:block}
@@ -1245,9 +1243,6 @@ body:not(.own) .ownonly{display:none!important}
 .rladd{width:90px!important;font-size:12px!important;padding:2px 9px!important;border:1px dashed var(--line)!important;border-radius:999px!important;background:none!important}
 .rlf select{font-size:12.5px;padding:3px 6px}
 @media(max-width:640px){.rlrow{grid-template-columns:1fr}}
-.glb .ipg{position:absolute;right:10px;top:10px;font-size:11px;font-weight:700;color:#fff;background:rgba(0,0,0,.5);padding:2px 8px;border-radius:999px}
-.glb .idots{position:absolute;left:0;right:0;bottom:6px;display:flex;justify-content:center;gap:6px}
-.glb .idots button{width:8px;height:8px;border-radius:50%;padding:0;border:0;background:var(--line)}.glb .idots button.on{background:var(--acc)}
 .glb .strip button{position:relative}.glb .strip button i{position:absolute;right:2px;top:2px;font-style:normal;font-size:9px;font-weight:700;color:#fff;background:rgba(0,0,0,.55);border-radius:3px;padding:0 3px}
 .fxp[data-fxme]{cursor:pointer}.fxp.me{outline:2px solid var(--acc);outline-offset:1px}.fxp.me b::after{content:" · 나";font-weight:500;color:var(--acc)}
 
@@ -1314,44 +1309,64 @@ body[data-theme=deco] .geh b{font-family:"Gowun Batang",serif}
 .hx.fxpage .tl .b,.hx.fxpage .tl img,.hx.fxpage .tl .b em{border-radius:0}
 @media(max-width:640px){.tl::before{left:36px}.tl .d{width:24px}.tl li.tlm{padding-left:52px}.tl img{width:42px;height:42px}}
 
-/* ===== 게시물 종류 (그림 · 만화 · 글) ===== */
-.galtabs{display:flex;gap:4px;margin:0 0 10px;flex-wrap:wrap}
-.galtabs button{font-size:12.5px;padding:4px 12px;border:1px solid var(--line);background:transparent;color:var(--sub);border-radius:999px}
-.galtabs button.on{background:var(--acc);border-color:var(--acc);color:#fff}.galtabs small{opacity:.7}
-.galkinds{display:flex;align-items:center;gap:6px;cursor:default}
-.galkinds button{font-size:12.5px;padding:3px 12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px}
-.galkinds button:hover{border-color:var(--acc);color:var(--acc)}
-.galg .gk{position:absolute;left:7px;top:7px;font-size:10.5px;font-weight:700;color:#fff;background:rgba(0,0,0,.6);padding:1px 7px;border-radius:999px}
-.galg .gt-txt .im,.galg .gt-toon .im{cursor:pointer}
-.galg .txtc{position:absolute;inset:0;background:#f4f2ec;color:#222;padding:30px 14px 12px;overflow:hidden;font:400 12.5px/1.75 "Noto Serif KR",serif}
-.galg .txtc b{display:block;font:700 15px/1.3 "Noto Sans KR",sans-serif;margin-bottom:6px}.galg .txtc p{margin:0;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
-.gtxt{width:min(760px,100%)}.gtxt textarea{width:100%;font:400 15px/1.8 "Noto Serif KR",serif;resize:vertical}.gtxt input{width:100%}
-/* 만화·글 보기 */
-.grd{position:fixed;inset:0;z-index:300;overflow-y:auto;background:#1b1b1c;color:#f1efe9;font:15px/1.7 "Noto Sans KR",sans-serif;
-  --acc2:var(--jacc,#efc11a);--ra:var(--ja,#d9577d);--rb:var(--jb,#2e9a8c)}
-.grbar{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:12px;padding:10px 18px;background:#111;border-bottom:3px solid var(--acc2);flex-wrap:wrap}
-.grbar .k{font:400 12px "Anton","Black Han Sans",sans-serif;letter-spacing:.12em;background:var(--acc2);color:#111;padding:1px 8px}
-.grbar b{font:400 19px "Black Han Sans","Noto Sans KR",sans-serif;color:var(--acc2)}.grbar small{color:#8b8880;font-size:12.5px}.grbar .sp{flex:1}
-.grbar button{font-size:12.5px;border:1px solid #444;background:transparent;padding:4px 10px;color:#ddd;border-radius:0}.grbar .x{font-size:17px;color:#fff;border:0}
-.grprog{position:sticky;top:51px;height:3px;background:#2a2a2c;z-index:3}.grprog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ra),var(--rb))}
-.grtoon{max-width:760px;margin:0 auto;padding-bottom:30px}.grtoon img{display:block;width:100%;height:auto}
-.grside{position:fixed;right:22px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;font:400 13px "Anton",sans-serif;color:#8b8880;z-index:3}
-.grside b{color:var(--acc2);font-weight:400;font-size:18px}.grside i{width:2px;height:40px;background:#444}
-.grnov{max-width:680px;margin:28px auto 30px;background:#f3f2ee;color:#1d1d1d;padding:46px 54px 40px;box-shadow:0 0 0 1px #000,8px 8px 0 var(--acc2)}
-.grnov .tk{font:400 12px "Anton",sans-serif;letter-spacing:.2em;color:#999}.grnov h1{color:#141414;margin:6px 0 4px;font:400 38px/1.15 "Black Han Sans","Noto Sans KR",sans-serif}
-.grnov .mt{font-size:12.5px;color:#777;border-bottom:1px solid #d8d5cd;padding-bottom:16px;margin-bottom:24px}
-.grnov p{margin:0 0 1.1em;font:400 var(--fs,17px)/2 "Noto Serif KR","Noto Sans KR",serif;text-indent:1em;word-break:keep-all}
-.grnov .sep{text-align:center;color:#aaa;letter-spacing:.6em;margin:22px 0}
-.grft{max-width:720px;margin:0 auto 60px;padding:0 12px}
-.grnav{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
-.grnav button{border:1px solid #3a3a3e;background:transparent;color:#f1efe9;padding:12px 14px;font-size:13px;text-align:left;border-radius:0}.grnav button:last-child{text-align:right}
-.grnav button small{display:block;color:#8b8880;font:400 11px "Anton",sans-serif;letter-spacing:.12em}
-.grcm{border:1px solid #3a3a3e;padding:14px 16px}.grcm h5{margin:0 0 8px;font:400 14px "Anton",sans-serif;letter-spacing:.14em}
-.grcm .r{font-size:13.5px;padding:7px 0;border-top:1px solid #3a3a3e;position:relative;padding-right:60px}.grcm .r b{color:var(--acc2);margin-right:8px}.grcm .r i{font-style:normal;color:#75736e;font-size:11px;margin-left:8px}
-.grcm .r button{position:absolute;right:0;top:6px;background:none;border:0;color:#75736e}
-.grcm .cin{margin-top:10px;display:flex;gap:6px}.grcm .cin input{flex:1;background:#252527;border:1px solid #3a3a3e;color:#f1efe9;padding:6px 10px}
-.grcm .cin .pri{background:var(--acc2);color:#111;border:0}
-@media(max-width:760px){.grnov{padding:30px 22px;margin:16px 10px}.grnov h1{font-size:28px}.grside{right:8px}.grprog{top:auto}}
 /* 일반 고정탁 타임라인 접기 */
 .fxtl .tlfold,.jgtl .fold{list-style:none}.fxtl .tlfold::before,.jgtl .fold::before{display:none!important}
 .fxtl .tlfold button{width:100%;border:1px dashed var(--line);background:transparent;color:var(--sub);padding:8px;font-size:13px}
+
+/* ===== 게시물: 이미지 · 텍스트 ===== */
+.galadd{position:relative;border:0!important;height:auto!important;justify-content:flex-end!important;margin:0 0 10px!important;cursor:default}
+.galup{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;padding:6px 14px;border:1px solid var(--acc);background:var(--acc);color:#fff;border-radius:6px}
+.galup i{font-style:normal;color:inherit!important;font-size:15px}
+.galmenu{position:absolute;right:0;top:calc(100% + 6px);z-index:20;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 12px 30px -12px rgba(0,0,0,.35);min-width:250px;overflow:hidden}
+.galmenu button{display:flex;align-items:center;gap:10px;width:100%;padding:10px 14px;border:0;border-top:1px solid var(--line);background:none;color:var(--ink);font-size:13.5px;text-align:left;border-radius:0}
+.galmenu button:first-child{border-top:0}.galmenu button:hover{background:var(--panel2)}
+.galmenu b{font-size:11px;padding:1px 8px;border-radius:3px;background:var(--ink);color:var(--panel);min-width:52px;text-align:center}
+.galmenu small{margin-left:auto;color:var(--faint);font-size:11.5px}
+.galg .gk{position:absolute;left:7px;top:7px;font-size:10.5px;font-weight:700;color:#fff;background:rgba(0,0,0,.6);padding:1px 7px;border-radius:999px}
+.galg .txtc{position:absolute;inset:0;background:#f4f2ec;color:#222;padding:30px 14px 12px;overflow:hidden;font:400 12.5px/1.75 "Noto Serif KR",serif}
+.galg .txtc b{display:block;font:700 15px/1.3 "Noto Sans KR",sans-serif;margin-bottom:6px}.galg .txtc p{margin:0;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+.galg .glnk{position:absolute;right:7px;top:7px;width:28px;height:28px;display:grid;place-items:center;padding:0;border:0;border-radius:6px;background:rgba(0,0,0,.55);color:#fff;font-size:13px;opacity:0;transition:opacity .15s;z-index:2}
+.galg figure:hover .glnk,.galg .glnk:focus{opacity:1}
+@media(hover:none){.galg .glnk{opacity:.85}}
+.galg figure:has(.pg) .glnk{top:32px}
+.galg .lock .im>img,.galg .lock .im .sl,.galg .lock .im .txtc{filter:blur(14px) saturate(.6);transform:scale(1.15)}
+.galg .lock .im::after{content:"";position:absolute;inset:0;background:rgba(20,20,20,.3);pointer-events:none}
+.galg .lock .pg,.galg .lock .dots{display:none}
+.galg .lk{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#fff;text-align:center;pointer-events:none}
+.galg .lk b{font:400 13px "Anton","Chakra Petch",sans-serif;letter-spacing:.14em;background:#111;color:#fff;padding:2px 10px}
+.galg .lk span{font-size:11.5px;color:#eee;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.gtxt{width:min(760px,100%)}.gtxt textarea{width:100%;font:400 15px/1.8 "Noto Serif KR",serif;resize:vertical}.gtxt input[type=text]{width:100%}
+.gelock{display:flex;align-items:center;gap:12px;margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;cursor:pointer;background:var(--panel)}
+.gelock input{position:absolute;opacity:0;pointer-events:none}
+.gelock .sw{width:40px;height:22px;border-radius:999px;background:var(--line);position:relative;flex:none;transition:background .15s}
+.gelock .sw::after{content:"";position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s}
+.gelock input:checked+.sw{background:var(--acc)}.gelock input:checked+.sw::after{left:21px}
+.gelock b{font-size:13.5px;display:block}.gelock small{font-size:12px;color:var(--faint)}
+/* 크게 보기: 왼쪽은 위→아래 스크롤 */
+.glb .col{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:0}
+.glb .col img{display:block;width:100%;height:auto;background:var(--panel);box-shadow:0 14px 40px -18px rgba(0,0,0,.35)}
+.glb .ipg{position:fixed;right:356px;top:50%;transform:translateY(-50%);display:none;flex-direction:column;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--faint);z-index:2}
+.glb .ipg b{color:var(--acc);font-size:16px}.glb .ipg i{width:2px;height:34px;background:var(--line)}
+.glb .top .tb{font-size:12px;border:1px solid var(--line);border-radius:6px;padding:3px 9px;background:var(--panel);color:var(--ink);white-space:nowrap}
+.glb .top .tb.off{color:var(--faint);border-style:dashed}
+.glb .strip button.tx{display:grid;place-items:center;background:#f4f2ec;color:#222;font-size:10px;font-weight:700;overflow:hidden}
+.glpaper{max-width:680px;margin:0 auto;background:#f3f2ee;color:#1d1d1d;padding:44px 52px 40px;box-shadow:0 0 0 1px rgba(0,0,0,.6),8px 8px 0 var(--acc)}
+.glpaper .tk{font:700 11px "Chakra Petch","Anton",sans-serif;letter-spacing:.2em;color:#999}
+.glpaper h1{margin:6px 0 4px;font:700 32px/1.2 "Noto Sans KR",sans-serif;color:#141414}
+.glpaper .pm{font-size:12.5px;color:#777;border-bottom:1px solid #d8d5cd;padding-bottom:14px;margin-bottom:22px}
+.glpaper p{margin:0 0 1.1em;font:400 var(--fs,17px)/2 "Noto Serif KR","Noto Sans KR",serif;text-indent:1em;word-break:keep-all}
+.glpaper .sep{text-align:center;color:#aaa;letter-spacing:.6em;margin:22px 0}
+@media(min-width:761px){.glb .ipg{display:flex}}
+@media(max-width:760px){.glb .col{max-width:none}.glpaper{padding:28px 20px;box-shadow:0 0 0 1px rgba(0,0,0,.5),5px 5px 0 var(--acc)}.glpaper h1{font-size:24px}.glb .top .tb{padding:3px 7px}.glb .top>span:nth-child(2){display:none}}
+/* 게시물 하나만 보는 페이지 */
+.pstpage{max-width:820px;margin:0 auto;padding:18px 12px 60px}
+.psttop{display:flex;align-items:baseline;gap:10px;padding:0 4px 12px;border-bottom:2px solid var(--acc);margin-bottom:20px}
+.psttop b{font-size:18px}.psttop small{color:var(--faint);font-size:12.5px;letter-spacing:.1em}
+.psth h2{margin:0;font-size:24px;color:inherit}.psth .pm{font-size:12.5px;color:var(--faint);margin:2px 0 14px}
+.pstimgs img{display:block;width:100%;height:auto}
+.pstft{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:28px;padding:22px;border:1px dashed var(--line);text-align:center}
+.pstft a.pri{display:inline-block;padding:9px 20px;text-decoration:none;font-weight:800}
+.pstft span{font-size:12.5px;color:var(--faint)}
+.pstlock{text-align:center;padding:60px 20px}.pstlock .ic{font:400 44px "Anton","Chakra Petch",sans-serif;color:var(--acc)}.pstlock p{color:var(--dim);margin:6px 0 0}
+body[data-page=post] aside{display:none}body[data-page=post] .wrap{grid-template-columns:1fr}
+.galmenu b{display:inline-block!important}

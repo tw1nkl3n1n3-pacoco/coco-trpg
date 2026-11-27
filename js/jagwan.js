@@ -30,8 +30,8 @@ function jgTimelineHTML(f,data,items){const d=jgDoc(f),tab=S.jgTl||"main",canRec
       return mh+`<li><div class="d">${dd}</div><div class="t"><a href="${e.sid?`#s-${esc(e.sid)}`:`#c-${esc(sc.id)}`}">${esc(sc.name)}</a> <small>${e.n>1?`${e.i}회차 / ${e.n}`:"1회차"}${effSys(sc)?" · "+esc(sysLabel(effSys(sc))):""}</small>${done?"<em>완주</em>":""}</div></li>`;}
     if(e.type==="g"){const ims=e.posts.flatMap(p=>galImgs(p).map(q=>({p,q})));
       return mh+`<li><div class="d">${dd}</div><div class="t">갤러리 <small>사진 ${ims.length}장${e.by?" · "+esc(e.by):""}</small></div><div class="th">${ims.slice(0,8).map(x=>`<img src="${esc(x.q.u||x.q.o)}" alt="" loading="lazy" data-gal="${esc(x.p.id)}">`).join("")}${ims.length>8?`<span>+${ims.length-8}</span>`:""}</div></li>`;}
-    const p=e.p,t=galT(p),im=galImgs(p);
-    return mh+`<li><div class="d">${dd}</div><div class="t"><a href="#" data-gal="${esc(p.id)}">${esc(p.title||GAL_T[t])}</a> <small>${GAL_T[t]}${p.by?" · "+esc(p.by):""}</small></div>${t==="toon"&&im[0]?`<div class="th"><img src="${esc(im[0].u||im[0].o)}" alt="" loading="lazy" data-gal="${esc(p.id)}"></div>`:t==="txt"?`<div class="note">${esc(String(p.body||"").slice(0,90))}…</div>`:""}</li>`;}).join("");};
+    const p=e.p;
+    return mh+`<li><div class="d">${dd}</div><div class="t"><a href="#" data-gal="${esc(p.id)}">${esc(p.title||"텍스트")}</a> <small>텍스트${p.by?" · "+esc(p.by):""}</small></div><div class="note">${esc(String(p.body||"").slice(0,90))}…</div></li>`;}).join("");};
   // 서브: 직접 쓰는 기록
   const R=(d.recs||[]).map(r=>({...r,k:jgNorm(r.d),dl:r.d})).sort((a,b)=>b.k.localeCompare(a.k));
   const subLi=list=>list.map(r=>`<li><div class="d">${esc(r.d||"")}</div><div class="t">${esc(r.t||"")}${canRec?`<button type="button" class="rx" data-jgrecx="${esc(r.id)}" title="지우기">✕</button><button type="button" class="rx" data-jgrece="${esc(r.id)}" title="고치기">✎</button>`:""}</div>${r.img?`<div class="th big"><img src="${esc(r.img)}" alt="" loading="lazy"></div>`:""}${r.note?`<div class="note">${esc(r.note).replace(/\n/g,"<br>")}</div>`:""}</li>`).join("");
@@ -45,7 +45,7 @@ function jgCardHTML(s,fields){const q=s.pr,dl=[["나이",q.age&&(/\D/.test(q.age
     ${dl.length?`<dl>${dl.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>`:""}
     ${secs.map(k=>`<details><summary>${esc(k)}</summary><p>${esc(q.sec[k]).replace(/\n/g,"<br>")}</p></details>`).join("")}</div>`;}
 function jgPageHTML(f){const d=jgDoc(f),[A,B]=jgSides(f),fields=d.fields&&d.fields.length?d.fields:JG_F0,data=jgFixData(f),ban=d.banner;
-  const srcs=S.db?galSrcFix(f):[],postsH=S.db?galHTML(srcs,{newest:1,title:"POSTS",en:"POSTS",kinds:1}):"",items=galAll(srcs,1);
+  const srcs=S.db?galSrcFix(f):[],postsH=S.db?galHTML(srcs,{newest:1,title:"POSTS",en:"POSTS"}):"",items=galAll(srcs,1);
   const tagH=(s,cls)=>`<div class="jgtag ${cls}"><div class="nm">${esc(s.en)}</div>${(s.pr.tags||[]).filter(Boolean).length?`<ul>${s.pr.tags.filter(Boolean).map(t=>`<li>${esc(t)}</li>`).join("")}</ul>`:""}</div>`;
   const logs=data.gs.slice().sort((a,b)=>(b.last||"").localeCompare(a.last||""));
   return `<div class="jgp">${S.canAdmin?`<div class="jgtop"><a class="ghost ownonly" href="#">← 첫 화면</a><span style="flex:1"></span><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":"✎ 페어 수정"}</button></div>`:""}

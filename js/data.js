@@ -137,6 +137,10 @@ function route(){
   const bid=h.startsWith("b-")?h.slice(2):null;
   if(bid){if(!S.book||S.book.scid!==bid){S.revPage=null;S.gid=null;S.up=null;S.admin=false;if(S.sid||S.cid){S.cid=null;openSession(null);}bookOpen(bid);window.scrollTo(0,0);}return;}
   if(S.book){S.book=null;PRE.book=new Set();document.body.classList.remove("booking");document.documentElement.classList.remove("booking");if(!sid&&!cid&&!h)render();}
+  // 게시물 하나 (#p-출처~id)
+  const pid=h.startsWith("p-")?h.slice(2):null;
+  if(pid){if(!S.postPage||S.postPage.key!==pid){S.fix=null;S.gid=null;S.revPage=null;S.up=null;S.admin=false;if(S.sid||S.cid){S.cid=null;closeSession();S.sid=null;}openPostPage(pid);}return;}
+  if(S.postPage){S.postPage=null;if(!sid&&!cid&&!h.startsWith("f-")&&!h.startsWith("g-")&&!h.startsWith("r-"))render();}
   // 고정탁 페이지 (#f-이름)
   const fid=h.startsWith("f-")?decodeURIComponent(h.slice(2)):null;
   if(fid){if(S.fix!==fid){S.fix=fid;S.revPage=null;S.gid=null;S.up=null;S.admin=false;if(S.sid||S.cid){S.cid=null;openSession(null);}else render();window.scrollTo(0,0);}return;}

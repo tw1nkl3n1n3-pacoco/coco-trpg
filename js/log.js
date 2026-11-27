@@ -39,7 +39,8 @@ function jgColors(f,over){const fd=(S.fixDocs||{})[typeof fixKey==="function"?fi
   st.setProperty("--ja",c.a||cc(sd[0]&&sd[0].p&&sd[0].p.c)||"#d9577d");st.setProperty("--jb",c.b||cc(sd[1]&&sd[1].p&&sd[1].p.c)||"#2e9a8c");
   st.setProperty("--jbg",c.bg||"#1b1b1c");st.setProperty("--jacc",c.acc||"#efc11a");if(typeof jgTextColor==="function")jgTextColor();}
 function applyTheme(){document.body.classList.toggle("own",!!S.canAdmin);
-  {const hx=!S.gid&&!S.cid&&!S.sid&&!S.revPage&&!S.admin&&!S.up&&!S.book&&!(S.fix&&typeof fixWord==="function"&&fixWord(S.fix)==="페어")&&isHX();if(document.body.classList.contains("hxhome")!==hx){document.body.classList.toggle("hxhome",hx);document.documentElement.classList.toggle("hxhome",hx);}}
+  {const hx=!S.gid&&!S.cid&&!S.sid&&!S.revPage&&!S.postPage&&!S.admin&&!S.up&&!S.book&&!(S.fix&&typeof fixWord==="function"&&fixWord(S.fix)==="페어")&&isHX();if(document.body.classList.contains("hxhome")!==hx){document.body.classList.toggle("hxhome",hx);document.documentElement.classList.toggle("hxhome",hx);}}
+  if(S.postPage){const t=postPageTheme();if(document.body.dataset.theme!==t)document.body.dataset.theme=t;document.body.dataset.page="post";if(t==="jg")jgColors(S.postPage.name);return;}
   if(S.fix&&!S.sid&&!S.cid&&!S.gid&&typeof fixWord==="function"&&fixWord(S.fix)==="페어"){if(document.body.dataset.theme!=="jg")document.body.dataset.theme="jg";document.body.dataset.page="fix";jgColors(S.fix);return;}
   if(S.gid&&!S.sid&&!S.cid){const c=campById(S.gid);const t=c&&c.system?themeOf({system:c.system}):"plain";if((document.body.dataset.theme||"")!==t)document.body.dataset.theme=t;document.body.dataset.page="scen";return;}
   const sc=S.revPage?S.revPage.sc:S.cid?(S.scEdit&&S.scDraft?S.scDraft:scenById(S.cid)):(S.sid&&S.meta?curScen():null);
@@ -56,6 +57,7 @@ function render(){try{bkAuto();}catch(e){}
   if(S.book){const ae=document.activeElement;if(S.book.mode==="edit"&&ae&&ae.closest&&ae.closest("#bksheet")&&$("#bksheet"))return;
     app.innerHTML=bookHTML();bindBook();return;}
   if(S.revPage){app.innerHTML=revPageHTML();return;}
+  if(S.postPage){app.innerHTML=postPageHTML();bindPostPage();return;}
   if(S.up&&!S.sid&&!S.cid){app.innerHTML=upHTML();bindUp();return;}
   if(S.fix&&!S.sid&&!S.cid){if(!fixOpen(S.fix)){app.innerHTML=fixLockHTML(S.fix);bindFixLock();return;}if(fixWord(S.fix)==="페어"){const ae=document.activeElement;if(S.jgEdit&&ae&&ae.closest&&ae.closest(".jgedit")&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName)&&ae.type!=="file"&&$(".jgedit"))return;app.innerHTML=jgPageHTML(S.fix);bindJgPage(S.fix);return;}app.innerHTML=fixPageHTML(S.fix);bindFixPage();return;}
   if(S.gid&&!S.sid&&!S.cid){app.innerHTML=campPageHTML();bindCamp();return;}
