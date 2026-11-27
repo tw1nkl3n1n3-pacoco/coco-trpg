@@ -45,6 +45,11 @@ function bindNfPage(f){if(jgPair(f))bindJgPage(f);else bindFxPage(f);
   if(gs&&gg){const n=gg.children.length,h=gs.querySelector("h4");if(n>6&&h&&!h.querySelector("[data-nfall]"))h.insertAdjacentHTML("beforeend",`<button type="button" class="nfallb" data-nfall="po">${(S.nfAll||{}).po?"접기 ▴":"모두 보기 ›"}</button>`);
     const w=document.createElement("div");w.className="nfscr";gg.before(w);w.append(Object.assign(document.createElement("button"),{type:"button",className:"nfarw l",textContent:"‹"}),gg,Object.assign(document.createElement("button"),{type:"button",className:"nfarw r",textContent:"›"}));
     w.querySelector(".l").dataset.nfarw="-1";w.querySelector(".r").dataset.nfarw="1";}
+  // 타임라인은 왼쪽 멤버 칸 높이만큼 보여 주고 더 보기 (모바일은 520px)
+  {const tl=document.querySelector(".nftl .jgtl"),pf=document.querySelector(".nfsplit>div:first-child"),key=S.jgTl||"main";
+    if(tl&&pf&&!(S.jgAll||{})[key]){const two=getComputedStyle(tl.closest(".nfsplit")).gridTemplateColumns.split(" ").length>1,cap=two?Math.max(pf.offsetHeight,420):520;
+      if(tl.scrollHeight>cap+60){tl.style.maxHeight=cap+"px";tl.classList.add("clamp");tl.querySelector(".jgmore")?.remove();
+        const b=document.createElement("button");b.type="button";b.className="jgmore";b.textContent="타임라인 더 보기 ▾";b.onclick=()=>{S.jgAll={...(S.jgAll||{}),[key]:true};render();};tl.appendChild(b);}}}
   document.querySelectorAll("[data-nfall]").forEach(b=>b.onclick=()=>{S.nfAll={...(S.nfAll||{}),[b.dataset.nfall]:!(S.nfAll||{})[b.dataset.nfall]};render();});
   document.querySelectorAll(".nfscr").forEach(w=>{const sc=w.querySelector(".nfcards,.galg");if(!sc)return;const up=()=>{w.classList.toggle("atl",sc.scrollLeft<4);w.classList.toggle("atr",sc.scrollLeft+sc.clientWidth>=sc.scrollWidth-4);};
     sc.addEventListener("scroll",up,{passive:true});up();w.querySelectorAll("[data-nfarw]").forEach(b=>b.onclick=()=>sc.scrollBy({left:+b.dataset.nfarw*sc.clientWidth*.9,behavior:"smooth"}));});
