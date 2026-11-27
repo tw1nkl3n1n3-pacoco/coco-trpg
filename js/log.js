@@ -24,6 +24,7 @@ function stampHTML(sc,word){
   return `<span class="donestamp${word==="종료"?" end":""}" style="${st}" title="${word||"완주"}${sc.doneAt?" · "+esc(sc.doneAt):""}">${word||"완주"}</span>`;
 }
 function themeOf(sc){
+  {const f=typeof fixOfScen==="function"&&sc?fixOfScen(sc):"";if(f&&fixWord(f)==="자관")return "jg";}
   {const ru=ruleOf(typeof effSys==="function"?effSys(sc):sc&&sc.system);if(ru&&ru.th)return ru.th;}
   const r=String(effSys(sc)).toLowerCase().replace(/\s+/g,"");
   if(/인세인|insane/.test(r))return "wa";
@@ -31,13 +32,18 @@ function themeOf(sc){
   if(/더블크로스|doublecross|덥크|^dx(\d|$)|^dx3/.test(r))return "dx";
   return "plain";
 }
+// 자관 두 캐릭터 색 (고정탁 문서의 colors가 있으면 그걸로)
+function jgColors(f){const fd=(S.fixDocs||{})[typeof fixKey==="function"?fixKey(f):""]||{},c=fd.colors||[];const P=typeof fixPeopleList==="function"?fixPeopleList(f):[];
+  const cc=x=>x&&(typeof fixC==="function"?fixC(x):x),a=c[0]||cc(P[0]&&P[0].c)||"#e7799b",b=c[1]||cc(P[1]&&P[1].c)||"#2f7f86";document.body.style.setProperty("--ja",a);document.body.style.setProperty("--jb",b);}
 function applyTheme(){document.body.classList.toggle("own",!!S.canAdmin);
   {const hx=!S.gid&&!S.cid&&!S.sid&&!S.revPage&&!S.admin&&!S.up&&!S.book&&isHX();if(document.body.classList.contains("hxhome")!==hx){document.body.classList.toggle("hxhome",hx);document.documentElement.classList.toggle("hxhome",hx);}}
+  if(S.fix&&!S.sid&&!S.cid&&!S.gid&&typeof fixWord==="function"&&fixWord(S.fix)==="자관"){if(document.body.dataset.theme!=="jg")document.body.dataset.theme="jg";document.body.dataset.page="fix";jgColors(S.fix);return;}
   if(S.gid&&!S.sid&&!S.cid){const c=campById(S.gid);const t=c&&c.system?themeOf({system:c.system}):"plain";if((document.body.dataset.theme||"")!==t)document.body.dataset.theme=t;document.body.dataset.page="scen";return;}
   const sc=S.revPage?S.revPage.sc:S.cid?(S.scEdit&&S.scDraft?S.scDraft:scenById(S.cid)):(S.sid&&S.meta?curScen():null);
   // 시나리오 정보가 아직 안 왔으면 양피지 대신 메인 화면 색으로 기다려요
   const t=S.revPage?(sc?themeOf(sc):"plain"):!S.cid&&!S.sid&&!S.local?"plain":!sc&&!S.local?"plain":themeOf(sc);
   if((document.body.dataset.theme||"")!==t){if(t)document.body.dataset.theme=t;else delete document.body.dataset.theme;}
+  if(t==="jg")jgColors(fixOfScen(sc));else{document.body.style.removeProperty("--ja");document.body.style.removeProperty("--jb");}
   document.body.dataset.page=S.revPage?"scen":S.cid?"scen":S.sid?"log":"home";
 }
 function render(){try{bkAuto();}catch(e){}
