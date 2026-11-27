@@ -873,3 +873,36 @@ body[data-theme=nf] .glpaper{background:#fff;color:#1c1c1c;box-shadow:0 10px 40p
 body[data-theme=nf] #log button{background:#f3f3f3;color:#333;border-color:#ddd}
 body[data-theme=nf] #log button.who,body[data-theme=nf] #log button.ts,body[data-theme=nf] #log .who,body[data-theme=nf] #log .ts{background:transparent!important;border-color:transparent}
 body[data-theme=nf] #log button.pri{background:#e50914;color:#fff;border-color:#e50914}
+/* 짭플릭스 글자 크기 한 벌: 큰 제목 44~76 · 줄 제목 19 · 본문 15.5 · 카드 제목 14.5 · 보조 13 · 작은 글 12 · 배지 10.5 */
+body.nfskin .nfin h1,.nfx .nfin h1{font-size:clamp(44px,6vw,76px)!important;line-height:1.04}
+body[data-theme=nf] .schero-t h2,body[data-theme=nf] .sc-top h2,body[data-theme=nf] .cphero h1{font-size:clamp(36px,5vw,60px)!important;line-height:1.05;font-weight:900}
+body[data-theme=nf] .sc-sec h4,body.nfskin .nfrow>h3,body.nfskin .nftl .jgsec>h4,body.nfskin .nfposts .galsec>h4{font-size:19px!important;font-weight:700!important;letter-spacing:0!important}
+body[data-theme=nf] .sc-sec h4 .tip,body[data-theme=nf] .gcnt,body.nfskin .nfrow>h3 small{font-size:13px!important;font-weight:400!important;color:#8a8a8a}
+body[data-theme=nf] .sc-text,body[data-theme=nf] .cpsum,body[data-theme=nf] .sc-sec>p{font-size:15.5px;line-height:1.8;color:#ddd}
+body[data-theme=nf] button,body[data-theme=nf] .btnlike{font-size:14px}
+body[data-theme=nf] .tip{font-size:12.5px}
+body[data-theme=nf] .day .odate,body[data-theme=nf] .day .lbl{font-size:15px}
+body[data-theme=nf] .day .ocnt,body[data-theme=nf] .meline{font-size:13px}
+body[data-theme=nf] .castc b,body[data-theme=nf] .cast b{font-size:14px}
+body[data-theme=nf] .castc small,body[data-theme=nf] .cast small{font-size:12px}
+body[data-theme=nf] .cped,body[data-theme=nf] .cpbook,body.nfskin .jgbook{font-size:13px}
+body[data-theme=nf] .cphero .sub{font-size:15px}
+/* 로그 */
+body[data-theme=nf] #log .tx{font-size:16px;line-height:1.8}
+body[data-theme=nf] #log .who{font-size:14px}
+body[data-theme=nf] #log .who small{font-size:12px}
+body[data-theme=nf] #log .ts{font-size:11.5px}
+body[data-theme=nf] #log .row.sec.l1 .tx{font-size:23px}
+body[data-theme=nf] #log .row.sec.l2 .tx{font-size:18px}
+body[data-theme=nf] aside .foldh{font-size:14px}
+body[data-theme=nf] aside{font-size:13px}
+body[data-theme=nf] header h1{font-size:19px}
+/* 카드·메타 */
+body.nfskin .nfcd b{font-size:14.5px}
+body.nfskin .nfcd small,body.nfskin .nfpplw small,body.nfskin .nfposts .galg figcaption .m{font-size:12px}
+body.nfskin .nfin .meta{font-size:14px}
+body.nfskin .nfin .tag{font-size:12px}
+body.nfskin .nfpf b{font-size:18px}body.nfskin .nfpf small{font-size:12.5px}body.nfskin .nfpf p{font-size:13.5px}
+body.nfskin .nftl .t{font-size:15.5px}body.nfskin .nftl .t small{font-size:12.5px}body.nfskin .nftl .tl li>.d{font-size:14px}
+body.nfskin .nfpplw b{font-size:13px}
+body.nfskin .nfnav{font-size:14px}
