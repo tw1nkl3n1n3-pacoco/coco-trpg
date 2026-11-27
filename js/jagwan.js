@@ -11,7 +11,8 @@ function jgSides(f){const P=fixPeopleList(f),pr=(jgDoc(f).prof)||{};
 function jgFixData(f){
   const gs=groups().filter(g=>g.sc&&fixOfScen(g.sc)===f);
   const days=gs.flatMap(g=>g.days.map(d=>d.day)).filter(Boolean).sort();
-  return {gs,days};}
+  const cs=S.camps.filter(c=>(c.fix||"")===f);
+  return {gs,days,cs,stories:gs.filter(g=>!g.sc.camp).length+cs.length};}
 const jgDot=d=>String(d||"").replace(/-/g,".");
 function jgDaysSince(d){if(!d)return 0;const t=new Date(d.replace(/\./g,"-")+"T00:00:00");return Math.max(0,Math.round((Date.now()-t)/864e5));}
 // 타임라인 날짜 맞추기: "2026.06.29" "2026-06" "2025.3" → 정렬용 "2026-06-29"
@@ -21,13 +22,16 @@ function jgFold(list,key,render){const all=!!(S.jgAll||{})[key],n=list.length,sh
 function jgTimelineHTML(f,data,items){const d=jgDoc(f),tab=S.jgTl||"main",canRec=S.canAdmin||fixOpen(f);
   // 메인: 세션 날짜 + 갤러리 날짜 (자동)
   const M=[];data.gs.forEach(g=>{const n=g.days.length;g.days.forEach((x,i)=>M.push({k:x.day||"",type:"s",g,i:i+1,n,sid:x.parts[0]?.id}));});
-  const byDay={};items.forEach(p=>{const day=p.at?new Date(p.at).toISOString().slice(0,10):"";if(!day)return;const t=galT(p);
+  const byDay={},scPosts={};items.forEach(p=>{const day=p.at?new Date(p.at).toISOString().slice(0,10):"";if(!day)return;const t=galT(p);
+    if(p.kind==="sc"&&data.gs.some(g=>g.sc.id===p.src)){(scPosts[p.src]=scPosts[p.src]||[]).push(p);return;}
     if(t==="img"){const key=day+"|"+(p.by||"");(byDay[key]=byDay[key]||{k:day,type:"g",by:p.by||"",posts:[]}).posts.push(p);}else M.push({k:day,type:"p",p});});
   M.push(...Object.values(byDay));M.sort((a,b)=>b.k.localeCompare(a.k));M.forEach(e=>e.dl=jgDot(e.k.slice(0,7)));
   const lastOf={};M.forEach(e=>{if(e.type==="s"&&!lastOf[e.g.sc.id])lastOf[e.g.sc.id]=e;});
   const mainLi=list=>{let ym="";return list.map(e=>{const m=e.k.slice(0,7),mh=m!==ym?(ym=m,`<li class="m"><div class="d">${esc(jgDot(m))}</div></li>`):"";const dd=esc(jgDot(e.k.slice(5)));
-    if(e.type==="s"){const sc=e.g.sc,done=lastOf[sc.id]===e&&sc.done,open=isOpen(sc.id)&&e.sid;
-      return mh+`<li><div class="d">${dd}</div><div class="t"><a href="#c-${esc(sc.id)}">${esc(sc.name)}</a> <small>${e.n>1?`${e.i}회차 / ${e.n}`:"1회차"}${effSys(sc)?" · "+esc(sysLabel(effSys(sc))):""}</small>${done?"<em>완주</em>":""}</div></li>`;}
+    if(e.type==="s"){const sc=e.g.sc,cm=campOf(sc),last=lastOf[sc.id]===e,done=last&&(sc.done||cm&&cm.done&&!isCamp(cm)),ps=last?scPosts[sc.id]||[]:[];
+      const ims=ps.filter(p=>galT(p)==="img").flatMap(p=>galImgs(p).map(q=>({p,q}))),txs=ps.filter(p=>galT(p)==="txt");
+      return mh+`<li><div class="d">${dd}</div><div class="t"><a href="#c-${esc(sc.id)}">${esc(sc.name)}</a>${cm?`<span class="cp">${isCamp(cm)?"CAMP":"CAMPAIGN"}</span>`:""} <small>${cm&&!isCamp(cm)?esc(epLabel(cm,sc))+" · ":""}${e.n>1?`${e.i}회차 / ${e.n}`:"1회차"}${effSys(sc)?" · "+esc(sysLabel(effSys(sc))):""}</small>${done?"<em>완주</em>":""}</div>
+        ${ims.length?`<div class="th">${ims.slice(0,8).map(x=>`<img src="${esc(x.q.u||x.q.o)}" alt="" loading="lazy" data-gal="${esc(x.p.id)}">`).join("")}${ims.length>8?`<span>+${ims.length-8}</span>`:""}</div>`:""}${txs.map(p=>`<a href="#" class="tcard sm" data-gal="${esc(p.id)}"><b>${esc(p.title||"텍스트")}</b>${esc(String(p.body||"").slice(0,70))}…</a>`).join("")}</li>`;}
     if(e.type==="g"){const ims=e.posts.flatMap(p=>galImgs(p).map(q=>({p,q})));
       return mh+`<li><div class="d">${dd}</div><div class="t">갤러리 <small>사진 ${ims.length}장${e.by?" · "+esc(e.by):""}</small></div><div class="th">${ims.slice(0,8).map(x=>`<img src="${esc(x.q.u||x.q.o)}" alt="" loading="lazy" data-gal="${esc(x.p.id)}">`).join("")}${ims.length>8?`<span>+${ims.length-8}</span>`:""}</div></li>`;}
     const p=e.p;
@@ -40,6 +44,16 @@ function jgTimelineHTML(f,data,items){const d=jgDoc(f),tab=S.jgTl||"main",canRec
   return `<section class="jgsec jgtl"><h4>TIMELINE<span class="jgtabs"><button type="button" data-jgtl="main" class="${tab==="main"?"on":""}">메인</button><button type="button" data-jgtl="sub" class="${tab==="sub"?"on":""}">서브</button></span>${tab==="sub"&&canRec?`<button type="button" class="jgadd" id="jgaddrec">＋ 기록 더하기</button>`:""}</h4>
     ${tab==="main"?`<div class="tip2">세션 날짜와 갤러리 날짜로 자동으로 만들어져요</div>${M.length?`<ol class="tl">${jgFold(M,"main",mainLi)}</ol>`:`<div class="empty">아직 기록이 없어요</div>`}`
       :`<div class="tip2">＋ 기록 더하기로 직접 쓰는 타임라인 · 글이나 갤러리 그림을 끼워 넣어요</div>${R.length?`<ol class="tl">${jgFold(R,"sub",subLi)}</ol>`:`<div class="empty">아직 기록이 없어요</div>`}`}</section>`;}
+// LOG: 단편 + 캠페인(편 목록이 접혀 들어가요 · 완주한 캠페인은 접혀서)
+function jgLogHTML(f,data){const G=id=>data.gs.find(g=>g.sc.id===id),dt=d=>jgDot((d||"").slice(5));
+  const one=data.gs.filter(g=>!g.sc.camp||!data.cs.some(c=>c.id===g.sc.camp)).map(g=>({k:g.last||"",h:`<li><div class="h"><a href="#c-${esc(g.sc.id)}">${esc(g.sc.name)}</a><small>${esc(jgDot(g.days[0]?.day||""))}${g.days.length>1?` – ${esc(dt(g.last))}`:""} · ${g.days.length}세션${g.sc.done?" · 완주":""}</small></div></li>`}));
+  const camp=data.cs.map(c=>{const es=campEps(c),cm=isCamp(c),done=!cm&&!!c.done,fin=es.filter(e=>e.done||done).length,last=campLast(c);
+    const lastEp=es.filter(e=>!e.gaiden).at(-1);const rows=es.map(e=>{const g=G(e.id),now=!cm&&!done&&!e.done&&e===lastEp;return `<li class="${now?"now":""}"><span>${cm?esc(dt(e.lastDay)):esc(epLabel(c,e).replace("편",""))||"·"}</span><a href="#c-${esc(e.id)}">${esc(e.name)}</a><small>${now?"진행 중":esc(dt(g?.last||e.lastDay))}</small></li>`;}).join("");
+    const head=`<span class="tg${done?"":" c"}">${cm?"CAMP":"CAMPAIGN"}</span><a href="#g-${esc(c.id)}">${esc(c.name)}</a><small>${cm?`탁 ${es.length}개`:`${es.filter(e=>!e.gaiden).length}편 · ${done?"완주":"진행 중"}`}</small>`;
+    const bar=cm?"":`<div class="jgbar${done?" full":""}"><i style="width:${es.length?Math.round(fin/es.length*100):0}%"></i></div>`;
+    return {k:last,h:done||cm?`<li class="cg"><details><summary class="h">${head}<b class="car"></b></summary>${bar}<ul class="eps">${rows}</ul></details></li>`:`<li class="cg"><div class="h">${head}</div>${bar}<ul class="eps">${rows}</ul></li>`};});
+  const all=[...camp,...one].sort((a,b)=>b.k.localeCompare(a.k));
+  return `<section class="jgsec jglog"><h4>LOG<small class="cnt">${String(all.length).padStart(2,"0")}</small></h4><ul>${all.map(x=>x.h).join("")||`<li class="empty">아직 세션이 없어요</li>`}</ul></section>`;}
 function jgCardHTML(s,fields){const q=s.pr,dl=[["나이",q.age&&(/\D/.test(q.age)?q.age:q.age+"세")],["키",q.ht&&(/\D/.test(q.ht)?q.ht:q.ht+"cm")],["성별",q.sex],["MBTI",q.mbti]].filter(x=>x[1]);
   const secs=fields.filter(k=>(q.sec||{})[k]);
   return `<div class="jgcd ${s.key}"><div class="hd">${q.icon?.u?`<img src="${esc(q.icon.u)}" alt="">`:`<span class="ph"></span>`}<div><b>${esc(s.nm)}</b><small>${[q.ren||q.rn,s.own].filter(Boolean).map(esc).join(" · ")}</small></div></div>
@@ -49,7 +63,6 @@ function jgCardHTML(s,fields){const q=s.pr,dl=[["나이",q.age&&(/\D/.test(q.age
 function jgPageHTML(f){const d=jgDoc(f),[A,B]=jgSides(f),fields=d.fields&&d.fields.length?d.fields:JG_F0,data=jgFixData(f),ban=d.banner;
   const srcs=S.db?galSrcFix(f):[],postsH=S.db?galHTML(srcs,{newest:1,title:"POSTS",en:"POSTS"}):"",items=galAll(srcs,1);
   const tagH=(s,cls)=>`<div class="jgtag ${cls}"><div class="nm">${esc(s.en)}</div>${(s.pr.tags||[]).filter(Boolean).length?`<ul>${s.pr.tags.filter(Boolean).map(t=>`<li>${esc(t)}</li>`).join("")}</ul>`:""}</div>`;
-  const logs=data.gs.slice().sort((a,b)=>(b.last||"").localeCompare(a.last||""));
   return `<div class="jgp">${S.canAdmin?`<div class="jgtop"><a class="ghost ownonly" href="#">← 첫 화면</a><span style="flex:1"></span><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":"✎ 페어 수정"}</button></div>`:""}
     ${S.jgEdit&&S.canAdmin?jgEditHTML(f):""}
     <section class="jgposter">
@@ -62,11 +75,10 @@ function jgPageHTML(f){const d=jgDoc(f),[A,B]=jgSides(f),fields=d.fields&&d.fiel
     <div class="jgwrap">
       <div class="jgtri">${jgCardHTML(A,fields)}
         <div class="jgmid"><div class="k">RELATION</div><div class="rel">${d.rel?esc(d.rel):`<span class="tip">관계 한 줄을 적어 주세요</span>`}</div>
-          <div class="nums"><div><b>${data.gs.length}</b><span>이야기</span></div><div><b>${data.days.length}</b><span>세션</span></div><div><b>${jgDaysSince(data.days[0])}</b><span>함께한 날</span></div></div>
+          <div class="nums"><div><b>${data.stories}</b><span>이야기</span></div><div><b>${data.days.length}</b><span>세션</span></div><div><b>${jgDaysSince(data.days[0])}</b><span>함께한 날</span></div></div>
           ${data.days.length?`<div class="vs"><i></i>${esc(jgDot(data.days[0]))} — ${esc(jgDot(data.days.at(-1)))}<i></i></div>`:""}</div>
         ${jgCardHTML(B,fields)}</div>
-      ${jgTimelineHTML(f,data,items)}
-      <section class="jgsec jglog"><h4>LOG</h4><ul>${logs.map(g=>`<li><a href="#c-${esc(g.sc.id)}">${esc(g.sc.name)}</a><small>${esc(jgDot(g.days[0]?.day||""))}${g.days.length>1?` – ${esc(jgDot(g.last||""))}`:""} · ${g.days.length}세션${g.sc.done?" · 완주":""}</small></li>`).join("")||`<li class="empty">아직 세션이 없어요</li>`}</ul></section>
+      <div class="jgsplit">${jgTimelineHTML(f,data,items)}${jgLogHTML(f,data)}</div>
       ${postsH}
       ${fixAccHTML(f)}
     </div></div>`;}
