@@ -838,3 +838,6 @@ body[data-theme=nf] .day:hover{background:#1f1f1f}
 .nfsite .nfcd .pg i{background:#e50914}
 body[data-theme=nf] .sys[data-th]{background:transparent!important;color:#ddd!important;border:1px solid #888!important;border-radius:2px!important;box-shadow:none!important;clip-path:none!important;font-family:"Noto Sans KR",sans-serif!important;font-weight:400!important;letter-spacing:0!important}
 .nfsite .nfhome h1{font-size:clamp(40px,5.6vw,76px)}
+body[data-theme=nf] .schero{height:min(68vh,560px);min-height:340px}
+body[data-theme=nf] .schero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;max-height:none}
+@media(max-width:760px){body[data-theme=nf] .schero{height:min(60vh,420px);min-height:300px}}
