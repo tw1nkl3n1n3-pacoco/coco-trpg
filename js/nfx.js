@@ -3,7 +3,7 @@
 // 타임라인·포스트·수정·비밀번호는 지금 페어·고정탁 부품을 그대로 써요
 const NF_BG="#141414";
 function nfStories(f,data){const out=[],seen=new Set();
-  data.gs.slice().sort((a,b)=>(a.days[0]?.day||"").localeCompare(b.days[0]?.day||"")).forEach(g=>{const c=g.sc.camp&&campById(g.sc.camp);
+  data.gs.slice().sort((a,b)=>(b.last||b.days.at(-1)?.day||"").localeCompare(a.last||a.days.at(-1)?.day||"")).forEach(g=>{const c=g.sc.camp&&campById(g.sc.camp);
     if(c){if(seen.has(c.id))return;seen.add(c.id);const es=campEps(c),gs=data.gs.filter(x=>x.sc.camp===c.id),ds=gs.flatMap(x=>x.days.map(d=>d.day)).filter(Boolean).sort(),cm=isCamp(c),done=!cm&&!!c.done;
       const fin=es.filter(e=>e.done||done).length;out.push({href:"#g-"+c.id,name:c.name,cv:(campCover(c,es)||{}).u||"",tag:cm?"캠프":`캠페인 · ${done?"완주":"진행 중"}`,sub:`${es.filter(e=>!e.gaiden).length}편${ds.length?" · "+jgDot(ds[0].slice(5))+(ds.length>1?" – "+jgDot(ds.at(-1).slice(5)):""):""}`,pg:es.length?Math.round(fin/es.length*100):0,k:ds[0]||""});}
     else{const d0=g.days[0]?.day||"",dl=g.last||d0;out.push({href:"#c-"+g.sc.id,name:g.sc.name,cv:(coverOf(g.sc)||{}).u||"",tag:"",sub:`${g.days.length}세션${d0?" · "+jgDot(d0.slice(5))+(dl&&dl!==d0?" – "+jgDot(dl.slice(5)):""):""}`,pg:g.sc.done||g.days.length?100:0,k:d0});}});
@@ -29,13 +29,13 @@ function nfPageHTML(f){const pair=jgPair(f),d=jgDoc(f),fields=d.fields&&d.fields
         <div class="btns">${lastG?`<a class="b1" href="#c-${esc(lastG.sc.id)}">▶ 최근 로그</a>`:""}<button type="button" class="b2" data-nfup>＋ 포스트 올리기</button></div></div>
       ${right}</section>
     <div class="nfrow nfcastrow"><h3>출연</h3><div class="nfcastr">${mem.map(m=>`<button type="button" data-nfprof="${esc(m.n)}" style="--c:${m.c}">${m.q.icon?.u?`<img src="${esc(m.q.icon.u)}" alt="">`:`<i>${esc([...m.nm][0])}</i>`}<span><b>${esc(m.nm)}</b><small>${esc([m.en&&m.en!==m.nm?m.en:"",m.own].filter(Boolean).join(" · "))}</small></span><em>›</em></button>`).join("")}</div></div>
-    <div class="nfrow"><h3>${pair?"함께한 이야기":"이야기"} <small>${st.length} · 오래된 것부터</small><span class="nfh">${st.length>4?`<button type="button" data-nfall="st">${(S.nfAll||{}).st?"접기 ▴":"모두 보기 ›"}</button>`:""}${st.length?`<a href="#mb-f-${esc(code)}">📖 리플레이북 합본</a>`:""}</span></h3>
+    <div class="nfrow"><h3>${pair?"함께한 이야기":"이야기"} <small>${st.length} · 최신순</small><span class="nfh">${st.length>4?`<button type="button" data-nfall="st">${(S.nfAll||{}).st?"접기 ▴":"모두 보기 ›"}</button>`:""}${st.length?`<a href="#mb-f-${esc(code)}">📖 리플레이북 합본</a>`:""}</span></h3>
       ${st.length?`<div class="nfscr${(S.nfAll||{}).st?" all":""}"><button type="button" class="nfarw l" data-nfarw="-1" aria-label="이전">‹</button><div class="nfcards">${st.map(s=>`<a class="nfcd" href="${esc(s.href)}">${s.cv?`<img src="${esc(s.cv)}" alt="" loading="lazy">`:""}${s.tag?`<span class="tp">${esc(s.tag)}</span>`:""}<b>${esc(s.name)}</b><small>${esc(s.sub)}</small><span class="pg"><i style="width:${s.pg}%"></i></span></a>`).join("")}</div><button type="button" class="nfarw r" data-nfarw="1" aria-label="다음">›</button></div>`:`<div class="empty">아직 세션이 없어요</div>`}</div>
     <div class="nfrow nftl wide">${jgTimelineHTML(f,data,items).replace("<h4>TIMELINE","<h4>타임라인")}</div>
     <div class="nfrow nfposts${(S.nfAll||{}).po?" all":""}">${postsH}</div>
     <div class="nfrow nfend">
-      ${S.canAdmin?`<div class="jgtop jgbot"><a class="ghost ownonly" href="#">← 첫 화면</a>${isNF()||isAX()?"":`<a class="ghost" href="#f-${esc(code)}">지금 디자인으로 보기</a>`}<span style="flex:1"></span><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":`✎ ${W} 수정`}</button></div>`:""}
-      ${S.jgEdit&&S.canAdmin?jgEditHTML(f):""}
+      ${jgCanEdit(f)?`<div class="jgtop jgbot"><a class="ghost ownonly" href="#">← 첫 화면</a>${isNF()||isAX()?"":`<a class="ghost" href="#f-${esc(code)}">지금 디자인으로 보기</a>`}<span style="flex:1"></span><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":`✎ ${W} 수정`}</button></div>`:""}
+      ${S.jgEdit&&jgCanEdit(f)?jgEditHTML(f):""}
       ${fixAccHTML(f)}${jgRO(f)?(pair?`<div class="sc-sec fxacc jgacc"><h4 data-en="ACCESS">페어 비밀번호</h4><div class="tip">페어 비밀번호를 넣으면 글을 올리고, 기록을 더하고, 댓글을 달 수 있어요.</div><form class="pwrow" id="jgunlock"><input type="text" id="jgpw" placeholder="페어 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form><div class="tip" id="jgmsg"></div></div>`
         :`<div class="sc-sec fxacc jgacc"><h4 data-en="ACCESS">고정탁 비밀번호</h4><div class="tip">누구로 들어갈지 고르고 비밀번호를 넣어요.</div><div class="fxpk">${mem.map(m=>`<button type="button" class="${S.fxPick===m.n?"on":""}" data-fxpick="${esc(m.n)}" style="--c:${m.c}"><i></i>${esc(m.nm)} · ${esc(m.n)}</button>`).join("")}<button type="button" class="${S.fxPick==="ext"?"on":""}" data-fxpick="ext">외부인으로</button></div><form class="pwrow" id="jgunlock"><input type="text" id="jgpw" placeholder="고정탁 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form><div class="tip" id="jgmsg"></div></div>`):""}
     </div></div>`;}

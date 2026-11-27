@@ -1333,3 +1333,34 @@ body.axskin .nfcastrow{display:none!important}
   .nfmodal .nav{position:sticky;bottom:0;justify-content:flex-start}}
 .nfin .btns button.b2{display:inline-flex;align-items:center;gap:8px;padding:9px 22px;border-radius:4px!important;font-weight:700;font-size:15px;background:rgba(109,109,110,.7)!important;color:#fff!important;border:0!important;cursor:pointer;font-family:"Noto Sans KR",sans-serif}
 .nfin .btns button.b2:hover{background:rgba(109,109,110,.5)!important}
+/* 갤러리 카드: 세션 이름(.from) 보이기 */
+.nfx .nfposts .galg .from{display:block!important;position:absolute;z-index:3;left:8px;top:8px;max-width:calc(100% - 56px);font:700 10.5px "Noto Sans KR",sans-serif;color:#fff;background:rgba(0,0,0,.62);padding:2px 7px;border-radius:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+.nfx .nfposts .galg figure:has(.gk) .from{top:30px}
+body.axskin .axposts .galg .from{display:block!important;font:600 10.5px var(--hx-mono);letter-spacing:.04em;color:var(--hx-acck);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+/* 포스트 크게 보기(라이트박스)도 테마에 맞춰 · 짭플릭스 */
+body[data-page=nf]:not(.axskin) .glb,body[data-theme=nf] .glb{--panel:#181818;--panel2:#141414;--line:#2a2a2a;--ink:#e5e5e5;--dim:#b3b3b3;--faint:#808080;--acc:#e50914;background:rgba(20,20,20,.97);color:#e5e5e5;backdrop-filter:none;font-family:"Noto Sans KR",sans-serif}
+body[data-page=nf]:not(.axskin) .glb .top,body[data-theme=nf] .glb .top{background:#0b0b0b;border-color:#222;font-family:"Noto Sans KR",sans-serif;letter-spacing:.04em}
+body[data-page=nf]:not(.axskin) .glb .top .ac,body[data-theme=nf] .glb .top .ac{color:#e50914}
+body[data-page=nf]:not(.axskin) .glb .top a,body[data-theme=nf] .glb .top a{border-radius:4px;background:#242424;border-color:#333;color:#e5e5e5}
+body[data-page=nf]:not(.axskin) .glb .side,body[data-theme=nf] .glb .side{background:#181818;border-color:#222}
+body[data-page=nf]:not(.axskin) .glb .meta .k,body[data-theme=nf] .glb .meta .k{color:#e50914;font-family:"Noto Sans KR",sans-serif}
+body[data-page=nf]:not(.axskin) .glb .meta h3,body[data-theme=nf] .glb .meta h3{font:800 20px "Noto Sans KR",sans-serif;color:#fff}
+body[data-page=nf]:not(.axskin) .glb .ch,body[data-theme=nf] .glb .ch{font-family:"Noto Sans KR",sans-serif;color:#808080}
+body[data-page=nf]:not(.axskin) .glb .nv,body[data-theme=nf] .glb .nv{background:rgba(0,0,0,.6);border:0;color:#fff;width:44px;height:44px}
+body[data-page=nf]:not(.axskin) .glb .col img,body[data-theme=nf] .glb .col img{border-radius:4px;box-shadow:none}
+body[data-page=nf]:not(.axskin) .glb .strip,body[data-theme=nf] .glb .strip{background:rgba(11,11,11,.95);border-color:#222}
+body[data-page=nf]:not(.axskin) .glb .strip button.on,body[data-theme=nf] .glb .strip button.on{outline-color:#e5e5e5}
+body[data-page=nf]:not(.axskin) .glb button,body[data-theme=nf] .glb button{border-radius:4px}
+body[data-page=nf]:not(.axskin) .glb .pri,body[data-theme=nf] .glb .pri{background:#e50914!important;border-color:#e50914!important;color:#fff!important}
+body[data-page=nf]:not(.axskin) .glb input,body[data-theme=nf] .glb input{background:#242424;border:1px solid #333;color:#eee;border-radius:4px}
+/* · 어카이브 */
+body.axskin .glb,body[data-theme=ax] .glb{--panel:#fff;--panel2:#f2f3f0;--line:#dcdfdc;--ink:#14171c;--dim:#6b717b;--faint:#9aa0a8;--acc:#5f7d00;background:rgba(242,243,240,.98);color:#14171c;backdrop-filter:none;font-family:"Noto Sans KR",sans-serif}
+body.axskin .glb .top,body[data-theme=ax] .glb .top{background:#f2f3f0;font-family:"Chakra Petch","Noto Sans KR",sans-serif;letter-spacing:.08em}
+body.axskin .glb .top a,body[data-theme=ax] .glb .top a,body.axskin .glb button,body[data-theme=ax] .glb button,body.axskin .glb input,body[data-theme=ax] .glb input{border-radius:0!important}
+body.axskin .glb .meta .k,body[data-theme=ax] .glb .meta .k,body.axskin .glb .ch,body[data-theme=ax] .glb .ch{font-family:"Chakra Petch","Noto Sans KR",sans-serif;color:#5f7d00}
+body.axskin .glb .meta h3,body[data-theme=ax] .glb .meta h3{font:700 20px "Noto Sans KR",sans-serif;letter-spacing:-.02em}
+body.axskin .glb .nv,body[data-theme=ax] .glb .nv{border-radius:0;background:#fff;border:1px solid #14171c;color:#14171c}
+body.axskin .glb .col img,body[data-theme=ax] .glb .col img{border-radius:0;box-shadow:0 0 0 1px #dcdfdc}
+body.axskin .glb .pri,body[data-theme=ax] .glb .pri{background:#14171c!important;color:#c8f031!important;border-color:#14171c!important}
+body.axskin .glb .strip button.on,body[data-theme=ax] .glb .strip button.on{outline-color:#14171c;border-radius:0}
+body.axskin .glb .strip,body[data-theme=ax] .glb .strip{background:rgba(242,243,240,.96)}

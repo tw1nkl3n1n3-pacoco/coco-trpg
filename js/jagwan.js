@@ -66,6 +66,8 @@ function jgCardHTML(s,fields){const q=s.pr,dl=[["나이",q.age&&(/\D/.test(q.age
     ${q.rn&&q.ren?`<div class="rn">${esc(q.rn)}</div>`:""}
     ${dl.length?`<dl>${dl.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>`:""}
     ${secs.map(k=>`<details><summary>${esc(k)}</summary><p>${esc(q.sec[k]).replace(/\n/g,"<br>")}</p></details>`).join("")}</div>`;}
+// 수정: 주인 또는 그 페어·고정탁 비밀번호를 연 사람 (규칙: fixes는 openedWith로 이미 허용)
+function jgCanEdit(f){return !!(S.canAdmin||fixOpen(f));}
 function jgRO(f){return !(S.canAdmin||fixOpen(f));}
 function jgSrcs(f){const ss=S.db?galSrcFix(f):[];return jgRO(f)?ss.map(x=>({...x,list:x.list.filter(p=>!p.nolink)})):ss;}
 function jgPageHTML(f){const d=jgDoc(f),[A,B]=jgSides(f),fields=d.fields&&d.fields.length?d.fields:JG_F0,data=jgFixData(f),ban=d.banner;
@@ -85,8 +87,8 @@ function jgPageHTML(f){const d=jgDoc(f),[A,B]=jgSides(f),fields=d.fields&&d.fiel
         ${jgCardHTML(B,fields)}</div>
       <div class="jgsplit">${jgTimelineHTML(f,data,items)}${jgLogHTML(f,data)}</div>
       ${postsH}
-      ${S.canAdmin?`<div class="jgtop jgbot"><a class="ghost ownonly" href="#">← 첫 화면</a><span style="flex:1"></span><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":"✎ 페어 수정"}</button></div>`:""}
-      ${S.jgEdit&&S.canAdmin?jgEditHTML(f):""}
+      ${jgCanEdit(f)?`<div class="jgtop jgbot"><a class="ghost ownonly" href="#">← 첫 화면</a><span style="flex:1"></span><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":"✎ 페어 수정"}</button></div>`:""}
+      ${S.jgEdit&&jgCanEdit(f)?jgEditHTML(f):""}
       ${fixAccHTML(f)}${jgRO(f)?`<div class="sc-sec fxacc jgacc"><h4 data-en="ACCESS">페어 비밀번호</h4><div class="tip">페어 비밀번호를 넣으면 글을 올리고, 기록을 더하고, 댓글을 달 수 있어요. 안의 모든 세션도 같이 열려요.</div>
         <form class="pwrow" id="jgunlock"><input type="text" id="jgpw" placeholder="페어 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form><div class="tip" id="jgmsg"></div></div>`:""}
     </div></div>`;}
@@ -112,8 +114,8 @@ function fxPageHTML(f){const d=jgDoc(f),M=fxMembers(f),fields=d.fields&&d.fields
           <div class="fxbar">${M.map(m=>`<i style="--c:${m.c}"></i>`).join("")}</div></section></div>
       <div class="jgsplit">${jgTimelineHTML(f,data,items)}${jgLogHTML(f,data)}</div>
       ${postsH}
-      ${S.canAdmin?`<div class="jgtop jgbot"><a class="ghost ownonly" href="#">← 첫 화면</a><span style="flex:1"></span><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":"✎ 고정탁 수정"}</button></div>`:""}
-      ${S.jgEdit&&S.canAdmin?jgEditHTML(f):""}
+      ${jgCanEdit(f)?`<div class="jgtop jgbot"><a class="ghost ownonly" href="#">← 첫 화면</a><span style="flex:1"></span><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":"✎ 고정탁 수정"}</button></div>`:""}
+      ${S.jgEdit&&jgCanEdit(f)?jgEditHTML(f):""}
       ${fixAccHTML(f)}${jgRO(f)?`<div class="sc-sec fxacc jgacc"><h4 data-en="ACCESS">고정탁 비밀번호</h4><div class="tip">누구로 들어갈지 고르고 비밀번호를 넣으면 글을 올리고, 기록을 더하고, 댓글을 달 수 있어요. 안의 모든 세션도 같이 열려요.</div>
         <div class="fxpk">${M.map(m=>`<button type="button" class="${pk===m.n?"on":""}" data-fxpick="${esc(m.n)}" style="--c:${m.c}"><i></i>${esc(m.nm)} · ${esc(m.n)}</button>`).join("")}<button type="button" class="${pk==="ext"?"on":""}" data-fxpick="ext">외부인으로</button></div>
         <form class="pwrow" id="jgunlock"><input type="text" id="jgpw" placeholder="고정탁 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form><div class="tip" id="jgmsg"></div></div>`:""}

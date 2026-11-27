@@ -52,8 +52,8 @@ function axPageHTML(f){const pair=jgPair(f),d=jgDoc(f),fields=d.fields&&d.fields
     ${axSh(N(),"포스트","Posts",`<span class="hx-m">${items.length} ITEMS</span>`)}
     <div class="axposts">${postsH}</div>
     ${acc?axSh(N(),"접근","Access","")+`<div class="axaccw">${acc}</div>`:""}
-    <div class="hx-foot axfoot"><span class="hx-m">© ${esc(site().title)} · ARCHIVE</span><span style="flex:1"></span>${S.canAdmin?`<button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":`✎ ${W} 수정`}</button>`:""}</div>
-    ${S.jgEdit&&S.canAdmin?jgEditHTML(f):""}
+    <div class="hx-foot axfoot"><span class="hx-m">© ${esc(site().title)} · ARCHIVE</span><span style="flex:1"></span>${jgCanEdit(f)?`<button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":`✎ ${W} 수정`}</button>`:""}</div>
+    ${S.jgEdit&&jgCanEdit(f)?jgEditHTML(f):""}
   </div></div>`;}
 function bindAxPage(f){if(jgPair(f))bindJgPage(f);else bindFxPage(f);if(typeof bindHX==="function")bindHX();
   document.querySelectorAll("[data-nfgo]").forEach(b=>b.onclick=()=>document.getElementById("nfm-"+b.dataset.nfgo)?.scrollIntoView({block:"center",behavior:"smooth"}));
