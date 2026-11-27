@@ -1403,3 +1403,11 @@ body.axskin .jgedit select{border-radius:0;border:1px solid #dcdfdc;background:#
 /* 짭플릭스·어카이브 화면은 바탕·글상자·줄무늬가 테마로 정해져 있어서 그 칸은 숨겨요 (포인트·캐릭터 색만) */
 body[data-page=nf] .jgsw:has(input[data-jgc=bg]),body[data-page=nf] .jgsw:has(input[data-jgc=box]),body[data-page=nf] [data-jgboxauto],body[data-page=nf] .jgscan{display:none!important}
 body.axskin .jgsw:has(input[data-jgc=acc]){display:none!important}
+/* 짭플릭스: 비밀번호 칸도 같은 톤 */
+body[data-page=nf]:not(.axskin) .nfend .fxacc{background:#181818!important;border:1px solid #2a2a2a!important;border-radius:6px!important;padding:20px 24px!important}
+body[data-page=nf]:not(.axskin) .nfend .fxacc h4{font:800 19px "Noto Sans KR",sans-serif!important;color:#fff!important;letter-spacing:0!important}
+body[data-page=nf]:not(.axskin) .nfend .fxacc h4::before{content:"ACCESS"!important;font:700 11px "Noto Sans KR",sans-serif!important;letter-spacing:.2em!important;color:var(--jacc)!important;display:block!important;margin-bottom:4px}
+body[data-page=nf]:not(.axskin) .nfend .fxacc .pw{background:#242424!important;border:1px solid #3a3a3a!important;border-radius:4px!important;color:#fff!important;font-family:"Noto Sans KR",monospace!important;letter-spacing:.12em}
+body[data-page=nf]:not(.axskin) .nfend .fxacc .pri{background:#fff!important;color:#141414!important;border:0!important;border-radius:4px!important}
+body[data-page=nf]:not(.axskin) .nfend .fxacc .ghost{color:#b3b3b3!important}
+body[data-page=nf]:not(.axskin) .nfend .fxacc input{background:#242424;border:1px solid #3a3a3a;border-radius:4px;color:#fff}
