@@ -106,8 +106,6 @@ mark{background:#f2c970;color:inherit;border-radius:3px}
 .row.sec.l3{margin:12px 0 4px}
 .row.sec.l3 .tx{font-size:14.5px;color:#8a6a42;border-bottom:1px dashed #e0cfa8;padding:0 2px 3px 18px}
 .secb.l2{padding-left:24px;font-size:13.5px}.secb.l3{padding-left:40px;font-size:13px;color:#7a6a58}
-
-.lvb{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}.lvb button{border:0!important;border-radius:0!important;padding:2px 7px!important;font-size:12px}.lvb button.on{background:var(--acc2)!important;color:#fff8ec!important}
 .secr{display:flex;align-items:center}.secr .secb{flex:1;min-width:0}
 .sectog{display:inline-flex;align-items:center;gap:3px;background:none;border:0;font-size:11.5px;color:#a08660;padding:3px 6px;border-radius:6px;white-space:nowrap}
 .sectog:hover{background:#fffaf0}.sectog .car{display:inline-block;transition:transform .15s}.sectog.open .car{transform:rotate(90deg)}
@@ -202,9 +200,7 @@ h1,h2,.scen-h h3{color:#4a2c17}
 .scen-h h3{font-family:"Gowun Batang",serif;font-size:19px;margin:0;flex:1}
 .scen-h .d{font-size:12.5px;color:var(--faint)}
 .day{display:flex;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--line);flex-wrap:wrap}
-.day-h{display:flex;gap:10px;align-items:baseline;min-width:190px}
 .dexp{margin-left:auto;font-size:12px;font-weight:600;padding:3px 10px;border-radius:7px;border:1px solid var(--line)!important;color:#8a7a68!important;background:transparent!important;white-space:nowrap;align-self:center}.dexp:hover{border-color:var(--acc2)!important;color:var(--acc2)!important;background:#fffaf0!important}
-.day-h .nth{font-size:12px;color:#fff8ec;background:var(--acc2);border-radius:6px;padding:1px 7px}
 .parts{display:flex;gap:6px;flex-wrap:wrap}
 .part{display:flex;gap:6px;align-items:baseline;text-decoration:none;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:4px 11px}
 .part:hover{border-color:var(--acc)}
@@ -304,7 +300,6 @@ a.scl:hover{color:var(--acc2)}
   .bar h1{max-width:60vw;font-size:17px}
   .bar .status:not(#save),#help{display:none}
   .crumb .status{display:inline!important}
-  .day-h{min-width:0}
   .player .time{min-width:0;font-size:12px}
   #splist{max-height:200px;overflow:auto}
   .tip.usage{display:none}
@@ -380,7 +375,6 @@ h1,h2,h3,.scen-h h3,.sc-top h2,.hometop h2{word-break:keep-all;overflow-wrap:any
 .row.note.stat .tx::before,.row.note.stat .tx::after{display:none}
 .row.note.stat .tx>span::before{content:"📊 "}
 /* 코코포리아 가져오기 화면 */
-.cc-sec{margin-top:12px}
 /* 로그 올리기 (코코포리아·롤20) */
 .cc-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
 .cc-head b{font-size:16px}.cc-head small{color:var(--dim);font-size:12.5px;margin-left:auto}
@@ -696,8 +690,6 @@ body[data-theme=deco][data-page=scen] :is(.sc-page,.rvpage)>.ldr{--ink:#f6e7c8;-
 .epnav a{border:1px solid var(--line);background:var(--panel,#fff);border-radius:12px;padding:10px 14px;text-decoration:none;color:var(--ink);font-size:13.5px;font-weight:700}
 .epnav a small{display:block;color:var(--faint);font-size:11.5px;font-weight:400}.epnav a.r{text-align:right}
 .campfld{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:14px}
-.campage .prow{display:grid;grid-template-columns:72px minmax(0,1fr);gap:10px;padding:10px 0;border-top:1px solid var(--line);font-size:14px}
-.campage .prow:first-of-type{border-top:0}
 .runs{display:flex;flex-direction:column;gap:6px}
 .run{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .rc{font-weight:700;border-left:4px solid var(--c);padding-left:8px}
@@ -820,7 +812,7 @@ body[data-theme=deco][data-page=scen] :is(.sc-page,.rvpage)>.ldr{--ink:#f6e7c8;-
 /* ===== 리플레이북 ===== */
 html.booking,body.booking{background:#e9e7e2!important;background-image:none!important}
 body.booking #app{max-width:none!important;padding:0!important;margin:0!important;background:none!important;box-shadow:none!important;border:0!important}
-body.booking #hdr,body.booking .topbar{display:none}
+body.booking #hdr{display:none}
 .bookwrap{--acc:#b0101a;max-width:none;margin:0;padding:0 24px 60px;font-family:"Pretendard",system-ui,sans-serif;color:#1c1c1b}
 .bkbar{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 24px;margin:0 -24px 26px;background:rgba(233,231,226,.94);backdrop-filter:blur(6px);border-bottom:1px solid #d6d3cc;font-size:13px}
 .bkbar>b{font-size:15px}.bkbar .sp{flex:1}.bkbar .cnt{color:#6f6c66}
@@ -1104,9 +1096,6 @@ html.hxhome,body.hxhome{background:#f2f3f0!important}
 .hx-pc i.no{width:auto;padding:0 4px;font:700 10px var(--hx-mono)}
 .hx-pc i.gm{width:auto;padding:0 4px;background:var(--hx-tx);font:600 10px var(--hx-mono)}
 .hx-pc b{font-weight:700;color:var(--hx-tx)}.hx-pc small{color:var(--hx-dim);font-size:12px}
-.hx-ps{display:flex;gap:2px;flex-wrap:wrap}
-.hx-ps i{width:22px;height:22px;background:var(--a);display:grid;place-items:center;font:700 10px var(--hx-sans);color:#fff;font-style:normal}
-.hx-ps i.gm{width:auto;padding:0 5px;background:var(--hx-tx);font:600 11px var(--hx-mono)}
 .hx-lock{color:var(--hx-faint)}
 .hx-foot{margin:70px 0 0!important;border-top:1px solid var(--hx-ln)!important;padding:18px 0 40px!important;color:var(--hx-faint);opacity:1!important;justify-content:flex-start!important}
 .hx-foot .sp{flex:1}
@@ -1183,7 +1172,6 @@ body.glbon{overflow:hidden}
 .glb .meta .by{font-size:12px;color:var(--faint)}
 .glb .meta .tools{margin-top:10px;display:flex;gap:6px}
 .glb .meta .tools button{font-size:12px;padding:3px 10px}
-.glb .capf{display:flex;gap:6px;margin:8px 0 6px}.glb .capf input{flex:1;min-width:0;font-size:14px}
 .glb .ch{padding:12px 18px 2px;font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--faint)}
 .glb .cl{flex:1;overflow:auto;padding:0 18px}
 .glb .cm{display:flex;gap:10px;padding:9px 0}
@@ -1363,10 +1351,6 @@ body[data-theme=deco] .geh b{font-family:"Gowun Batang",serif}
 @media(max-width:760px){.glb .col{max-width:none}.glpaper{padding:28px 20px;box-shadow:0 0 0 1px rgba(0,0,0,.5),5px 5px 0 var(--acc)}.glpaper h1{font-size:24px}.glb .top .tb{padding:3px 7px}.glb .top>span:nth-child(2){display:none}}
 /* 게시물 하나만 보는 페이지 */
 .pstpage{max-width:820px;margin:0 auto;padding:18px 12px 60px}
-.pstbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;margin:-18px -12px 20px;padding:10px 14px;background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(8px);border-bottom:2px solid var(--acc)}
-.pstbar b{font-size:17px}.pstbar small{color:var(--faint);font-size:12px;letter-spacing:.1em}.pstbar .sp{flex:1}
-.pstbar .k{font-size:11px;font-weight:700;padding:1px 8px;border-radius:3px;background:var(--acc);color:#fff}
-.pstbar button{font-size:12px;padding:3px 9px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px}
 .psth h2{margin:0;font-size:24px;color:inherit}.psth .pm{font-size:12.5px;color:var(--faint);margin:2px 0 14px}
 .pstimgs img{display:block;width:100%;height:auto}
 .pstft{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:28px;padding:22px;border:1px dashed var(--line);text-align:center}
@@ -1392,7 +1376,6 @@ body[data-page=post] aside{display:none}body[data-page=post] .wrap{grid-template
 @media(max-width:760px){
   .glb{padding-top:46px}
   .glb .top{position:fixed!important;left:0;right:0;top:0;height:46px;transition:transform .2s}.glb .top.hid{transform:translateY(-100%)}
-  .pstbar small{display:none}
 }
 /* 서브 타임라인 기록 창 */
 .jgrec{width:min(760px,100%)}

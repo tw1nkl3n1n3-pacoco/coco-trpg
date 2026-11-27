@@ -7,7 +7,6 @@ const _galSubs={};let _galKey="";const _fixSubs={};
 function galImgs(p){return p&&Array.isArray(p.imgs)&&p.imgs.length?p.imgs:p?[{u:p.u,o:p.o,p:p.p,op:p.op,w:p.w,h:p.h,fn:p.fn,sz:p.sz}]:[];}
 function galRaw(o){return Array.isArray(o&&o.gal)?o.gal:[];}
 function galCanEdit(p){return S.canAdmin||(!!p&&!!p.uid&&p.uid===myUid());}
-function galAllCms(){return Object.values(S.galCms).flat();}
 function galCmsOf(it){return (S.galCms[it.src]||[]).filter(c=>c.bid===it.id);}
 // 출처마다 댓글 받아오기 (출처가 바뀌면 다시)
 function galWatch(srcs){
@@ -265,14 +264,14 @@ function galTxtEdit(p){galTxtBox(p,async v=>{try{await galMutate(p,g=>g.map(x=>{
 function galTxtBox(v,onSave,onDel){const w=document.createElement("div");w.className="gedit";
   w.innerHTML=`<div class="gebox gtxt"><div class="geh"><b>텍스트</b><button type="button" class="x" data-x>✕</button></div>
     <div class="gelab">제목</div><input type="text" id="gtt" maxlength="80" value="${esc(v.title||"")}">
-    <div class="gelab">본문 <span class="tip">· 문단은 빈 줄로 · *** 은 장면 구분선</span></div><textarea id="gtb" rows="16">${esc(v.body||"")}</textarea>
+    <div class="gelab">본문 <span class="tip">· 문단은 빈 줄로 · *** 은 장면 구분선 · 최대 10만 자</span></div><textarea id="gtb" rows="16">${esc(v.body||"")}</textarea>
     ${galLockRow(!!v.nolink)}
     <div class="gefoot">${onDel?`<button type="button" class="ghost danger" id="gtd">지우기</button>`:""}<span class="tip" id="gtn"></span><span style="flex:1"></span><button type="button" class="ghost" data-x>취소</button><button type="button" class="pri" id="gts">저장</button></div></div>`;
   document.body.appendChild(w);const tb=w.querySelector("#gtb"),n=w.querySelector("#gtn");const cnt=()=>n.textContent=`${tb.value.replace(/\s/g,"").length.toLocaleString()}자`;cnt();tb.oninput=cnt;
   w.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>w.remove());
   const d=w.querySelector("#gtd");if(d)d.onclick=onDel;
   w.querySelector("#gts").onclick=async()=>{const t=w.querySelector("#gtt").value.trim(),b=tb.value;if(!t&&!b.trim()){toast("제목이나 본문을 써 주세요");return;}
-    if(await onSave({title:t.slice(0,80),body:b.slice(0,200000),nolink:w.querySelector("#genl").checked})!==false)w.remove();};}
+    if(await onSave({title:t.slice(0,80),body:b.slice(0,100000),nolink:w.querySelector("#genl").checked})!==false)w.remove();};}
 function galTxtHTML(b){return String(b||"").replace(/\r/g,"").split(/\n\s*\n+/).map(par=>/^\s*(\*\s*){3,}\s*$/.test(par)?`<div class="sep">◆ ◆ ◆</div>`:`<p>${esc(qfix(par.trim())).replace(/\n/g,"<br>")}</p>`).join("");}
 // ---------- 게시물 하나만 보는 페이지 (#p-출처~id) — 비밀번호 없이 · 댓글은 페이지로 들어가서 ----------
 async function openPostPage(key){let [src,id]=key.split("~");S.postPage={key,loading:true};render();
