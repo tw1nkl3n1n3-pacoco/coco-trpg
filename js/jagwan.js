@@ -39,7 +39,7 @@ function jgTimelineHTML(f,data,items){const d=jgDoc(f),tab=S.jgTl||"main",canRec
       return mh+`<li><div class="d">${dd}</div><div class="t"><a href="#c-${esc(sc.id)}">${esc(sc.name)}</a>${who}${cm?`<span class="cp">${isCamp(cm)?"CAMP":"CAMPAIGN"}</span>`:""} <small>${cm&&!isCamp(cm)?esc(epLabel(cm,sc))+" · ":""}${e.n>1?`${e.i}회차 / ${e.n}`:"1회차"}${effSys(sc)?" · "+esc(sysLabel(effSys(sc))):""}</small>${done?"<em>완주</em>":""}</div>
         ${ims.length?`<div class="th">${ims.slice(0,8).map(x=>`<img src="${esc(x.q.u||x.q.o)}" alt="" loading="lazy" data-gal="${esc(x.p.id)}">`).join("")}${ims.length>8?`<span>+${ims.length-8}</span>`:""}</div>`:""}${txs.map(p=>`<a href="#" class="tcard sm" data-gal="${esc(p.id)}"><b>${esc(p.title||"텍스트")}</b>${esc(String(p.body||"").slice(0,70))}…</a>`).join("")}</li>`;}
     if(e.type==="g"){const ims=e.posts.flatMap(p=>galImgs(p).map(q=>({p,q})));
-      return mh+`<li><div class="d">${dd}</div><div class="t">갤러리 <small>사진 ${ims.length}장${e.by?" · "+esc(e.by):""}</small></div><div class="th">${ims.slice(0,8).map(x=>`<img src="${esc(x.q.u||x.q.o)}" alt="" loading="lazy" data-gal="${esc(x.p.id)}">`).join("")}${ims.length>8?`<span>+${ims.length-8}</span>`:""}</div></li>`;}
+      return mh+`<li><div class="d">${dd}</div><div class="th gonly">${ims.slice(0,8).map(x=>`<img src="${esc(x.q.u||x.q.o)}" alt="" loading="lazy" data-gal="${esc(x.p.id)}">`).join("")}${ims.length>8?`<span>+${ims.length-8}</span>`:""}</div></li>`;}
     const p=e.p;
     return mh+`<li><div class="d">${dd}</div><div class="t"><a href="#" data-gal="${esc(p.id)}">${esc(p.title||"텍스트")}</a> <small>텍스트${p.by?" · "+esc(p.by):""}</small></div><div class="note">${esc(String(p.body||"").slice(0,90))}…</div></li>`;}).join("");};
   // 서브: 직접 쓰는 기록
@@ -87,7 +87,7 @@ function jgPageHTML(f){const d=jgDoc(f),[A,B]=jgSides(f),fields=d.fields&&d.fiel
         ${jgCardHTML(B,fields)}</div>
       <div class="jgsplit">${jgTimelineHTML(f,data,items)}${jgLogHTML(f,data)}</div>
       ${postsH}
-      ${jgCanEdit(f)?`<div class="jgtop jgbot"><a class="ghost ownonly" href="#">← 첫 화면</a><span style="flex:1"></span><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":"✎ 페어 수정"}</button></div>`:""}
+      ${jgCanEdit(f)?`<div class="jgtop jgbot"><a class="ghost ownonly" href="#">← 첫 화면</a><span style="flex:1"></span><button type="button" class="ghost jgshare" data-jgshare>🔗 공유 링크</button><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":"✎ 페어 수정"}</button></div>`:""}
       ${S.jgEdit&&jgCanEdit(f)?jgEditHTML(f):""}
       ${fixAccHTML(f)}${jgRO(f)?`<div class="sc-sec fxacc jgacc"><h4 data-en="ACCESS">페어 비밀번호</h4><div class="tip">페어 비밀번호를 넣으면 글을 올리고, 기록을 더하고, 댓글을 달 수 있어요. 안의 모든 세션도 같이 열려요.</div>
         <form class="pwrow" id="jgunlock"><input type="text" id="jgpw" placeholder="페어 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form><div class="tip" id="jgmsg"></div></div>`:""}
@@ -114,7 +114,7 @@ function fxPageHTML(f){const d=jgDoc(f),M=fxMembers(f),fields=d.fields&&d.fields
           <div class="fxbar">${M.map(m=>`<i style="--c:${m.c}"></i>`).join("")}</div></section></div>
       <div class="jgsplit">${jgTimelineHTML(f,data,items)}${jgLogHTML(f,data)}</div>
       ${postsH}
-      ${jgCanEdit(f)?`<div class="jgtop jgbot"><a class="ghost ownonly" href="#">← 첫 화면</a><span style="flex:1"></span><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":"✎ 고정탁 수정"}</button></div>`:""}
+      ${jgCanEdit(f)?`<div class="jgtop jgbot"><a class="ghost ownonly" href="#">← 첫 화면</a><span style="flex:1"></span><button type="button" class="ghost jgshare" data-jgshare>🔗 공유 링크</button><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":"✎ 고정탁 수정"}</button></div>`:""}
       ${S.jgEdit&&jgCanEdit(f)?jgEditHTML(f):""}
       ${fixAccHTML(f)}${jgRO(f)?`<div class="sc-sec fxacc jgacc"><h4 data-en="ACCESS">고정탁 비밀번호</h4><div class="tip">누구로 들어갈지 고르고 비밀번호를 넣으면 글을 올리고, 기록을 더하고, 댓글을 달 수 있어요. 안의 모든 세션도 같이 열려요.</div>
         <div class="fxpk">${M.map(m=>`<button type="button" class="${pk===m.n?"on":""}" data-fxpick="${esc(m.n)}" style="--c:${m.c}"><i></i>${esc(m.nm)} · ${esc(m.n)}</button>`).join("")}<button type="button" class="${pk==="ext"?"on":""}" data-fxpick="ext">외부인으로</button></div>
@@ -232,3 +232,7 @@ function bindJgPage(f){
 function jgTextColor(){const st=document.body.style,bg=(st.getPropertyValue("--jbg")||"#1b1b1c").trim();const m=bg.match(/^#?([0-9a-f]{6})$/i);let lum=0.1;
   if(m){const n=parseInt(m[1],16),r=(n>>16)/255,g=(n>>8&255)/255,b=(n&255)/255;lum=0.2126*r+0.7152*g+0.0722*b;}
   st.setProperty("--jtx",lum>0.55?"#141414":"#f1efe9");st.setProperty("--jdk",lum>0.55?"1":"0");}
+// 페어·고정탁 공유 링크: 카톡·트위터에 붙이면 맨 위 배너가 미리보기로 떠요 (배포 때 p/f-코드.html을 만들어요)
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-jgshare]");if(!b||!S.fix)return;
+  const u=shareUrl("f-"+(fixCode(S.fix)||encodeURIComponent(S.fix)));
+  try{await navigator.clipboard.writeText(u);toast("공유 링크를 복사했어요 · 배너가 미리보기로 떠요");}catch(_){prompt("공유 링크",u);}});

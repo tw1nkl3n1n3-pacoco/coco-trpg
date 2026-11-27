@@ -59,6 +59,18 @@ if (cfg && cfg.projectId && cfg.apiKey) {
       const desc = camp ? ["캠프", when, val(f.place), eps ? `탁 ${eps}개` : ""].filter(Boolean).join(" · ") : ["캠페인", val(f.system), eps ? `${eps}편` : ""].filter(Boolean).join(" · ");
       pages.push({ id, f, name: val(f.name) || (camp ? "캠프" : "캠페인"), desc, target: `../#g-${id}` });
     }
+    // 페어·고정탁 페이지도 (fixes는 누구나 읽을 수 있어요) · 공유 이미지 = 맨 위 배너
+    let fixes = [];
+    try { fixes = await list("fixes"); } catch (e) { console.log("::warning::페어·고정탁을 읽지 못했어요: " + e.message); }
+    const fixIds = site && site.f.fixIds && site.f.fixIds.mapValue && site.f.fixIds.mapValue.fields || {};
+    for (const { id, f } of fixes) {
+      if (!id.startsWith("fx_")) continue;
+      let nm = ""; try { nm = decodeURIComponent(id.slice(3)); } catch (e) { continue; }
+      const code = val(fixIds[nm]) || encodeURIComponent(nm);
+      const ban = f.banner && f.banner.mapValue && f.banner.mapValue.fields || null, bu = ban ? val(ban.u) || "" : "";
+      const pair = !!(f.prof && f.prof.mapValue) && !(f.mems && f.mems.mapValue);
+      pages.push({ id: "f-" + code, f: { cover: bu ? { mapValue: { fields: { u: { stringValue: bu } } } } : null }, name: nm, desc: [pair ? "페어" : "고정탁", val(f.rel) || val(f.tag) || ""].filter(Boolean).join(" · "), target: `../#f-${code}` });
+    }
     for (const { id, f, name, desc, target } of pages) {
       const system = desc, og = val(f.og) || "";
       // 공유 이미지 = 카드 이미지: 갤러리 사진을 카드로 골랐으면 그 사진, 아니면 올린 그림(og)

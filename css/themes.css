@@ -1458,3 +1458,4 @@ body[data-page=nf] .jgsw:has(input[data-jgc=acc]){display:none!important}
 .nfresg{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
 .nfresg .notice{grid-column:1/-1}
 @media(max-width:760px){.nfsearchw{order:5;flex:1 1 100%;width:auto}.nfres{margin-top:150px}.nfresg{grid-template-columns:1fr 1fr}}
+.jgtl .th.gonly{margin-top:2px}
