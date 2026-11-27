@@ -65,11 +65,9 @@ function jgRO(f){return !(S.canAdmin||fixOpen(f));}
 function jgSrcs(f){const ss=S.db?galSrcFix(f):[];return jgRO(f)?ss.map(x=>({...x,list:x.list.filter(p=>!p.nolink)})):ss;}
 function jgPageHTML(f){const d=jgDoc(f),[A,B]=jgSides(f),fields=d.fields&&d.fields.length?d.fields:JG_F0,data=jgFixData(f),ban=d.banner;
   const srcs=jgSrcs(f),postsH=S.db?galHTML(srcs,{newest:1,title:"POSTS",en:"POSTS"}):"",items=galAll(srcs,1);
-  const tagH=(s,cls)=>`<div class="jgtag ${cls}"><div class="nm">${esc(s.en)}</div>${(s.pr.tags||[]).filter(Boolean).length?`<ul>${s.pr.tags.filter(Boolean).map(t=>`<li>${esc(t)}</li>`).join("")}</ul>`:""}</div>`;
   return `<div class="jgp">
     <section class="jgposter">
       <div class="jgban${ban?.u?"":" empty"}">${ban?.u?`<img src="${esc(ban.u)}" alt="" style="object-position:50% ${+ban.y>=0?+ban.y:40}%">`:`<div class="fb"><span>${esc(A.en)}</span><span>${esc(B.en)}</span></div>`}</div>
-      ${tagH(A,"a")}${tagH(B,"b")}
       <div class="jgunder">
         ${A.pr.cut?.u?`<div class="jgcut a"><img src="${esc(A.pr.cut.u)}" alt=""></div>`:""}${B.pr.cut?.u?`<div class="jgcut b"><img src="${esc(B.pr.cut.u)}" alt=""></div>`:""}
         <div class="jgtitle"><h1>${esc(f)}</h1><p>${esc(A.en)} × ${esc(B.en)}</p></div>
@@ -102,7 +100,7 @@ function jgEditHTML(f){const D=jgDraft(f),[A,B]=jgSides(f),c=D.colors||{};
     <div class="pff"><div class="f2"><span>이명<input data-jgp="${key}.nm" value="${v("nm")}" placeholder="${esc(s.nm)}"></span><span>이명 영문<input data-jgp="${key}.en" value="${v("en")}" placeholder="ROUGE"></span></div>
       <div class="f2"><span>본명<input data-jgp="${key}.rn" value="${v("rn")}"></span><span>본명 영문<input data-jgp="${key}.ren" value="${v("ren")}"></span></div>
       <div class="f4"><span>나이<input data-jgp="${key}.age" value="${v("age")}"></span><span>키<input data-jgp="${key}.ht" value="${v("ht")}"></span><span>성별<input data-jgp="${key}.sex" value="${v("sex")}"></span><span>MBTI<input data-jgp="${key}.mbti" value="${v("mbti")}"></span></div>
-      <div class="f3"><span>태그 세 줄 (첫 화면)${[0,1,2].map(i=>`<input data-jgtag="${key}.${i}" value="${esc((q.tags||[])[i]||"")}">`).join("")}</span></div></div></div>
+</div></div>
     <div class="pfs">${D.fields.map((k,i)=>`<div><div class="fh"><b>${esc(k)}</b>${D.fields.length>1?`<button type="button" data-jgfdel="${i}" title="이 항목 지우기 (양쪽)">✕</button>`:""}</div><textarea rows="3" data-jgsec="${key}|${esc(k)}">${esc((q.sec||{})[k]||"")}</textarea></div>`).join("")}
       <div class="addf"><input id="jgfnew-${key}" placeholder="새 항목 이름 (예: 능력)"><button type="button" data-jgfadd="${key}">＋ 항목 더하기</button><small>양쪽에 같이 생겨요</small></div></div></div>`;};
   return `<section class="jgedit"><div class="eh">페어 수정 <small>· 주인만</small></div>
@@ -118,7 +116,6 @@ async function jgUpImg(f,file){const fk=fixKey(f);if(!S.authUser)await S.auth.si
 function bindJgEdit(f){const box=document.querySelector(".jgedit");if(!box)return;const D=jgDraft(f);
   const setPath=(path,val)=>{const [k,fld]=path.split(".");D.prof[k]=D.prof[k]||{};if(val)D.prof[k][fld]=val;else delete D.prof[k][fld];};
   box.querySelectorAll("[data-jgp]").forEach(i=>i.oninput=i.onchange=()=>setPath(i.dataset.jgp,i.value.trim()));
-  box.querySelectorAll("[data-jgtag]").forEach(i=>i.oninput=()=>{const [k,n]=i.dataset.jgtag.split(".");D.prof[k].tags=[0,1,2].map(j=>box.querySelector(`[data-jgtag="${k}.${j}"]`).value.trim());});
   box.querySelectorAll("[data-jgsec]").forEach(t=>t.oninput=()=>{const [k,fld]=t.dataset.jgsec.split("|");D.prof[k].sec=D.prof[k].sec||{};D.prof[k].sec[fld]=t.value;});
   const rel=box.querySelector("[data-jgrel]");rel.oninput=()=>D.rel=rel.value;
   box.querySelectorAll("[data-jgc]").forEach(i=>i.oninput=()=>{D.colors={...D.colors,[i.dataset.jgc]:i.value};i.nextElementSibling.nextElementSibling.textContent=i.value.toUpperCase();
