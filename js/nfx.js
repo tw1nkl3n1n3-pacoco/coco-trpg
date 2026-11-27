@@ -39,6 +39,8 @@ function nfPageHTML(f){const pair=jgPair(f),d=jgDoc(f),fields=d.fields&&d.fields
       ${fixAccHTML(f)}${jgRO(f)?(pair?`<div class="sc-sec fxacc jgacc"><h4 data-en="ACCESS">페어 비밀번호</h4><div class="tip">페어 비밀번호를 넣으면 글을 올리고, 기록을 더하고, 댓글을 달 수 있어요.</div><form class="pwrow" id="jgunlock"><input type="text" id="jgpw" placeholder="페어 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form><div class="tip" id="jgmsg"></div></div>`
         :`<div class="sc-sec fxacc jgacc"><h4 data-en="ACCESS">고정탁 비밀번호</h4><div class="tip">누구로 들어갈지 고르고 비밀번호를 넣어요.</div><div class="fxpk">${mem.map(m=>`<button type="button" class="${S.fxPick===m.n?"on":""}" data-fxpick="${esc(m.n)}" style="--c:${m.c}"><i></i>${esc(m.nm)} · ${esc(m.n)}</button>`).join("")}<button type="button" class="${S.fxPick==="ext"?"on":""}" data-fxpick="ext">외부인으로</button></div><form class="pwrow" id="jgunlock"><input type="text" id="jgpw" placeholder="고정탁 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form><div class="tip" id="jgmsg"></div></div>`):""}
     </div></div>`;}
+// 포스트 카드의 세션 이름: 그림 위 딱지 → 캡션 맨 위 줄 (좁아도 안 잘리게)
+function nfFromToCap(){document.querySelectorAll(".nfposts .galg figure,.axposts .galg figure").forEach(fg=>{const fr=fg.querySelector(".im>.from"),cap=fg.querySelector("figcaption");if(fr&&cap)cap.prepend(fr);});}
 // 프로필 모달 (첫 화면 아이콘을 누르면)
 function nfMem(f){if(jgPair(f)){const [A,B]=jgSides(f);return [A,B].map(s=>({n:s.own||s.key,nm:s.nm,en:s.en,q:s.pr,own:s.own,c:s.key==="a"?"var(--ja)":"var(--jb)"}));}return fxMembers(f).map(m=>({...m,own:m.n}));}
 function nfModalOpen(f,n){const d=jgDoc(f),fields=d.fields&&d.fields.length?d.fields:JG_F0,M=nfMem(f),i=Math.max(0,M.findIndex(m=>m.n===n)),m=M[i],q=m.q||{};
@@ -55,6 +57,7 @@ function nfModalOpen(f,n){const d=jgDoc(f),fields=d.fields&&d.fields.length?d.fi
   const close=()=>{el.remove();document.body.classList.remove("nfmodal-on");document.removeEventListener("keydown",esc_);};const esc_=e=>{if(e.key==="Escape")close();};
   el.onclick=e=>{if(e.target===el||e.target.closest(".x"))close();const b=e.target.closest("[data-nfp]");if(b){close();nfModalOpen(f,b.dataset.nfp);}};document.addEventListener("keydown",esc_);}
 function bindNfPage(f){if(jgPair(f))bindJgPage(f);else bindFxPage(f);
+  nfFromToCap();
   // 포스트: 전부 펼친 격자 + 쪽 넘기기 (PC 6×2 · 폰 3×2)
   {const gg=document.querySelector(".nfposts .galsec .galg");if(gg){const figs=[...gg.children].filter(x=>x.tagName==="FIGURE"),per=matchMedia("(max-width:760px)").matches?6:12,pages=Math.ceil(figs.length/per);
     S.nfPg=Math.min(S.nfPg||0,Math.max(0,pages-1));const show=()=>{figs.forEach((x,k)=>x.hidden=Math.floor(k/per)!==S.nfPg);const pg=gg.parentElement.querySelector(".nfpager");if(pg)pg.querySelectorAll("[data-pg]").forEach(b=>b.classList.toggle("on",+b.dataset.pg===S.nfPg));

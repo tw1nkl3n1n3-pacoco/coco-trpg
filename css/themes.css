@@ -1364,3 +1364,42 @@ body.axskin .glb .col img,body[data-theme=ax] .glb .col img{border-radius:0;box-
 body.axskin .glb .pri,body[data-theme=ax] .glb .pri{background:#14171c!important;color:#c8f031!important;border-color:#14171c!important}
 body.axskin .glb .strip button.on,body[data-theme=ax] .glb .strip button.on{outline-color:#14171c;border-radius:0}
 body.axskin .glb .strip,body[data-theme=ax] .glb .strip{background:rgba(242,243,240,.96)}
+/* ══ 짭플릭스: 맨 아래 줄 · 수정 패널 ══ */
+body[data-page=nf]:not(.axskin) .nfend .jgbot a.ghost{color:#b3b3b3;text-decoration:none;font-size:14px}
+body[data-page=nf]:not(.axskin) .nfend .jgbot a.ghost:hover{color:#fff}
+body[data-page=nf]:not(.axskin) .jged{background:rgba(109,109,110,.7)!important;color:#fff!important;border-radius:4px!important;font:700 14px "Noto Sans KR",sans-serif!important;padding:9px 20px!important}
+body[data-page=nf]:not(.axskin) .jged:hover{background:rgba(109,109,110,.5)!important}
+body[data-page=nf]:not(.axskin) .jgedit{background:#181818;color:#e5e5e5;box-shadow:none;border:1px solid #2a2a2a;border-radius:6px;--ink:#e5e5e5;--dim:#b3b3b3;--faint:#808080;--line:#2a2a2a;padding:22px 26px}
+body[data-page=nf]:not(.axskin) .jgedit .eh{font:800 22px "Noto Sans KR",sans-serif;color:#fff}body[data-page=nf]:not(.axskin) .jgedit .eh small{color:#808080}
+body[data-page=nf]:not(.axskin) .jgedit .erow,body[data-page=nf]:not(.axskin) .jgedit .eft,body[data-page=nf]:not(.axskin) .jgpfs{border-color:#2a2a2a}
+body[data-page=nf]:not(.axskin) .jgedit .erow>label span,body[data-page=nf]:not(.axskin) .jgedit .eft{color:#808080}
+body[data-page=nf]:not(.axskin) .jgedit .eup,body[data-page=nf]:not(.axskin) .jgedit .ein,body[data-page=nf]:not(.axskin) .jgsw,body[data-page=nf]:not(.axskin) .jgpf,body[data-page=nf]:not(.axskin) .jgpf .pff input,body[data-page=nf]:not(.axskin) .jgpf .pfs textarea,body[data-page=nf]:not(.axskin) .jgpf .addf input,body[data-page=nf]:not(.axskin) .jgfch button{background:#242424!important;border-color:#3a3a3a!important;color:#e5e5e5!important;border-radius:4px}
+body[data-page=nf]:not(.axskin) .jgfch button.on{border-color:#e5e5e5!important;box-shadow:inset 0 0 0 1px #e5e5e5!important;background:#2e2e2e!important}
+body[data-page=nf]:not(.axskin) .jgpf{border-top:4px solid var(--c)!important}
+body[data-page=nf]:not(.axskin) .jgpf .pi img,body[data-page=nf]:not(.axskin) .jgpf .pi .ph{border-color:#3a3a3a;background:#1c1c1c;border-radius:4px}
+body[data-page=nf]:not(.axskin) .jgpf .pi.cutbg img,body[data-page=nf]:not(.axskin) .jgpf .pi .ph.tall{background:repeating-conic-gradient(#2a2a2a 0 25%,#202020 0 50%) 0 0/12px 12px}
+body[data-page=nf]:not(.axskin) .jgpf .pff,body[data-page=nf]:not(.axskin) .jgpf .pi small,body[data-page=nf]:not(.axskin) .jgsw code{color:#9a9a9a}
+body[data-page=nf]:not(.axskin) .jgpf .addf{border-color:#3a3a3a}body[data-page=nf]:not(.axskin) .jgpf .addf button{background:#e5e5e5;color:#141414;border:0;border-radius:4px}
+body[data-page=nf]:not(.axskin) .jgedit .pri{background:#e50914!important;border-color:#e50914!important;color:#fff!important;border-radius:4px}
+body[data-page=nf]:not(.axskin) .jgedit .ghost{color:#b3b3b3}
+body[data-page=nf]:not(.axskin) .jgedit input[type=range]{accent-color:#e50914}
+/* ══ 어카이브: 수정 패널 ══ */
+body.axskin .jgedit{background:#fff;color:#14171c;box-shadow:none;border:1px solid #dcdfdc;border-radius:0;--line:#dcdfdc;margin:16px 0}
+body.axskin .jgedit .eh{font:700 22px "Noto Sans KR",sans-serif;letter-spacing:-.02em}
+body.axskin .jgedit .eh::before{content:"EDIT";display:block;font:600 11.5px "Chakra Petch",sans-serif;letter-spacing:.08em;color:#5f7d00;margin-bottom:4px}
+body.axskin .jgedit .erow,body.axskin .jgedit .eft,body.axskin .jgpfs{border-color:#dcdfdc}
+body.axskin .jgedit .eup,body.axskin .jgedit .ein,body.axskin .jgsw,body.axskin .jgpf,body.axskin .jgpf .pff input,body.axskin .jgpf .pfs textarea,body.axskin .jgfch button,body.axskin .jgpf .addf input{border-radius:0!important;border-color:#dcdfdc!important;background:#fff!important}
+body.axskin .jgpf{background:#fafbf7!important;border-top:3px solid var(--c)!important}
+body.axskin .jgfch button.on{border-color:#14171c!important;box-shadow:inset 0 0 0 1px #14171c!important}
+body.axskin .jgedit .pri,body.axskin .jgpf .addf button{background:#14171c!important;color:#c8f031!important;border-color:#14171c!important;border-radius:0}
+body.axskin .jgsw code,body.axskin .jgpf .pff{font-family:"Chakra Petch","Noto Sans KR",sans-serif}
+body.axskin .axp .hx-foot a.ghost{color:#6b717b;text-decoration:none}
+/* 세션 이름: 그림 위 딱지 대신 캡션 줄로 (잘리지 않게) */
+.nfx .nfposts .galg figcaption .from{display:block!important;position:static!important;background:none!important;padding:0!important;max-width:none!important;margin:0 0 3px;font:700 11px "Noto Sans KR",sans-serif!important;color:#ff8a8f!important;white-space:normal!important;overflow:hidden;display:-webkit-box!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.35;letter-spacing:0}
+.nfx .nfposts .galg figcaption .from::before{content:"◆ "}
+body.axskin .axposts .galg figcaption .from{white-space:normal!important;display:-webkit-box!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.35}
+body[data-page=nf]:not(.axskin) .jgedit select{background:#242424!important;color:#e5e5e5!important;border:1px solid #3a3a3a!important;border-radius:4px}
+body.axskin .jgedit select{border-radius:0;border:1px solid #dcdfdc;background:#fff}
+/* 짭플릭스·어카이브 화면은 바탕·글상자·줄무늬가 테마로 정해져 있어서 그 칸은 숨겨요 (포인트·캐릭터 색만) */
+body[data-page=nf] .jgsw:has(input[data-jgc=bg]),body[data-page=nf] .jgsw:has(input[data-jgc=box]),body[data-page=nf] [data-jgboxauto],body[data-page=nf] .jgscan{display:none!important}
+body.axskin .jgsw:has(input[data-jgc=acc]){display:none!important}

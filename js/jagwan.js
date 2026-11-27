@@ -146,7 +146,7 @@ function jgEditHTML(f){const D=jgDraft(f),pair=jgPair(f),[A,B]=jgSides(f),c=D.co
 </div></div>
     <div class="pfs">${D.fields.map((k,i)=>`<div><div class="fh"><b>${esc(k)}</b>${D.fields.length>1?`<button type="button" data-jgfdel="${i}" title="이 항목 지우기 (모두)">✕</button>`:""}</div><textarea rows="3" data-jgsec="${key}|${esc(k)}">${esc((q.sec||{})[k]||"")}</textarea></div>`).join("")}
       <div class="addf"><input id="jgfnew-${key}" placeholder="새 항목 이름 (예: 능력)"><button type="button" data-jgfadd="${key}">＋ 항목 더하기</button><small>${pair?"양쪽에":"모든 멤버에"} 같이 생겨요</small></div></div></div>`;};
-  return `<section class="jgedit"><div class="eh">${W} 수정 <small>· 주인만</small></div>
+  return `<section class="jgedit"><div class="eh">${W} 수정 <small>· ${S.canAdmin?"주인":esc(W)+" 비밀번호로 들어온 사람"}</small></div>
     <div class="erow"><label>첫 화면 그림<span>가로로 긴 그림</span></label><label class="eup">${D.banner?.u?"바꾸기":"＋ 올리기"}<input type="file" accept="image/*" hidden data-jgimg="banner"></label>
       ${(()=>{const ims=galAll(galSrcFix(f),1).filter(p=>galT(p)==="img").flatMap(p=>galImgs(p).map(q=>q.o||q.u)).filter(Boolean);return ims.length?`<div class="jgbpick"><span class="tip">또는 갤러리에서</span>${ims.map(u=>`<button type="button" class="${D.banner&&(D.banner.o===u||D.banner.u===u)?"on":""}" data-jgbpick="${esc(u)}"><img src="${esc(u)}" alt="" loading="lazy"></button>`).join("")}</div>`:"";})()}
       ${D.banner?.u?`<span class="eup2">위치 <input type="range" min="0" max="100" value="${+D.banner.y>=0?+D.banner.y:40}" data-jgby></span><button type="button" class="ghost" data-jgbandel>빼기</button>`:""}<span class="tip" id="jgupmsg"></span></div>

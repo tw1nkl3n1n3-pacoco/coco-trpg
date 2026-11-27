@@ -55,7 +55,7 @@ function axPageHTML(f){const pair=jgPair(f),d=jgDoc(f),fields=d.fields&&d.fields
     <div class="hx-foot axfoot"><span class="hx-m">© ${esc(site().title)} · ARCHIVE</span><span style="flex:1"></span>${jgCanEdit(f)?`<button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":`✎ ${W} 수정`}</button>`:""}</div>
     ${S.jgEdit&&jgCanEdit(f)?jgEditHTML(f):""}
   </div></div>`;}
-function bindAxPage(f){if(jgPair(f))bindJgPage(f);else bindFxPage(f);if(typeof bindHX==="function")bindHX();
+function bindAxPage(f){if(jgPair(f))bindJgPage(f);else bindFxPage(f);nfFromToCap();if(typeof bindHX==="function")bindHX();
   document.querySelectorAll("[data-nfgo]").forEach(b=>b.onclick=()=>document.getElementById("nfm-"+b.dataset.nfgo)?.scrollIntoView({block:"center",behavior:"smooth"}));
   // 타임라인은 옆 칸(세션 막대) 높이에 맞춰 접고 더 보기
   const tl=document.querySelector(".axtl .jgtl"),key=S.jgTl||"main";
