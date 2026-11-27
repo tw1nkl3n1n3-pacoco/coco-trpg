@@ -306,8 +306,10 @@ body[data-theme=jg] header h1,body[data-theme=jg] .sc-top h2{color:var(--ink)!im
 body[data-theme=jg] header h1 small,body[data-theme=jg] header .scl small{font-family:var(--jmono);letter-spacing:.06em}
 body[data-theme=jg] .sc-top .orig{font-family:var(--jmono)!important;letter-spacing:.14em;color:var(--faint)!important}
 /* 두 주인공 대사는 각자 색으로 옅게 물들여요 */
-body[data-theme=jg] .row.chr:not(.chat) .body{background:color-mix(in srgb,var(--c) 7%,#fff)}
-body[data-theme=jg] .row.chat .tx,body[data-theme=jg] .row.chat .who{color:var(--faint)}
+body[data-theme=jg] .row.chr:not(.chat){background:color-mix(in srgb,var(--c) 7%,transparent)}
+body[data-theme=jg] .row.chr:not(.chat):hover{background:color-mix(in srgb,var(--c) 11%,transparent)}
+body[data-theme=jg] .row.chr .body{background:none}
+body[data-theme=jg] .row.chat .tx{color:var(--dim)}body[data-theme=jg] .row.chat .who{color:var(--faint)}
 body[data-theme=jg] .sc-sec{position:relative}
 body[data-theme=jg] .sc-sec::before{content:"";position:absolute;left:-1px;top:-1px;width:40px;height:3px;background:var(--ja)}
 body[data-theme=jg] .sc-sec::after{content:"";position:absolute;right:-1px;bottom:-1px;width:40px;height:3px;background:var(--jb)}
