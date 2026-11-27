@@ -294,8 +294,8 @@ body[data-theme=jg] .sc-sec h4::before{counter-increment:jgsec;content:counter(j
 body[data-theme=jg] .sc-sec h4::after{content:attr(data-en);margin-left:auto;font-family:var(--jmono);font-size:10.5px;letter-spacing:.18em;color:var(--faint);font-weight:600}
 body[data-theme=jg] .sc-top h2{font-weight:900;letter-spacing:.02em;font-style:normal}
 body[data-theme=jg] .sc-top h2 .orig,body[data-theme=jg] .schero-t .orig{font-family:var(--jmono);letter-spacing:.1em}
-body[data-theme=jg] .schero-t{background:rgba(255,255,255,.9);color:var(--ink);box-shadow:none;border-bottom:3px solid;border-image:var(--jgrad) 1}
-body[data-theme=jg] .schero-t *{color:var(--ink)}
+body[data-theme=jg] .schero-t{background:linear-gradient(transparent,rgba(21,23,27,.82));box-shadow:none;padding-top:40px;border-bottom:3px solid;border-image:var(--jgrad) 1}
+body[data-theme=jg] .schero-t h2{font-weight:900;letter-spacing:.03em}
 body[data-theme=jg] .day-h .nth,body[data-theme=jg] .oday .nth{border-radius:0;background:var(--ink)!important;color:#fff!important}
 body[data-theme=jg] .castc,body[data-theme=jg] .rvcard,body[data-theme=jg] .galg .im,body[data-theme=jg] .galadd,body[data-theme=jg] .glb .fr img,body[data-theme=jg] .gebox,body[data-theme=jg] .gei{border-radius:0}
 body[data-theme=jg] .galadd i,body[data-theme=jg] .galg figcaption .c{color:var(--ja)}
