@@ -565,7 +565,7 @@ body[data-theme=jg] .jgp .sc-sec h4{color:var(--jtx)!important}
   .fxtri{grid-template-columns:1fr}.fxtri .jgmid{order:-1}.fxcards{grid-template-columns:repeat(2,minmax(0,1fr))}.fxcd.op{grid-template-columns:1fr}.jgpfs.fx{grid-template-columns:1fr}}
 
 /* 글상자 색을 따로 고르면: 상자 안에서 글자·선·강조색을 상자 색 기준으로 다시 */
-body.jbox .jgp .jgsec{--jbg:var(--jbox);--jtx:var(--jboxtx);--jacc:var(--jboxacc);
+body.jbox .jgp .jgsec,body.jbox .jgp .jgwrap>.sc-sec{--jbg:var(--jbox);--jtx:var(--jboxtx);--jacc:var(--jboxacc);
   --p1:color-mix(in srgb,var(--jbg) 93%,var(--jtx));--p2:color-mix(in srgb,var(--jbg) 88%,var(--jtx));--ln:color-mix(in srgb,var(--jbg) 82%,var(--jtx));--dimj:color-mix(in srgb,var(--jtx) 70%,var(--jbg));--fj:color-mix(in srgb,var(--jtx) 50%,var(--jbg));
   --ink:var(--jtx);--dim:var(--dimj);--faint:var(--fj);--line:var(--ln);--panel:var(--p1);--panel2:var(--p2);--acc:var(--jacc);--gold:var(--jacc);color:var(--jtx);background:var(--jbox);border-color:transparent}
 .jgsw.auto code{color:#999}
