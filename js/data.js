@@ -23,7 +23,7 @@ function publish(){
   const all=[];Object.values(SUB.sessData).forEach(m=>Object.values(m).forEach(x=>all.push(x)));
   S.sessions=all.sort((a,b)=>String(a.title).localeCompare(String(b.title),"ko",{numeric:true}));
   const cwChanged=refreshCanWrite();
-  if(S.fix&&location.hash.startsWith("#f-")){const r=fixFromHash(location.hash.slice(3));if(r!==S.fix)S.fix=r;}
+  if(S.fix&&location.hash.startsWith("#f-")){const r=fixFromHash(location.hash.slice(3));if(r!==S.fix)S.fix=r;if(fixCode(r)&&location.hash!==fixHref(r))try{history.replaceState(null,"",fixHref(r));}catch(e){}}
   if(S.sid){if(cwChanged)render();else{renderSide();renderAllRows(true);renderHeader();}maybeEnsure();if(S.chunksLoaded)loadSecs();}
   else if(!S.importing&&!S.scEdit)render();
   if(S.canAdmin)ownerMaintain();
