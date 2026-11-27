@@ -585,3 +585,5 @@ body[data-theme=jg] .jgp .fxacc{border:0!important;box-shadow:none!important;out
 body[data-theme=jg] .jgp .fxacc h4::after{display:none!important}
 .jgp .fxacc .pri{border:0!important;box-shadow:none!important}
 body:not(.jbox) .jgp .fxacc{border:1px solid var(--ln)!important}
+/* 고정탁 첫 화면 그림: 페어용 양옆 캐릭터색 그라데이션 없이 · 위아래 어둡게/바탕으로만 */
+.fxpg .jgban::before{background:linear-gradient(rgba(0,0,0,.28),transparent 38%),linear-gradient(transparent 55%,var(--jbg))}
