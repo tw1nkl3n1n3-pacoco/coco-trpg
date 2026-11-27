@@ -1410,3 +1410,5 @@ body[data-page=post] aside{display:none}body[data-page=post] .wrap{grid-template
 @media(max-width:760px){.jrf{grid-template-columns:1fr}.jrgrid{grid-template-columns:repeat(3,1fr);max-height:260px}}
 .jrt.on::after{left:auto;right:6px}.jrt.on i{display:none}
 @media(max-width:760px){.pstimgs{margin:0 -12px}.pstpage .glpaper{margin:0 -12px;box-shadow:none;padding:28px 20px}}
+
+.cvpick .cvup{opacity:1}.cvpick .cvup span{width:68px;height:50px;display:grid;place-items:center;border:1px dashed var(--line);border-radius:4px;font-size:20px;color:var(--acc)}

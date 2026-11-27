@@ -61,10 +61,15 @@ if (cfg && cfg.projectId && cfg.apiKey) {
     }
     for (const { id, f, name, desc, target } of pages) {
       const system = desc, og = val(f.og) || "";
-      let img = "";
-      if (og.startsWith("data:image/")) {
-        const buf = Buffer.from(og.split(",")[1], "base64");
-        const file = `p/${id}.${og.startsWith("data:image/png") ? "png" : "jpg"}`;
+      // 공유 이미지 = 카드 이미지: 갤러리 사진을 카드로 골랐으면 그 사진, 아니면 올린 그림(og)
+      const cv = f.cover && f.cover.mapValue && f.cover.mapValue.fields || null, cvU = cv && !val(cv.og) ? val(cv.u) || "" : "";
+      let img = "", buf = null, ext = "jpg";
+      if (cvU.startsWith("https://")) {
+        try { const r = await fetch(cvU); if (r.ok) { buf = Buffer.from(await r.arrayBuffer()); ext = /png/.test(r.headers.get("content-type") || "") ? "png" : "jpg"; } } catch (e) {}
+      }
+      if (!buf && og.startsWith("data:image/")) { buf = Buffer.from(og.split(",")[1], "base64"); ext = og.startsWith("data:image/png") ? "png" : "jpg"; }
+      if (buf) {
+        const file = `p/${id}.${ext}`;
         fs.writeFileSync(path.join(OUT, file), buf);
         img = `${BASE}${file}?v=${crypto.createHash("md5").update(buf).digest("hex").slice(0, 8)}`;
       }
@@ -77,7 +82,6 @@ if (cfg && cfg.projectId && cfg.apiKey) {
 <meta property="og:description" content="${esc(siteTitle)}${system ? " · " + esc(system) : ""}">
 <meta property="og:url" content="${BASE}p/${id}.html">
 ${img ? `<meta property="og:image" content="${img}">
-<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="${img}">` : `<meta name="twitter:card" content="summary">`}
 <meta http-equiv="refresh" content="0;url=${target}">

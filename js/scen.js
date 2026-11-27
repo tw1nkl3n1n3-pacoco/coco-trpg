@@ -47,10 +47,6 @@ function scenHTML(){
         <div class="donerow"><label class="chk"><input type="checkbox" id="e-done"${d.done?" checked":""}> 완주했어요</label><label class="donedate">완주한 날 <input type="date" id="e-doneat" value="${esc(d.doneAt||"")}"></label></div>
         <datalist id="syslist">${[...new Set(S.scens.map(x=>(x.system||"").trim()).filter(Boolean))].map(x=>`<option value="${esc(x)}">`).join("")}</datalist>
       </div></div>
-      <div class="sc-sec"><h4 data-en="SHARE IMAGE">공유 이미지 <span class="tip" style="letter-spacing:0">· 링크를 보낼 때 카톡·디스코드 미리보기에 뜨는 그림 (가로로 긴 1200×630으로 맞춰져요)</span></h4>
-        <div class="ogcard${d.og?"":" empty"}" id="e-ogprev">${d.og?`<img src="${d.og}" alt="">`:`<span>아직 이미지가 없어요</span>`}</div>
-        <div style="display:flex;gap:6px;margin-top:8px"><button type="button" id="e-ogup">이미지 올리기</button>${d.og?`<button type="button" class="ghost" id="e-ogdel">지우기</button>`:""}<input type="file" id="e-ogfile" accept="image/*" style="display:none"></div>
-      </div>
       ${cvEditHTML(d,sc)}
       <div class="sc-sec"><h4 data-en="NO-LOG DAYS">녹음 없이 플레이한 날 <span class="tip" style="letter-spacing:0">· 녹음이 금지된 세션 · 로그 없이 회차로만 보여요</span></h4>
         <div class="plays">${(d.plays||[]).map((v,i)=>`<span class="playd"><input type="date" data-play="${i}" value="${esc(v)}"><button type="button" class="ghost" data-playdel="${i}" title="빼기">✕</button></span>`).join("")}<button type="button" id="e-playadd">＋ 날짜 추가</button></div>
@@ -121,13 +117,18 @@ async function loadScenCounts(sc){
 // 녹음 목록을 다 받아온 뒤에만 대사 수를 세요 (빈 목록으로 세면 모두 0이 돼요)
 function sessionsReady(id){return S.canAdmin?!!SUB.sessData.all:!!SUB.sessData[id];}
 // 수정 창에서 바꾼 부분만 최신 시나리오에 적용 (다른 사람이 그 사이에 바꾼 건 그대로 둬요)
-// 카드 이미지 고르기 (공유 이미지 또는 갤러리 사진) + 보여줄 위치
-function cvEditHTML(d,sc){const G=galRaw(sc),opts=[...(d.og?[{id:"og",u:d.og,lb:"공유 이미지"}]:[]),...G.slice().sort((a,b)=>(a.at||0)-(b.at||0)).flatMap((p,i)=>{const im=galImgs(p);return im.map((q,k)=>({id:p.id+"|"+k,u:q.u||q.o,lb:"갤러리 "+String(i+1).padStart(2,"0")+(im.length>1?"-"+(k+1):"")}));})];
-  if(!opts.length)return "";const c=d.cover||{},cur=c.og?"og":c.id?c.id+"|"+(c.k||0):(d.og?"og":""),y=+c.y>=0?+c.y:50,cu=coverOf(d);
-  return `<div class="sc-sec cvsec"><h4 data-en="CARD IMAGE">카드 이미지 <span class="tip" style="letter-spacing:0">· 첫 화면 카드 위 그림 · 원래 비율, 4:3보다 길면 잘려요</span></h4>
-    <div class="cvpick">${opts.map(o=>`<button type="button" class="${o.id===cur?"on":""}" data-cvpick="${esc(o.id)}"><img src="${esc(o.u)}" alt="" loading="lazy"><small>${esc(o.lb)}</small></button>`).join("")}</div>
+// 카드 이미지 = 공유 이미지 (첫 화면 카드 + 링크 미리보기에 같이) · 직접 올린 그림(og) 또는 갤러리 사진 + 보여줄 위치
+function cvEditHTML(d,sc){const G=galRaw(sc).filter(p=>galT(p)!=="txt"),opts=[...(d.og?[{id:"og",u:d.og,lb:"올린 그림"}]:[]),...G.slice().sort((a,b)=>(a.at||0)-(b.at||0)).flatMap((p,i)=>{const im=galImgs(p);return im.map((q,k)=>({id:p.id+"|"+k,u:q.u||q.o,lb:"갤러리 "+String(i+1).padStart(2,"0")+(im.length>1?"-"+(k+1):"")}));})];
+  const c=d.cover||{},cur=c.og?"og":c.id?c.id+"|"+(c.k||0):(d.og?"og":""),y=+c.y>=0?+c.y:50,cu=coverOf(d);
+  return `<div class="sc-sec cvsec"><h4 data-en="CARD IMAGE">카드 · 공유 이미지 <span class="tip" style="letter-spacing:0">· 첫 화면 카드와 링크 미리보기에 같이 쓰여요</span></h4>
+    <div class="cvpick"><button type="button" class="cvup" id="e-ogup"><span>＋</span><small>새로 올리기</small></button><input type="file" id="e-ogfile" accept="image/*" style="display:none">${opts.map(o=>`<button type="button" class="${o.id===cur?"on":""}" data-cvpick="${esc(o.id)}"><img src="${esc(o.u)}" alt="" loading="lazy"><small>${esc(o.lb)}</small></button>`).join("")}</div>
     ${cu?`<div class="cvprev cv" id="e-cvprev"><img src="${esc(cu.u)}" alt="" style="object-position:50% ${y}%" draggable="false"></div>
-    <div class="cvrng">위 <input type="range" id="e-cvy" min="0" max="100" value="${y}"> 아래</div><div class="tip">그림을 위아래로 끌거나 막대를 움직여서 보여줄 부분을 골라요 (4:3보다 긴 그림만 움직여요)</div>`:""}</div>`;}
+    <div class="cvrng">위 <input type="range" id="e-cvy" min="0" max="100" value="${y}"> 아래${cur==="og"?`<button type="button" class="ghost" id="e-ogdel" style="margin-left:auto">올린 그림 빼기</button>`:""}</div><div class="tip">그림을 위아래로 끌거나 막대를 움직여서 보여줄 부분을 골라요 (4:3보다 긴 그림만 움직여요)</div>`:`<div class="tip">아직 그림이 없어요 · 새로 올리거나 갤러리 사진을 골라요</div>`}</div>`;}
+// 올린 그림: 비율은 그대로, 긴 쪽 1200px
+function shrinkKeep(file,max=1200){return new Promise((ok,no)=>{const img=new Image(),u=URL.createObjectURL(file);
+  img.onload=()=>{const r=Math.min(1,max/Math.max(img.width,img.height)),w=Math.round(img.width*r),h=Math.round(img.height*r),c=document.createElement("canvas");c.width=w;c.height=h;
+    const g=c.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,w,h);g.drawImage(img,0,0,w,h);URL.revokeObjectURL(u);ok(c.toDataURL("image/jpeg",.85));};
+  img.onerror=()=>{URL.revokeObjectURL(u);no();};img.src=u;});}
 function bindCvEdit(){const d=S.scDraft;if(!d)return;const sc=scenById(S.cid);
   document.querySelectorAll("[data-cvpick]").forEach(b=>b.onclick=()=>{const pl=window.__scPull;pl&&pl();const id=b.dataset.cvpick,y=+(d.cover&&d.cover.y)>=0?+d.cover.y:50;
     if(id==="og")d.cover={og:1,y};else{const [pid,k]=id.split("|");const p=galRaw(sc).find(x=>x.id===pid);const q=p&&galImgs(p)[+k||0];if(q)d.cover={id:pid,k:+k||0,u:q.u||q.o,w:q.w||0,h:q.h||0,y};}render();});
@@ -165,8 +166,8 @@ function bindScen(){
   {const up=$("#e-ogup"),fi=$("#e-ogfile");
     if(up&&fi){up.onclick=()=>fi.click();
       fi.onchange=async ev=>{const f=ev.target.files[0];if(!f||!S.scDraft)return;
-        try{const pl=window.__scPull;pl&&pl();S.scDraft.og=await shrinkImage(f,1200,"image/jpeg",1200,630);render();toast("저장을 눌러야 적용돼요");}catch(e){toast("이미지를 읽지 못했어요");}};}
-    const del=$("#e-ogdel");if(del)del.onclick=()=>{const pl=window.__scPull;pl&&pl();delete S.scDraft.og;render();};}
+        try{const pl=window.__scPull;pl&&pl();S.scDraft.og=await shrinkKeep(f);S.scDraft.cover={og:1,y:50};render();toast("저장을 눌러야 적용돼요");}catch(e){toast("이미지를 읽지 못했어요");}};}
+    const del=$("#e-ogdel");if(del)del.onclick=()=>{const pl=window.__scPull;pl&&pl();delete S.scDraft.og;if(S.scDraft.cover&&S.scDraft.cover.og)delete S.scDraft.cover;render();};}
   document.querySelectorAll("[data-theme-set]").forEach(b=>b.onclick=()=>{if(!S.scDraft)return;const k=b.dataset.themeSet;
     if(k)S.scDraft.theme=k;else delete S.scDraft.theme;
     document.querySelectorAll("[data-theme-set]").forEach(x=>x.classList.toggle("on",x===b));

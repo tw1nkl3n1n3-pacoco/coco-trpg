@@ -76,7 +76,7 @@ function editSessionBox(id){
 function bindPartEdit(){document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=ev=>{ev.preventDefault();ev.stopPropagation();editSessionBox(b.dataset.edit);});}
 
 // ---------- home & import ----------
-// 카드 이미지: 대표 이미지(갤러리에서 고른 것 · cover) 또는 공유 이미지(og) · 원래 비율, 4:3보다 길면 고른 위치로 잘라요
+// 카드 이미지: 대표 이미지(갤러리에서 고른 것 · cover) 또는 올린 그림(og) · 링크 미리보기에도 같은 그림 · 원래 비율, 4:3보다 길면 고른 위치로 잘라요
 function coverOf(x){if(!x)return null;const c=x.cover;if(c&&c.og)return x.og?{u:x.og,y:c.y}:null;if(c&&c.u)return c;return x.og?{u:x.og,y:50}:null;}
 function coverHTML(x,cls){const c=coverOf(x);return c?`<div class="${cls} cv"><img src="${esc(c.u)}" alt="" loading="lazy" decoding="async" style="object-position:50% ${+c.y>=0?+c.y:50}%"></div>`:"";}
 function pwOf(sc){return sc&&sc.camp&&campById(sc.camp)?sc.camp:sc&&sc.id;}

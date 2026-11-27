@@ -150,7 +150,7 @@ function galLBRefresh(force){
     <div class="side"><div class="meta"><div class="k">#${n2(i+1)}${p.label?` · <a href="#c-${esc(p.src)}">${esc(p.label)}</a>`:""}</div>
       ${ttl?`<h3>${esc(ttl)}</h3>`:""}
       <div class="by">${esc(p.by||"")}${p.by?" 올림 · ":""}${p.at?new Date(p.at).toLocaleDateString("ko-KR"):""}${IM.length>1?` · ${IM.length}장`:""}${t==="txt"?` · ${len.toLocaleString()}자`:""}</div>
-      ${ed?`<div class="tools"><button type="button" data-glb="edit">✎ 수정</button>${t==="img"&&S.canAdmin&&S.fix&&!S.cid&&!S.sid?`<button type="button" data-glb="fxcover" class="${galIsFxCover(p,S.galImg)?"on":""}">${galIsFxCover(p,S.galImg)?"★ 커버":"☆ 커버로"}</button>`:""}${t==="img"&&S.canAdmin&&p.kind==="sc"?`<button type="button" data-glb="cover" class="${galIsCover(sc,p,S.galImg)?"on":""}">${galIsCover(sc,p,S.galImg)?"★ 카드 이미지":"☆ 카드 이미지로"}</button>`:""}</div>`:""}</div>
+      ${ed?`<div class="tools"><button type="button" data-glb="edit">✎ 수정</button>${t==="img"&&S.canAdmin&&S.fix&&!S.cid&&!S.sid?`<button type="button" data-glb="fxcover" class="${galIsFxCover(p,S.galImg)?"on":""}">${galIsFxCover(p,S.galImg)?"★ 커버":"☆ 커버로"}</button>`:""}${t==="img"&&S.canAdmin&&p.kind==="sc"?`<button type="button" data-glb="cover" class="${galIsCover(sc,p,S.galImg)?"on":""}">${galIsCover(sc,p,S.galImg)?"★ 카드·공유 이미지":"☆ 카드·공유 이미지로"}</button>`:""}</div>`:""}</div>
       <div class="ch">COMMENTS · ${cms.length}</div>
       <div class="cl">${cms.map(c=>{const sp=(sc?.sp||[]).find(x=>x.k===c.k);return `<div class="cm"><span class="av" style="--c:${sp?.c||"#888"}">${esc((c.name||"?").slice(0,1))}</span><div><b>${esc(c.name||"")}</b><i>${galTime(c.created)}</i>${S.canAdmin||c.uid===myUid()?`<button type="button" class="cmx" data-glbcx="${esc(c.id)}" title="지우기">✕</button>`:""}<p>${esc(c.text||"")}</p></div></div>`;}).join("")||`<div class="tip" style="padding:10px 0">아직 댓글이 없어요</div>`}</div>
       ${can?`<form class="cin" id="glbf"><input type="text" id="glbnew" maxlength="2000" placeholder="댓글 달기" autocomplete="off"><button class="pri">등록</button></form>`:""}</div>
@@ -182,7 +182,7 @@ function galLBRefresh(force){
       render();galLBRefresh(true);}
     else if(act==="cover"&&sc){const on=galIsCover(sc,p,S.galImg);
       await mutateScen(sc.id,L=>{if(on)delete L.cover;else L.cover={id:p.id,k:S.galImg,u:q.u||q.o,w:q.w||0,h:q.h||0,y:50};});
-      toast(on?"카드 이미지를 공유 이미지로 되돌렸어요":"카드 이미지로 정했어요 · 보여줄 위치는 시나리오 수정에서 고를 수 있어요",3200);render();galLBRefresh(true);}
+      toast(on?"카드·공유 이미지에서 뺐어요":"카드·공유 이미지로 정했어요 · 보여줄 위치는 시나리오 수정에서 고를 수 있어요",3200);render();galLBRefresh(true);}
   };
   {let tx=null,ty=0;stg.ontouchstart=e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY;};stg.ontouchend=e=>{if(tx==null)return;const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;tx=null;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*2)galStep(dx<0?1:-1);};}
   const f=ov.querySelector("#glbf");if(f)f.onsubmit=async e=>{e.preventDefault();const tt=ov.querySelector("#glbnew"),text=tt.value.trim();if(!text)return;
