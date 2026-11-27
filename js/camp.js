@@ -63,11 +63,12 @@ function fixLockHTML(f){const W=fixWord(f);
 function bindFixLock(){const f=S.fix;
   document.querySelectorAll("[data-fxpick]").forEach(b=>b.onclick=()=>{S.fxPick=b.dataset.fxpick;render();});
   const form=$("#fxunlock");if(!form)return;const inp=$("#fxpw");setTimeout(()=>inp.focus(),0);
-  form.onsubmit=async ev=>{ev.preventDefault();const pw=inp.value.trim();if(!pw)return;const m=$("#fxmsg");m.textContent="확인하는 중…";const ids=fixPwIds(f);
-    try{await unlockScen(ids[0],pw);await Promise.all(ids.slice(1).map(id=>unlockScen(id,pw).catch(()=>{})));
-      try{await S.db.doc(`unlocks/${fixKey(f)}_${S.auth.currentUser.uid}`).set({scid:fixKey(f),uid:S.auth.currentUser.uid,pw,at:Date.now()});}catch(e){}const who=fixWord(f)==="페어"&&fixOther(f)||S.fxPick;if(who)fixSetMe(f,who);S.fxPick=null;
-      m.textContent="열렸어요!";refreshCanWrite();render();}
-    catch(err){m.textContent=err&&err.code==="permission-denied"?"비밀번호가 틀렸어요.":"열지 못했어요: "+(err.code||err.message);}};}
+  form.onsubmit=ev=>{ev.preventDefault();fixUnlock(f,inp.value.trim(),$("#fxmsg"));};}
+async function fixUnlock(f,pw,m){if(!pw)return;m.textContent="확인하는 중…";const ids=fixPwIds(f);
+  try{if(!S.authUser&&S.auth)await S.auth.signInAnonymously();await unlockScen(ids[0],pw);await Promise.all(ids.slice(1).map(id=>unlockScen(id,pw).catch(()=>{})));
+    try{await S.db.doc(`unlocks/${fixKey(f)}_${S.auth.currentUser.uid}`).set({scid:fixKey(f),uid:S.auth.currentUser.uid,pw,at:Date.now()});}catch(e){}const who=fixWord(f)==="페어"&&fixOther(f)||S.fxPick;if(who)fixSetMe(f,who);S.fxPick=null;
+    m.textContent="열렸어요!";refreshCanWrite();render();}
+  catch(err){m.textContent=err&&err.code==="permission-denied"?"비밀번호가 틀렸어요.":"열지 못했어요: "+(err.code||err.message);}}
 // 타임라인: 고정탁 안의 모든 세션을 날짜순(최근이 위)으로 · 시나리오 첫 세션에 갤러리 사진 하나
 function fixTimelineHTML(f,allG,cs){
   const E=[];allG.forEach(g=>{const sc=g.sc,n=g.days.length;g.days.forEach((d,i)=>E.push({day:d.day||"",sc,i:i+1,n,sid:d.parts[0]?.id,camp:sc.camp&&campById(sc.camp)}));
@@ -141,9 +142,8 @@ function campRuns(c){
   const es=campEps(c),labs=es.map(e=>epLabel(c,e)),P=new Map();
   es.forEach((e,i)=>{const gk=gmKey(e);(e.sp||[]).forEach(p=>{if(isAnon(p)&&!p.ch&&p.k!==gk)return;if(p.chr&&!p.ch&&p.k!==gk)return;if(/&/.test(p.name||""))return;
     const gm=p.k===gk,q=pcSplit(p.name||""),who=gm?"GM":q.name;if(!who)return;
-    if(!P.has(who))P.set(who,[]);P.get(who).push({i,ch:gm?q.name:(p.ch||""),pc:q.n||"",c:fixC(p.c)});
-    // 타이만: GM이 캐릭터도 맡았으면 플레이어 칸에도
-    if(gm&&p.ch&&q.name){if(!P.has(q.name))P.set(q.name,[]);P.get(q.name).push({i,ch:p.ch,pc:q.n||"",c:fixC(p.c)});}});});
+    if(!P.has(who))P.set(who,[]);P.get(who).push({i,ch:gm?(p.ch?`${q.name} · ${p.ch}`:q.name):(p.ch||""),pc:q.n||"",c:fixC(p.c)});
+});});
   const rng=ix=>{const out=[];let s=null,prev=null;const flush=()=>{if(s==null)return;const a=labs[s],b=labs[prev];out.push(s===prev?a:(/편$/.test(a)&&/편$/.test(b)?`${a.replace("편","")}–${b}`:`${a}–${b}`));};
     ix.forEach(i=>{if(s!=null&&i===prev+1){prev=i;return;}flush();s=i;prev=i;});flush();return out.join(", ");};
   const rows=[...P.entries()].map(([who,list])=>{
@@ -167,7 +167,7 @@ function campViewHTML(c,es,rows,open){const W=campWord(c),dt=d=>(d||"").replace(
       ${done?`<span class="st">완주</span>`:e===lastEp||e.gaiden?`<span class="st now">진행 중</span>`:"<span></span>"}</a>`;}).join("");
   const labs=es.map(e=>e.gaiden?"외전":epLabel(c,e));
   const pcn=v=>{const m=String(v.x.pc||"").match(/\d+/);return m?+m[0]:99;};
-  const cast=rows.flatMap(r=>r.runs.map(x=>({r,x}))).sort((a,b)=>(b.r.who==="GM")-(a.r.who==="GM")||pcn(a)-pcn(b)||a.r.who.localeCompare(b.r.who,"ko")).map(({r,x})=>`<div class="pc2${r.who==="GM"?" gm":""}" style="--c:${x.c}"><div class="p">${r.who==="GM"?"GM":`${x.pc?esc(x.pc.replace("PC ","PC"))+" · ":""}${esc(r.who)}`}</div>
+  const cast=rows.flatMap(r=>r.runs.map(x=>({r,x}))).sort((a,b)=>(b.r.who==="GM")-(a.r.who==="GM")||pcn(a)-pcn(b)||a.r.who.localeCompare(b.r.who,"ko")).map(({r,x})=>`<div class="pc2${r.who==="GM"?" gm":""}" style="--c:${x.c}"><div class="p">${r.who==="GM"?gmAb({system:c.system}):`${x.pc?esc(x.pc.replace("PC ","PC"))+" · ":""}${esc(r.who)}`}</div>
       <div class="c">${x.ch?esc(x.ch):`<span class="tip">${r.who==="GM"?"":"캐릭터 이름 없음"}</span>`}</div><div class="eps">${es.map((_,i)=>x.ix.includes(i)?`<i>${esc(labs[i])}</i>`:"").join("")}</div></div>`).join("");
   const srcs=es.map(e=>({id:e.id,kind:"sc",label:e.gaiden?"외전":epLabel(c,e)||e.name,list:galRaw(e),read:isOpen(e.id),up:false}));
   const free=S.canAdmin&&S.db?S.scens.filter(x=>!x.camp||!campById(x.camp)).sort((a,b)=>(b.lastDay||"").localeCompare(a.lastDay||"")):[];
@@ -232,7 +232,7 @@ function campDays(c){const es=campEps(c);if(!c.start)return [{lab:"",eps:es.slic
 // 캠프 후기용: 모든 탁의 참가자를 이름으로 한 번씩
 function campSc(c){const sp=[],by=new Map();
   campEps(c).forEach(e=>{const g=gmKey(e);(e.sp||[]).forEach(p=>{if(/&/.test(p.name||"")||(isAnon(p)&&!p.ch&&p.k!==g))return;const q=pcSplit(p.name||""),n=q.name;if(!n)return;
-    const role=p.k===g?(themeOf(e)==="deco"?"DM":"GM"):q.n?"PC"+q.n:"PL";
+    const role=p.k===g?gmAb(e):q.n?"PC"+q.n:"PL";
     if(!by.has(n)){const o={k:"n_"+n,name:n,c:p.c,rl:[]};by.set(n,o);sp.push(o);}by.get(n).rl.push(`${e.name} ${role}`);});});
   sp.forEach(o=>{o.roles=o.rl.join(" · ");delete o.rl;});
   return {id:c.id,name:c.name,sp,isCampSc:true,place:c.place||"",when:campWhen(c)};}

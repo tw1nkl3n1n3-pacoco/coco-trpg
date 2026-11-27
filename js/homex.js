@@ -9,7 +9,7 @@ function hxCast(sc){const gk=gmKey(sc);const sp=(sc.sp||[]).filter(p=>!/&/.test(
   // 타이만: 메인 캐릭터만, 캐릭터 이름을 굵게 · 맡은 사람은 회색
   if(sp.some(p=>p.chr)){const m=gmFirst(sp.filter(p=>p.chr&&p.ch),gk);return m.length?`<div class="hx-cast">${m.map(p=>`<span class="hx-pc"><i style="--a:${fixC(p.c)}">${esc([...p.ch][0])}</i><b>${esc(p.ch)}</b><small>${esc(pcSplit(p.name).name)}</small></span>`).join("")}</div>`:"";}
   const gm=sp.find(p=>p.k===gk),pcs=sp.filter(p=>p.k!==gk);if(!sp.length)return "";
-  const one=(p,g)=>{const q=pcSplit(p.name||""),n=q.name||"?";return `<span class="hx-pc">${g?`<i class="gm">${themeOf(sc)==="deco"?"DM":"GM"}</i>`:q.n?`<i class="no" style="--a:${fixC(p.c)}">PC${esc(q.n)}</i>`:`<i style="--a:${fixC(p.c)}">${esc([...n][0])}</i>`}<b>${esc(n)}</b>${!g&&p.ch?`<small>${esc(p.ch)}</small>`:""}</span>`;};
+  const one=(p,g)=>{const q=pcSplit(p.name||""),n=q.name||"?";return `<span class="hx-pc">${g?`<i class="gm">${gmAb(sc)}</i>`:q.n?`<i class="no" style="--a:${fixC(p.c)}">PC${esc(q.n)}</i>`:`<i style="--a:${fixC(p.c)}">${esc([...n][0])}</i>`}<b>${esc(n)}</b>${!g&&p.ch?`<small>${esc(p.ch)}</small>`:""}</span>`;};
   return `<div class="hx-cast">${gm?one(gm,true):""}${pcs.map(p=>one(p,false)).join("")}</div>`;}
 function hxImg(x){return coverOf(x)?coverHTML(x,"hx-img"):`<div class="hx-band"></div>`;}
 // 시나리오 카드

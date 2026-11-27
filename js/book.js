@@ -51,7 +51,7 @@ function bookTxt(x,inQ){
 }
 function bookBlocks(sc,edit){
   // 장은 단락(큰 단락)으로만 나눠요 · 회차·부는 쪽 아래 날짜로만 보여요
-  const B=S.book,th=themeOf(sc)||"plain",gk=gmKey(sc),gmw=th==="deco"?"DM":"GM";
+  const B=S.book,th=themeOf(sc)||"plain",gk=gmKey(sc),gmw=gmAb(sc);
   const out=[];let n=0;
   PRE.book=new Set();
   const nouns=nounGroupsOf(sc).filter(g=>g.d),noted=new Set();
@@ -174,7 +174,7 @@ function bookHTML(){
     <div class="bkmeasure" id="bkmeasure"></div></div>`;
 }
 function bookFront(sc){
-  const th=themeOf(sc)||"plain",gk=gmKey(sc),gmw=th==="deco"?"DM":"GM",days=[...new Set(S.book.parts.map(p=>p.day))];
+  const th=themeOf(sc)||"plain",gk=gmKey(sc),gmw=gmAb(sc),days=[...new Set(S.book.parts.map(p=>p.day))];
   const cast=gmFirst((sc.sp||[]).filter(p=>p.k!==ALL&&(p.k===gk||!isAnon(p)&&!/&/.test(p.name)||p.ch)),gk);
   const pcn=p=>+(pcSplit(p.name).n||"").replace(/\D/g,"")||99;
   const gm=cast.find(p=>p.k===gk),pcs=cast.filter(p=>p.k!==gk).sort((a,b)=>pcn(a)-pcn(b));
@@ -230,7 +230,7 @@ function bookRender(){
     if(revs.length){
       const pgs=[];let page=null;const np=()=>{page=document.createElement("div");page.className="bpg";page.innerHTML=`<div class="bbody"></div><div class="bfolio"><span>${esc(sc.name)}</span><span>${revStart+pgs.length}</span></div>`;host.appendChild(page);pgs.push(page);return page.firstChild;};
       let body=np();body.innerHTML=`<h2 class="ph">AFTERWORD</h2><h3 class="pt">플레이어 후기</h3>`;
-      revs.forEach(r=>{const w=revWho(sc,r);const el=document.createElement("div");el.className="brv";el.innerHTML=`<b>${esc(w.name)}</b><small>${esc(w.gm?(themeOf(sc)==="deco"?"DM":"GM"):w.ch?w.ch+" 역":"")}</small><div class="rb">${r.html?richView(r.html):esc(r.text||"").replace(/\n/g,"<br>")}</div>`;
+      revs.forEach(r=>{const w=revWho(sc,r);const el=document.createElement("div");el.className="brv";el.innerHTML=`<b>${esc(w.name)}</b><small>${esc(w.gm?gmWord(sc):w.ch?w.ch+" 역":"")}</small><div class="rb">${r.html?richView(r.html):esc(r.text||"").replace(/\n/g,"<br>")}</div>`;
         body.appendChild(el);if(body.scrollHeight>body.clientHeight+1&&body.children.length>1){body.removeChild(el);body=np();body.appendChild(el);}});}
     m.innerHTML="";
   }else{

@@ -468,6 +468,9 @@ body[data-theme=dx]{--gmc:#0f1113}
 /* D&D는 GM 대신 DM (던전 마스터) */
 body[data-theme=deco] .gmw,.cast[data-th=deco] .gmw{display:none}
 body[data-theme=deco] .gmtag::after,.cast[data-th=deco] .gmtag::after,body[data-theme=deco] .gmav::after{content:"DM"}
+/* 크툴루는 GM 대신 KP (수호자) */
+body[data-kp] .gmw,.cast[data-kp] .gmw{display:none}
+body[data-kp] .gmtag::after,.cast[data-kp] .gmtag::after,body[data-kp] .gmav::after{content:"KP"}
 /* 세션 후기 */
 .rvlist{display:flex;flex-direction:column}
 .rvr{display:flex;align-items:center;gap:8px;padding:9px 2px;border-top:1px solid var(--line)}

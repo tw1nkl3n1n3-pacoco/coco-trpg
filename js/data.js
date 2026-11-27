@@ -395,7 +395,9 @@ function spList(){
 const isGM=k=>!!k&&gmKey(curScen())===k;
 // GM 딱지 (D&D는 CSS로 'DM'으로 바뀌어요)
 const gmTag='<span class="gmtag"><span class="gmw">GM</span></span>';
-const gmWord=sc=>themeOf(sc)==="deco"?"던전 마스터":"게임 마스터";
+// 진행자 이름: 크툴루는 KP(수호자) · D&D는 DM · 나머지 GM
+function gmAb(sc){const s=(typeof effSys==="function"?effSys(sc):sc&&sc.system)||"";return /크툴루|cthulhu|(^|[^a-z])coc([^a-z]|$)/i.test(s)?"KP":themeOf(sc)==="deco"?"DM":"GM";}
+const gmWord=sc=>gmAb(sc)==="KP"?"수호자":themeOf(sc)==="deco"?"던전 마스터":"게임 마스터";
 const spBy=k=>spList().find(s=>s.k===k)||{k,name:"(목록에 없는 화자)",c:"#888"};
 function spTarget(){const sc=curScen();return sc?sc.sp:S.meta.sp;}
 function counts(){const c={};S.flat.forEach(e=>{if(e.b.s!==NOTE&&e.b.s!==DICE&&e.b.s!==HAND&&e.b.s!==SEC)c[e.b.s]=(c[e.b.s]||0)+1;});return c;}

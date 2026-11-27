@@ -17,8 +17,8 @@ const jgDot=d=>String(d||"").replace(/-/g,".");
 function jgDaysSince(d){if(!d)return 0;const t=new Date(d.replace(/\./g,"-")+"T00:00:00");return Math.max(0,Math.round((Date.now()-t)/864e5));}
 // 타임라인 날짜 맞추기: "2026.06.29" "2026-06" "2025.3" → 정렬용 "2026-06-29"
 function jgNorm(d){const m=String(d||"").match(/(\d{4})\D*(\d{1,2})?\D*(\d{1,2})?/);if(!m)return "";return m[1]+(m[2]?"-"+m[2].padStart(2,"0"):"")+(m[3]?"-"+m[3].padStart(2,"0"):"");}
-function jgFold(list,key,render){const all=!!(S.jgAll||{})[key],n=list.length,shown=all?list:list.slice(0,6);
-  return render(shown)+(n>6?`<li class="fold"><button type="button" data-jgfold="${key}">${all?"▴ 접기":`▾ 이전 기록 ${n-6}개 더 보기 <small>${esc(list.at(-1).dl||"")}${list.at(-1).dl?" – ":""}${esc(list[6].dl||"")}</small>`}</button></li>`:"");}
+// 타임라인은 다 그리고, 화면에서 LOG 높이만큼만 보이게 잘라요 (bindJgPage) · 펼치면 맨 아래 '접기'
+function jgFold(list,key,render){return render(list)+((S.jgAll||{})[key]?`<li class="fold"><button type="button" data-jgfold="${key}">▴ 접기</button></li>`:"");}
 function jgTimelineHTML(f,data,items){const d=jgDoc(f),tab=S.jgTl||"main",canRec=S.canAdmin||fixOpen(f);
   // 메인: 세션 날짜 + 갤러리 날짜 (자동)
   const M=[];data.gs.forEach(g=>{const n=g.days.length;g.days.forEach((x,i)=>M.push({k:x.day||"",type:"s",g,i:i+1,n,sid:x.parts[0]?.id}));});
@@ -60,8 +60,10 @@ function jgCardHTML(s,fields){const q=s.pr,dl=[["나이",q.age&&(/\D/.test(q.age
     ${q.rn&&q.ren?`<div class="rn">${esc(q.rn)}</div>`:""}
     ${dl.length?`<dl>${dl.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>`:""}
     ${secs.map(k=>`<details><summary>${esc(k)}</summary><p>${esc(q.sec[k]).replace(/\n/g,"<br>")}</p></details>`).join("")}</div>`;}
+function jgRO(f){return !(S.canAdmin||fixOpen(f));}
+function jgSrcs(f){const ss=S.db?galSrcFix(f):[];return jgRO(f)?ss.map(x=>({...x,list:x.list.filter(p=>!p.nolink)})):ss;}
 function jgPageHTML(f){const d=jgDoc(f),[A,B]=jgSides(f),fields=d.fields&&d.fields.length?d.fields:JG_F0,data=jgFixData(f),ban=d.banner;
-  const srcs=S.db?galSrcFix(f):[],postsH=S.db?galHTML(srcs,{newest:1,title:"POSTS",en:"POSTS"}):"",items=galAll(srcs,1);
+  const srcs=jgSrcs(f),postsH=S.db?galHTML(srcs,{newest:1,title:"POSTS",en:"POSTS"}):"",items=galAll(srcs,1);
   const tagH=(s,cls)=>`<div class="jgtag ${cls}"><div class="nm">${esc(s.en)}</div>${(s.pr.tags||[]).filter(Boolean).length?`<ul>${s.pr.tags.filter(Boolean).map(t=>`<li>${esc(t)}</li>`).join("")}</ul>`:""}</div>`;
   return `<div class="jgp">
     <section class="jgposter">
@@ -71,7 +73,7 @@ function jgPageHTML(f){const d=jgDoc(f),[A,B]=jgSides(f),fields=d.fields&&d.fiel
         ${A.pr.cut?.u?`<div class="jgcut a"><img src="${esc(A.pr.cut.u)}" alt=""></div>`:""}${B.pr.cut?.u?`<div class="jgcut b"><img src="${esc(B.pr.cut.u)}" alt=""></div>`:""}
         <div class="jgtitle"><h1>${esc(f)}</h1><p>${esc(A.en)} × ${esc(B.en)}</p></div>
       </div></section>
-    <div class="jgwrap">${S.canAdmin?`<div class="jgtop"><a class="ghost ownonly" href="#">← 첫 화면</a><span style="flex:1"></span><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":"✎ 페어 수정"}</button></div>`:""}
+    <div class="jgwrap">${jgRO(f)?`<form class="jgunlock" id="jgunlock"><span>🔒 페어 비밀번호를 넣으면 글을 올리고, 기록을 더하고, 댓글을 달 수 있어요</span><input type="text" id="jgpw" placeholder="페어 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button><small id="jgmsg"></small></form>`:""}${S.canAdmin?`<div class="jgtop"><a class="ghost ownonly" href="#">← 첫 화면</a><span style="flex:1"></span><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":"✎ 페어 수정"}</button></div>`:""}
       ${S.jgEdit&&S.canAdmin?jgEditHTML(f):""}
       <div class="jgtri">${jgCardHTML(A,fields)}
         <div class="jgmid"><div class="k">RELATION</div><div class="rel">${d.rel?esc(d.rel):`<span class="tip">관계 한 줄을 적어 주세요</span>`}</div>
@@ -133,7 +135,7 @@ function bindJgEdit(f){const box=document.querySelector(".jgedit");if(!box)retur
 // ---------- 서브 타임라인 기록 ----------
 // 서브 타임라인 기록: 날짜·제목·메모 + 게시물 하나(이미지·텍스트 다) 끼워 넣기 · rec.post={src,id}
 function jgRecPost(r,items){return r.post?items.find(p=>p.id===r.post.id&&p.src===r.post.src):null;}
-function jgRecBox(f,rec){const w=document.createElement("div");w.className="gedit";const items=galAll(galSrcFix(f),1);
+function jgRecBox(f,rec){const w=document.createElement("div");w.className="gedit";const items=galAll(jgSrcs(f),1);
   let pick=rec?.post||null;const today=jgDot(galYmd());
   const tile=p=>{const on=pick&&pick.id===p.id&&pick.src===p.src,t=galT(p),q=galImgs(p)[0];
     return `<button type="button" class="jrt${on?" on":""}${t==="txt"?" tx":""}" data-src="${esc(p.src)}" data-id="${esc(p.id)}">${t==="txt"?`<span class="tt"><b>${esc(p.title||"텍스트")}</b>${esc(String(p.body||"").slice(0,60))}</span>`:`<img src="${esc(q.u||q.o)}" alt="" loading="lazy">${galImgs(p).length>1?`<i>${galImgs(p).length}</i>`:""}`}<span class="cap">${esc(galTitle(p)||GAL_T[t])}<small>${galDate(p.at)}</small></span></button>`;};
@@ -159,12 +161,18 @@ function bindJgPage(f){
   if(S.jgEdit)bindJgEdit(f);
   document.querySelectorAll("[data-jgtl]").forEach(b=>b.onclick=()=>{S.jgTl=b.dataset.jgtl;render();});
   document.querySelectorAll("[data-jgfold]").forEach(b=>b.onclick=()=>{S.jgAll={...(S.jgAll||{}),[b.dataset.jgfold]:!(S.jgAll||{})[b.dataset.jgfold]};render();});
+  // 타임라인 높이를 LOG에 맞춰 접기 (한 줄로 쌓이는 모바일은 560px)
+  {const tl=document.querySelector(".jgtl"),lg=document.querySelector(".jglog"),key=S.jgTl||"main";
+    if(tl&&lg&&!(S.jgAll||{})[key]){const two=getComputedStyle(tl.parentElement).gridTemplateColumns.split(" ").length>1,cap=two?Math.max(lg.offsetHeight,380):560;
+      if(tl.scrollHeight>cap+60){tl.style.maxHeight=cap+"px";tl.classList.add("clamp");const n=tl.querySelectorAll(".tl>li:not(.m)").length;
+        const b=document.createElement("button");b.type="button";b.className="jgmore";b.textContent="▾ 타임라인 더 보기";b.onclick=()=>{S.jgAll={...(S.jgAll||{}),[key]:true};render();};tl.appendChild(b);}}}
   const ar=$("#jgaddrec");if(ar)ar.onclick=()=>jgRecBox(f);
   document.querySelectorAll("[data-jgrece]").forEach(b=>b.onclick=()=>jgRecBox(f,(jgDoc(f).recs||[]).find(r=>r.id===b.dataset.jgrece)));
   document.querySelectorAll("[data-jgrecx]").forEach(b=>b.onclick=()=>confirmBox("이 기록을 지울까요?","지우기",async()=>{const recs=(jgDoc(f).recs||[]).filter(r=>r.id!==b.dataset.jgrecx);
     try{await jgPut(f,{recs});render();}catch(err){toast("지우지 못했어요");}}));
   document.querySelectorAll(".jgtl [data-gal]").forEach(x=>x.onclick=ev=>{ev.preventDefault();galOpenAt(x.dataset.gal);});
-  if(S.db)bindGal(galSrcFix(f));
+  if(S.db)bindGal(jgSrcs(f));
+  {const u=$("#jgunlock");if(u)u.onsubmit=ev=>{ev.preventDefault();fixUnlock(f,$("#jgpw").value.trim(),$("#jgmsg"));};}
   bindFixAcc(f);
 }
 // 바탕색 밝기에 맞춰 글자색

@@ -191,10 +191,10 @@ function castHTML(sc){
   const g=gmKey(sc);
   // 타이만: 메인 캐릭터(맡은 사람이 있는 캐릭터)만, 캐릭터 이름을 크게
   if((sc?.sp||[]).some(p=>p.chr)){const m=gmFirst(sc.sp.filter(p=>p.chr&&p.ch),g);if(!m.length)return "";
-    return `<div class="cast" data-th="${themeOf(sc)||"pa"}">${m.map(p=>`<span class="castc" style="--c:${fixC(p.c)}">${spDot(p)}<b>${esc(p.ch)}</b><span>${spName(p)}</span></span>`).join("")}</div>`;}
+    return `<div class="cast" data-th="${themeOf(sc)||"pa"}"${gmAb(sc)==="KP"?" data-kp":""}>${m.map(p=>`<span class="castc" style="--c:${fixC(p.c)}">${spDot(p)}<b>${esc(p.ch)}</b><span>${spName(p)}</span></span>`).join("")}</div>`;}
   const cast=gmFirst((sc?.sp||[]).filter(p=>p.k===g||!isAnon(p)&&!/&/.test(p.name)||p.ch),g);
   if(!cast.length)return "";
-  return `<div class="cast" data-th="${themeOf(sc)||"pa"}">${cast.map(p=>`<span class="castc${p.k===g?" gm":""}" style="--c:${fixC(p.c)}">${p.k===g?gmTag:spDot(p)}<b>${spName(p)}</b>${p.ch?`<span>${esc(p.ch)}</span>`:""}</span>`).join("")}</div>`;
+  return `<div class="cast" data-th="${themeOf(sc)||"pa"}"${gmAb(sc)==="KP"?" data-kp":""}>${cast.map(p=>`<span class="castc${p.k===g?" gm":""}" style="--c:${fixC(p.c)}">${p.k===g?gmTag:spDot(p)}<b>${spName(p)}</b>${p.ch?`<span>${esc(p.ch)}</span>`:""}</span>`).join("")}</div>`;
 }
 function daysHTML(days,gear=true){
   const exp=d=>S.db&&d.parts.length?`<button class="ghost dexp" data-exps="${esc(d.parts[0].scen)}" data-expd="${esc(d.day)}" title="이 회차 로그를 HTML 파일로 받기">⬇ HTML</button>`:"";

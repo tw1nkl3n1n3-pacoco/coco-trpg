@@ -40,7 +40,7 @@ async function buildDayHTML(scen,day){
       const nm=`${pm?`<span class="pcn">${pm[1]}</span>`:""}<b>${esc(pm?pm[2]:p.name)}</b>${ch?`<small> ${esc(ch)}</small>`:""}${b.tab?`<small class="tab"> ${esc(b.tab)}</small>`:""}`;
       const x=run.map(t=>xEm(t)).join("<br>");
       // 이름·대사는 모두 검은색 (GM은 배경·GM 표시로만 구분)
-      out.push(`<p class="pl${gm?" gm":""}${b.tab?" tabbed":""}" style="--c:${c}"><span class="nm">${gm?`<span class="gmt">${themeOf(sc)==="deco"?"DM":"GM"}</span>`:""}${nm}</span> : <span class="tx">${x}</span></p>`);
+      out.push(`<p class="pl${gm?" gm":""}${b.tab?" tabbed":""}" style="--c:${c}"><span class="nm">${gm?`<span class="gmt">${gmAb(sc)}</span>`:""}${nm}</span> : <span class="tx">${x}</span></p>`);
     }
     return out.join("\n");
   };
