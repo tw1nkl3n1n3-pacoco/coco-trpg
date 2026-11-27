@@ -268,7 +268,6 @@ body[data-theme=jg] .row:hover{background:rgba(0,0,0,.035)}
 body[data-theme=jg] .row.sel{background:var(--sel);border-color:var(--jacc)}
 body[data-theme=jg] .body{box-shadow:inset 3px 0 0 color-mix(in srgb,var(--c) 70%,#bbb)}
 body[data-theme=jg] .row.chr:not(.chat) .body{box-shadow:inset 6px 0 0 var(--c);padding-left:16px}
-body[data-theme=jg] .row.chr:not(.chat){background:color-mix(in srgb,var(--c) 6%,transparent)}
 body[data-theme=jg] .row.chr .body{background:none}
 body[data-theme=jg] .who{font-family:var(--jhk);font-weight:400;font-size:15px;letter-spacing:.02em;color:color-mix(in srgb,var(--c) 80%,#000)}
 body[data-theme=jg] .who small{font-family:var(--jdisp);font-weight:400;color:var(--faint);letter-spacing:.06em}
