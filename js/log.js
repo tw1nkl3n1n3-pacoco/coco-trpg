@@ -34,19 +34,19 @@ function themeOf(sc){
 }
 // 자관 두 캐릭터 색 (고정탁 문서의 colors가 있으면 그걸로)
 // 자관 색 4개: 고정탁 문서 colors = {bg, acc, a, b} (없으면 두 캐릭터의 로그 색)
-function jgColors(f){const fd=(S.fixDocs||{})[typeof fixKey==="function"?fixKey(f):""]||{},c=fd.colors||{};const P=typeof fixPeopleList==="function"?fixPeopleList(f):[];
-  const cc=x=>x&&(typeof fixC==="function"?fixC(x):x),st=document.body.style;
-  st.setProperty("--ja",c.a||cc(P[0]&&P[0].c)||"#d9577d");st.setProperty("--jb",c.b||cc(P[1]&&P[1].c)||"#2e9a8c");
-  if(c.bg)st.setProperty("--jbg",c.bg);else st.removeProperty("--jbg");if(c.acc)st.setProperty("--jacc",c.acc);else st.removeProperty("--jacc");}
+function jgColors(f,over){const fd=(S.fixDocs||{})[typeof fixKey==="function"?fixKey(f):""]||{},c=over||fd.colors||{};
+  const sd=typeof jgSides==="function"?jgSides(f):[],cc=x=>x&&(typeof fixC==="function"?fixC(x):x),st=document.body.style;
+  st.setProperty("--ja",c.a||cc(sd[0]&&sd[0].p&&sd[0].p.c)||"#d9577d");st.setProperty("--jb",c.b||cc(sd[1]&&sd[1].p&&sd[1].p.c)||"#2e9a8c");
+  st.setProperty("--jbg",c.bg||"#1b1b1c");st.setProperty("--jacc",c.acc||"#efc11a");if(typeof jgTextColor==="function")jgTextColor();}
 function applyTheme(){document.body.classList.toggle("own",!!S.canAdmin);
-  {const hx=!S.gid&&!S.cid&&!S.sid&&!S.revPage&&!S.admin&&!S.up&&!S.book&&isHX();if(document.body.classList.contains("hxhome")!==hx){document.body.classList.toggle("hxhome",hx);document.documentElement.classList.toggle("hxhome",hx);}}
+  {const hx=!S.gid&&!S.cid&&!S.sid&&!S.revPage&&!S.admin&&!S.up&&!S.book&&!(S.fix&&typeof fixWord==="function"&&fixWord(S.fix)==="자관")&&isHX();if(document.body.classList.contains("hxhome")!==hx){document.body.classList.toggle("hxhome",hx);document.documentElement.classList.toggle("hxhome",hx);}}
   if(S.fix&&!S.sid&&!S.cid&&!S.gid&&typeof fixWord==="function"&&fixWord(S.fix)==="자관"){if(document.body.dataset.theme!=="jg")document.body.dataset.theme="jg";document.body.dataset.page="fix";jgColors(S.fix);return;}
   if(S.gid&&!S.sid&&!S.cid){const c=campById(S.gid);const t=c&&c.system?themeOf({system:c.system}):"plain";if((document.body.dataset.theme||"")!==t)document.body.dataset.theme=t;document.body.dataset.page="scen";return;}
   const sc=S.revPage?S.revPage.sc:S.cid?(S.scEdit&&S.scDraft?S.scDraft:scenById(S.cid)):(S.sid&&S.meta?curScen():null);
   // 시나리오 정보가 아직 안 왔으면 양피지 대신 메인 화면 색으로 기다려요
   const t=S.revPage?(sc?themeOf(sc):"plain"):!S.cid&&!S.sid&&!S.local?"plain":!sc&&!S.local?"plain":themeOf(sc);
   if((document.body.dataset.theme||"")!==t){if(t)document.body.dataset.theme=t;else delete document.body.dataset.theme;}
-  if(t==="jg")jgColors(fixOfScen(sc));else["--ja","--jb","--jbg","--jacc"].forEach(k=>document.body.style.removeProperty(k));
+  if(t==="jg")jgColors(fixOfScen(sc));else["--ja","--jb","--jbg","--jacc","--jtx","--jdk"].forEach(k=>document.body.style.removeProperty(k));
   document.body.dataset.page=S.revPage?"scen":S.cid?"scen":S.sid?"log":"home";
 }
 function render(){try{bkAuto();}catch(e){}
@@ -57,7 +57,7 @@ function render(){try{bkAuto();}catch(e){}
     app.innerHTML=bookHTML();bindBook();return;}
   if(S.revPage){app.innerHTML=revPageHTML();return;}
   if(S.up&&!S.sid&&!S.cid){app.innerHTML=upHTML();bindUp();return;}
-  if(S.fix&&!S.sid&&!S.cid){if(!fixOpen(S.fix)){app.innerHTML=fixLockHTML(S.fix);bindFixLock();return;}app.innerHTML=fixPageHTML(S.fix);bindFixPage();return;}
+  if(S.fix&&!S.sid&&!S.cid){if(!fixOpen(S.fix)){app.innerHTML=fixLockHTML(S.fix);bindFixLock();return;}if(fixWord(S.fix)==="자관"){const ae=document.activeElement;if(S.jgEdit&&ae&&ae.closest&&ae.closest(".jgedit")&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName)&&ae.type!=="file"&&$(".jgedit"))return;app.innerHTML=jgPageHTML(S.fix);bindJgPage(S.fix);return;}app.innerHTML=fixPageHTML(S.fix);bindFixPage();return;}
   if(S.gid&&!S.sid&&!S.cid){app.innerHTML=campPageHTML();bindCamp();return;}
   if(S.cid){app.innerHTML=scenHTML();bindScen();return;}
   if(!S.sid&&S.admin){app.innerHTML=adminHTML();bindAdmin();return;}

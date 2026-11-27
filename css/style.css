@@ -1313,3 +1313,45 @@ body[data-theme=deco] .geh b{font-family:"Gowun Batang",serif}
 .hx.fxpage .tl .d,.hx.fxpage .tl li.tlm,.hx.fxpage .tl .b small{font-family:var(--hx-mono)}
 .hx.fxpage .tl .b,.hx.fxpage .tl img,.hx.fxpage .tl .b em{border-radius:0}
 @media(max-width:640px){.tl::before{left:36px}.tl .d{width:24px}.tl li.tlm{padding-left:52px}.tl img{width:42px;height:42px}}
+
+/* ===== 게시물 종류 (그림 · 만화 · 글) ===== */
+.galtabs{display:flex;gap:4px;margin:0 0 10px;flex-wrap:wrap}
+.galtabs button{font-size:12.5px;padding:4px 12px;border:1px solid var(--line);background:transparent;color:var(--sub);border-radius:999px}
+.galtabs button.on{background:var(--acc);border-color:var(--acc);color:#fff}.galtabs small{opacity:.7}
+.galkinds{display:flex;align-items:center;gap:6px;cursor:default}
+.galkinds button{font-size:12.5px;padding:3px 12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px}
+.galkinds button:hover{border-color:var(--acc);color:var(--acc)}
+.galg .gk{position:absolute;left:7px;top:7px;font-size:10.5px;font-weight:700;color:#fff;background:rgba(0,0,0,.6);padding:1px 7px;border-radius:999px}
+.galg .gt-txt .im,.galg .gt-toon .im{cursor:pointer}
+.galg .txtc{position:absolute;inset:0;background:#f4f2ec;color:#222;padding:30px 14px 12px;overflow:hidden;font:400 12.5px/1.75 "Noto Serif KR",serif}
+.galg .txtc b{display:block;font:700 15px/1.3 "Noto Sans KR",sans-serif;margin-bottom:6px}.galg .txtc p{margin:0;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+.gtxt{width:min(760px,100%)}.gtxt textarea{width:100%;font:400 15px/1.8 "Noto Serif KR",serif;resize:vertical}.gtxt input{width:100%}
+/* 만화·글 보기 */
+.grd{position:fixed;inset:0;z-index:300;overflow-y:auto;background:#1b1b1c;color:#f1efe9;font:15px/1.7 "Noto Sans KR",sans-serif;
+  --acc2:var(--jacc,#efc11a);--ra:var(--ja,#d9577d);--rb:var(--jb,#2e9a8c)}
+.grbar{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:12px;padding:10px 18px;background:#111;border-bottom:3px solid var(--acc2);flex-wrap:wrap}
+.grbar .k{font:400 12px "Anton","Black Han Sans",sans-serif;letter-spacing:.12em;background:var(--acc2);color:#111;padding:1px 8px}
+.grbar b{font:400 19px "Black Han Sans","Noto Sans KR",sans-serif;color:var(--acc2)}.grbar small{color:#8b8880;font-size:12.5px}.grbar .sp{flex:1}
+.grbar button{font-size:12.5px;border:1px solid #444;background:transparent;padding:4px 10px;color:#ddd;border-radius:0}.grbar .x{font-size:17px;color:#fff;border:0}
+.grprog{position:sticky;top:51px;height:3px;background:#2a2a2c;z-index:3}.grprog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ra),var(--rb))}
+.grtoon{max-width:760px;margin:0 auto;padding-bottom:30px}.grtoon img{display:block;width:100%;height:auto}
+.grside{position:fixed;right:22px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;font:400 13px "Anton",sans-serif;color:#8b8880;z-index:3}
+.grside b{color:var(--acc2);font-weight:400;font-size:18px}.grside i{width:2px;height:40px;background:#444}
+.grnov{max-width:680px;margin:28px auto 30px;background:#f3f2ee;color:#1d1d1d;padding:46px 54px 40px;box-shadow:0 0 0 1px #000,8px 8px 0 var(--acc2)}
+.grnov .tk{font:400 12px "Anton",sans-serif;letter-spacing:.2em;color:#999}.grnov h1{color:#141414;margin:6px 0 4px;font:400 38px/1.15 "Black Han Sans","Noto Sans KR",sans-serif}
+.grnov .mt{font-size:12.5px;color:#777;border-bottom:1px solid #d8d5cd;padding-bottom:16px;margin-bottom:24px}
+.grnov p{margin:0 0 1.1em;font:400 var(--fs,17px)/2 "Noto Serif KR","Noto Sans KR",serif;text-indent:1em;word-break:keep-all}
+.grnov .sep{text-align:center;color:#aaa;letter-spacing:.6em;margin:22px 0}
+.grft{max-width:720px;margin:0 auto 60px;padding:0 12px}
+.grnav{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+.grnav button{border:1px solid #3a3a3e;background:transparent;color:#f1efe9;padding:12px 14px;font-size:13px;text-align:left;border-radius:0}.grnav button:last-child{text-align:right}
+.grnav button small{display:block;color:#8b8880;font:400 11px "Anton",sans-serif;letter-spacing:.12em}
+.grcm{border:1px solid #3a3a3e;padding:14px 16px}.grcm h5{margin:0 0 8px;font:400 14px "Anton",sans-serif;letter-spacing:.14em}
+.grcm .r{font-size:13.5px;padding:7px 0;border-top:1px solid #3a3a3e;position:relative;padding-right:60px}.grcm .r b{color:var(--acc2);margin-right:8px}.grcm .r i{font-style:normal;color:#75736e;font-size:11px;margin-left:8px}
+.grcm .r button{position:absolute;right:0;top:6px;background:none;border:0;color:#75736e}
+.grcm .cin{margin-top:10px;display:flex;gap:6px}.grcm .cin input{flex:1;background:#252527;border:1px solid #3a3a3e;color:#f1efe9;padding:6px 10px}
+.grcm .cin .pri{background:var(--acc2);color:#111;border:0}
+@media(max-width:760px){.grnov{padding:30px 22px;margin:16px 10px}.grnov h1{font-size:28px}.grside{right:8px}.grprog{top:auto}}
+/* 일반 고정탁 타임라인 접기 */
+.fxtl .tlfold,.jgtl .fold{list-style:none}.fxtl .tlfold::before,.jgtl .fold::before{display:none!important}
+.fxtl .tlfold button{width:100%;border:1px dashed var(--line);background:transparent;color:var(--sub);padding:8px;font-size:13px}
