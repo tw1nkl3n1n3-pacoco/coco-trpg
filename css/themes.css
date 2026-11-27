@@ -569,3 +569,19 @@ body.jbox .jgp .jgsec,body.jbox .jgp .jgwrap>.sc-sec{--jbg:var(--jbox);--jtx:var
   --p1:color-mix(in srgb,var(--jbg) 93%,var(--jtx));--p2:color-mix(in srgb,var(--jbg) 88%,var(--jtx));--ln:color-mix(in srgb,var(--jbg) 82%,var(--jtx));--dimj:color-mix(in srgb,var(--jtx) 70%,var(--jbg));--fj:color-mix(in srgb,var(--jtx) 50%,var(--jbg));
   --ink:var(--jtx);--dim:var(--dimj);--faint:var(--fj);--line:var(--ln);--panel:var(--p1);--panel2:var(--p2);--acc:var(--jacc);--gold:var(--jacc);color:var(--jtx);background:var(--jbox);border-color:transparent}
 .jgsw.auto code{color:#999}
+
+/* 비밀번호 칸도 다른 상자처럼: ACCESS 큰 제목 + 작은 한글 */
+.jgp .fxacc{border-radius:0;padding:20px 24px}
+.jgp .fxacc h4{display:flex!important;align-items:baseline;gap:12px;flex-wrap:wrap;margin:0 0 10px;font:700 13px "Noto Sans KR",sans-serif!important;letter-spacing:0!important;color:var(--dimj)!important;border:0!important;padding:0!important;text-transform:none}
+body[data-theme=jg] .jgp .fxacc h4::before{content:attr(data-en);display:inline!important;position:static!important;font:400 22px/1 var(--jdisp);letter-spacing:.14em;color:var(--jtx);background:none!important;width:auto;height:auto}
+.jgp .fxacc h4 .tip{color:var(--fj)}
+.jgp .fxacc .pw{background:var(--p2);color:var(--jtx);border:1px solid var(--ln);border-radius:0}
+.jgp .fxacc .pri{background:var(--jacc);color:color-mix(in srgb,var(--jacc) 10%,#111);border-radius:0}
+.jgp .fxacc .ghost{border-radius:0}
+/* 자글자글 줄무늬 끄기 (fixes.scan:false) */
+body.jnoscan[data-theme=jg]{background-image:none}
+body.jnoscan .jgban::after{display:none}
+body[data-theme=jg] .jgp .fxacc{border:0!important;box-shadow:none!important;outline:0}
+body[data-theme=jg] .jgp .fxacc h4::after{display:none!important}
+.jgp .fxacc .pri{border:0!important;box-shadow:none!important}
+body:not(.jbox) .jgp .fxacc{border:1px solid var(--ln)!important}

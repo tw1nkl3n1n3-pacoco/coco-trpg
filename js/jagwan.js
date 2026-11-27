@@ -129,8 +129,8 @@ async function jgPut(f,upd){const fk=fixKey(f);if(!S.authUser)await S.auth.signI
 const jgPair=f=>fixWord(f)==="페어";
 // 고정탁 멤버 프로필은 fixes 문서 mems = {플레이어 이름: {nm,en,rn,ren,age,ht,sex,mbti,icon,sec}} · 페어는 prof = {a,b}
 function jgDraft(f){if(!S.jgDraftF||S.jgDraftF!==f||!S.jgDraft){const d=jgDoc(f),F=d.fields&&d.fields.length?d.fields:JG_F0;S.jgDraftF=f;
-  if(jgPair(f)){const [A,B]=jgSides(f);S.jgDraft=JSON.parse(JSON.stringify({font:d.font||{},banner:d.banner||null,rel:d.rel||"",colors:d.colors||{},fields:F,prof:{a:{own:A.own,...(d.prof||{}).a},b:{own:B.own,...(d.prof||{}).b}}}));}
-  else{const m=d.mems||{},prof={};fxMembers(f).forEach(p=>prof[p.n]={...(m[p.n]||{})});S.jgDraft=JSON.parse(JSON.stringify({font:d.font||{},banner:d.banner||null,rel:d.tag||"",colors:d.colors||{},fields:F,prof}));}}
+  if(jgPair(f)){const [A,B]=jgSides(f);S.jgDraft=JSON.parse(JSON.stringify({scan:d.scan!==false,font:d.font||{},banner:d.banner||null,rel:d.rel||"",colors:d.colors||{},fields:F,prof:{a:{own:A.own,...(d.prof||{}).a},b:{own:B.own,...(d.prof||{}).b}}}));}
+  else{const m=d.mems||{},prof={};fxMembers(f).forEach(p=>prof[p.n]={...(m[p.n]||{})});S.jgDraft=JSON.parse(JSON.stringify({scan:d.scan!==false,font:d.font||{},banner:d.banner||null,rel:d.tag||"",colors:d.colors||{},fields:F,prof}));}}
   return S.jgDraft;}
 function jgEditHTML(f){const D=jgDraft(f),pair=jgPair(f),[A,B]=jgSides(f),c=D.colors||{},W=fixWord(f),P=fixPeopleList(f);
   const cv=(k,def,lb)=>`<label class="jgsw"><input type="color" data-jgc="${k}" value="${esc(c[k]||def)}"><b>${lb}</b><code>${esc((c[k]||def).toUpperCase())}</code></label>`;
@@ -149,7 +149,7 @@ function jgEditHTML(f){const D=jgDraft(f),pair=jgPair(f),[A,B]=jgSides(f),c=D.co
       ${(()=>{const ims=galAll(galSrcFix(f),1).filter(p=>galT(p)==="img").flatMap(p=>galImgs(p).map(q=>q.o||q.u)).filter(Boolean);return ims.length?`<div class="jgbpick"><span class="tip">또는 갤러리에서</span>${ims.map(u=>`<button type="button" class="${D.banner&&(D.banner.o===u||D.banner.u===u)?"on":""}" data-jgbpick="${esc(u)}"><img src="${esc(u)}" alt="" loading="lazy"></button>`).join("")}</div>`:"";})()}
       ${D.banner?.u?`<span class="eup2">위치 <input type="range" min="0" max="100" value="${+D.banner.y>=0?+D.banner.y:40}" data-jgby></span><button type="button" class="ghost" data-jgbandel>빼기</button>`:""}<span class="tip" id="jgupmsg"></span></div>
     <div class="erow"><label>${pair?"관계 한 줄":"한 줄 문구"}</label><input class="ein" data-jgrel value="${esc(D.rel||"")}" placeholder="${pair?"두 캐릭터가 어떤 사이인지":"이름 아래에 들어가는 한 줄"}"></div>
-    <div class="erow"><label>색<span>${pair?"테마 · 글상자 · 캐릭터 2":"테마 · 글상자 · 멤버 색은 세션 로그 색"}</span></label>${cv("bg","#1b1b1c","테마 바탕")}${cv("acc","#efc11a","테마 포인트")}<label class="jgsw${c.box?"":" auto"}"><input type="color" data-jgc="box" value="${esc(c.box||"#ffffff")}"><b>글상자</b><code>${esc(c.box?c.box.toUpperCase():"자동")}</code></label>${c.box?`<button type="button" class="ghost" data-jgboxauto title="바탕색에 맞춰 자동으로">글상자 자동</button>`:""}${pair?cv("a",fixC(A.p?.c)||"#d9577d","A")+cv("b",fixC(B.p?.c)||"#2e9a8c","B"):""}<button type="button" class="ghost" data-jgcreset>기본으로</button></div>
+    <div class="erow"><label>색<span>${pair?"테마 · 글상자 · 캐릭터 2":"테마 · 글상자 · 멤버 색은 세션 로그 색"}</span></label>${cv("bg","#1b1b1c","테마 바탕")}${cv("acc","#efc11a","테마 포인트")}<label class="jgsw${c.box?"":" auto"}"><input type="color" data-jgc="box" value="${esc(c.box||"#ffffff")}"><b>글상자</b><code>${esc(c.box?c.box.toUpperCase():"자동")}</code></label>${c.box?`<button type="button" class="ghost" data-jgboxauto title="바탕색에 맞춰 자동으로">글상자 자동</button>`:""}${pair?cv("a",fixC(A.p?.c)||"#d9577d","A")+cv("b",fixC(B.p?.c)||"#2e9a8c","B"):""}<button type="button" class="ghost" data-jgcreset>기본으로</button><label class="jgscan"><input type="checkbox" data-jgscan${D.scan!==false?" checked":""}> 줄무늬 효과 <span class="tip">첫 화면 그림·바탕의 자글자글한 가로줄</span></label></div>
     ${["ko","en"].map(k=>{const cur=(D.font||{})[k]||JG_FONTS[k][0][0];return `<div class="erow jgfrow"><label>${k==="ko"?"한글 강조 폰트<span>페이지 제목 · 이름 아이콘</span>":"영문 · 숫자 강조 폰트<span>LOG 같은 소제목 · 영문 이명 · 날짜·숫자</span>"}</label><div class="jgfch">${JG_FONTS[k].map(([n,lb,w],i)=>{jgFontLoad(n);return `<button type="button" class="${n===cur?"on":""}" data-jgfont="${k}|${esc(n)}" style="font-family:'${esc(n)}';font-weight:${w}">${esc(lb)}${i?"":"<small>기본</small>"}</button>`;}).join("")}</div></div>`;}).join("")}
     <div class="jgpfs${pair?"":" fx"}">${pair?pf("a",A)+pf("b",B):fxMembers(f).map(m=>pf(m.n,{nm:m.nm})).join("")}</div>
     <div class="eft"><span>비워 둔 칸은 페이지에 안 나와요${pair?" · 이 색은 페어에 묶인 모든 세션 페이지·로그에도 적용돼요":""}</span><button type="button" class="pri" id="jgsave">저장</button></div></section>`;}
@@ -165,6 +165,7 @@ function bindJgEdit(f){const box=document.querySelector(".jgedit");if(!box)retur
   const ba=box.querySelector("[data-jgboxauto]");if(ba)ba.onclick=()=>{D.colors={...D.colors};delete D.colors.box;jgColors(f,D.colors);render();};
   box.querySelectorAll("[data-jgfont]").forEach(b=>b.onclick=()=>{const [k,n]=b.dataset.jgfont.split("|");D.font={...(D.font||{}),[k]:n};if(n===JG_FONTS[k][0][0])delete D.font[k];
     box.querySelectorAll(`[data-jgfont^="${k}|"]`).forEach(x=>x.classList.toggle("on",x===b));jgFonts(f,D.font);});
+  const sc=box.querySelector("[data-jgscan]");if(sc)sc.onchange=()=>{D.scan=sc.checked;document.body.classList.toggle("jnoscan",!sc.checked);};
   const cr=box.querySelector("[data-jgcreset]");cr.onclick=()=>{D.colors={};jgColors(f,D.colors);render();};
   const by=box.querySelector("[data-jgby]");if(by)by.oninput=()=>{D.banner={...D.banner,y:+by.value};const im=document.querySelector(".jgban img");if(im)im.style.objectPosition=`50% ${by.value}%`;};
   box.querySelectorAll("[data-jgbpick]").forEach(b=>b.onclick=()=>{const u=b.dataset.jgbpick,on=D.banner&&(D.banner.o===u||D.banner.u===u);D.banner=on?null:{u,o:u,y:40};render();});
@@ -175,8 +176,8 @@ function bindJgEdit(f){const box=document.querySelector(".jgedit");if(!box)retur
   box.querySelectorAll("[data-jgfdel]").forEach(b=>b.onclick=()=>{const k=D.fields[+b.dataset.jgfdel];confirmBox(`'${k}' 항목을 모두에게서 지울까요? 적어 둔 글도 같이 지워져요.`,"지우기",()=>{D.fields=D.fields.filter(x=>x!==k);Object.keys(D.prof).forEach(s=>{if(D.prof[s]?.sec)delete D.prof[s].sec[k];});render();});});
   $("#jgsave").onclick=async()=>{const clean=JSON.parse(JSON.stringify(D));
     Object.keys(clean.prof).forEach(s=>{const q=clean.prof[s]||{};if(q.sec)Object.keys(q.sec).forEach(k=>{if(!clean.fields.includes(k)||!String(q.sec[k]).trim())delete q.sec[k];});if(q.tags&&!q.tags.some(Boolean))delete q.tags;});
-    const upd=jgPair(f)?{font:clean.font||{},rel:clean.rel||"",colors:clean.colors||{},fields:clean.fields,prof:clean.prof,banner:clean.banner||null}
-      :{font:clean.font||{},tag:clean.rel||"",colors:clean.colors||{},fields:clean.fields,mems:clean.prof,banner:clean.banner||null};
+    const upd=jgPair(f)?{scan:clean.scan!==false,font:clean.font||{},rel:clean.rel||"",colors:clean.colors||{},fields:clean.fields,prof:clean.prof,banner:clean.banner||null}
+      :{scan:clean.scan!==false,font:clean.font||{},tag:clean.rel||"",colors:clean.colors||{},fields:clean.fields,mems:clean.prof,banner:clean.banner||null};
     try{await jgPut(f,upd);S.jgEdit=false;S.jgDraft=null;toast("저장했어요");render();}catch(e){writeFail(e);}};}
 // ---------- 서브 타임라인 기록 ----------
 // 서브 타임라인 기록: 날짜·제목·메모 + 게시물 하나(이미지·텍스트 다) 끼워 넣기 · rec.post={src,id}
