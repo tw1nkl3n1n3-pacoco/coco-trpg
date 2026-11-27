@@ -9,6 +9,9 @@ function shrinkImage(file,size,type="image/jpeg",w=size,h=size){
       URL.revokeObjectURL(u);ok(c.toDataURL(type,.85));};
     img.onerror=()=>{URL.revokeObjectURL(u);no();};img.src=u;});
 }
+// 시나리오 문서는 비밀번호로 연 사람도 고칠 수 있어서, 화면에 그대로 끼워 넣는 값(화자 키·색·그림)은 받을 때 걸러요
+function scSafe(sc){(sc.sp||[]).forEach(p=>{if(p.k!=null)p.k=String(p.k).replace(/[^\w-]/g,"");if(p.c!=null)p.c=cssC(p.c,"#7a6a5a");if(p.img)p.img=safeU(p.img);});
+  if(sc.og)sc.og=safeU(sc.og);if(sc.gm!=null)sc.gm=String(sc.gm).replace(/[^\w-]/g,"");return sc;}
 function publish(){
   const old=S.scens;
   // scenarios/_site: 사이트 제목·설명·아이콘 (주인만 고칠 수 있어요)
@@ -16,7 +19,7 @@ function publish(){
   if(SUB.scData._site)try{localStorage.setItem("trpg-site",JSON.stringify(S.site));}catch(e){}
   applySite();
   const ids=new Set([...Object.keys(SUB.scData)].filter(id=>id!=="_site"));
-  S.scens=[...ids].map(id=>{const o=old.find(x=>x.id===id);return (S.scBusy[id]&&o)?o:{id,...JSON.parse(JSON.stringify(SUB.scData[id]))};});
+  S.scens=[...ids].map(id=>{const o=old.find(x=>x.id===id);return (S.scBusy[id]&&o)?o:scSafe({id,...JSON.parse(JSON.stringify(SUB.scData[id]))});});
   old.forEach(o=>{if(S.scBusy[o.id]&&!S.scens.find(x=>x.id===o.id))S.scens.push(o);});
   // 캠페인 비밀번호로 연 경우: 그 캠페인의 모든 편 로그를 받아와요
   if(!S.canAdmin&&S.db)_unlockIds.filter(x=>x.startsWith("g")).forEach(g=>S.scens.filter(x=>x.camp===g).forEach(x=>watchSess(x.id)));

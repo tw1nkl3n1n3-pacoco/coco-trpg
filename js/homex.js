@@ -18,7 +18,7 @@ function hxScCard(g){const sc=g.sc||{name:g.scen};const open=!g.sc||isOpen(g.sc.
   const d0=g.days[0]?.day||sc.lastDay||"",d1=g.days[g.days.length-1]?.day||sc.lastDay||"";
   const on=g.days.some(d=>d.parts.some(p=>p.src==="ccfolia"||p.src==="roll20")),nolog=g.days.length&&g.days.every(d=>d.nolog);
   const lines=g.days.reduce((a,d)=>a+d.parts.reduce((x,p)=>x+(p.n||0),0),0);
-  return `<a class="hxc" href="${g.sc?"#c-"+esc(g.sc.id):"#"}" style="--c:${hxCol(sc)}">${hxImg(sc)}
+  return `<a class="hxc" href="${g.sc?"#c-"+esc(g.sc.id):"#"}" style="--c:${cssC(hxCol(sc))}">${hxImg(sc)}
    <div class="hx-b">${sc.system||sc.fix?`<div class="hx-r1">${sc.system?`<span class="hx-tag">${esc(sysLabel(effSys(sc)))}</span>`:""}${sc.fix?`<span class="hx-tag o hx-fix" data-fix="${esc(sc.fix)}">◆ ${esc(sc.fix)}</span>`:""}</div>`:""}
    <h4>${esc(sc.name)}</h4>${sc.orig?`<div class="hx-orig">${esc(sc.orig)}</div>`:""}
    <span class="hx-when">${esc(hxRng(d0,d1))}${d0?` · ${g.days.length||sc.nDays||1}회차`:""}${on?" · ONLINE":nolog?" · 녹음 없음":""}${!open?" · 🔒":""}</span>
@@ -28,15 +28,15 @@ function hxScCard(g){const sc=g.sc||{name:g.scen};const open=!g.sc||isOpen(g.sc.
    ${hxCast(sc)}<div class="hx-ft"><span class="sp"></span>${!open?`<span class="hx-m hx-lock">■ LOCKED</span>`:lines?`<span class="hx-m">${lines.toLocaleString()} lines</span>`:""}${sc.done?`<span class="hx-stp">✓ 완주</span>`:""}</div></div></a>`;}
 // 캠프·캠페인 카드
 function hxCampCard(c){const es=campEps(c),cm=isCamp(c),cc=c.system?hxCol({system:c.system}):"#1fa8e0",shown=S.campMore[c.id]?es.slice().reverse():es.slice().reverse().slice(0,5);
-  return `<a class="hxc" href="#g-${esc(c.id)}" style="--c:${cm?"#1fa8e0":cc}">${hxImg(c)}
-   <div class="hx-b"><div class="hx-r1"><span class="hx-tag" style="--c:#1fa8e0">${cm?"CAMP":"CAMPAIGN"}</span>${c.system?`<span class="hx-tag o" style="--c:${cc}">${esc(sysLabel(c.system))}</span>`:""}${c.place?`<span class="hx-tag o">${esc(c.place)}</span>`:""}${!cm&&c.fix?`<span class="hx-tag o hx-fix" data-fix="${esc(c.fix)}">◆ ${esc(c.fix)}</span>`:""}</div>
+  return `<a class="hxc" href="#g-${esc(c.id)}" style="--c:${cm?"#1fa8e0":cssC(cc)}">${hxImg(c)}
+   <div class="hx-b"><div class="hx-r1"><span class="hx-tag" style="--c:#1fa8e0">${cm?"CAMP":"CAMPAIGN"}</span>${c.system?`<span class="hx-tag o" style="--c:${cssC(cc)}">${esc(sysLabel(c.system))}</span>`:""}${c.place?`<span class="hx-tag o">${esc(c.place)}</span>`:""}${!cm&&c.fix?`<span class="hx-tag o hx-fix" data-fix="${esc(c.fix)}">◆ ${esc(c.fix)}</span>`:""}</div>
    <h4>${esc(c.name)}</h4>${c.orig&&!cm?`<div class="hx-orig">${esc(c.orig)}</div>`:""}
    <span class="hx-when">${cm?esc(campWhen(c)||""):esc(hxRng(es[0]?.lastDay,campLast(c)))} · ${es.length}${cm?"탁":"편"}</span>
-   <ul class="hx-eps">${shown.map(e=>`<li style="--c:${hxCol(e)}"><b>${esc(e.name)}</b><small>${cm?esc((e.lastDay||"").slice(5).replace("-","/")):esc(epLabel(c,e))}</small></li>`).join("")}</ul>
+   <ul class="hx-eps">${shown.map(e=>`<li style="--c:${cssC(hxCol(e))}"><b>${esc(e.name)}</b><small>${cm?esc((e.lastDay||"").slice(5).replace("-","/")):esc(epLabel(c,e))}</small></li>`).join("")}</ul>
    ${es.length>5?`<button class="hx-more" data-cmore="${esc(c.id)}">${S.campMore[c.id]?"▴ 접기":`▾ ${es.length-5}개 더 보기`}</button>`:""}<div class="hx-ft"><span class="sp"></span>${(cm?campEnded(c):c.done)?`<span class="hx-stp">✓ ${cm?"종료":"완주"}</span>`:""}</div></div></a>`;}
 // 진행 중인 캠페인: 편을 잇는 선
 function hxLive(c){const es=campEps(c),cc=c.system?hxCol({system:c.system}):"#f09a1a",show=es.slice(-5);
-  return `<a class="hx-live" href="#g-${esc(c.id)}"><div class="hx-r1"><span class="hx-tag" style="--c:#f09a1a">CAMPAIGN</span>${c.system?`<span class="hx-tag o" style="--c:${cc}">${esc(sysLabel(c.system))}</span>`:""}</div>
+  return `<a class="hx-live" href="#g-${esc(c.id)}"><div class="hx-r1"><span class="hx-tag" style="--c:#f09a1a">CAMPAIGN</span>${c.system?`<span class="hx-tag o" style="--c:${cssC(cc)}">${esc(sysLabel(c.system))}</span>`:""}</div>
   <h3>${esc(c.name)}</h3><div class="hx-when">${esc(c.orig||"")}${c.orig?" · ":""}${es.length}편 · 마지막 ${esc(hxDot(campLast(c)))}</div>
   <div class="hx-track">${show.map((e,i)=>`<div class="hx-node${i===show.length-1?" n":""}"><i></i><b>${esc(epLabel(c,e)||"")}${i===show.length-1?" · LATEST":""}</b><span>${esc(e.name)}</span></div>`).join("")}</div></a>`;}
 // 홈 숫자 (두 테마 같이 써요) · 같은 시나리오를 다시 돌려도 한 번 · 캠프의 탁은 시나리오·세션에 들어가 있어서 캠페인만 따로 · 함께한 사람에서 내 닉네임은 빼요

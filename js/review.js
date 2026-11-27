@@ -263,7 +263,6 @@ let _cmRz;addEventListener("resize",()=>{clearTimeout(_cmRz);_cmRz=setTimeout(()
 // ---------- 이모티콘 (사이트 공용 :이름:) · 블로그식 글쓰기 ----------
 // scenarios/_site.emo = [{n:"하하", u:"이미지 주소"}] — 주인만 등록, 어디서든 :하하: 로 써요
 function emoMap(){const m={};(site().emo||[]).forEach(e=>{if(e&&e.n&&e.u)m[e.n]=e.u;});return m;}
-const EMO_RE=/:([^:\s<>"'&]{1,20}):/g;
 function emoImg(n,u){return `<img class="emo" src="${esc(u)}" alt=":${esc(n)}:" title=":${esc(n)}:" data-emo="${esc(n)}" draggable="false">`;}
 // 이미 안전하게 만든 HTML 안의 글자 부분에서만 :이름: 을 그림으로
 function emoize(html){const m=emoMap();if(!Object.keys(m).length)return html;

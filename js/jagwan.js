@@ -99,25 +99,25 @@ function fxPageHTML(f){const d=jgDoc(f),M=fxMembers(f),fields=d.fields&&d.fields
   const sys=(()=>{const c={};data.gs.forEach(g=>{const x=sysLabel(effSys(g.sc)||"");if(x)c[x]=(c[x]||0)+1;});return Object.keys(c).sort((a,b)=>c[b]-c[a])[0]||"";})();
   const stripes=M.length?M.map((m,i)=>`${m.c} ${Math.round(i/M.length*100)}% ${Math.round((i+1)/M.length*100)}%`).join(","):"#333 0 100%";
   const card=m=>{const q=m.q,dl=[["나이",q.age&&(/\D/.test(q.age)?q.age:q.age+"세")],["키",q.ht&&(/\D/.test(q.ht)?q.ht:q.ht+"cm")],["성별",q.sex],["MBTI",q.mbti]].filter(x=>x[1]),secs=fields.filter(k=>(q.sec||{})[k]),op=open===m.n;
-    return `<div class="fxcd${op?" op":""}" id="fxm-${esc(m.n)}" data-fxmem="${esc(m.n)}" style="--c:${m.c}"><div class="lt"><div class="h">${q.icon?.u?`<img src="${esc(q.icon.u)}" alt="">`:`<i>${esc(m.nm.slice(0,1))}</i>`}<div><b>${esc(m.nm)}</b><small>${[q.ren||q.rn,m.n].filter(Boolean).map(esc).join(" · ")}</small></div></div>
+    return `<div class="fxcd${op?" op":""}" id="fxm-${esc(m.n)}" data-fxmem="${esc(m.n)}" style="--c:${cssC(m.c)}"><div class="lt"><div class="h">${q.icon?.u?`<img src="${esc(q.icon.u)}" alt="">`:`<i>${esc(m.nm.slice(0,1))}</i>`}<div><b>${esc(m.nm)}</b><small>${[q.ren||q.rn,m.n].filter(Boolean).map(esc).join(" · ")}</small></div></div>
       ${dl.length?`<dl>${dl.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>`:""}${!op&&secs.length?`<div class="more">${secs.map(esc).join(" · ")} 펼치기 +</div>`:""}</div>
       ${op&&secs.length?`<div class="rt">${secs.map(k=>`<div class="k">${esc(k)}</div><p>${esc(q.sec[k]).replace(/\n/g,"<br>")}</p>`).join("")}</div>`:""}</div>`;};
   const pk=S.fxPick||"";
   return `<div class="jgp fxpg">
     <section class="jgposter"><div class="jgban${ban?.u?"":" empty"}"${ban?.u?"":` style="background:linear-gradient(110deg,${stripes})"`}>${ban?.u?`<img src="${esc(ban.u)}" alt="" style="object-position:50% ${+ban.y>=0?+ban.y:40}%">`:`<div class="fb" style="grid-template-columns:repeat(${Math.max(1,M.length)},1fr)">${M.map(m=>`<span>${esc(m.q.en||"")}</span>`).join("")}</div>`}</div>
       <div class="fxtt"><h1>${esc(f)}</h1>${d.tag?`<p>${esc(d.tag)}</p>`:""}</div>
-      <div class="fxstrip">${M.map(m=>`<button type="button" class="mb" data-fxgo="${esc(m.n)}" style="--c:${m.c}">${m.q.icon?.u?`<img src="${esc(m.q.icon.u)}" alt="">`:`<i>${esc(m.nm.slice(0,1))}</i>`}<b>${esc(m.nm)}</b><small>${esc(m.n)}</small></button>`).join("")}</div></section>
+      <div class="fxstrip">${M.map(m=>`<button type="button" class="mb" data-fxgo="${esc(m.n)}" style="--c:${cssC(m.c)}">${m.q.icon?.u?`<img src="${esc(m.q.icon.u)}" alt="">`:`<i>${esc(m.nm.slice(0,1))}</i>`}<b>${esc(m.nm)}</b><small>${esc(m.n)}</small></button>`).join("")}</div></section>
     <div class="jgwrap">
       <div class="fxtri"><section class="jgsec fxmems"><h4>MEMBERS<small class="cnt">${String(M.length).padStart(2,"0")}</small></h4><div class="fxcards">${M.map(card).join("")}</div></section>
         <section class="jgsec jgmid"><div class="k">TABLE</div><div class="rel">${[sys,data.days.length?jgDot(data.days[0]).slice(0,7)+" –":""].filter(Boolean).map(esc).join(" · ")||`<span class="tip">아직 세션이 없어요</span>`}</div>
           <div class="nums"><div><b>${data.stories}</b><span>이야기</span></div><div><b>${data.days.length}</b><span>세션</span></div><div><b>${jgDaysSince(data.days[0])}</b><span>함께한 날</span></div></div>
-          <div class="fxbar">${M.map(m=>`<i style="--c:${m.c}"></i>`).join("")}</div></section></div>
+          <div class="fxbar">${M.map(m=>`<i style="--c:${cssC(m.c)}"></i>`).join("")}</div></section></div>
       <div class="jgsplit">${jgTimelineHTML(f,data,items)}${jgLogHTML(f,data)}</div>
       ${postsH}
       ${jgCanEdit(f)?`<div class="jgtop jgbot"><a class="ghost ownonly" href="#">← 첫 화면</a><span style="flex:1"></span><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":"✎ 고정탁 수정"}</button></div>`:""}
       ${S.jgEdit&&jgCanEdit(f)?jgEditHTML(f):""}
       ${fixAccHTML(f)}${jgRO(f)?`<div class="sc-sec fxacc jgacc"><h4 data-en="ACCESS">고정탁 비밀번호</h4><div class="tip">누구로 들어갈지 고르고 비밀번호를 넣으면 글을 올리고, 기록을 더하고, 댓글을 달 수 있어요. 안의 모든 세션도 같이 열려요.</div>
-        <div class="fxpk">${M.map(m=>`<button type="button" class="${pk===m.n?"on":""}" data-fxpick="${esc(m.n)}" style="--c:${m.c}"><i></i>${esc(m.nm)} · ${esc(m.n)}</button>`).join("")}<button type="button" class="${pk==="ext"?"on":""}" data-fxpick="ext">외부인으로</button></div>
+        <div class="fxpk">${M.map(m=>`<button type="button" class="${pk===m.n?"on":""}" data-fxpick="${esc(m.n)}" style="--c:${cssC(m.c)}"><i></i>${esc(m.nm)} · ${esc(m.n)}</button>`).join("")}<button type="button" class="${pk==="ext"?"on":""}" data-fxpick="ext">외부인으로</button></div>
         <form class="pwrow" id="jgunlock"><input type="text" id="jgpw" placeholder="고정탁 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form><div class="tip" id="jgmsg"></div></div>`:""}
     </div></div>`;}
 function bindFxPage(f){bindJgPage(f);

@@ -99,7 +99,7 @@ function mbRender(){const M=S.mbook;if(!M||!M.data)return;const host=$("#bkpages
     return pgs;};
   const T=tocPages(null).length;meas.innerHTML="";
   // 4) 표지
-  const cov=document.createElement("div");cov.className="bpg bcover";if(M.cover)cov.style.setProperty("--og",`url('${M.cover}')`);
+  const cov=document.createElement("div");cov.className="bpg bcover";if(M.cover)cov.style.setProperty("--og",`url('${safeU(M.cover)}')`);
   const allDays=items.flatMap(it=>it.parts.map(p=>p.day)).filter(Boolean).sort();
   cov.innerHTML=`<div class="art${M.cover?" img":""}"></div><div class="band"></div><div class="in"><div class="series">REPLAY BOOK · COLLECTION</div><h1>${esc(title)}</h1><div class="bcsub">${esc(M.src.sub||"")}</div>
     <div class="bcpub"><span>${site().title===SITE_UNSET?"":esc(site().title)}</span><span>${allDays.length?esc(allDays[0].replace(/-/g,". ")):""}${allDays.length>1?` – ${esc(allDays.at(-1).replace(/-/g,". "))}`:""} · ${parts.length}부</span></div></div>`;

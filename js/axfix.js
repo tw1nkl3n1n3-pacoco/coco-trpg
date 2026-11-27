@@ -5,8 +5,8 @@ function axSh(i,ko,en,right){return `<div class="hx-sh"><span class="hx-m hx-idx
 function axFile(m,fields,lab){const q=m.q||{},num=v=>v&&!/\D/.test(v)?v:v||"—";
   const cells=[["AGE",q.age],["HEIGHT",q.ht],["SEX",q.sex],["MBTI",q.mbti]].filter(x=>x[1]);
   const pic=q.bust?.u||q.cut?.u||q.icon?.u||"",tags=(q.tags||[]).filter(t=>t&&t!==q.mbti).slice(0,4),secs=fields.filter(k=>(q.sec||{})[k]);
-  return `<div class="axdc" id="nfm-${esc(m.n)}" style="--c:${m.c}"><div class="ph${!q.bust?.u&&q.cut?.u?" cut":""}"><span class="no hx-m">${esc(lab)}</span>${pic?`<img src="${esc(pic)}" alt="" loading="lazy">`:`<i>${esc([...(m.nm||"?")][0])}</i>`}</div>
-    <div class="bd"><span class="hx-tag" style="--c:${m.c}">${esc(m.en||m.nm)}</span><h3>${esc(m.nm)}</h3>${q.rn||q.ren?`<div class="rn">${[q.rn,q.ren&&q.ren.toUpperCase()].filter(Boolean).map(esc).join(" · ")}</div>`:""}
+  return `<div class="axdc" id="nfm-${esc(m.n)}" style="--c:${cssC(m.c)}"><div class="ph${!q.bust?.u&&q.cut?.u?" cut":""}"><span class="no hx-m">${esc(lab)}</span>${pic?`<img src="${esc(pic)}" alt="" loading="lazy">`:`<i>${esc([...(m.nm||"?")][0])}</i>`}</div>
+    <div class="bd"><span class="hx-tag" style="--c:${cssC(m.c)}">${esc(m.en||m.nm)}</span><h3>${esc(m.nm)}</h3>${q.rn||q.ren?`<div class="rn">${[q.rn,q.ren&&q.ren.toUpperCase()].filter(Boolean).map(esc).join(" · ")}</div>`:""}
       ${cells.length?`<dl>${cells.map(([k,v])=>`<div><dt class="hx-m">${k}</dt><dd>${esc(num(v))}</dd></div>`).join("")}</dl>`:""}
       ${tags.length?`<div class="tags">${tags.map(t=>`<span class="hx-tag o">${esc(String(t).toUpperCase())}</span>`).join("")}</div>`:""}
       ${secs.length?`<div class="sec">${secs.map(k=>`<details><summary><b>${esc(k)}</b><span class="hx-m">+ OPEN</span></summary><p>${esc(q.sec[k]).replace(/\n/g,"<br>")}</p></details>`).join("")}</div>`:""}
@@ -23,8 +23,8 @@ function axPageHTML(f){const pair=jgPair(f),d=jgDoc(f),fields=d.fields&&d.fields
   // 그림 액자: 페어는 첫 화면 그림 위에 두 사람 전신 · 고정탁은 그림 + 멤버 아이콘
   const cuts=pair?mem.filter(m=>m.q.cut?.u):[];
   const fig=(ban?.u||cuts.length)?`<div class="axfig${ban?.u?"":" nobg"}">${ban?.u?`<img class="bg" src="${esc(ban.u)}" alt="" style="object-position:50% ${+ban.y>=0?+ban.y:40}%">`:""}
-      ${cuts.map((m,i)=>`<img class="cut c${i}" src="${esc(m.q.cut.u)}" alt="">`).join("")}${cuts.map((m,i)=>`<span class="nm n${i} hx-m" style="--c:${m.c}">${esc(m.en||m.nm)}</span>`).join("")}
-      ${!pair?`<div class="mems">${mem.map(m=>`<button type="button" data-nfgo="${esc(m.n)}" style="--c:${m.c}">${m.q.icon?.u?`<img src="${esc(m.q.icon.u)}" alt="">`:`<i>${esc([...m.nm][0])}</i>`}<b>${esc(m.nm)}</b></button>`).join("")}</div>`:""}
+      ${cuts.map((m,i)=>`<img class="cut c${i}" src="${esc(m.q.cut.u)}" alt="">`).join("")}${cuts.map((m,i)=>`<span class="nm n${i} hx-m" style="--c:${cssC(m.c)}">${esc(m.en||m.nm)}</span>`).join("")}
+      ${!pair?`<div class="mems">${mem.map(m=>`<button type="button" data-nfgo="${esc(m.n)}" style="--c:${cssC(m.c)}">${m.q.icon?.u?`<img src="${esc(m.q.icon.u)}" alt="">`:`<i>${esc([...m.nm][0])}</i>`}<b>${esc(m.nm)}</b></button>`).join("")}</div>`:""}
       <span class="crop tl"></span><span class="crop tr"></span><div class="cap hx-m">FIG.01<i>${esc(W)} 첫 화면</i></div></div>`:"";
   // 타임라인 옆: 달별 세션 막대 + 세계관(서브) 요약
   const mc={};data.days.forEach(x=>{const k=x.slice(0,7);mc[k]=(mc[k]||0)+1;});const months=Object.keys(mc).sort().slice(-8),mx=Math.max(1,...Object.values(mc)),lastM=months.at(-1);
@@ -34,13 +34,13 @@ function axPageHTML(f){const pair=jgPair(f),d=jgDoc(f),fields=d.fields&&d.fields
     ${recsSub.length?`<div class="hx-m hx-k" style="margin-top:18px">SUB · 기록 ${recsSub.length}</div><p class="subs">${recsSub.slice(0,5).map(r=>`${esc(r.d)} ${esc(r.t)}`).join(" · ")}${recsSub.length>5?" …":""}</p>`:""}</div>`;
   const ro=jgRO(f);
   const acc=`${fixAccHTML(f)}${ro?(pair?`<div class="sc-sec fxacc jgacc axacc"><div><div class="hx-m hx-k">PAIR PASSWORD</div><h3>페어 비밀번호</h3><p>넣으면 글을 올리고, 기록을 더하고, 댓글을 달 수 있어요. 잠긴 글도 보여요.</p></div><form class="pwrow" id="jgunlock"><input type="text" id="jgpw" placeholder="페어 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form><div class="tip" id="jgmsg"></div></div>`
-    :`<div class="sc-sec fxacc jgacc axacc"><div><div class="hx-m hx-k">TABLE PASSWORD</div><h3>고정탁 비밀번호</h3><p>누구로 들어갈지 고르고 비밀번호를 넣어요.</p><div class="fxpk">${mem.map(m=>`<button type="button" class="${S.fxPick===m.n?"on":""}" data-fxpick="${esc(m.n)}" style="--c:${m.c}"><i></i>${esc(m.nm)} · ${esc(m.n)}</button>`).join("")}<button type="button" class="${S.fxPick==="ext"?"on":""}" data-fxpick="ext">외부인으로</button></div></div><form class="pwrow" id="jgunlock"><input type="text" id="jgpw" placeholder="고정탁 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form><div class="tip" id="jgmsg"></div></div>`):""}`;
+    :`<div class="sc-sec fxacc jgacc axacc"><div><div class="hx-m hx-k">TABLE PASSWORD</div><h3>고정탁 비밀번호</h3><p>누구로 들어갈지 고르고 비밀번호를 넣어요.</p><div class="fxpk">${mem.map(m=>`<button type="button" class="${S.fxPick===m.n?"on":""}" data-fxpick="${esc(m.n)}" style="--c:${cssC(m.c)}"><i></i>${esc(m.nm)} · ${esc(m.n)}</button>`).join("")}<button type="button" class="${S.fxPick==="ext"?"on":""}" data-fxpick="ext">외부인으로</button></div></div><form class="pwrow" id="jgunlock"><input type="text" id="jgpw" placeholder="고정탁 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form><div class="tip" id="jgmsg"></div></div>`):""}`;
   let n=0;const N=()=>++n;
   return `<div class="jgp hx axp${pair?" pair":""}"><div class="hx-wrap">
     <div class="hx-bar"><a class="hx-logo" href="#" aria-label="목록"></a><a href="#"><b>${esc(site().title)}</b></a><span class="hx-m">/ ${pair?"PAIR":"TABLE"} / ${esc(f)}</span><span style="flex:1"></span><a class="hx-m" href="#">← 목록</a></div>
     <section class="hx-hero"><div class="hx-hl"><div class="hx-dots"></div><div class="hx-m hx-k">▲ ${pair?`PAIR — ${esc(mem[0].en)} × ${esc(mem[1].en)}`:`TABLE — ${mem.length} MEMBERS`}</div><h1>${esc(f)}<span></span></h1>
         ${line?`<div class="hx-ko">${esc(line)}</div>`:""}
-        <div class="axids">${mem.map(m=>`<span class="hx-tag" style="--c:${m.c}">${esc(m.en||m.nm)}${m.en&&m.en!==m.nm?" · "+esc(m.nm):""}</span>`).join("")}${sys?`<span class="hx-tag o" style="--c:${hxCol({system:sys})}">${esc(sysLabel(sys))}</span>`:""}</div></div>
+        <div class="axids">${mem.map(m=>`<span class="hx-tag" style="--c:${cssC(m.c)}">${esc(m.en||m.nm)}${m.en&&m.en!==m.nm?" · "+esc(m.nm):""}</span>`).join("")}${sys?`<span class="hx-tag o" style="--c:${hxCol({system:sys})}">${esc(sysLabel(sys))}</span>`:""}</div></div>
       <div class="hx-hr"><div class="hx-stat"><b>${pad(data.stories)}</b><div><span class="hx-m">STORIES</span><small>함께한 이야기</small></div></div><div class="hx-stat"><b>${pad(data.days.length)}</b><div><span class="hx-m">SESSIONS</span><small>세션</small></div></div><div class="hx-stat"><b>${first?jgDaysSince(first):"—"}</b><div><span class="hx-m">DAYS</span><small>함께한 날</small></div></div><div class="hx-stat"><b class="sm">${first?esc(first.slice(2,7).replace("-",".")):"—"}</b><div><span class="hx-m">SINCE</span><small>첫 세션</small></div></div></div></section>
     ${fig}
     ${axSh(N(),pair?"두 사람":"멤버","Profile",`<span class="hx-m">${mem.length} FILES</span>`)}

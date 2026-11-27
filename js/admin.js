@@ -2,7 +2,7 @@
 // (js/ 파일들은 한 덩어리처럼 이어서 읽어요 · 순서는 index.html)
 // ---------- 관리자 페이지 (#admin) ----------
 const RULES_VERSION="7"; // firebase/firestore.rules 의 rulesv 숫자와 같아야 해요
-const ST_RULES_VERSION="6"; // firebase/storage.rules 의 rulesv 숫자
+const ST_RULES_VERSION="7"; // firebase/storage.rules 의 rulesv 숫자
 S.chk={fs:"?",st:"?",build:null,newer:null,upstream:"",commits:null,err:""};
 const adminAlert=()=>S.chk.fs==="old"||S.chk.st==="old"||(S.chk.newer||0)>0;
 const projId=()=>(window.FIREBASE_CONFIG||{}).projectId||"";

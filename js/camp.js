@@ -104,7 +104,7 @@ function campViewHTML(c,es,rows,open){const W=campWord(c),dt=d=>(d||"").replace(
       ${done?`<span class="st">완주</span>`:e===lastEp||e.gaiden?`<span class="st now">진행 중</span>`:"<span></span>"}</a>`;}).join("");
   const labs=es.map(e=>e.gaiden?"외전":epLabel(c,e));
   const pcn=v=>{const m=String(v.x.pc||"").match(/\d+/);return m?+m[0]:99;};
-  const cast=rows.flatMap(r=>r.runs.map(x=>({r,x}))).sort((a,b)=>(b.r.who==="GM")-(a.r.who==="GM")||pcn(a)-pcn(b)||a.r.who.localeCompare(b.r.who,"ko")).map(({r,x})=>`<div class="pc2${r.who==="GM"?" gm":""}" style="--c:${x.c}"><div class="p">${r.who==="GM"?gmAb({system:c.system}):`${x.pc?esc(x.pc.replace("PC ","PC"))+" · ":""}${esc(r.who)}`}</div>
+  const cast=rows.flatMap(r=>r.runs.map(x=>({r,x}))).sort((a,b)=>(b.r.who==="GM")-(a.r.who==="GM")||pcn(a)-pcn(b)||a.r.who.localeCompare(b.r.who,"ko")).map(({r,x})=>`<div class="pc2${r.who==="GM"?" gm":""}" style="--c:${cssC(x.c)}"><div class="p">${r.who==="GM"?gmAb({system:c.system}):`${x.pc?esc(x.pc.replace("PC ","PC"))+" · ":""}${esc(r.who)}`}</div>
       <div class="c">${x.ch?esc(x.ch):`<span class="tip">${r.who==="GM"?"":"캐릭터 이름 없음"}</span>`}</div><div class="eps">${es.map((_,i)=>x.ix.includes(i)?`<i>${esc(labs[i])}</i>`:"").join("")}</div></div>`).join("");
   const srcs=es.map(e=>({id:e.id,kind:"sc",label:e.gaiden?"외전":epLabel(c,e)||e.name,list:galRaw(e),read:isOpen(e.id),up:false}));
   const free=S.canAdmin&&S.db?S.scens.filter(x=>!x.camp||!campById(x.camp)).sort((a,b)=>(b.lastDay||"").localeCompare(a.lastDay||"")):[];
@@ -196,7 +196,7 @@ function campPgHTML(c){
       <div class="gdates"><label>시작일<input type="date" id="g-start" value="${esc(c.start||"")}"></label><span>–</span><label>끝나는 날<input type="date" id="g-end" value="${esc(c.end&&c.end!==c.start?c.end:"")}"></label></div><div class="tip" style="margin-top:-4px">당일치기면 끝나는 날은 비워 두세요</div>
     </div></div>
     <div class="sc-sec"><h4 data-en="SHARE IMAGE">대표 이미지 <span class="tip" style="letter-spacing:0">· 세션 페이지처럼 캠프 페이지 맨 위에 크게 나와요 (1200×630으로 맞춰져요)</span></h4>
-      ${(()=>{const og=S.campOg!==undefined?S.campOg:c.og||"";return `<div class="ogcard${og?"":" empty"}" id="g-ogprev">${og?`<img src="${og}" alt="">`:`<span>아직 이미지가 없어요</span>`}</div>
+      ${(()=>{const og=S.campOg!==undefined?S.campOg:c.og||"";return `<div class="ogcard${og?"":" empty"}" id="g-ogprev">${og?`<img src="${esc(og)}" alt="">`:`<span>아직 이미지가 없어요</span>`}</div>
       <div style="display:flex;gap:6px;margin-top:8px"><button type="button" id="g-ogup">이미지 올리기</button><button type="button" class="ghost" id="g-ogdel"${og?"":' style="display:none"'}>지우기</button><input type="file" id="g-ogfile" accept="image/*" style="display:none"></div>`;})()}</div>
     ${es.length?"":`<div class="sc-sec"><h4 data-en="DELETE">캠프 지우기</h4><div class="tip" style="margin-bottom:8px">탁이 하나도 없을 때만 지울 수 있어요.</div><button class="ghost" id="g-del">이 캠프 지우기</button></div>`}
     <div class="homefoot"><button class="ghost ownonly" onclick="location.hash=''">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div></div>`;
@@ -208,7 +208,7 @@ function campPgHTML(c){
     return `<div class="cadd"><a class="btnlike${es.length?"":" pri"}" href="#up-${esc(c.id)}">＋ 탁 올리기</a>
       ${free.length?`<span class="gadd-ex"><select id="g-addsel"><option value="">이미 있는 세션 넣기…</option>${free.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}${x.system?` · ${esc(sysLabel(x.system))}`:""}</option>`).join("")}</select><button class="ghost" id="g-addgo">넣기</button></span>`:""}</div>`;})():"";
   return `<div class="sc-page campage camp-k">
-    ${c.og?`<div class="campline">캠프</div><div class="schero"><img src="${c.og}" alt=""><div class="schero-t"><h2>${esc(c.name)}<small class="hsub">${sub}</small></h2><span class="scmeta">${edb}</span></div></div>`
+    ${c.og?`<div class="campline">캠프</div><div class="schero"><img src="${esc(safeU(c.og))}" alt=""><div class="schero-t"><h2>${esc(c.name)}<small class="hsub">${sub}</small></h2><span class="scmeta">${edb}</span></div></div>`
       :`<div class="ckick"><span class="cbadge">캠프</span></div><div class="sc-top"><h2>${esc(c.name)}<small class="hsub">${sub}</small></h2><span class="scmeta">${edb}</span></div>`}
     ${!when&&S.canAdmin?`<div class="notice" style="margin:12px 0">✎ 수정에서 캠프 날짜를 넣으면 탁이 일차별로 나뉘어요.</div>`:""}
     ${days.length?days.map((d,i)=>`<div class="sc-sec cday-sec"><h4 data-en="${d.day?`DAY ${i+1}`:"ETC"}">${esc(d.lab||"탁")}${d.day?` <span class="tip" style="letter-spacing:0">${esc(fmtDay(d.day))}</span>`:""}</h4>${d.eps.map(row).join("")}</div>`).join("")
@@ -232,7 +232,7 @@ function bindCamp(){
   const e=$("#g-edit");if(e)e.onclick=()=>{S.campEdit=true;render();};
   const x=$("#g-x");if(x)x.onclick=()=>{S.campEdit=false;S.campOg=undefined;render();};
   {const up=$("#g-ogup"),fi=$("#g-ogfile"),pv=$("#g-ogprev"),dl=$("#g-ogdel");
-    const show=og=>{pv.className="ogcard"+(og?"":" empty");pv.innerHTML=og?`<img src="${og}" alt="">`:`<span>아직 이미지가 없어요</span>`;dl.style.display=og?"":"none";};
+    const show=og=>{pv.className="ogcard"+(og?"":" empty");pv.innerHTML=og?`<img src="${esc(og)}" alt="">`:`<span>아직 이미지가 없어요</span>`;dl.style.display=og?"":"none";};
     if(up&&fi){up.onclick=()=>fi.click();fi.onchange=async ev=>{const f=ev.target.files[0];if(!f)return;try{S.campOg=await shrinkImage(f,1200,"image/jpeg",1200,630);show(S.campOg);toast("저장을 눌러야 적용돼요");}catch(e){toast("이미지를 읽지 못했어요");}fi.value="";};}
     if(dl)dl.onclick=()=>{S.campOg="";show("");};}
   const sv=$("#g-save");if(sv)sv.onclick=async()=>{const name=$("#g-name").value.trim();if(!name){toast("이름을 넣어 주세요");return;}

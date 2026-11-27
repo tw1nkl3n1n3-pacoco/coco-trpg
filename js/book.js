@@ -179,7 +179,7 @@ function bookFront(sc){
   const pcn=p=>+(pcSplit(p.name).n||"").replace(/\D/g,"")||99;
   const gm=cast.find(p=>p.k===gk),pcs=cast.filter(p=>p.k!==gk).sort((a,b)=>pcn(a)-pcn(b));
   const sys=effSys(sc)?sysLabel(effSys(sc)):"";
-  const cover=`<div class="bpg bcover"${sc.og?` style="--og:url('${sc.og}')"`:""}><div class="art${sc.og?" img":""}"></div><div class="band"></div><div class="in">
+  const cover=`<div class="bpg bcover"${safeU(sc.og)?` style="--og:url('${safeU(sc.og)}')"`:""}><div class="art${sc.og?" img":""}"></div><div class="band"></div><div class="in">
     <div class="series">${sys?`<b>${esc(sys)}</b>`:""}REPLAY BOOK</div><h1>${esc(sc.name)}</h1>${sc.orig?`<div class="bcorig">${esc(sc.orig)}</div>`:""}
     ${sc.summary?`<div class="bcsub">${esc(sc.summary.split("\n").filter(Boolean).slice(0,2).join(" "))}</div>`:""}
     <div class="bcwho${(sc.sp||[]).some(p=>p.chr)?" tai":""}">${gm&&!gm.chr?`<div><b>${gmw}</b>${esc(pcSplit(gm.name).name)}</div>`:""}${(sc.sp||[]).some(p=>p.chr)?gmFirst((sc.sp||[]).filter(p=>p.chr&&p.ch),gk).map(p=>`<div class="tai"><b>${esc(p.ch)}</b><span>${esc(pcSplit(p.name).name)}</span></div>`).join(""):`<div><b>PL</b>${pcs.map(p=>esc(pcSplit(p.name).name)).join(" · ")}</div>`}</div>

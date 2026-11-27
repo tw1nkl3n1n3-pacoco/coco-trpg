@@ -37,7 +37,11 @@ const CHUNK=60;
 const OLDC=["#f3c97f","#8fc7f2","#f29a9a","#a5dd9b","#d4a5f5","#f5b98a","#7fd8d0","#f2a7d0","#c9c97f","#9fa8f5","#e8e8e8","#b8e07a"];
 // 더블크로스 테마에서는 누런 올리브색을 맑은 색으로 바꿔 보여줘요
 const DXC={"#4f7a2a":"#17a25e","#7d6a14":"#d18b00","#5c4a3a":"#6b7280","#b8691c":"#e46a12"};
-const fixC=c=>{const i=OLDC.indexOf(c);const v=i>=0?COLORS[i]:(c||"#7a6a5a");return document.body&&document.body.dataset.theme==="dx"&&DXC[v]||v;};
+// 색 값은 다른 사람이 고칠 수 있는 문서에서 와요: 색처럼 생긴 값만 통과 (따옴표 등으로 HTML이 깨지지 않게)
+const cssC=(c,d="#888")=>{c=String(c??"").trim();return /^(#[0-9a-f]{3,8}|rgba?\([\d\s.,%]+\)|hsla?\([\d\s.,%deg]+\)|var\(--[a-z0-9-]+\)|[a-z]{3,20})$/i.test(c)?c:d;};
+// 그림 주소: data:image 또는 https만, 따옴표·꺾쇠 없이
+const safeU=u=>{u=String(u??"");return /^(data:image\/[a-z+.-]+;base64,[A-Za-z0-9+/=]+|https:\/\/[^\s"'<>()\\]+)$/.test(u)?u:"";};
+const fixC=c=>{const i=OLDC.indexOf(c);const v=i>=0?COLORS[i]:cssC(c,"#7a6a5a");return document.body&&document.body.dataset.theme==="dx"&&DXC[v]||v;};
 const ckey=i=>"c"+String(i).padStart(3,"0");
 function toast(msg,ms=2200){const d=document.createElement("div");d.className="toast";d.textContent=msg;document.body.appendChild(d);setTimeout(()=>d.remove(),ms);}
 async function retry(fn){

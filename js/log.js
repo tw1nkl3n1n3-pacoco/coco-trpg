@@ -1,14 +1,13 @@
 // 코코 로그방 · 로그 화면: 그리기·선택·글 고치기·단락·고유명사·녹음 재생·키보드
 // (js/ 파일들은 한 덩어리처럼 이어서 읽어요 · 순서는 index.html)
 // ---------- rendering ----------
-const THEMES={"":{n:"양피지",d:"지금 기본 · 판타지",sw:["#efe3cc","#fff","#9c3d22","#c9a46a"]},wa:{n:"인세인",d:"인세인 룰에 자동 적용",sw:["#0a0a0a","#fcfcfb","#b0101a","#d4d4d4"]},deco:{n:"D&D",d:"D&D 룰에 자동 적용",sw:["#e9e4d6","#fbf8f0","#1f4a3d","#b08a3e"]},blue:{n:"블루 모던",d:"현대 · SF · 현대 수사",sw:["#eef3f9","#ffffff","#2563eb","#38bdf8"]}};
 // 테마는 룰 시스템에 따라 자동으로 정해져요
 // PC 번호: 플레이어 이름이 "PC1 코코"처럼 시작하면 번호를 동그라미 안에 넣고 이름에서는 빼요
 const pcSplit=v=>{const m=String(v||"").match(/^\s*PC\s*(\d{1,2})\s*[.:·\-]?\s*(.+)$/i);return m?{n:m[1],name:m[2]}:{n:"",name:String(v||"")};};
 const spDot=(p,style="")=>{const q=pcSplit(p.name);return `<span class="dot${q.n?" pcn":""}"${style?` style="${style}"`:""}>${q.n}</span>`;};
 const spName=p=>esc(pcSplit(p.name).name);
 // 인장(동그란 캐릭터 이미지): 올린 그림 → 없으면 GM은 GM 그림, 나머지는 캐릭터 이름 첫 글자
-const avHTML=(p,gm)=>p.img?`<img src="${p.img}" alt="">`:gm?`<span class="gmav"><span class="gmw">GM</span></span>`:`<span class="ini">${esc((p.ch||pcSplit(p.name).name||"?").trim().slice(0,1))}</span>`;
+const avHTML=(p,gm)=>safeU(p.img)?`<img src="${esc(safeU(p.img))}" alt="">`:gm?`<span class="gmav"><span class="gmw">GM</span></span>`:`<span class="ini">${esc((p.ch||pcSplit(p.name).name||"?").trim().slice(0,1))}</span>`;
 // 룰 이름 표기: DnD·D＆D → D&D
 // 룰 관리(관리 > 룰): site().rules = [{n:표시 이름, m:[묶을 이름], a:[검색 별명], th:테마}]
 function siteRules(){const r=(typeof site==="function"?site():{}).rules;return Array.isArray(r)?r:[];}
