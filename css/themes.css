@@ -841,3 +841,35 @@ body[data-theme=nf] .sys[data-th]{background:transparent!important;color:#ddd!im
 body[data-theme=nf] .schero{height:min(68vh,560px);min-height:340px}
 body[data-theme=nf] .schero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;max-height:none}
 @media(max-width:760px){body[data-theme=nf] .schero{height:min(60vh,420px);min-height:300px}}
+/* 짭플릭스: 글을 읽는 칸은 흰 종이 (로그 본문 · 후기 · 갤러리 글) */
+body[data-theme=nf] #log{background:#fff!important;border:0!important;border-radius:6px;box-shadow:0 8px 30px rgba(0,0,0,.4)!important;
+  --bg:#fff;--panel:#fff;--panel2:#f3f3f3;--line:#e6e6e6;--ink:#1c1c1c;--dim:#555;--faint:#9a9a9a;--sel:#fde8ea;--play:#e9f6ee;color:#1c1c1c;color-scheme:light}
+body[data-theme=nf] #log .row:hover{background:#f6f6f6}
+body[data-theme=nf] #log .row.sel{background:#fde8ea;border-color:#f5b8bf}
+body[data-theme=nf] #log .tx{color:#1c1c1c}
+body[data-theme=nf] #log .row.gm .tx{color:#444}
+body[data-theme=nf] #log .who{color:color-mix(in srgb,var(--c) 78%,#000)}
+body[data-theme=nf] #log .row.gm .who{color:#1c1c1c}
+body[data-theme=nf] #log .who small,body[data-theme=nf] #log .ts{color:#9a9a9a}
+body[data-theme=nf] #log .row.sec .tx{color:#141414}
+body[data-theme=nf] #log .row.sec.l1 .tx{border-bottom-color:#e6e6e6}
+body[data-theme=nf] #log .row.sec.l3 .tx{color:#333}
+body[data-theme=nf] #log .row.note .tx{color:#666}
+body[data-theme=nf] #log .row.dice .tx{background:#f5f5f5;color:#222;border-color:#e3e3e3}
+body[data-theme=nf] #log .row.dice .dw{color:#141414}body[data-theme=nf] #log .row.dice .dl{color:#666}body[data-theme=nf] #log .row.dice .dr{color:#128a3e}
+body[data-theme=nf] #log .dres.success{background:#128a3e;color:#fff}body[data-theme=nf] #log .dres.failure{background:#ddd;color:#333}body[data-theme=nf] #log .dres.fumble{background:#fff;color:#c40812;box-shadow:inset 0 0 0 1px #c40812}
+body[data-theme=nf] #log .row.hand .body{background:#fafafa;border-color:#e3e3e3}body[data-theme=nf] #log .row.hand .hlab{background:#141414;color:#fff}body[data-theme=nf] #log .row.hand .tx{color:#1c1c1c}
+body[data-theme=nf] #log .row.note.stat .tx{color:#0f6b31;background:#e9f6ee}
+body[data-theme=nf] #log input,body[data-theme=nf] #log textarea{background:#fff;color:#1c1c1c;border-color:#ccc}
+/* 후기 */
+body[data-theme=nf] .rvcard,body[data-theme=nf] .rvpage .rvcard{background:#fff;color:#1c1c1c;--ink:#1c1c1c;--dim:#555;--faint:#999;--line:#e6e6e6;--panel:#fff;--panel2:#f3f3f3;color-scheme:light}
+body[data-theme=nf] .rvcard h1,body[data-theme=nf] .rvcard h2,body[data-theme=nf] .rvcard h3,body[data-theme=nf] .rvcard b{color:#141414}
+/* 갤러리 글 (카드 · 펼친 글) */
+body[data-theme=nf] .txtc,.nfx .galg .txtc,.nfx .nfposts .galg .txtc{background:#fff!important;color:#1c1c1c!important}
+body[data-theme=nf] .txtc b,.nfx .nfposts .galg .txtc b{color:#141414!important}body[data-theme=nf] .txtc p,.nfx .nfposts .galg .txtc p{color:#444!important}
+.nfx .nfposts .galg .gt-txt::after{background:linear-gradient(transparent 55%,rgba(0,0,0,.8))}
+body[data-theme=nf] .glpaper{background:#fff;color:#1c1c1c;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.nfx .nftl .tcard{background:#fff!important;color:#333!important}.nfx .nftl .tcard b{color:#141414!important}
+body[data-theme=nf] #log button{background:#f3f3f3;color:#333;border-color:#ddd}
+body[data-theme=nf] #log button.who,body[data-theme=nf] #log button.ts,body[data-theme=nf] #log .who,body[data-theme=nf] #log .ts{background:transparent!important;border-color:transparent}
+body[data-theme=nf] #log button.pri{background:#e50914;color:#fff;border-color:#e50914}
