@@ -34,7 +34,17 @@ function themeOf(sc){
 }
 // 페어 두 캐릭터 색 (고정탁 문서의 colors가 있으면 그걸로)
 // 페어 색 4개: 고정탁 문서 colors = {bg, acc, a, b} (없으면 두 캐릭터의 로그 색)
-function jgColors(f,over){const fd=(S.fixDocs||{})[typeof fixKey==="function"?fixKey(f):""]||{},c=over||fd.colors||{};
+// 페어·고정탁 강조 폰트 · fixes 문서 font:{ko,en} · 기본(검은고딕·Anton) 말고는 고를 때 구글 폰트에서 불러와요
+const JG_FONTS={ko:[["Black Han Sans","검은고딕",400],["Do Hyeon","도현",400],["Jua","주아",400],["Gugi","구기",400],["Song Myung","송명",400],["Gowun Batang","고운바탕",700],["Nanum Myeongjo","나눔명조",800],["Yeon Sung","연성",400],["Bagel Fat One","베이글",400],["Orbit","오르빗",400],["Hahmlet","함렛",800]],
+  en:[["Anton","Anton",400],["Bebas Neue","Bebas Neue",400],["Oswald","Oswald",600],["Playfair Display","Playfair Display",800],["Cinzel","Cinzel",700],["Righteous","Righteous",400],["Orbitron","Orbitron",700]]};
+function jgFontLoad(name){const all=[...JG_FONTS.ko,...JG_FONTS.en],x=all.find(v=>v[0]===name);if(!x||x===JG_FONTS.ko[0]||x===JG_FONTS.en[0])return;const id="jgf-"+name.replace(/\W/g,"");if(document.getElementById(id))return;
+  document.head.appendChild(Object.assign(document.createElement("link"),{id,rel:"stylesheet",href:`https://fonts.googleapis.com/css2?family=${name.replace(/ /g,"+")}:wght@${x[2]}&display=swap`}));}
+function jgFonts(f,over){const fd=(S.fixDocs||{})[typeof fixKey==="function"?fixKey(f):""]||{},o=over||fd.font||{},st=document.body.style;
+  const ok=(k,v)=>v&&JG_FONTS[k].some(x=>x[0]===v);
+  if(ok("ko",o.ko)&&o.ko!=="Black Han Sans"){jgFontLoad(o.ko);st.setProperty("--jhk",`"${o.ko}","Black Han Sans","Noto Sans KR",sans-serif`);}else st.removeProperty("--jhk");
+  if(ok("en",o.en)&&o.en!=="Anton"){jgFontLoad(o.en);st.setProperty("--jdisp",`"${o.en}",${ok("ko",o.ko)?`"${o.ko}",`:""}"Black Han Sans","Noto Sans KR",sans-serif`);}
+  else if(ok("ko",o.ko)&&o.ko!=="Black Han Sans")st.setProperty("--jdisp",`"Anton","${o.ko}","Black Han Sans","Noto Sans KR",sans-serif`);else st.removeProperty("--jdisp");}
+function jgColors(f,over){jgFonts(f);const fd=(S.fixDocs||{})[typeof fixKey==="function"?fixKey(f):""]||{},c=over||fd.colors||{};
   const sd=typeof jgSides==="function"?jgSides(f):[],cc=x=>x&&(typeof fixC==="function"?fixC(x):x),st=document.body.style;
   st.setProperty("--ja",c.a||cc(sd[0]&&sd[0].p&&sd[0].p.c)||"#d9577d");st.setProperty("--jb",c.b||cc(sd[1]&&sd[1].p&&sd[1].p.c)||"#2e9a8c");
   st.setProperty("--jbg",c.bg||"#1b1b1c");st.setProperty("--jacc",c.acc||"#efc11a");if(typeof jgTextColor==="function")jgTextColor();}
@@ -48,7 +58,7 @@ document.body.classList.toggle("own",!!S.canAdmin);
   // 시나리오 정보가 아직 안 왔으면 양피지 대신 메인 화면 색으로 기다려요
   const t=S.revPage?(sc?themeOf(sc):"plain"):!S.cid&&!S.sid&&!S.local?"plain":!sc&&!S.local?"plain":themeOf(sc);
   if((document.body.dataset.theme||"")!==t){if(t)document.body.dataset.theme=t;else delete document.body.dataset.theme;}
-  if(t==="jg")jgColors(fixOfScen(sc));else["--ja","--jb","--jbg","--jacc","--jtx","--jdk"].forEach(k=>document.body.style.removeProperty(k));
+  if(t==="jg")jgColors(fixOfScen(sc));else["--ja","--jb","--jbg","--jacc","--jtx","--jdk","--jdisp","--jhk"].forEach(k=>document.body.style.removeProperty(k));
   document.body.dataset.page=S.revPage?"scen":S.cid?"scen":S.sid?"log":"home";
 }
 function render(){try{bkAuto();}catch(e){}
