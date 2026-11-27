@@ -33,8 +33,11 @@ function themeOf(sc){
   return "plain";
 }
 // 자관 두 캐릭터 색 (고정탁 문서의 colors가 있으면 그걸로)
-function jgColors(f){const fd=(S.fixDocs||{})[typeof fixKey==="function"?fixKey(f):""]||{},c=fd.colors||[];const P=typeof fixPeopleList==="function"?fixPeopleList(f):[];
-  const cc=x=>x&&(typeof fixC==="function"?fixC(x):x),a=c[0]||cc(P[0]&&P[0].c)||"#e7799b",b=c[1]||cc(P[1]&&P[1].c)||"#2f7f86";document.body.style.setProperty("--ja",a);document.body.style.setProperty("--jb",b);}
+// 자관 색 4개: 고정탁 문서 colors = {bg, acc, a, b} (없으면 두 캐릭터의 로그 색)
+function jgColors(f){const fd=(S.fixDocs||{})[typeof fixKey==="function"?fixKey(f):""]||{},c=fd.colors||{};const P=typeof fixPeopleList==="function"?fixPeopleList(f):[];
+  const cc=x=>x&&(typeof fixC==="function"?fixC(x):x),st=document.body.style;
+  st.setProperty("--ja",c.a||cc(P[0]&&P[0].c)||"#d9577d");st.setProperty("--jb",c.b||cc(P[1]&&P[1].c)||"#2e9a8c");
+  if(c.bg)st.setProperty("--jbg",c.bg);else st.removeProperty("--jbg");if(c.acc)st.setProperty("--jacc",c.acc);else st.removeProperty("--jacc");}
 function applyTheme(){document.body.classList.toggle("own",!!S.canAdmin);
   {const hx=!S.gid&&!S.cid&&!S.sid&&!S.revPage&&!S.admin&&!S.up&&!S.book&&isHX();if(document.body.classList.contains("hxhome")!==hx){document.body.classList.toggle("hxhome",hx);document.documentElement.classList.toggle("hxhome",hx);}}
   if(S.fix&&!S.sid&&!S.cid&&!S.gid&&typeof fixWord==="function"&&fixWord(S.fix)==="자관"){if(document.body.dataset.theme!=="jg")document.body.dataset.theme="jg";document.body.dataset.page="fix";jgColors(S.fix);return;}
@@ -43,7 +46,7 @@ function applyTheme(){document.body.classList.toggle("own",!!S.canAdmin);
   // 시나리오 정보가 아직 안 왔으면 양피지 대신 메인 화면 색으로 기다려요
   const t=S.revPage?(sc?themeOf(sc):"plain"):!S.cid&&!S.sid&&!S.local?"plain":!sc&&!S.local?"plain":themeOf(sc);
   if((document.body.dataset.theme||"")!==t){if(t)document.body.dataset.theme=t;else delete document.body.dataset.theme;}
-  if(t==="jg")jgColors(fixOfScen(sc));else{document.body.style.removeProperty("--ja");document.body.style.removeProperty("--jb");}
+  if(t==="jg")jgColors(fixOfScen(sc));else["--ja","--jb","--jbg","--jacc"].forEach(k=>document.body.style.removeProperty(k));
   document.body.dataset.page=S.revPage?"scen":S.cid?"scen":S.sid?"log":"home";
 }
 function render(){try{bkAuto();}catch(e){}
