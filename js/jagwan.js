@@ -63,8 +63,7 @@ function jgCardHTML(s,fields){const q=s.pr,dl=[["나이",q.age&&(/\D/.test(q.age
 function jgPageHTML(f){const d=jgDoc(f),[A,B]=jgSides(f),fields=d.fields&&d.fields.length?d.fields:JG_F0,data=jgFixData(f),ban=d.banner;
   const srcs=S.db?galSrcFix(f):[],postsH=S.db?galHTML(srcs,{newest:1,title:"POSTS",en:"POSTS"}):"",items=galAll(srcs,1);
   const tagH=(s,cls)=>`<div class="jgtag ${cls}"><div class="nm">${esc(s.en)}</div>${(s.pr.tags||[]).filter(Boolean).length?`<ul>${s.pr.tags.filter(Boolean).map(t=>`<li>${esc(t)}</li>`).join("")}</ul>`:""}</div>`;
-  return `<div class="jgp">${S.canAdmin?`<div class="jgtop"><a class="ghost ownonly" href="#">← 첫 화면</a><span style="flex:1"></span><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":"✎ 페어 수정"}</button></div>`:""}
-    ${S.jgEdit&&S.canAdmin?jgEditHTML(f):""}
+  return `<div class="jgp">
     <section class="jgposter">
       <div class="jgban${ban?.u?"":" empty"}">${ban?.u?`<img src="${esc(ban.u)}" alt="" style="object-position:50% ${+ban.y>=0?+ban.y:40}%">`:`<div class="fb"><span>${esc(A.en)}</span><span>${esc(B.en)}</span></div>`}</div>
       ${tagH(A,"a")}${tagH(B,"b")}
@@ -72,7 +71,8 @@ function jgPageHTML(f){const d=jgDoc(f),[A,B]=jgSides(f),fields=d.fields&&d.fiel
         ${A.pr.cut?.u?`<div class="jgcut a"><img src="${esc(A.pr.cut.u)}" alt=""></div>`:""}${B.pr.cut?.u?`<div class="jgcut b"><img src="${esc(B.pr.cut.u)}" alt=""></div>`:""}
         <div class="jgtitle"><h1>${esc(f)}</h1><p>${esc(A.en)} × ${esc(B.en)}</p></div>
       </div></section>
-    <div class="jgwrap">
+    <div class="jgwrap">${S.canAdmin?`<div class="jgtop"><a class="ghost ownonly" href="#">← 첫 화면</a><span style="flex:1"></span><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":"✎ 페어 수정"}</button></div>`:""}
+      ${S.jgEdit&&S.canAdmin?jgEditHTML(f):""}
       <div class="jgtri">${jgCardHTML(A,fields)}
         <div class="jgmid"><div class="k">RELATION</div><div class="rel">${d.rel?esc(d.rel):`<span class="tip">관계 한 줄을 적어 주세요</span>`}</div>
           <div class="nums"><div><b>${data.stories}</b><span>이야기</span></div><div><b>${data.days.length}</b><span>세션</span></div><div><b>${jgDaysSince(data.days[0])}</b><span>함께한 날</span></div></div>
@@ -102,6 +102,7 @@ function jgEditHTML(f){const D=jgDraft(f),[A,B]=jgSides(f),c=D.colors||{};
       <div class="addf"><input id="jgfnew-${key}" placeholder="새 항목 이름 (예: 능력)"><button type="button" data-jgfadd="${key}">＋ 항목 더하기</button><small>양쪽에 같이 생겨요</small></div></div></div>`;};
   return `<section class="jgedit"><div class="eh">페어 수정 <small>· 주인만</small></div>
     <div class="erow"><label>첫 화면 그림<span>가로로 긴 그림</span></label><label class="eup">${D.banner?.u?"바꾸기":"＋ 올리기"}<input type="file" accept="image/*" hidden data-jgimg="banner"></label>
+      ${(()=>{const ims=galAll(galSrcFix(f),1).filter(p=>galT(p)==="img").flatMap(p=>galImgs(p).map(q=>q.o||q.u)).filter(Boolean);return ims.length?`<div class="jgbpick"><span class="tip">또는 갤러리에서</span>${ims.map(u=>`<button type="button" class="${D.banner&&(D.banner.o===u||D.banner.u===u)?"on":""}" data-jgbpick="${esc(u)}"><img src="${esc(u)}" alt="" loading="lazy"></button>`).join("")}</div>`:"";})()}
       ${D.banner?.u?`<span class="eup2">위치 <input type="range" min="0" max="100" value="${+D.banner.y>=0?+D.banner.y:40}" data-jgby></span><button type="button" class="ghost" data-jgbandel>빼기</button>`:""}<span class="tip" id="jgupmsg"></span></div>
     <div class="erow"><label>관계 한 줄</label><input class="ein" data-jgrel value="${esc(D.rel||"")}" placeholder="두 캐릭터가 어떤 사이인지"></div>
     <div class="erow"><label>색<span>테마 2 + 캐릭터 2</span></label>${cv("bg","#1b1b1c","테마 바탕")}${cv("acc","#efc11a","테마 포인트")}${cv("a",fixC(A.p?.c)||"#d9577d","A")}${cv("b",fixC(B.p?.c)||"#2e9a8c","B")}<button type="button" class="ghost" data-jgcreset>기본으로</button></div>
@@ -119,6 +120,7 @@ function bindJgEdit(f){const box=document.querySelector(".jgedit");if(!box)retur
     const st=document.body.style,m={bg:"--jbg",acc:"--jacc",a:"--ja",b:"--jb"};st.setProperty(m[i.dataset.jgc],i.value);jgTextColor();});
   const cr=box.querySelector("[data-jgcreset]");cr.onclick=()=>{D.colors={};jgColors(f,D.colors);render();};
   const by=box.querySelector("[data-jgby]");if(by)by.oninput=()=>{D.banner={...D.banner,y:+by.value};const im=document.querySelector(".jgban img");if(im)im.style.objectPosition=`50% ${by.value}%`;};
+  box.querySelectorAll("[data-jgbpick]").forEach(b=>b.onclick=()=>{const u=b.dataset.jgbpick,on=D.banner&&(D.banner.o===u||D.banner.u===u);D.banner=on?null:{u,o:u,y:40};render();});
   const bd=box.querySelector("[data-jgbandel]");if(bd)bd.onclick=()=>{D.banner=null;render();};
   box.querySelectorAll("[data-jgimg]").forEach(i=>i.onchange=async()=>{const file=i.files[0];i.value="";if(!file)return;const m=$("#jgupmsg");if(m)m.textContent="올리는 중…";
     try{const q=await jgUpImg(f,file),k=i.dataset.jgimg;if(k==="banner")D.banner={...q,y:40};else{const [s,fld]=k.split(".");D.prof[s][fld]=q;}render();}catch(e){toast("그림을 올리지 못했어요");if(m)m.textContent="";}});

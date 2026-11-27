@@ -1,3 +1,5 @@
+// GM 이름: GM · KP(크툴루 수호자) · DM · 수호자 · 키퍼
+const GM_RE=/(^|[^A-Za-z])(GM|KP|DM)([^A-Za-z]|$)|수호자|키퍼/i;
 // 코코 로그방 · 온라인 로그 가져오기 (코코포리아·롤20 html 읽기 · 올리기 창 · 회차 만들기)
 // (js/ 파일들은 한 덩어리처럼 이어서 읽어요 · 순서는 index.html)
 // ---------- 코코포리아 로그(html) 가져오기 ----------
@@ -24,7 +26,7 @@ function parseCcfolia(text){
   msgs.forEach(m=>{if(!m.sys)return;const g=m.x.match(/^\[\s*(.+?)\s*\]\s*(\S+)/);if(g){(st[g[1]]=st[g[1]]||new Set()).add(g[2]);if(!order.includes(g[1]))order.push(g[1]);}});
   const pcs=order.filter(n=>st[n].size>=2);
   const cnt={};use.forEach(m=>{if(m.sp&&!m.sys)cnt[m.sp]=(cnt[m.sp]||0)+1;});
-  const gmName=Object.keys(cnt).filter(n=>/(^|\W)GM(\W|$)/i.test(n)).sort((a,b)=>cnt[b]-cnt[a])[0]||"";
+  const gmName=Object.keys(cnt).filter(n=>GM_RE.test(n)).sort((a,b)=>cnt[b]-cnt[a])[0]||"";
   const isDX=msgs.some(m=>/침식률|侵蝕率/.test(m.x))||msgs.some(m=>m.rr&&/\d+dx/i.test(m.x));
   const title=(doc.title||"").replace(/\[(すべて|全て|all|전체|ALL)\]/gi,"").replace(/^\s*\[[^\]]*\]\s*/,"").trim()||"코코포리아 로그";
   return {title,days,pcs,cnt,gmName,system:isDX?"더블크로스 3rd":""};
@@ -89,7 +91,7 @@ function parseRoll20(text){
   if(!msgs.length)return null;
   const days=[];msgs.forEach(m=>{if(!days.length||m.t-days[days.length-1].at(-1).t>3*3600e3)days.push([]);days[days.length-1].push(m);});
   const cnt={};msgs.forEach(m=>{if(m.sp&&!m.sys)cnt[m.sp]=(cnt[m.sp]||0)+1;});
-  const gms=Object.keys(cnt).filter(n=>/\(GM\)$|(^|\W)GM(\W|$)/i.test(n));
+  const gms=Object.keys(cnt).filter(n=>/\((GM|KP|DM)\)$/i.test(n)||GM_RE.test(n));
   const gmName=gms.sort((a,b)=>cnt[b]-cnt[a])[0]||"";
   const ooc=Object.keys(cnt).filter(n=>!gms.includes(n)&&userAv(avOf[n]));
   // PC 짐작: 저장한 사람(you)이 GM이면 다른 계정이 말한 캐릭터가 PC, PL이면 내가 말한 캐릭터 + 다른 계정 중 많이 말한 캐릭터
@@ -107,12 +109,12 @@ function parseRoll20(text){
   // 크툴루에 PC가 둘 이하이면 타이만(1:1)으로 짐작
   const tai=/크툴루|cthulhu|coc/i.test(sys+" "+title)&&pcs.length<=2;
   // 타이만: 메인 캐릭터마다 그 캐릭터를 맡은 사람 · 내 캐릭터는 내가 가장 많이 쓴 본인 이름, 상대 캐릭터는 GM 닉네임
-  const taiPl={};if(tai){const gmN=String(gmName||"").replace(/\s*\(?\bGM\b\)?\s*/gi," ").trim(),myO=ooc.filter(mine).sort((a,b)=>cnt[b]-cnt[a])[0]||"";
+  const taiPl={};if(tai){const gmN=String(gmName||"").replace(/\s*\(?\b(GM|KP|DM)\b\)?\s*/gi," ").trim(),myO=ooc.filter(mine).sort((a,b)=>cnt[b]-cnt[a])[0]||"";
     pcs.forEach(n=>{taiPl[n]=mine(n)?(myO||plOf[n]||""):iAmGM?(plOf[n]||ooc.filter(o=>!mine(o))[0]||""):gmN;});}
   return {title,days,pcs,cnt,gmName,gms,ooc,plOf,taiPl,system:sys,src:"roll20",tai};
 }
 const CC_TABLE=/^[◎「『《【◆▶]|\d*D\d+|이벤트표|정보\s*조사|주의사항|트레일러/;
-function ccRole(cc,name){if(cc.gms&&cc.gms.includes(name))return "gm";if(cc.ooc&&cc.ooc.includes(name))return "ooc";if(name===cc.gmName||/^\W*GM\W*$/i.test(name))return "gm";if(cc.pcs.includes(name))return "pc";if(cc.src!=="roll20"&&CC_TABLE.test(name))return "hand";return "npc";}
+function ccRole(cc,name){if(cc.gms&&cc.gms.includes(name))return "gm";if(cc.ooc&&cc.ooc.includes(name))return "ooc";if(name===cc.gmName||/^\W*(GM|KP|DM|수호자|키퍼)\W*$/i.test(name))return "gm";if(cc.pcs.includes(name))return "pc";if(cc.src!=="roll20"&&CC_TABLE.test(name))return "hand";return "npc";}
 function ccResult(r){let p=r.split("＞").map(x=>x.trim());if(p.length>1&&p[0].startsWith("("))p=p.slice(1);return p.filter(x=>x&&!/^(成功|失敗|ファンブル|クリティカル|スペシャル)$/.test(x)).join(" → ");}
 function ccOutcome(m){const r=m.rr||"";if(m.r20)return m.rc||"";if(/ファンブル/.test(r)||m.rc==="fumble")return "fumble";if(/失敗/.test(r))return "failure";if(/成功/.test(r))return m.rc==="critical"?"critical":"success";return "";}
 const kst=t=>{const d=new Date(t+9*3600e3);return d.toISOString().slice(0,10);};
@@ -166,7 +168,7 @@ function ccForm(cc,box,opt={}){
   const said={};cc.days.flat().forEach(m=>{if(!m.sys&&m.sp&&m.x&&!said[m.sp]&&m.rr===null)said[m.sp]=m.x.split("\n")[0];});
   const exSp=ex?ex.sp:[];
   const gmPrev=ex&&gmKey(ex)?(ex.sp.find(x=>x.k===gmKey(ex))||{}).name:"";
-  const gmAuto=gmPrev||String(cc.gmName||"").replace(/\s*\(?\bGM\b\)?\s*/gi," ").trim();
+  const gmAuto=gmPrev||String(cc.gmName||"").replace(/\s*\(?\b(GM|KP|DM)\b\)?\s*/gi," ").trim();
   const opts=[["pc","PC"],["npc","GM 캐릭터"],["gm","GM 본인"],["hand","핸드아웃"],...(cc.src==="roll20"?[["ooc","잡담 (PL 본인)"]]:[])];
   const roleSel=n=>{const r=ccRole(cc,n);return `<select data-role="${esc(n)}">${opts.map(([v,l])=>`<option value="${v}"${v===r?" selected":""}>${l}</option>`).join("")}</select>`;};
   const total=days.reduce((a,x)=>a+x.n,0);

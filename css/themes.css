@@ -322,7 +322,7 @@ body[data-theme=jg]{--jtx:#f1efe9}
 .jgtop{display:flex;align-items:center;gap:10px;padding:10px 18px 0}
 .jgtop .ghost{color:var(--dimj);font-size:13px}
 .jged{background:var(--jacc)!important;color:#111!important;border:0!important;font-weight:800;padding:6px 14px;font-size:13px}
-.jgposter{position:relative;max-width:1180px;margin:0 auto;overflow-x:clip}
+.jgposter{position:relative;margin:0;overflow-x:clip}
 .jgban{position:relative;height:430px;overflow:hidden}
 .jgban img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.88) contrast(1.05)}
 .jgban::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(rgba(0,0,0,.5),transparent 42%),linear-gradient(90deg,color-mix(in srgb,var(--ja) 50%,transparent),transparent 30%,transparent 70%,color-mix(in srgb,var(--jb) 50%,transparent)),linear-gradient(transparent 55%,var(--jbg))}
@@ -506,3 +506,13 @@ body[data-theme=jg] :is(.cphero,.cep2 .th,.pc2,.cpown,.cphero .k>*,.cep2 .st,.pc
 body[data-theme=jg] .cphero h1{font-family:var(--jhk);font-weight:400;color:var(--jacc)}
 body[data-theme=jg] .cphero .k>*{background:var(--jacc);color:#111}body[data-theme=jg] .cphero .k .o{background:rgba(255,255,255,.14);color:#fff}
 body[data-theme=jg] .cep2 .n{font-family:var(--jdisp)}body[data-theme=jg] .cphero .prog i{background:linear-gradient(90deg,var(--ja),var(--jb))}
+
+/* 첫 화면: 그림은 화면 가로를 꽉 채우고, 글자·전신은 가운데 1180 안에 */
+.jgtag.a{left:max(48px,calc(50% - 542px))}.jgtag.b{right:max(48px,calc(50% - 542px))}
+.jgcut.a{left:max(40px,calc(50% - 550px))}.jgcut.b{right:max(30px,calc(50% - 560px))}
+.jgtop{max-width:1180px;margin:14px auto 0;padding:0}
+.jgbpick{display:flex;gap:6px;align-items:center;flex-wrap:wrap;flex-basis:100%;margin-left:162px}
+.jgbpick button{width:74px;height:42px;padding:0;border:2px solid transparent;background:#ddd;cursor:pointer}
+.jgbpick button img{width:100%;height:100%;object-fit:cover;display:block}
+.jgbpick button.on{border-color:var(--jacc);box-shadow:0 0 0 1px #000}
+@media(max-width:900px){.jgtag.a{left:14px}.jgtag.b{right:14px}.jgcut.a{left:4px}.jgcut.b{right:0}.jgbpick{margin-left:0}}
