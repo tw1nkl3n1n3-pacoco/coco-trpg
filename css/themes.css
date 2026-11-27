@@ -524,3 +524,40 @@ body[data-theme=jg] .cep2 .n{font-family:var(--jdisp)}body[data-theme=jg] .cpher
 .jgacc .pwrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.jgacc .pwrow input{flex:1;max-width:280px;width:auto}
 body[data-theme=jg] .sc-sec h4{color:var(--jbg)!important}
 body[data-theme=jg] .jgp .sc-sec h4{color:var(--jtx)!important}
+/* --- 고정탁 페이지 (3~6명) --- */
+.fxpg .jgban{height:380px}
+.fxpg .jgban.empty::before{background:linear-gradient(rgba(0,0,0,.35),transparent 42%),linear-gradient(transparent 50%,var(--jbg))}
+.fxpg .jgban .fb span{font-size:clamp(40px,7vw,96px);transform:translateY(-40px)}
+.fxtt{position:relative;z-index:2;text-align:center;margin-top:-150px;padding:0 16px}
+.fxtt h1{margin:0;font:400 clamp(56px,9vw,120px)/1 var(--jhk);color:var(--jacc);letter-spacing:.04em;word-break:keep-all}
+.fxtt p{margin:10px 0 0;font:400 14px var(--jdisp);letter-spacing:.4em;color:var(--dimj)}
+.fxstrip{display:flex;justify-content:center;flex-wrap:wrap;gap:18px;margin:26px auto 0;padding:0 16px;position:relative;z-index:2;max-width:900px}
+.fxstrip .mb{display:flex;flex-direction:column;align-items:center;gap:6px;width:104px;background:none!important;border:0!important;color:var(--jtx);padding:0;cursor:pointer}
+.fxstrip .mb i,.fxstrip .mb img{width:70px;height:70px;display:grid;place-items:center;font:400 28px var(--jhk);font-style:normal;color:#fff;background:var(--c);object-fit:cover;object-position:50% 15%;box-shadow:0 0 0 3px var(--jbg),0 0 0 5px var(--c)}
+.fxstrip .mb b{font-size:14px;font-weight:700}.fxstrip .mb small{font:400 12px var(--jdisp);letter-spacing:.06em;color:var(--fj)}
+.fxstrip .mb:hover b{color:var(--jacc)}
+.fxtri{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;margin-top:22px;align-items:stretch}
+.fxtri>.jgsec{margin-top:0}
+.fxtri .jgmid{display:flex;flex-direction:column;justify-content:center;text-align:center}
+.fxtri .jgmid .k{font:400 12px var(--jdisp);letter-spacing:.3em;color:var(--jacc)}
+.fxtri .jgmid .rel{font-size:16px;font-weight:700;margin:10px 0 14px}
+.fxtri .jgmid .nums{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--ln);padding-top:14px}
+.fxtri .jgmid .nums b{display:block;font:400 32px/1 var(--jdisp)}.fxtri .jgmid .nums span{font-size:11.5px;color:var(--fj)}
+.fxbar{display:flex;gap:4px;margin-top:16px;height:4px}.fxbar i{flex:1;background:var(--c)}
+.fxcards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.fxcd{background:var(--p2);border:1px solid var(--ln);border-top:4px solid var(--c);padding:12px 14px;cursor:pointer;min-width:0}
+.fxcd:hover{border-color:var(--c)}
+.fxcd .h{display:flex;gap:10px;align-items:center}.fxcd .h i,.fxcd .h img{width:40px;height:40px;flex:none;background:var(--c);display:grid;place-items:center;font:400 18px var(--jhk);font-style:normal;color:#fff;object-fit:cover;object-position:50% 15%}
+.fxcd .h b{display:block;font:400 17px/1.2 var(--jhk)}.fxcd .h small{font:400 12px var(--jdisp);color:var(--fj);letter-spacing:.04em}
+.fxcd dl{display:grid;grid-template-columns:44px 1fr;gap:2px 8px;margin:10px 0 6px;font-size:12.5px}.fxcd dt{color:var(--fj)}.fxcd dd{margin:0}
+.fxcd .more{font-size:12px;color:var(--jacc);border-top:1px solid var(--ln);padding-top:6px;margin-top:6px}
+.fxcd.op{grid-column:1/-1;display:grid;grid-template-columns:230px minmax(0,1fr);gap:18px;cursor:default}
+.fxcd.op .rt .k{font-size:12.5px;font-weight:700;margin-top:2px}.fxcd.op .rt p{margin:3px 0 10px;font-size:13.5px;color:var(--dimj);line-height:1.8}
+.jgtl .t .who{display:inline-flex;gap:3px;margin-left:6px;vertical-align:-1px}.jgtl .t .who i{width:12px;height:12px;background:var(--c)}
+.jgtl .t .gmn{margin-left:6px}
+.jgpfs.fx{grid-template-columns:repeat(2,minmax(0,1fr))}.jgpfs.fx .jgpf{border-top-color:var(--c)}.jgpf .pft small{color:#888;font-size:12px}
+.fxpk{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.fxpk button{display:flex;align-items:center;gap:6px;border:1px solid var(--ln)!important;background:transparent!important;color:var(--jtx)!important;padding:5px 12px;font-size:13px;border-radius:0}
+.fxpk button i{width:12px;height:12px;background:var(--c,#777)}.fxpk button.on{border-color:var(--jacc)!important;box-shadow:inset 0 0 0 1px var(--jacc)}
+@media(max-width:900px){.fxpg .jgban{height:260px}.fxtt{margin-top:-110px}.fxstrip{gap:8px}.fxstrip .mb{width:92px}.fxstrip .mb i,.fxstrip .mb img{width:54px;height:54px;font-size:22px}
+  .fxtri{grid-template-columns:1fr}.fxtri .jgmid{order:-1}.fxcards{grid-template-columns:repeat(2,minmax(0,1fr))}.fxcd.op{grid-template-columns:1fr}.jgpfs.fx{grid-template-columns:1fr}}

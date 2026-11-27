@@ -19,6 +19,10 @@ function jgDaysSince(d){if(!d)return 0;const t=new Date(d.replace(/\./g,"-")+"T0
 // 타임라인 날짜 맞추기: "2026.06.29" "2026-06" "2025.3" → 정렬용 "2026-06-29"
 function jgNorm(d){const m=String(d||"").match(/(\d{4})\D*(\d{1,2})?\D*(\d{1,2})?/);if(!m)return "";return m[1]+(m[2]?"-"+m[2].padStart(2,"0"):"")+(m[3]?"-"+m[3].padStart(2,"0"):"");}
 // 타임라인은 다 그리고, 화면에서 LOG 높이만큼만 보이게 잘라요 (bindJgPage) · 펼치면 맨 아래 '접기'
+// 고정탁 타임라인: 그 세션에 나온 멤버 색 + 진행자
+function jgWho(f,sc){const P=fxMembers(f),gk=gmKey(sc),seen=new Set(),cs=[];let gm="";
+  (sc.sp||[]).forEach(p=>{const n=pcSplit(p.name||"").name;if(p.k===gk)gm=n;const m=P.find(x=>x.n===n);if(m&&!seen.has(n)&&!(p.chr&&!p.ch)){seen.add(n);cs.push(m);}});
+  return `<span class="who">${cs.map(m=>`<i style="--c:${fixC(m.c)}" title="${esc(m.n)}"></i>`).join("")}</span>${gm?`<small class="gmn">${gmAb(sc)}${/^(GM|KP|DM)$/i.test(gm)?"":" "+esc(gm)}</small>`:""}`;}
 function jgFold(list,key,render){return render(list)+((S.jgAll||{})[key]?`<li class="fold"><button type="button" data-jgfold="${key}">▴ 접기</button></li>`:"");}
 function jgTimelineHTML(f,data,items){const d=jgDoc(f),tab=S.jgTl||"main",canRec=S.canAdmin||fixOpen(f);
   // 메인: 세션 날짜 + 갤러리 날짜 (자동)
@@ -31,7 +35,8 @@ function jgTimelineHTML(f,data,items){const d=jgDoc(f),tab=S.jgTl||"main",canRec
   const mainLi=list=>{let ym="";return list.map(e=>{const m=e.k.slice(0,7),mh=m!==ym?(ym=m,`<li class="m"><div class="d">${esc(jgDot(m))}</div></li>`):"";const dd=esc(jgDot(e.k.slice(5)));
     if(e.type==="s"){const sc=e.g.sc,cm=campOf(sc),last=lastOf[sc.id]===e,done=last&&(sc.done||cm&&cm.done&&!isCamp(cm)),ps=last?scPosts[sc.id]||[]:[];
       const ims=ps.filter(p=>galT(p)==="img").flatMap(p=>galImgs(p).map(q=>({p,q}))),txs=ps.filter(p=>galT(p)==="txt");
-      return mh+`<li><div class="d">${dd}</div><div class="t"><a href="#c-${esc(sc.id)}">${esc(sc.name)}</a>${cm?`<span class="cp">${isCamp(cm)?"CAMP":"CAMPAIGN"}</span>`:""} <small>${cm&&!isCamp(cm)?esc(epLabel(cm,sc))+" · ":""}${e.n>1?`${e.i}회차 / ${e.n}`:"1회차"}${effSys(sc)?" · "+esc(sysLabel(effSys(sc))):""}</small>${done?"<em>완주</em>":""}</div>
+      const who=jgPair(f)?"":jgWho(f,sc);
+      return mh+`<li><div class="d">${dd}</div><div class="t"><a href="#c-${esc(sc.id)}">${esc(sc.name)}</a>${who}${cm?`<span class="cp">${isCamp(cm)?"CAMP":"CAMPAIGN"}</span>`:""} <small>${cm&&!isCamp(cm)?esc(epLabel(cm,sc))+" · ":""}${e.n>1?`${e.i}회차 / ${e.n}`:"1회차"}${effSys(sc)?" · "+esc(sysLabel(effSys(sc))):""}</small>${done?"<em>완주</em>":""}</div>
         ${ims.length?`<div class="th">${ims.slice(0,8).map(x=>`<img src="${esc(x.q.u||x.q.o)}" alt="" loading="lazy" data-gal="${esc(x.p.id)}">`).join("")}${ims.length>8?`<span>+${ims.length-8}</span>`:""}</div>`:""}${txs.map(p=>`<a href="#" class="tcard sm" data-gal="${esc(p.id)}"><b>${esc(p.title||"텍스트")}</b>${esc(String(p.body||"").slice(0,70))}…</a>`).join("")}</li>`;}
     if(e.type==="g"){const ims=e.posts.flatMap(p=>galImgs(p).map(q=>({p,q})));
       return mh+`<li><div class="d">${dd}</div><div class="t">갤러리 <small>사진 ${ims.length}장${e.by?" · "+esc(e.by):""}</small></div><div class="th">${ims.slice(0,8).map(x=>`<img src="${esc(x.q.u||x.q.o)}" alt="" loading="lazy" data-gal="${esc(x.p.id)}">`).join("")}${ims.length>8?`<span>+${ims.length-8}</span>`:""}</div></li>`;}
@@ -85,32 +90,68 @@ function jgPageHTML(f){const d=jgDoc(f),[A,B]=jgSides(f),fields=d.fields&&d.fiel
       ${fixAccHTML(f)}${jgRO(f)?`<div class="sc-sec fxacc jgacc"><h4 data-en="ACCESS">페어 비밀번호</h4><div class="tip">페어 비밀번호를 넣으면 글을 올리고, 기록을 더하고, 댓글을 달 수 있어요. 안의 모든 세션도 같이 열려요.</div>
         <form class="pwrow" id="jgunlock"><input type="text" id="jgpw" placeholder="페어 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form><div class="tip" id="jgmsg"></div></div>`:""}
     </div></div>`;}
+// ---------- 고정탁 페이지 (3~6명) — 페어와 같은 부품 · 같은 포스터 테마 ----------
+function fxMembers(f){const d=jgDoc(f),m=d.mems||{};return fixPeopleList(f).filter(p=>!/^(GM|KP|DM|수호자|키퍼)$/i.test(p.n)).map(p=>{const q=m[p.n]||{},ch=[...p.ch][0]||"";return {n:p.n,c:fixC(p.c),q,nm:q.nm||ch||p.n,en:q.en||q.nm||ch||p.n};});}
+function fxPageHTML(f){const d=jgDoc(f),M=fxMembers(f),fields=d.fields&&d.fields.length?d.fields:JG_F0,data=jgFixData(f),ban=d.banner,open=S.fxMem;
+  const srcs=jgSrcs(f),items=galAll(srcs,1),postsH=S.db?galHTML(srcs,{newest:1,title:"POSTS",en:"POSTS"}):"";
+  const sys=(()=>{const c={};data.gs.forEach(g=>{const x=sysLabel(effSys(g.sc)||"");if(x)c[x]=(c[x]||0)+1;});return Object.keys(c).sort((a,b)=>c[b]-c[a])[0]||"";})();
+  const stripes=M.length?M.map((m,i)=>`${m.c} ${Math.round(i/M.length*100)}% ${Math.round((i+1)/M.length*100)}%`).join(","):"#333 0 100%";
+  const card=m=>{const q=m.q,dl=[["나이",q.age&&(/\D/.test(q.age)?q.age:q.age+"세")],["키",q.ht&&(/\D/.test(q.ht)?q.ht:q.ht+"cm")],["성별",q.sex],["MBTI",q.mbti]].filter(x=>x[1]),secs=fields.filter(k=>(q.sec||{})[k]),op=open===m.n;
+    return `<div class="fxcd${op?" op":""}" id="fxm-${esc(m.n)}" data-fxmem="${esc(m.n)}" style="--c:${m.c}"><div class="lt"><div class="h">${q.icon?.u?`<img src="${esc(q.icon.u)}" alt="">`:`<i>${esc(m.nm.slice(0,1))}</i>`}<div><b>${esc(m.nm)}</b><small>${[q.ren||q.rn,m.n].filter(Boolean).map(esc).join(" · ")}</small></div></div>
+      ${dl.length?`<dl>${dl.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>`:""}${!op&&secs.length?`<div class="more">${secs.map(esc).join(" · ")} 펼치기 +</div>`:""}</div>
+      ${op&&secs.length?`<div class="rt">${secs.map(k=>`<div class="k">${esc(k)}</div><p>${esc(q.sec[k]).replace(/\n/g,"<br>")}</p>`).join("")}</div>`:""}</div>`;};
+  const pk=S.fxPick||"";
+  return `<div class="jgp fxpg">
+    <section class="jgposter"><div class="jgban${ban?.u?"":" empty"}"${ban?.u?"":` style="background:linear-gradient(110deg,${stripes})"`}>${ban?.u?`<img src="${esc(ban.u)}" alt="" style="object-position:50% ${+ban.y>=0?+ban.y:40}%">`:`<div class="fb" style="grid-template-columns:repeat(${Math.max(1,M.length)},1fr)">${M.map(m=>`<span>${esc(m.q.en||"")}</span>`).join("")}</div>`}</div>
+      <div class="fxtt"><h1>${esc(f)}</h1>${d.tag?`<p>${esc(d.tag)}</p>`:""}</div>
+      <div class="fxstrip">${M.map(m=>`<button type="button" class="mb" data-fxgo="${esc(m.n)}" style="--c:${m.c}">${m.q.icon?.u?`<img src="${esc(m.q.icon.u)}" alt="">`:`<i>${esc(m.nm.slice(0,1))}</i>`}<b>${esc(m.nm)}</b><small>${esc(m.n)}</small></button>`).join("")}</div></section>
+    <div class="jgwrap">
+      <div class="fxtri"><section class="jgsec fxmems"><h4>MEMBERS<small class="cnt">${String(M.length).padStart(2,"0")}</small></h4><div class="fxcards">${M.map(card).join("")}</div></section>
+        <section class="jgsec jgmid"><div class="k">TABLE</div><div class="rel">${[sys,data.days.length?jgDot(data.days[0]).slice(0,7)+" –":""].filter(Boolean).map(esc).join(" · ")||`<span class="tip">아직 세션이 없어요</span>`}</div>
+          <div class="nums"><div><b>${data.stories}</b><span>이야기</span></div><div><b>${data.days.length}</b><span>세션</span></div><div><b>${jgDaysSince(data.days[0])}</b><span>함께한 날</span></div></div>
+          <div class="fxbar">${M.map(m=>`<i style="--c:${m.c}"></i>`).join("")}</div></section></div>
+      <div class="jgsplit">${jgTimelineHTML(f,data,items)}${jgLogHTML(f,data)}</div>
+      ${postsH}
+      ${S.canAdmin?`<div class="jgtop jgbot"><a class="ghost ownonly" href="#">← 첫 화면</a><span style="flex:1"></span><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":"✎ 고정탁 수정"}</button></div>`:""}
+      ${S.jgEdit&&S.canAdmin?jgEditHTML(f):""}
+      ${fixAccHTML(f)}${jgRO(f)?`<div class="sc-sec fxacc jgacc"><h4 data-en="ACCESS">고정탁 비밀번호</h4><div class="tip">누구로 들어갈지 고르고 비밀번호를 넣으면 글을 올리고, 기록을 더하고, 댓글을 달 수 있어요. 안의 모든 세션도 같이 열려요.</div>
+        <div class="fxpk">${M.map(m=>`<button type="button" class="${pk===m.n?"on":""}" data-fxpick="${esc(m.n)}" style="--c:${m.c}"><i></i>${esc(m.nm)} · ${esc(m.n)}</button>`).join("")}<button type="button" class="${pk==="ext"?"on":""}" data-fxpick="ext">외부인으로</button></div>
+        <form class="pwrow" id="jgunlock"><input type="text" id="jgpw" placeholder="고정탁 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form><div class="tip" id="jgmsg"></div></div>`:""}
+    </div></div>`;}
+function bindFxPage(f){bindJgPage(f);
+  document.querySelectorAll("[data-fxmem]").forEach(c=>c.onclick=()=>{S.fxMem=S.fxMem===c.dataset.fxmem?null:c.dataset.fxmem;render();});
+  document.querySelectorAll("[data-fxgo]").forEach(b=>b.onclick=()=>{S.fxMem=b.dataset.fxgo;render();document.getElementById("fxm-"+b.dataset.fxgo)?.scrollIntoView({block:"center",behavior:"smooth"});});
+  document.querySelectorAll(".fxpk [data-fxpick]").forEach(b=>b.onclick=()=>{S.fxPick=b.dataset.fxpick;document.querySelectorAll(".fxpk button").forEach(x=>x.classList.toggle("on",x===b));});
+  {const u=$("#jgunlock");if(u)u.onsubmit=ev=>{ev.preventDefault();if(!S.fxPick){toast("누구로 들어갈지 먼저 골라 주세요");return;}fixUnlock(f,$("#jgpw").value.trim(),$("#jgmsg"));};}}
 // fixes 문서에 합쳐 쓰고 화면 쪽 사본도 맞추기
 async function jgPut(f,upd){const fk=fixKey(f);if(!S.authUser)await S.auth.signInAnonymously();await S.db.doc("fixes/"+fk).set(upd,{merge:true});S.fixDocs[fk]={...(S.fixDocs[fk]||{}),...upd};}
 // ---------- 페어 수정 (주인) ----------
-function jgDraft(f){if(!S.jgDraftF||S.jgDraftF!==f||!S.jgDraft){const d=jgDoc(f),[A,B]=jgSides(f);
-  S.jgDraftF=f;S.jgDraft=JSON.parse(JSON.stringify({banner:d.banner||null,rel:d.rel||"",colors:d.colors||{},fields:d.fields&&d.fields.length?d.fields:JG_F0,
-    prof:{a:{own:A.own,...(d.prof||{}).a},b:{own:B.own,...(d.prof||{}).b}}}));}return S.jgDraft;}
-function jgEditHTML(f){const D=jgDraft(f),[A,B]=jgSides(f),c=D.colors||{};
+const jgPair=f=>fixWord(f)==="페어";
+// 고정탁 멤버 프로필은 fixes 문서 mems = {플레이어 이름: {nm,en,rn,ren,age,ht,sex,mbti,icon,sec}} · 페어는 prof = {a,b}
+function jgDraft(f){if(!S.jgDraftF||S.jgDraftF!==f||!S.jgDraft){const d=jgDoc(f),F=d.fields&&d.fields.length?d.fields:JG_F0;S.jgDraftF=f;
+  if(jgPair(f)){const [A,B]=jgSides(f);S.jgDraft=JSON.parse(JSON.stringify({banner:d.banner||null,rel:d.rel||"",colors:d.colors||{},fields:F,prof:{a:{own:A.own,...(d.prof||{}).a},b:{own:B.own,...(d.prof||{}).b}}}));}
+  else{const m=d.mems||{},prof={};fxMembers(f).forEach(p=>prof[p.n]={...(m[p.n]||{})});S.jgDraft=JSON.parse(JSON.stringify({banner:d.banner||null,rel:d.tag||"",colors:d.colors||{},fields:F,prof}));}}
+  return S.jgDraft;}
+function jgEditHTML(f){const D=jgDraft(f),pair=jgPair(f),[A,B]=jgSides(f),c=D.colors||{},W=fixWord(f),P=fixPeopleList(f);
   const cv=(k,def,lb)=>`<label class="jgsw"><input type="color" data-jgc="${k}" value="${esc(c[k]||def)}"><b>${lb}</b><code>${esc((c[k]||def).toUpperCase())}</code></label>`;
   const ppl=fixPeopleList(f).map(p=>p.n);
-  const pf=(key,s)=>{const q=D.prof[key]||{},v=k=>esc(q[k]||"");return `<div class="jgpf ${key}"><div class="pft"><b>${key.toUpperCase()} 캐릭터 프로필</b><select data-jgp="${key}.own">${ppl.map(n=>`<option${n===q.own?" selected":""}>${esc(n)}</option>`).join("")}</select></div>
+  const pf=(key,s)=>{const q=D.prof[key]||{},v=k=>esc(q[k]||""),pp=P.find(x=>x.n===key);return `<div class="jgpf ${pair?key:""}"${pp?` style="--c:${fixC(pp.c)}"`:""}><div class="pft">${pair?`<b>${key.toUpperCase()} 캐릭터 프로필</b><select data-jgp="${key}.own">${ppl.map(n=>`<option${n===q.own?" selected":""}>${esc(n)}</option>`).join("")}</select>`:`<b>${esc(s.nm)}</b><small>${esc(key)}</small>`}</div>
     <div class="pfg"><div class="pimgs"><label class="pi">${q.icon?.u?`<img src="${esc(q.icon.u)}">`:`<span class="ph">＋</span>`}<small>아이콘</small><input type="file" accept="image/*" hidden data-jgimg="${key}.icon"></label>
-      <label class="pi cutbg">${q.cut?.u?`<img src="${esc(q.cut.u)}">`:`<span class="ph tall">＋</span>`}<small>전신 (투명 PNG)</small><input type="file" accept="image/*" hidden data-jgimg="${key}.cut"></label></div>
-    <div class="pff"><div class="f2"><span>이명<input data-jgp="${key}.nm" value="${v("nm")}" placeholder="${esc(s.nm)}"></span><span>이명 영문<input data-jgp="${key}.en" value="${v("en")}" placeholder="ROUGE"></span></div>
+      ${pair?`<label class="pi cutbg">${q.cut?.u?`<img src="${esc(q.cut.u)}">`:`<span class="ph tall">＋</span>`}<small>전신 (투명 PNG)</small><input type="file" accept="image/*" hidden data-jgimg="${key}.cut"></label>`:""}</div>
+    <div class="pff"><div class="f2"><span>이명<input data-jgp="${key}.nm" value="${v("nm")}" placeholder="${esc(s.nm)}"></span><span>이명 영문<input data-jgp="${key}.en" value="${v("en")}" placeholder="${pair?"ROUGE":"SATO"}"></span></div>
       <div class="f2"><span>본명<input data-jgp="${key}.rn" value="${v("rn")}"></span><span>본명 영문<input data-jgp="${key}.ren" value="${v("ren")}"></span></div>
       <div class="f4"><span>나이<input data-jgp="${key}.age" value="${v("age")}"></span><span>키<input data-jgp="${key}.ht" value="${v("ht")}"></span><span>성별<input data-jgp="${key}.sex" value="${v("sex")}"></span><span>MBTI<input data-jgp="${key}.mbti" value="${v("mbti")}"></span></div>
 </div></div>
-    <div class="pfs">${D.fields.map((k,i)=>`<div><div class="fh"><b>${esc(k)}</b>${D.fields.length>1?`<button type="button" data-jgfdel="${i}" title="이 항목 지우기 (양쪽)">✕</button>`:""}</div><textarea rows="3" data-jgsec="${key}|${esc(k)}">${esc((q.sec||{})[k]||"")}</textarea></div>`).join("")}
-      <div class="addf"><input id="jgfnew-${key}" placeholder="새 항목 이름 (예: 능력)"><button type="button" data-jgfadd="${key}">＋ 항목 더하기</button><small>양쪽에 같이 생겨요</small></div></div></div>`;};
-  return `<section class="jgedit"><div class="eh">페어 수정 <small>· 주인만</small></div>
+    <div class="pfs">${D.fields.map((k,i)=>`<div><div class="fh"><b>${esc(k)}</b>${D.fields.length>1?`<button type="button" data-jgfdel="${i}" title="이 항목 지우기 (모두)">✕</button>`:""}</div><textarea rows="3" data-jgsec="${key}|${esc(k)}">${esc((q.sec||{})[k]||"")}</textarea></div>`).join("")}
+      <div class="addf"><input id="jgfnew-${key}" placeholder="새 항목 이름 (예: 능력)"><button type="button" data-jgfadd="${key}">＋ 항목 더하기</button><small>${pair?"양쪽에":"모든 멤버에"} 같이 생겨요</small></div></div></div>`;};
+  return `<section class="jgedit"><div class="eh">${W} 수정 <small>· 주인만</small></div>
     <div class="erow"><label>첫 화면 그림<span>가로로 긴 그림</span></label><label class="eup">${D.banner?.u?"바꾸기":"＋ 올리기"}<input type="file" accept="image/*" hidden data-jgimg="banner"></label>
       ${(()=>{const ims=galAll(galSrcFix(f),1).filter(p=>galT(p)==="img").flatMap(p=>galImgs(p).map(q=>q.o||q.u)).filter(Boolean);return ims.length?`<div class="jgbpick"><span class="tip">또는 갤러리에서</span>${ims.map(u=>`<button type="button" class="${D.banner&&(D.banner.o===u||D.banner.u===u)?"on":""}" data-jgbpick="${esc(u)}"><img src="${esc(u)}" alt="" loading="lazy"></button>`).join("")}</div>`:"";})()}
       ${D.banner?.u?`<span class="eup2">위치 <input type="range" min="0" max="100" value="${+D.banner.y>=0?+D.banner.y:40}" data-jgby></span><button type="button" class="ghost" data-jgbandel>빼기</button>`:""}<span class="tip" id="jgupmsg"></span></div>
-    <div class="erow"><label>관계 한 줄</label><input class="ein" data-jgrel value="${esc(D.rel||"")}" placeholder="두 캐릭터가 어떤 사이인지"></div>
-    <div class="erow"><label>색<span>테마 2 + 캐릭터 2</span></label>${cv("bg","#1b1b1c","테마 바탕")}${cv("acc","#efc11a","테마 포인트")}${cv("a",fixC(A.p?.c)||"#d9577d","A")}${cv("b",fixC(B.p?.c)||"#2e9a8c","B")}<button type="button" class="ghost" data-jgcreset>기본으로</button></div>
-    <div class="jgpfs">${pf("a",A)}${pf("b",B)}</div>
-    <div class="eft"><span>비워 둔 칸은 페이지에 안 나와요 · 이 색은 페어에 묶인 모든 세션 페이지·로그에도 적용돼요</span><button type="button" class="pri" id="jgsave">저장</button></div></section>`;}
+    <div class="erow"><label>${pair?"관계 한 줄":"한 줄 문구"}</label><input class="ein" data-jgrel value="${esc(D.rel||"")}" placeholder="${pair?"두 캐릭터가 어떤 사이인지":"이름 아래에 들어가는 한 줄"}"></div>
+    <div class="erow"><label>색<span>${pair?"테마 2 + 캐릭터 2":"테마 2 · 멤버 색은 세션 로그 색"}</span></label>${cv("bg","#1b1b1c","테마 바탕")}${cv("acc","#efc11a","테마 포인트")}${pair?cv("a",fixC(A.p?.c)||"#d9577d","A")+cv("b",fixC(B.p?.c)||"#2e9a8c","B"):""}<button type="button" class="ghost" data-jgcreset>기본으로</button></div>
+    <div class="jgpfs${pair?"":" fx"}">${pair?pf("a",A)+pf("b",B):fxMembers(f).map(m=>pf(m.n,{nm:m.nm})).join("")}</div>
+    <div class="eft"><span>비워 둔 칸은 페이지에 안 나와요${pair?" · 이 색은 페어에 묶인 모든 세션 페이지·로그에도 적용돼요":""}</span><button type="button" class="pri" id="jgsave">저장</button></div></section>`;}
 async function jgUpImg(f,file){const fk=fixKey(f);if(!S.authUser)await S.auth.signInAnonymously();
   const q=await galPut(fk,file,"jg"+Date.now().toString(36)+rid4());return {u:q.o,o:q.o,p:q.p,op:q.op,w:q.w,h:q.h};}
 function bindJgEdit(f){const box=document.querySelector(".jgedit");if(!box)return;const D=jgDraft(f);
@@ -127,10 +168,11 @@ function bindJgEdit(f){const box=document.querySelector(".jgedit");if(!box)retur
   box.querySelectorAll("[data-jgimg]").forEach(i=>i.onchange=async()=>{const file=i.files[0];i.value="";if(!file)return;const m=$("#jgupmsg");if(m)m.textContent="올리는 중…";
     try{const q=await jgUpImg(f,file),k=i.dataset.jgimg;if(k==="banner")D.banner={...q,y:40};else{const [s,fld]=k.split(".");D.prof[s][fld]=q;}render();}catch(e){toast("그림을 올리지 못했어요");if(m)m.textContent="";}});
   box.querySelectorAll("[data-jgfadd]").forEach(b=>b.onclick=()=>{const i=$("#jgfnew-"+b.dataset.jgfadd),v=(i.value||"").trim();if(!v)return;if(D.fields.includes(v)){toast("이미 있는 항목이에요");return;}D.fields=[...D.fields,v];render();});
-  box.querySelectorAll("[data-jgfdel]").forEach(b=>b.onclick=()=>{const k=D.fields[+b.dataset.jgfdel];confirmBox(`'${k}' 항목을 양쪽에서 지울까요? 적어 둔 글도 같이 지워져요.`,"지우기",()=>{D.fields=D.fields.filter(x=>x!==k);["a","b"].forEach(s=>{if(D.prof[s]?.sec)delete D.prof[s].sec[k];});render();});});
+  box.querySelectorAll("[data-jgfdel]").forEach(b=>b.onclick=()=>{const k=D.fields[+b.dataset.jgfdel];confirmBox(`'${k}' 항목을 모두에게서 지울까요? 적어 둔 글도 같이 지워져요.`,"지우기",()=>{D.fields=D.fields.filter(x=>x!==k);Object.keys(D.prof).forEach(s=>{if(D.prof[s]?.sec)delete D.prof[s].sec[k];});render();});});
   $("#jgsave").onclick=async()=>{const clean=JSON.parse(JSON.stringify(D));
-    ["a","b"].forEach(s=>{const q=clean.prof[s]||{};if(q.sec)Object.keys(q.sec).forEach(k=>{if(!clean.fields.includes(k)||!String(q.sec[k]).trim())delete q.sec[k];});if(q.tags&&!q.tags.some(Boolean))delete q.tags;});
-    const upd={rel:clean.rel||"",colors:clean.colors||{},fields:clean.fields,prof:clean.prof,banner:clean.banner||null};
+    Object.keys(clean.prof).forEach(s=>{const q=clean.prof[s]||{};if(q.sec)Object.keys(q.sec).forEach(k=>{if(!clean.fields.includes(k)||!String(q.sec[k]).trim())delete q.sec[k];});if(q.tags&&!q.tags.some(Boolean))delete q.tags;});
+    const upd=jgPair(f)?{rel:clean.rel||"",colors:clean.colors||{},fields:clean.fields,prof:clean.prof,banner:clean.banner||null}
+      :{tag:clean.rel||"",colors:clean.colors||{},fields:clean.fields,mems:clean.prof,banner:clean.banner||null};
     try{await jgPut(f,upd);S.jgEdit=false;S.jgDraft=null;toast("저장했어요");render();}catch(e){writeFail(e);}};}
 // ---------- 서브 타임라인 기록 ----------
 // 서브 타임라인 기록: 날짜·제목·메모 + 게시물 하나(이미지·텍스트 다) 끼워 넣기 · rec.post={src,id}

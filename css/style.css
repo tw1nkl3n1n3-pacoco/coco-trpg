@@ -1111,23 +1111,12 @@ html.hxhome,body.hxhome{background:#f2f3f0!important}
 .hx-fix{cursor:pointer;--c:var(--hx-tx)}.hx-fix:hover{background:var(--hx-acc);color:var(--hx-tx);border-color:var(--hx-tx)}
 
 /* 고정탁 페이지 */
-.fxpage .fxk{margin-top:14px;font-size:12px;color:var(--dim);letter-spacing:.06em}
-.fxpage .fxh{font:700 34px/1.2 "Gowun Batang",serif;margin:6px 0 4px}
-.fxmeta{color:var(--dim);font-size:13.5px}.fxmeta b{font:700 16px "Gowun Batang",serif;color:var(--ink);margin:0 2px}
-.fxppl{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0 4px}
-.fxp{display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px 12px 4px 6px;font-size:13px}
-.fxp i{width:10px;height:10px;border-radius:50%;background:var(--c)}.fxp small{color:var(--faint)}
-.fxintro{margin:14px 0 0;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);font-size:13.5px;line-height:1.7}
-.fxintro.empty{border-style:dashed;background:none;color:var(--faint)}
-.fxlist{margin-top:20px}
-.hx.fxpage{max-width:1180px;padding:20px 28px 60px}.hx.fxpage .fxh{font-family:var(--hx-sans)}.hx.fxpage .fxp,.hx.fxpage .fxintro{border-radius:0}
-.fxpage .fixline,.fxpage .hx-fix{display:none}
 
 /* 홈 맨 아래 고정탁 태그 */
 .fxtags{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:28px 0 6px}
 .fxtags a{padding:5px 12px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);text-decoration:none;font-size:12.5px;font-weight:600}
 .fxtags a:hover{border-color:var(--ink)}.fxtags a small{color:var(--faint);font-weight:400;margin-left:5px}
-.fxacc{margin-top:22px}.lockpage .fxk{letter-spacing:.1em;margin-bottom:-6px}
+.fxacc{margin-top:22px}
 
 /* 갤러리 — 색·글꼴은 그 페이지 테마(--acc·--ink·--panel…)를 따라가요 */
 .sc-sec h4 .gcnt{font-size:11px;font-weight:500;color:var(--faint);margin-left:8px;letter-spacing:.06em;font-variant-numeric:tabular-nums}
@@ -1194,9 +1183,7 @@ body[data-theme=deco] .glb .meta h3,body[data-theme=deco] .galg figcaption .t{fo
   .glb .stage{flex:none;overflow:visible;padding:12px 10px}.glb .nv{display:none}.glb .ipg{display:none}
   .glb .strip{flex:none;height:58px;justify-content:flex-start;padding:0 12px;border:0;order:2}.glb .strip button{width:44px;height:34px}
   .glb .side{flex:1 0 auto;border-left:0;border-top:1px solid var(--line);order:3}.glb .cl{overflow:visible}}
-.fxpage .galg .from{display:block}
 /* 고정탁 페이지: 카드에 이름(참가자) 줄은 빼요 — 위에 멤버가 나와요 */
-.fxpage .cast,.fxpage .hx-cast{display:none}
 .galadd small{color:var(--faint)}
 .galadd input{display:none!important}.galadd{padding:0!important;line-height:1.2}.galadd span{margin:0!important}
 
@@ -1235,7 +1222,6 @@ body:not(.own) .ownonly{display:none!important}
 .rlf select{font-size:12.5px;padding:3px 6px}
 @media(max-width:640px){.rlrow{grid-template-columns:1fr}}
 .glb .strip button{position:relative}.glb .strip button i{position:absolute;right:2px;top:2px;font-style:normal;font-size:9px;font-weight:700;color:#fff;background:rgba(0,0,0,.55);border-radius:3px;padding:0 3px}
-.fxp[data-fxme]{cursor:pointer}.fxp.me{outline:2px solid var(--acc);outline-offset:1px}.fxp.me b::after{content:" · 나";font-weight:500;color:var(--acc)}
 
 /* 갤러리 게시물 수정창 */
 .gedit{position:fixed;inset:0;z-index:9100;background:rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center;padding:16px}
@@ -1255,14 +1241,6 @@ body:not(.own) .ownonly{display:none!important}
 .gefoot{display:flex;gap:6px;align-items:center;margin-top:16px}.gefoot .danger{color:var(--bad)}
 .gebox select{width:100%}
 /* 테마 맞추기 — 아카이브 고정탁 페이지: 각진 플랫 카드에 맞춰요 */
-.hx.fxpage .sc-sec{border-radius:0;box-shadow:none;border:1px solid var(--hx-ln);background:var(--hx-p1);padding:16px 18px}
-.hx.fxpage .sc-sec h4{font:600 11px var(--hx-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--hx-tx)!important;border-bottom:1px solid var(--hx-ln)}
-.hx.fxpage .sc-sec h4 .gcnt,.hx.fxpage .sc-sec h4 .tip{font-family:var(--hx-mono);text-transform:none}
-.hx.fxpage .galg .im,.hx.fxpage .galadd,.hx.fxpage .pwrow .pw{border-radius:0}
-.hx.fxpage .galg .no,.hx.fxpage .galg .pg{font-family:var(--hx-mono);border-radius:0}
-.hx.fxpage .galg .from{border-radius:0;font-family:var(--hx-mono);font-size:10.5px}
-.hx.fxpage .galg figcaption .m{font-family:var(--hx-mono)}
-.hx.fxpage .galadd i{color:var(--hx-acck)}
 /* 각진 테마(더블크로스·인세인): 수정창·카드 이미지 고르기도 각지게 */
 body[data-theme=dx] :is(.gebox,.gei,.geadd,.cvpick button img,.cvprev,.glb .strip button,.glb .nv,.glb .top a),
 body[data-theme=wa] :is(.gebox,.gei,.geadd,.cvpick button img,.cvprev,.glb .strip button,.glb .top a,.galadd){border-radius:0}
@@ -1275,19 +1253,10 @@ body[data-theme=deco] .geh b{font-family:"Gowun Batang",serif}
 .hx .fxtags a{border-radius:0;font-family:var(--hx-mono);border-color:var(--hx-ln);background:var(--hx-p1);color:var(--hx-tx)}.hx .fxtags a small{color:var(--hx-faint)}
 
 /* 고정탁·페어 커버 */
-.fxcover{position:relative;margin:12px 0 10px;border-radius:12px;overflow:hidden;background:var(--panel2)}
-.fxcover img{width:100%;display:block;max-height:min(40cqw,440px);object-fit:cover;user-select:none;-webkit-user-drag:none}
-.fxcover .fxct{position:absolute;left:0;right:0;bottom:0;padding:44px 22px 16px;background:linear-gradient(transparent,rgba(0,0,0,.6));color:#fff}
-.fxcover .fxk{color:rgba(255,255,255,.85);margin:0}.fxcover .fxh{color:#fff;margin:2px 0 0;text-shadow:0 1px 8px rgba(0,0,0,.3)}
-.fxcover .fxcvpos{position:absolute;right:10px;top:10px;font-size:12px;padding:4px 10px;background:rgba(255,255,255,.92);border:0;border-radius:999px;color:#111}
-.fxcover.drag{cursor:ns-resize;touch-action:none;outline:2px dashed var(--acc);outline-offset:2px}
-.hx.fxpage .fxcover{border-radius:0}.hx.fxpage .fxcover .fxcvpos{border-radius:0;font-family:var(--hx-mono)}
 /* 타임라인 */
-.fxtl{margin-top:16px}
 .tl{list-style:none;margin:6px 0 0;padding:0;position:relative}
 .tl::before{content:"";position:absolute;left:44px;top:4px;bottom:4px;width:2px;background:var(--line)}
 .tl li{position:relative;display:flex;align-items:center;gap:12px;padding:7px 0;min-height:40px}
-.tl li.tlm{min-height:0;padding:12px 0 2px 60px;font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--faint)}
 .tl .d{width:32px;text-align:right;font-size:13px;font-weight:700;color:var(--dim);font-variant-numeric:tabular-nums;flex:none}
 .tl .dot{width:12px;height:12px;border-radius:50%;background:var(--c);box-shadow:0 0 0 3px var(--panel);flex:none;position:relative;z-index:1;margin-left:-1px}
 .tl .b{flex:1;min-width:0;display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px;color:var(--ink);text-decoration:none;padding:6px 10px;border-radius:8px}
@@ -1296,13 +1265,9 @@ body[data-theme=deco] .geh b{font-family:"Gowun Batang",serif}
 .tl .b em{font-style:normal;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:999px}
 .tl .b em.dn{background:#c8f031;color:#1c2600}.tl .b em.st{border:1px solid var(--line);color:var(--dim)}
 .tl img{width:52px;height:52px;object-fit:cover;border-radius:6px;flex:none}
-.hx.fxpage .tl .d,.hx.fxpage .tl li.tlm,.hx.fxpage .tl .b small{font-family:var(--hx-mono)}
-.hx.fxpage .tl .b,.hx.fxpage .tl img,.hx.fxpage .tl .b em{border-radius:0}
-@media(max-width:640px){.tl::before{left:36px}.tl .d{width:24px}.tl li.tlm{padding-left:52px}.tl img{width:42px;height:42px}}
+@media(max-width:640px){.tl::before{left:36px}.tl .d{width:24px}.tl img{width:42px;height:42px}}
 
-/* 일반 고정탁 타임라인 접기 */
-.fxtl .tlfold,.jgtl .fold{list-style:none}.fxtl .tlfold::before,.jgtl .fold::before{display:none!important}
-.fxtl .tlfold button{width:100%;border:1px dashed var(--line);background:transparent;color:var(--sub);padding:8px;font-size:13px}
+/* 일반 고정탁 타임라인 접기 */.jgtl .fold{list-style:none}.jgtl .fold::before{display:none!important}
 
 /* ===== 게시물: 이미지 · 텍스트 ===== */
 .galadd{position:relative;border:0!important;height:auto!important;justify-content:flex-end!important;margin:0 0 10px!important;cursor:default}
