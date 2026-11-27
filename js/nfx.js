@@ -28,11 +28,11 @@ function nfPageHTML(f){const pair=jgPair(f),d=jgDoc(f),fields=d.fields&&d.fields
         <div class="meta">${meta}</div>${line?`<p>${esc(line)}</p>`:""}
         <div class="btns">${lastG?`<a class="b1" href="#c-${esc(lastG.sc.id)}">▶ 최근 로그</a>`:""}${st.length?`<a class="b2" href="#mb-f-${esc(code)}">📖 리플레이북</a>`:""}</div></div>
       ${right}</section>
-    <div class="nfrow"><h3>${pair?"함께한 이야기":"이야기"} <small>오래된 것부터</small>${st.length?`<a href="#mb-f-${esc(code)}">리플레이북 합본 ›</a>`:""}</h3>
-      ${st.length?`<div class="nfcards">${st.map(s=>`<a class="nfcd" href="${esc(s.href)}">${s.cv?`<img src="${esc(s.cv)}" alt="" loading="lazy">`:""}${s.tag?`<span class="tp">${esc(s.tag)}</span>`:""}<b>${esc(s.name)}</b><small>${esc(s.sub)}</small><span class="pg"><i style="width:${s.pg}%"></i></span></a>`).join("")}</div>`:`<div class="empty">아직 세션이 없어요</div>`}</div>
+    <div class="nfrow"><h3>${pair?"함께한 이야기":"이야기"} <small>${st.length} · 오래된 것부터</small><span class="nfh">${st.length>4?`<button type="button" data-nfall="st">${(S.nfAll||{}).st?"접기 ▴":"모두 보기 ›"}</button>`:""}${st.length?`<a href="#mb-f-${esc(code)}">📖 리플레이북 합본</a>`:""}</span></h3>
+      ${st.length?`<div class="nfscr${(S.nfAll||{}).st?" all":""}"><button type="button" class="nfarw l" data-nfarw="-1" aria-label="이전">‹</button><div class="nfcards">${st.map(s=>`<a class="nfcd" href="${esc(s.href)}">${s.cv?`<img src="${esc(s.cv)}" alt="" loading="lazy">`:""}${s.tag?`<span class="tp">${esc(s.tag)}</span>`:""}<b>${esc(s.name)}</b><small>${esc(s.sub)}</small><span class="pg"><i style="width:${s.pg}%"></i></span></a>`).join("")}</div><button type="button" class="nfarw r" data-nfarw="1" aria-label="다음">›</button></div>`:`<div class="empty">아직 세션이 없어요</div>`}</div>
     <div class="nfrow nfsplit"><div><h3>${pair?"두 사람":"멤버"}</h3><div class="nfpfs">${mem.map(m=>`<div id="nfm-${esc(m.n)}">${nfCard(m,fields)}</div>`).join("")}</div></div>
-      <div class="nftl">${jgTimelineHTML(f,data,items)}</div></div>
-    <div class="nfrow nfposts">${postsH}</div>
+      <div class="nftl">${jgTimelineHTML(f,data,items).replace("<h4>TIMELINE","<h4>타임라인")}</div></div>
+    <div class="nfrow nfposts${(S.nfAll||{}).po?" all":""}">${postsH}</div>
     <div class="nfrow nfend">
       ${S.canAdmin?`<div class="jgtop jgbot"><a class="ghost ownonly" href="#">← 첫 화면</a><a class="ghost" href="#f-${esc(code)}">지금 디자인으로 보기</a><span style="flex:1"></span><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":`✎ ${W} 수정`}</button></div>`:""}
       ${S.jgEdit&&S.canAdmin?jgEditHTML(f):""}
@@ -40,4 +40,12 @@ function nfPageHTML(f){const pair=jgPair(f),d=jgDoc(f),fields=d.fields&&d.fields
         :`<div class="sc-sec fxacc jgacc"><h4 data-en="ACCESS">고정탁 비밀번호</h4><div class="tip">누구로 들어갈지 고르고 비밀번호를 넣어요.</div><div class="fxpk">${mem.map(m=>`<button type="button" class="${S.fxPick===m.n?"on":""}" data-fxpick="${esc(m.n)}" style="--c:${m.c}"><i></i>${esc(m.nm)} · ${esc(m.n)}</button>`).join("")}<button type="button" class="${S.fxPick==="ext"?"on":""}" data-fxpick="ext">외부인으로</button></div><form class="pwrow" id="jgunlock"><input type="text" id="jgpw" placeholder="고정탁 비밀번호" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pri">열기</button></form><div class="tip" id="jgmsg"></div></div>`):""}
     </div></div>`;}
 function bindNfPage(f){if(jgPair(f))bindJgPage(f);else bindFxPage(f);
+  // 포스트: 줄 양옆 화살표 + 모두 보기 (갤러리 부품 바깥에서 붙여요)
+  const gs=document.querySelector(".nfposts .galsec"),gg=gs&&gs.querySelector(".galg");
+  if(gs&&gg){const n=gg.children.length,h=gs.querySelector("h4");if(n>6&&h&&!h.querySelector("[data-nfall]"))h.insertAdjacentHTML("beforeend",`<button type="button" class="nfallb" data-nfall="po">${(S.nfAll||{}).po?"접기 ▴":"모두 보기 ›"}</button>`);
+    const w=document.createElement("div");w.className="nfscr";gg.before(w);w.append(Object.assign(document.createElement("button"),{type:"button",className:"nfarw l",textContent:"‹"}),gg,Object.assign(document.createElement("button"),{type:"button",className:"nfarw r",textContent:"›"}));
+    w.querySelector(".l").dataset.nfarw="-1";w.querySelector(".r").dataset.nfarw="1";}
+  document.querySelectorAll("[data-nfall]").forEach(b=>b.onclick=()=>{S.nfAll={...(S.nfAll||{}),[b.dataset.nfall]:!(S.nfAll||{})[b.dataset.nfall]};render();});
+  document.querySelectorAll(".nfscr").forEach(w=>{const sc=w.querySelector(".nfcards,.galg");if(!sc)return;const up=()=>{w.classList.toggle("atl",sc.scrollLeft<4);w.classList.toggle("atr",sc.scrollLeft+sc.clientWidth>=sc.scrollWidth-4);};
+    sc.addEventListener("scroll",up,{passive:true});up();w.querySelectorAll("[data-nfarw]").forEach(b=>b.onclick=()=>sc.scrollBy({left:+b.dataset.nfarw*sc.clientWidth*.9,behavior:"smooth"}));});
   document.querySelectorAll("[data-nfgo]").forEach(b=>b.onclick=()=>document.getElementById("nfm-"+b.dataset.nfgo)?.scrollIntoView({block:"center",behavior:"smooth"}));}
