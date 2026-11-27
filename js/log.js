@@ -40,7 +40,7 @@ function jgColors(f,over){const fd=(S.fixDocs||{})[typeof fixKey==="function"?fi
   st.setProperty("--jbg",c.bg||"#1b1b1c");st.setProperty("--jacc",c.acc||"#efc11a");if(typeof jgTextColor==="function")jgTextColor();}
 function applyTheme(){{const sc=S.cid?scenById(S.cid):S.sid&&S.meta?curScen():S.gid?campById(S.gid):null;if(sc&&gmAb(sc)==="KP")document.body.dataset.kp="1";else delete document.body.dataset.kp;}
 document.body.classList.toggle("own",!!S.canAdmin);
-  {const hx=!S.gid&&!S.cid&&!S.sid&&!S.revPage&&!S.postPage&&!S.admin&&!S.up&&!S.book&&!S.fix&&isHX();if(document.body.classList.contains("hxhome")!==hx){document.body.classList.toggle("hxhome",hx);document.documentElement.classList.toggle("hxhome",hx);}}
+  {const hx=!S.gid&&!S.cid&&!S.sid&&!S.revPage&&!S.postPage&&!S.admin&&!S.up&&!S.book&&!S.mbook&&!S.fix&&isHX();if(document.body.classList.contains("hxhome")!==hx){document.body.classList.toggle("hxhome",hx);document.documentElement.classList.toggle("hxhome",hx);}}
   if(S.postPage){const t=postPageTheme();if(document.body.dataset.theme!==t)document.body.dataset.theme=t;document.body.dataset.page="post";if(t==="jg")jgColors(S.postPage.name);return;}
   if(S.fix&&!S.sid&&!S.cid&&!S.gid&&typeof fixWord==="function"){if(document.body.dataset.theme!=="jg")document.body.dataset.theme="jg";document.body.dataset.page="fix";jgColors(S.fix);return;}
   if(S.gid&&!S.sid&&!S.cid){const c=campById(S.gid);const pj=c&&!isCamp(c)&&c.fix&&fixWord(c.fix)==="페어";const t=pj?"jg":c&&c.system?themeOf({system:c.system}):"plain";if(pj)jgColors(c.fix);if((document.body.dataset.theme||"")!==t)document.body.dataset.theme=t;document.body.dataset.page="scen";return;}
@@ -54,7 +54,8 @@ document.body.classList.toggle("own",!!S.canAdmin);
 function render(){try{bkAuto();}catch(e){}
   const app=$("#app");
   refreshCanWrite();applyTheme();if(typeof setTitle==="function")setTitle();
-  if(document.body.classList.contains("booking")!==!!S.book){document.body.classList.toggle("booking",!!S.book);document.documentElement.classList.toggle("booking",!!S.book);}
+  {const bk=!!(S.book||S.mbook);if(document.body.classList.contains("booking")!==bk){document.body.classList.toggle("booking",bk);document.documentElement.classList.toggle("booking",bk);}}
+  if(S.mbook){app.innerHTML=mbHTML();bindMbook();return;}
   if(S.book){const ae=document.activeElement;if(S.book.mode==="edit"&&ae&&ae.closest&&ae.closest("#bksheet")&&$("#bksheet"))return;
     app.innerHTML=bookHTML();bindBook();return;}
   if(S.revPage){app.innerHTML=revPageHTML();return;}

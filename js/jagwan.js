@@ -59,7 +59,7 @@ function jgLogHTML(f,data){const G=id=>data.gs.find(g=>g.sc.id===id),dt=d=>jgDot
     const bar=cm?"":`<div class="jgbar${done?" full":""}"><i style="width:${es.length?Math.round(fin/es.length*100):0}%"></i></div>`;
     return {k:last,h:done||cm?`<li class="cg"><details><summary class="h">${head}<b class="car"></b></summary>${bar}<ul class="eps">${rows}</ul></details></li>`:`<li class="cg"><div class="h">${head}</div>${bar}<ul class="eps">${rows}</ul></li>`};});
   const all=[...camp,...one].sort((a,b)=>b.k.localeCompare(a.k));
-  return `<section class="jgsec jglog"><h4>LOG<small class="cnt">${String(all.length).padStart(2,"0")}</small></h4><ul>${all.map(x=>x.h).join("")||`<li class="empty">아직 세션이 없어요</li>`}</ul></section>`;}
+  return `<section class="jgsec jglog"><h4>LOG<small class="cnt">${String(all.length).padStart(2,"0")}</small>${all.length?`<a class="jgbook" href="#mb-f-${esc(fixCode(f)||encodeURIComponent(f))}">📖 리플레이북 합본</a>`:""}</h4><ul>${all.map(x=>x.h).join("")||`<li class="empty">아직 세션이 없어요</li>`}</ul></section>`;}
 function jgCardHTML(s,fields){const q=s.pr,dl=[["나이",q.age&&(/\D/.test(q.age)?q.age:q.age+"세")],["키",q.ht&&(/\D/.test(q.ht)?q.ht:q.ht+"cm")],["성별",q.sex],["MBTI",q.mbti]].filter(x=>x[1]);
   const secs=fields.filter(k=>(q.sec||{})[k]);
   return `<div class="jgcd ${s.key}"><div class="hd">${q.icon?.u?`<img src="${esc(q.icon.u)}" alt="">`:`<span class="ph"></span>`}<div><b>${esc(s.nm)}</b><small>${[q.ren||q.rn,s.own].filter(Boolean).map(esc).join(" · ")}</small></div></div>

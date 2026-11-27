@@ -111,7 +111,7 @@ function campViewHTML(c,es,rows,open){const W=campWord(c),dt=d=>(d||"").replace(
       <div class="stat"><div><b>${main.length}</b><span>편</span></div><div><b>${days.length}</b><span>세션</span></div><div><b>${players}</b><span>플레이어</span></div>${posts?`<div><b>${posts}</b><span>게시물</span></div>`:""}</div>
       <div class="prog"><i style="width:${es.length?Math.round(fin/es.length*100):0}%"></i></div></div></section>
     ${c.intro?`<div class="sc-sec cpsec"><h4 data-en="STORY">소개</h4><div class="sc-text">${emoize(esc(c.intro)).replace(/\n/g,"<br>")}</div></div>`:""}
-    <div class="sc-sec cpsec"><h4 data-en="CHAPTERS">편 목록 <span class="tip" style="letter-spacing:0">· 오래된 편부터</span></h4>${chap||`<div class="sc-text empty">아직 편이 없어요.</div>`}</div>
+    <div class="sc-sec cpsec"><h4 data-en="CHAPTERS">편 목록 <span class="tip" style="letter-spacing:0">· 오래된 편부터</span>${es.length?`<a class="cpbook" href="#mb-g-${esc(c.id)}">📖 리플레이북 합본</a>`:""}</h4>${chap||`<div class="sc-text empty">아직 편이 없어요.</div>`}</div>
     ${cast?`<div class="sc-sec cpsec"><h4 data-en="CAST">플레이어 · 캐릭터</h4><div class="cast2">${cast}</div></div>`:""}
     ${S.db&&posts?galHTML(srcs,{newest:1,title:"모든 편의 게시물",en:"GALLERY"}):""}
     ${S.canAdmin?`<details class="cpown"${es.length?"":" open"}><summary>${W} 관리 <span class="tip">· 주인만</span></summary>

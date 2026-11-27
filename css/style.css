@@ -1397,3 +1397,35 @@ body[data-page=post] aside{display:none}body[data-page=post] .wrap{grid-template
 .cpown summary{cursor:pointer;font-weight:700;color:var(--ink);margin-bottom:4px}
 @media(max-width:760px){.cphero h1{font-size:26px}.cphero .in{padding:18px}.cphero .stat{gap:18px}.cep2{grid-template-columns:44px minmax(0,1fr) auto;gap:10px}.cep2 .th{display:none}.cep2 .n{font-size:24px}}
 body[data-theme=dx] :is(.cphero,.cep2 .th,.pc2,.cpown){border-radius:0}
+/* ===== 리플레이북 합본 ===== */
+.jgbook,.cpbook{margin-left:auto;font:700 12.5px "Noto Sans KR",sans-serif;letter-spacing:0;padding:5px 12px;text-decoration:none;border:1px solid var(--line);border-radius:6px;color:var(--ink);background:var(--panel)}
+.jgsec>h4 .jgbook{border-color:var(--ln);color:var(--jtx);background:transparent;border-radius:0}.jgsec>h4 .jgbook:hover{background:var(--jacc);color:#111;border-color:var(--jacc)}
+.mbpick .mbgrid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;margin-top:14px;max-width:1180px;margin-left:auto;margin-right:auto}
+.mbcard{background:#fff;border:1px solid #e1e3e8;border-radius:12px;padding:16px 18px;color:#16181d;font-family:"Noto Sans KR",sans-serif}
+.mbcard h4{margin:0 0 4px;font-size:14px}.mbcard .tip{font-size:12px;color:#9aa0ab;margin-bottom:10px}
+.mbsel{list-style:none;margin:0;padding:0}
+.mbsel li{display:grid;grid-template-columns:26px 54px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 4px;border-top:1px solid #e1e3e8}
+.mbsel li:first-child{border-top:0}
+.mbsel li.ep{grid-template-columns:26px minmax(0,1fr) auto;padding-left:40px;border-top:1px dashed #e1e3e8}.mbsel li.ep .t b{font-size:13px;font-weight:500}
+.mbsel .ck{width:22px;height:22px;padding:0;border-radius:5px;background:#2f6bdc;border:0;color:#fff;font-size:13px;line-height:22px;cursor:pointer}
+.mbsel li.off .ck{background:#fff;border:2px solid #c9ccd3;color:transparent}.mbsel li.off .t,.mbsel li.off .th{opacity:.45}
+.mbsel .ck:disabled{cursor:not-allowed}
+.mbsel .th{width:54px;height:38px;border-radius:5px;background:#d6d9df center/cover}
+.mbsel .t b{display:block;font-size:14px}.mbsel .t small{color:#9aa0ab;font-size:12px}
+.mbsel .tg{font:400 10px "Anton","Chakra Petch",sans-serif;font-style:normal;letter-spacing:.1em;color:#2f6bdc;box-shadow:inset 0 0 0 1px #2f6bdc;padding:0 5px;margin-right:6px;vertical-align:1px}
+.mbsel .mv{display:flex;gap:2px}.mbsel .mv button{width:28px;height:28px;padding:0;border:1px solid #e1e3e8;border-radius:6px;background:#fff;color:#5b616e;font-size:12px}.mbsel .mv button:disabled{opacity:.35}
+.mbcov{display:flex;gap:12px;align-items:center;margin:4px 0 12px;padding:10px;border:1px solid #e1e3e8;border-radius:10px}
+.mbcov .cv{width:68px;height:96px;flex:none;border-radius:4px;background:#1b1b1c center/cover;color:#888;font-size:10px;display:grid;place-items:center;text-align:center}
+.mbcov b{font-size:13px}.mbcov .tip{margin:2px 0 6px}.mbcov .btnlike{font-size:12.5px;padding:5px 12px;cursor:pointer}
+.mbcard .chk{display:flex;gap:8px;align-items:center;font-size:13px;margin:6px 0}
+.mbord{list-style:none;margin:10px 0 0;padding:10px 0 0;border-top:1px solid #e1e3e8;font-size:12.5px;color:#5b616e}.mbord li{display:flex;gap:8px;padding:3px 0}.mbord li span{width:50px;color:#9aa0ab;flex:none}
+.mbsum{display:flex;gap:20px;margin-top:12px;padding-top:12px;border-top:1px solid #e1e3e8;font-size:12.5px;color:#5b616e}.mbsum b{display:block;font:400 22px "Anton","Chakra Petch",sans-serif;color:#16181d}
+.mbbuild{max-width:600px;margin:60px auto;text-align:center}
+.bpg.mbpart .bbody{display:flex;flex-direction:column;justify-content:center;padding:12%}
+.bpg.mbpart{background:#f4f1ea}.bpg.mbpart.ep{background:#fff}
+.bpg.mbpart .n{font:400 4.2em/1 "Anton","Chakra Petch",sans-serif;color:var(--acc,#b5172e)}.bpg.mbpart .n.s{font-size:2.4em}
+.bpg.mbpart h2{margin:.25em 0 .3em;font:900 1.7em/1.3 "Noto Sans KR",sans-serif;color:#1c1c1b;word-break:keep-all}
+.bpg.mbpart p{margin:0;font:400 .85em/1.6 "Noto Sans KR",sans-serif;color:#777}
+.mbook{--acc:#b5172e}
+.mbtoc li.pt{font-weight:800;border-bottom:1px solid #222;margin-top:.5em}.mbtoc li small{font-weight:400;color:#888;font-size:.8em}
+@media(max-width:760px){.mbpick .mbgrid{grid-template-columns:1fr}.mbsel li{grid-template-columns:26px minmax(0,1fr) auto}.mbsel li .th{display:none}.mbsel li.ep{padding-left:24px}}

@@ -142,6 +142,10 @@ function route(){
   const rid=h.startsWith("r-")?h.slice(2):null;
   const gid=h.startsWith("g-")?h.slice(2):null;
   const bid=h.startsWith("b-")?h.slice(2):null;
+  // 리플레이북 합본 (#mb-f-고정탁코드 · #mb-g-캠페인id)
+  const mbk=h.startsWith("mb-")?h.slice(3):null;
+  if(mbk){if(!S.mbook||S.mbook.key!==mbk){S.revPage=null;S.gid=null;S.fix=null;S.up=null;S.admin=false;S.book=null;if(S.sid||S.cid){S.cid=null;openSession(null);}mbInit(mbk);window.scrollTo(0,0);}render();return;}
+  if(S.mbook){S.mbook=null;document.body.classList.remove("booking");document.documentElement.classList.remove("booking");}
   if(bid){if(!S.book||S.book.scid!==bid){S.revPage=null;S.gid=null;S.up=null;S.admin=false;if(S.sid||S.cid){S.cid=null;openSession(null);}bookOpen(bid);window.scrollTo(0,0);}return;}
   if(S.book){S.book=null;PRE.book=new Set();document.body.classList.remove("booking");document.documentElement.classList.remove("booking");if(!sid&&!cid&&!h)render();}
   // 게시물 하나 (#p-출처~id)
