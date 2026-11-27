@@ -41,6 +41,8 @@ function syncSubs(reset){
   const mode=S.canAdmin?"owner":"user:"+(myEmail()||"anon");
   if(reset||mode!==SUB.mode){clearSubs();SUB.mode=mode;}
   if(!SUB.camps)SUB.camps=S.db.collection("camps").onSnapshot(snap=>{S.camps=snap.docs.map(d=>({id:d.id,...d.data()}));publish();},()=>{});
+  // 게시물(그림·텍스트)은 posts 컬렉션 하나에 · 규칙이 아직 옛날이면 예전처럼 시나리오 문서 안(gal)으로
+  if(!SUB.posts)SUB.posts=S.db.collection("posts").onSnapshot(snap=>{S.posts=snap.docs.map(d=>({...d.data(),id:d.id,_pd:1}));S.postsOn=true;publish();if(S.canAdmin)galMigrate();},()=>{S.postsOn=false;});
   if(S.canAdmin){
     if(SUB.all.length)return;
     SUB.all.push(S.db.collection("scenarios").onSnapshot(snap=>{SUB.scData={};snap.docs.forEach(d=>SUB.scData[d.id]=d.data());markLoaded();publish();},e=>{markLoaded();render();}));

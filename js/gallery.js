@@ -1,11 +1,15 @@
 // 갤러리 — 세션 페이지(세션 후기 아래)와 고정탁 페이지
-// 사진 목록: scenarios/{id}.gal 또는 fixes/{fx_이름}.gal = [{id,u(미리보기),o(원본),p,op,w,h,fn,cap,by,k,uid,at}]
+// 게시물: posts/{id} = {src(시나리오 id · 고정탁 키), kind:"sc"|"fx", t, title, body, imgs:[{u(미리보기),o(원본),p,op,w,h}], cap, by, k, uid, at, nolink}
+// (예전에는 scenarios/{id}.gal · fixes/{fk}.gal 배열 안 — 주인 브라우저가 posts로 옮겨요)
 // 파일: Storage gal/{scid 또는 fx_이름}/{uid}/… — 원본 그대로 + 화면용 미리보기 · 댓글: comments (scid=출처, sid:"gal", bid:사진 id)
 S.galCms={};S.galItems=[];S.galOpen=null;S.gEdit=null;S.fixDocs={};
 const _galSubs={};let _galKey="";const _fixSubs={};
 // 게시물 하나에 사진 여러 장 (imgs) · 예전 한 장짜리는 u/o를 그대로
 function galImgs(p){return p&&Array.isArray(p.imgs)&&p.imgs.length?p.imgs:p?[{u:p.u,o:p.o,p:p.p,op:p.op,w:p.w,h:p.h,fn:p.fn,sz:p.sz}]:[];}
-function galRaw(o){return Array.isArray(o&&o.gal)?o.gal:[];}
+// 한 출처(시나리오 id · 고정탁 키)의 게시물: posts 컬렉션 + 아직 안 옮긴 예전 gal
+function galRaw(o,id){id=id||(o&&o.id)||"";const P=(S.posts||[]).filter(p=>p.src===id),ids=new Set(P.map(p=>p.id));
+  const old=Array.isArray(o&&o.gal)?o.gal.filter(p=>!ids.has(p.id)):[];return old.length?[...old,...P]:P;}
+const galClean=p=>{const y={...p};["_pd","label"].forEach(k=>delete y[k]);return y;};
 function galCanEdit(p){return S.canAdmin||(!!p&&!!p.uid&&p.uid===myUid());}
 function galCmsOf(it){return (S.galCms[it.src]||[]).filter(c=>c.bid===it.id);}
 // 출처마다 댓글 받아오기 (출처가 바뀌면 다시)
@@ -26,7 +30,7 @@ function fixDocWatch(fk){if(!S.db||S.local||_fixSubs[fk])return;
 function galSrcScen(sc){return [{id:sc.id,kind:"sc",label:"",list:galRaw(sc),read:isOpen(sc.id),up:canWriteScen(sc.id)||S.canAdmin}];}
 function galSrcFix(f){const fk=fixKey(f);fixDocWatch(fk);
   const scs=S.scens.filter(x=>fixOfScen(x)===f);
-  return [{id:fk,kind:"fx",label:"",list:galRaw(S.fixDocs[fk]),read:true,up:S.canAdmin||fixOpen(f)},
+  return [{id:fk,kind:"fx",label:"",list:galRaw(S.fixDocs[fk],fk),read:true,up:S.canAdmin||fixOpen(f)},
     ...scs.map(x=>({id:x.id,kind:"sc",label:x.name,list:galRaw(x),read:isOpen(x.id),up:false}))];}
 const galDate=t=>{if(!t)return "";const d=new Date(t);return `${d.getMonth()+1}.${d.getDate()}`;};
 const galTime=t=>{if(!t)return "";const d=new Date(t),z=n=>String(n).padStart(2,"0");return `${d.getMonth()+1}.${d.getDate()} ${z(d.getHours())}:${z(d.getMinutes())}`;};
@@ -81,7 +85,9 @@ async function galThumb(img){
   return await new Promise(ok=>c.toBlob(ok,"image/jpeg",.85));
 }
 const galRef=kind=>id=>S.db.doc((kind==="fx"?"fixes/":"scenarios/")+id);
-async function galAdd(kind,src,item){const ref=galRef(kind)(src),v=firebase.firestore.FieldValue.arrayUnion(item);
+async function galAdd(kind,src,item){
+  if(S.postsOn){await S.db.doc("posts/"+item.id).set({...item,src,kind});return;}
+  const ref=galRef(kind)(src),v=firebase.firestore.FieldValue.arrayUnion(item);
   if(kind==="fx")await ref.set({gal:v},{merge:true});else await ref.update({gal:v});}
 // 파일 하나 올리기: 원본 그대로 + 화면용 미리보기
 async function galPut(src,f,id,onp){
@@ -115,6 +121,9 @@ async function galUpload(kind,src,files){
 }
 // 사진 하나 고치기·지우기 (다른 사람이 동시에 올려도 안 사라지게 트랜잭션으로)
 async function galMutate(it,fn){
+  if((S.posts||[]).some(p=>p.id===it.id&&p.src===it.src)){const pr=S.db.doc("posts/"+it.id);
+    await S.db.runTransaction(async tx=>{const d=await tx.get(pr);if(!d.exists)return;const cur={...d.data(),id:it.id},r=fn([cur]);
+      if(!r.length)tx.delete(pr);else{const y={...r[0],src:cur.src,kind:cur.kind};delete y.id;tx.set(pr,y);}});return;}
   const ref=galRef(it.kind)(it.src);
   await S.db.runTransaction(async tx=>{const d=await tx.get(ref);const g=(d.exists&&d.data().gal)||[];tx.update(ref,{gal:fn(g)});});
 }
@@ -264,14 +273,14 @@ function galTxtEdit(p){galTxtBox(p,async v=>{try{await galMutate(p,g=>g.map(x=>{
 function galTxtBox(v,onSave,onDel){const w=document.createElement("div");w.className="gedit";
   w.innerHTML=`<div class="gebox gtxt"><div class="geh"><b>텍스트</b><button type="button" class="x" data-x>✕</button></div>
     <div class="gelab">제목</div><input type="text" id="gtt" maxlength="80" value="${esc(v.title||"")}">
-    <div class="gelab">본문 <span class="tip">· 문단은 빈 줄로 · *** 은 장면 구분선 · 최대 10만 자</span></div><textarea id="gtb" rows="16">${esc(v.body||"")}</textarea>
+    <div class="gelab">본문 <span class="tip">· 문단은 빈 줄로 · *** 은 장면 구분선 · 최대 20만 자</span></div><textarea id="gtb" rows="16">${esc(v.body||"")}</textarea>
     ${galLockRow(!!v.nolink)}
     <div class="gefoot">${onDel?`<button type="button" class="ghost danger" id="gtd">지우기</button>`:""}<span class="tip" id="gtn"></span><span style="flex:1"></span><button type="button" class="ghost" data-x>취소</button><button type="button" class="pri" id="gts">저장</button></div></div>`;
   document.body.appendChild(w);const tb=w.querySelector("#gtb"),n=w.querySelector("#gtn");const cnt=()=>n.textContent=`${tb.value.replace(/\s/g,"").length.toLocaleString()}자`;cnt();tb.oninput=cnt;
   w.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>w.remove());
   const d=w.querySelector("#gtd");if(d)d.onclick=onDel;
   w.querySelector("#gts").onclick=async()=>{const t=w.querySelector("#gtt").value.trim(),b=tb.value;if(!t&&!b.trim()){toast("제목이나 본문을 써 주세요");return;}
-    if(await onSave({title:t.slice(0,80),body:b.slice(0,100000),nolink:w.querySelector("#genl").checked})!==false)w.remove();};}
+    if(await onSave({title:t.slice(0,80),body:b.slice(0,200000),nolink:w.querySelector("#genl").checked})!==false)w.remove();};}
 function galTxtHTML(b){return String(b||"").replace(/\r/g,"").split(/\n\s*\n+/).map(par=>/^\s*(\*\s*){3,}\s*$/.test(par)?`<div class="sep">◆ ◆ ◆</div>`:`<p>${esc(qfix(par.trim())).replace(/\n/g,"<br>")}</p>`).join("");}
 // ---------- 게시물 하나만 보는 페이지 (#p-출처~id) — 비밀번호 없이 · 댓글은 페이지로 들어가서 ----------
 async function openPostPage(key){let [src,id]=key.split("~");S.postPage={key,loading:true};render();
@@ -279,7 +288,8 @@ async function openPostPage(key){let [src,id]=key.split("~");S.postPage={key,loa
   if(!src.startsWith("fx_")){for(let i=0;i<40&&!S.scensLoaded;i++)await new Promise(r=>setTimeout(r,100));const n=fixByCode(src);if(n)src=fixKey(n);}
   if(!S.postPage||S.postPage.key!==key)return;
   try{const fx=src.startsWith("fx_"),d=await S.db.doc((fx?"fixes/":"scenarios/")+src).get();
-    const data=d.exists?d.data():null,p=data&&galRaw(data).find(x=>x.id===id);
+    const data=d.exists?d.data():null;let p=null;try{const pd=await S.db.doc("posts/"+id).get();if(pd.exists&&pd.data().src===src)p={...pd.data(),id};}catch(e){}
+    if(!p)p=data&&(data.gal||[]).find(x=>x.id===id);
     if(!p){S.postPage={key,err:"게시물을 찾을 수 없어요."};render();return;}
     const name=fx?decodeURIComponent(src.slice(3)):(data.name||"");if(fx)S.fixDocs[src]={...(S.fixDocs[src]||{}),...data};
     S.postPage={key,src,fx,name,sc:fx?null:{id:src,...data},p:{...p,src,kind:fx?"fx":"sc"}};}
@@ -300,3 +310,17 @@ function postPageHTML(){const P=S.postPage||{};
     ${ft}</div>`;}
 function bindPostPage(){
   const a=document.querySelector("[data-pstgo]"),P=S.postPage;if(a&&P&&P.p)a.onclick=()=>{try{sessionStorage.setItem("galGo",JSON.stringify({src:P.src,id:P.p.id,at:Date.now()}));}catch(e){}};}
+
+// ---------- 예전 게시물(시나리오·고정탁 문서 안 gal)을 posts 컬렉션으로 옮기기 · 주인 브라우저에서 한 번 ----------
+let _galMig=false;
+async function galMigrate(){if(_galMig||!S.canAdmin||!S.postsOn)return;
+  _galMig=true;let fx=[];try{fx=(await S.db.collection("fixes").get()).docs.map(d=>[d.id,d.data()]);}catch(e){}
+  const jobs=[...S.scens.filter(x=>(x.gal||[]).length).map(x=>({ref:S.db.doc("scenarios/"+x.id),src:x.id,kind:"sc",list:x.gal})),
+    ...fx.filter(([k,v])=>(v.gal||[]).length).map(([k,v])=>({ref:S.db.doc("fixes/"+k),src:k,kind:"fx",list:v.gal}))];
+  if(!jobs.length){_galMig=false;return;}
+  try{for(const j of jobs){const b=S.db.batch();j.list.forEach(p=>{const y=galClean(p);delete y.id;b.set(S.db.doc("posts/"+p.id),{...y,src:j.src,kind:j.kind},{merge:true});});await b.commit();
+      // 다 옮겨졌는지 확인한 다음에만 예전 칸을 비워요
+      const ok=await Promise.all(j.list.map(p=>S.db.doc("posts/"+p.id).get().then(d=>d.exists)));if(ok.every(Boolean))await j.ref.update({gal:firebase.firestore.FieldValue.delete()});}
+    console.log("[gal] posts로 옮겼어요",jobs.length);}
+  catch(e){console.warn("[gal] 옮기지 못했어요",e);}
+  _galMig=false;}

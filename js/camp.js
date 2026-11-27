@@ -79,7 +79,7 @@ function fixTimelineHTML(f,allG,cs){
   const lastOf={};E.forEach(e=>{if(!lastOf[e.sc.id])lastOf[e.sc.id]=e;});
   const dot=d=>d.replace(/-/g,".");let ym="";
   return `<div class="sc-sec fxtl"><h4 data-en="TIMELINE">타임라인<span class="gcnt">${String(E.length).padStart(2,"0")}</span></h4><ol class="tl">${(S.fxTlAll?E:E.slice(0,6)).map(e=>{
-    const sc=e.sc,open=isOpen(sc.id),th=galImgs((sc.gal||[]).slice().sort((a,b)=>(a.at||0)-(b.at||0))[0])[0],m=e.day.slice(0,7),mh=m!==ym?(ym=m,`<li class="tlm">${esc(dot(m))}</li>`):"";
+    const sc=e.sc,open=isOpen(sc.id),th=galImgs(galRaw(sc).slice().sort((a,b)=>(a.at||0)-(b.at||0))[0])[0],m=e.day.slice(0,7),mh=m!==ym?(ym=m,`<li class="tlm">${esc(dot(m))}</li>`):"";
     const done=lastOf[sc.id]===e&&(sc.done||e.camp&&e.camp.done),first=firstOf[sc.id]===e;
     const body=`<b>${esc(sc.name)}</b><small>${e.nolog?"녹음 없이 플레이":(e.n>1?`${e.i}회차 / ${e.n}`:"1회차")}${effSys(sc)?" · "+esc(sysLabel(effSys(sc))):""}${e.camp?" · "+esc(e.camp.name):""}</small>${first&&e.n>1?`<em class="st">시작</em>`:""}${done?`<em class="dn">완주</em>`:""}`;
     return mh+`<li style="--c:${typeof hxCol==="function"?hxCol(sc):"var(--acc)"}"><span class="d">${esc(e.day.slice(8))}</span><i class="dot"></i>${open&&e.sid?`<a class="b" href="#s-${esc(e.sid)}">${body}</a>`:`<span class="b">${body}</span>`}${first&&th?`<img src="${esc(th.u||th.o)}" alt="" loading="lazy">`:""}</li>`;}).join("")}${E.length>6?`<li class="tlfold"><button type="button" id="fxtlmore">${S.fxTlAll?"▴ 접기":`▾ 이전 기록 ${E.length-6}개 더 보기`}</button></li>`:""}</ol></div>`;}
