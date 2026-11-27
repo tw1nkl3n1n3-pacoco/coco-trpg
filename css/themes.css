@@ -675,3 +675,5 @@ body[data-page=nf] header{box-shadow:none}
 @media(max-width:760px){.nfsplit{grid-template-columns:1fr;gap:36px}.nfx .nfposts .galg{grid-auto-columns:42%}}
 .nfsplit>div>h3{margin:0 0 10px;min-height:30px;display:flex;align-items:center}
 .nfx .nftl .jgsec>h4{min-height:30px;margin:0 0 6px!important;font:700 19px "Noto Sans KR",sans-serif!important;letter-spacing:0!important;color:#f2f2f2!important}
+.nfx .nfcards,.nfx .nfposts .galg{scrollbar-width:thin;scrollbar-color:#444 transparent}
+.nfx .nfcards::-webkit-scrollbar,.nfx .nfposts .galg::-webkit-scrollbar{height:6px}.nfx .nfcards::-webkit-scrollbar-thumb,.nfx .nfposts .galg::-webkit-scrollbar-thumb{background:#444;border-radius:3px}.nfx .nfcards::-webkit-scrollbar-track,.nfx .nfposts .galg::-webkit-scrollbar-track{background:transparent}
