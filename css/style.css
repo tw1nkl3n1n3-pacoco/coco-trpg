@@ -1365,7 +1365,8 @@ body[data-theme=deco] .geh b{font-family:"Gowun Batang",serif}
 .psth h2{margin:0;font-size:24px;color:inherit}.psth .pm{font-size:12.5px;color:var(--faint);margin:2px 0 14px}
 .pstimgs img{display:block;width:100%;height:auto}
 .pstft{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:28px;padding:22px;border:1px dashed var(--line);text-align:center}
-.pstft a.pri{display:inline-block;padding:9px 20px;text-decoration:none;font-weight:800}
+.pstft a.pri{display:inline-block;padding:9px 20px;text-decoration:none;font-weight:800;background:var(--acc);color:#fff;border-radius:6px}
+body[data-theme=jg] .pstft a.pri{color:#111;border-radius:0}
 .pstft span{font-size:12.5px;color:var(--faint)}
 .pstlock{text-align:center;padding:60px 20px}.pstlock .ic{font:400 44px "Anton","Chakra Petch",sans-serif;color:var(--acc)}.pstlock p{color:var(--dim);margin:6px 0 0}
 body[data-page=post] aside{display:none}body[data-page=post] .wrap{grid-template-columns:1fr}
