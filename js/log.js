@@ -47,7 +47,13 @@ function jgFonts(f,over){const fd=(S.fixDocs||{})[typeof fixKey==="function"?fix
 function jgColors(f,over){jgFonts(f);const fd=(S.fixDocs||{})[typeof fixKey==="function"?fixKey(f):""]||{},c=over||fd.colors||{};
   const sd=typeof jgSides==="function"?jgSides(f):[],cc=x=>x&&(typeof fixC==="function"?fixC(x):x),st=document.body.style;
   st.setProperty("--ja",c.a||cc(sd[0]&&sd[0].p&&sd[0].p.c)||"#d9577d");st.setProperty("--jb",c.b||cc(sd[1]&&sd[1].p&&sd[1].p.c)||"#2e9a8c");
-  st.setProperty("--jbg",c.bg||"#1b1b1c");st.setProperty("--jacc",c.acc||"#efc11a");if(typeof jgTextColor==="function")jgTextColor();}
+  st.setProperty("--jbg",c.bg||"#1b1b1c");st.setProperty("--jacc",c.acc||"#efc11a");if(typeof jgTextColor==="function")jgTextColor();jgBox(c.box,c.bg||"#1b1b1c",c.acc||"#efc11a");}
+// 글상자 색(고르면): 상자 안 글자색은 상자 밝기로, 강조색은 포인트·바탕 중 상자에서 더 잘 보이는 쪽으로
+function jgLum(h){const m=String(h||"").match(/^#?([0-9a-f]{6})$/i);if(!m)return 0.1;const n=parseInt(m[1],16),f=v=>{v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);};return 0.2126*f(n>>16)+0.7152*f(n>>8&255)+0.0722*f(n&255);}
+function jgCon(a,b){const x=jgLum(a),y=jgLum(b);return (Math.max(x,y)+0.05)/(Math.min(x,y)+0.05);}
+function jgBox(box,bg,acc){const st=document.body.style,on=!!(box&&/^#[0-9a-f]{6}$/i.test(box));document.body.classList.toggle("jbox",on);
+  if(!on){["--jbox","--jboxtx","--jboxacc"].forEach(k=>st.removeProperty(k));return;}
+  st.setProperty("--jbox",box);st.setProperty("--jboxtx",jgLum(box)>0.3?"#141414":"#f1efe9");st.setProperty("--jboxacc",jgCon(acc,box)>=jgCon(bg,box)?acc:bg);}
 function applyTheme(){{const sc=S.cid?scenById(S.cid):S.sid&&S.meta?curScen():S.gid?campById(S.gid):null;if(sc&&gmAb(sc)==="KP")document.body.dataset.kp="1";else delete document.body.dataset.kp;}
 document.body.classList.toggle("own",!!S.canAdmin);
   {const hx=!S.gid&&!S.cid&&!S.sid&&!S.revPage&&!S.postPage&&!S.admin&&!S.up&&!S.book&&!S.mbook&&!S.fix&&isHX();if(document.body.classList.contains("hxhome")!==hx){document.body.classList.toggle("hxhome",hx);document.documentElement.classList.toggle("hxhome",hx);}}
