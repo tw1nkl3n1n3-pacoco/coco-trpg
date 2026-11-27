@@ -43,7 +43,7 @@ function jgCardHTML(s,fields){const q=s.pr,dl=[["나이",q.age&&(/\D/.test(q.age
   return `<div class="jgcd ${s.key}"><div class="hd">${q.icon?.u?`<img src="${esc(q.icon.u)}" alt="">`:`<span class="ph"></span>`}<div><b>${esc(s.nm)}</b><small>${[q.ren||q.rn,s.own].filter(Boolean).map(esc).join(" · ")}</small></div></div>
     ${q.rn&&q.ren?`<div class="rn">${esc(q.rn)}</div>`:""}
     ${dl.length?`<dl>${dl.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>`:""}
-    ${secs.map((k,i)=>`<details${i?"":" open"}><summary>${esc(k)}</summary><p>${esc(q.sec[k]).replace(/\n/g,"<br>")}</p></details>`).join("")}</div>`;}
+    ${secs.map(k=>`<details><summary>${esc(k)}</summary><p>${esc(q.sec[k]).replace(/\n/g,"<br>")}</p></details>`).join("")}</div>`;}
 function jgPageHTML(f){const d=jgDoc(f),[A,B]=jgSides(f),fields=d.fields&&d.fields.length?d.fields:JG_F0,data=jgFixData(f),ban=d.banner;
   const srcs=S.db?galSrcFix(f):[],postsH=S.db?galHTML(srcs,{newest:1,title:"POSTS",en:"POSTS",kinds:1}):"",items=galAll(srcs,1);
   const tagH=(s,cls)=>`<div class="jgtag ${cls}"><div class="nm">${esc(s.en)}</div>${(s.pr.tags||[]).filter(Boolean).length?`<ul>${s.pr.tags.filter(Boolean).map(t=>`<li>${esc(t)}</li>`).join("")}</ul>`:""}</div>`;

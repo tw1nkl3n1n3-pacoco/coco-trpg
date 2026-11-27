@@ -450,3 +450,24 @@ body[data-theme=jg] .jgp .galsec .gcnt{font-family:var(--jdisp);color:var(--fj);
   .jgtri,.jgpfs{grid-template-columns:1fr}.jgwrap{padding:0 12px 50px}.jgsec{padding:16px}.jgedit .erow>label:first-child{width:100%}
 }
 @media(max-width:900px){.jgmid{order:-1}}
+/* 페어 타임라인: 한 줄에 몰지 않고 날짜 → 제목 → 내용 순으로 */
+.jgtl .tl li{display:block;gap:0;min-height:0}
+.jgtl .tl li>*{min-width:0}
+.jgtl .d{display:block;width:auto;text-align:left;font-weight:400;line-height:1.2;margin-bottom:3px}
+.jgtl .t{line-height:1.45;word-break:keep-all;overflow-wrap:anywhere}
+.jgtl .t small{display:inline-block;margin-left:6px}
+.jgtl .t em{white-space:nowrap}
+.jgtl .th img{width:64px;height:64px}
+@media(max-width:900px){
+  .jgtl .tl::before{left:5px}
+  .jgtl .tl li{padding:0 0 18px 24px}
+  .jgtl .tl li::before{width:9px;height:9px;border-width:2px;top:4px}
+  .jgtl .tl li.m{padding:2px 0 8px 24px}
+  .jgtl .t{font-size:15px}
+  .jgtl .t small{display:block;margin:2px 0 0;font-size:12px}
+  .jgtl .t em{margin-left:6px}
+  .jgtl .th img{width:56px;height:56px}.jgtl .th.big img{width:100%;max-height:none}
+  .jgtl .note{font-size:13px}
+  .jgsec>h4{font-size:20px;gap:10px}.jgadd{margin-left:0}
+  .jgtl .fold small{display:block;margin:2px 0 0}
+}
