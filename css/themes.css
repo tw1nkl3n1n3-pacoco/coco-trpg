@@ -502,3 +502,7 @@ body[data-theme=jg] .jrt,body[data-theme=jg] .jrt.on::after{border-radius:0}
 .jglog .eps li small{font:400 11.5px var(--jdisp);color:var(--fj)}
 .jglog .eps li.now{color:var(--jtx)}.jglog .eps li.now small{color:var(--jacc)}
 @media(max-width:900px){.jgsplit{grid-template-columns:1fr}}
+body[data-theme=jg] :is(.cphero,.cep2 .th,.pc2,.cpown,.cphero .k>*,.cep2 .st,.pc2 .eps i,.cphero .cped){border-radius:0}
+body[data-theme=jg] .cphero h1{font-family:var(--jhk);font-weight:400;color:var(--jacc)}
+body[data-theme=jg] .cphero .k>*{background:var(--jacc);color:#111}body[data-theme=jg] .cphero .k .o{background:rgba(255,255,255,.14);color:#fff}
+body[data-theme=jg] .cep2 .n{font-family:var(--jdisp)}body[data-theme=jg] .cphero .prog i{background:linear-gradient(90deg,var(--ja),var(--jb))}

@@ -139,19 +139,54 @@ function campCardHTML(c){
 // 플레이어별 캐릭터: 같은 캐릭터로 이어진 편을 한 줄로
 function campRuns(c){
   const es=campEps(c),labs=es.map(e=>epLabel(c,e)),P=new Map();
-  es.forEach((e,i)=>{const gk=gmKey(e);(e.sp||[]).forEach(p=>{if(isAnon(p)&&!p.ch&&p.k!==gk)return;if(/&/.test(p.name||""))return;
+  es.forEach((e,i)=>{const gk=gmKey(e);(e.sp||[]).forEach(p=>{if(isAnon(p)&&!p.ch&&p.k!==gk)return;if(p.chr&&!p.ch&&p.k!==gk)return;if(/&/.test(p.name||""))return;
     const gm=p.k===gk,q=pcSplit(p.name||""),who=gm?"GM":q.name;if(!who)return;
     if(!P.has(who))P.set(who,[]);P.get(who).push({i,ch:gm?q.name:(p.ch||""),pc:q.n||"",c:fixC(p.c)});});});
   const rng=ix=>{const out=[];let s=null,prev=null;const flush=()=>{if(s==null)return;const a=labs[s],b=labs[prev];out.push(s===prev?a:(/편$/.test(a)&&/편$/.test(b)?`${a.replace("편","")}–${b}`:`${a}–${b}`));};
     ix.forEach(i=>{if(s!=null&&i===prev+1){prev=i;return;}flush();s=i;prev=i;});flush();return out.join(", ");};
   const rows=[...P.entries()].map(([who,list])=>{
     const byCh=new Map();list.forEach(x=>{const k=x.ch||"";if(!byCh.has(k))byCh.set(k,[]);byCh.get(k).push(x);});
-    const runs=[...byCh.entries()].map(([ch,xs])=>({ch,c:xs[xs.length-1].c,last:xs[xs.length-1].i,r:rng(xs.map(x=>x.i)),pc:xs.some(x=>x.pc)?"PC "+xs.filter(x=>x.pc).map(x=>x.pc).join("·"):""})).sort((a,b)=>b.last-a.last);
+    const runs=[...byCh.entries()].map(([ch,xs])=>({ch,c:xs[xs.length-1].c,last:xs[xs.length-1].i,ix:xs.map(x=>x.i),r:rng(xs.map(x=>x.i)),pc:xs.some(x=>x.pc)?"PC "+xs.filter(x=>x.pc).map(x=>x.pc).join("·"):""})).sort((a,b)=>b.last-a.last);
     const seen=new Set(list.map(x=>x.i)),miss=es.map((_,i)=>i).filter(i=>!seen.has(i)&&i>Math.min(...seen));
     return {who,runs,miss:miss.length?rng(miss):"",first:Math.min(...seen)};
   }).sort((a,b)=>(a.who==="GM")-(b.who==="GM")||a.first-b.first||a.who.localeCompare(b.who,"ko"));
   return rows;
 }
+// 캠페인 페이지 (보기): 커버 · 소개 · 편 목록 · 캐스트(플레이어만) · 모든 편 갤러리 · 관리(주인)
+function campCover(c,es){if(c.og)return {u:c.og,y:50};for(const e of es.slice().reverse()){const v=coverOf(e);if(v)return v;}return null;}
+function campViewHTML(c,es,rows,open){const W=campWord(c),dt=d=>(d||"").replace(/-/g,"."),G=e=>groups().find(g=>g.sc&&g.sc.id===e.id);
+  const main=es.filter(e=>!e.gaiden),fin=es.filter(e=>e.done||c.done).length,days=es.flatMap(e=>G(e)?.days.map(x=>x.day)||[]).filter(Boolean).sort();
+  const posts=es.reduce((a,e)=>a+galRaw(e).length,0),players=rows.filter(r=>r.who!=="GM").length,cv=campCover(c,es);
+  const lastEp=main.at(-1);
+  const chap=es.map(e=>{const g=G(e),ds=(g?.days||[]).map(x=>x.day).filter(Boolean),done=e.done||c.done,lab=epLabel(c,e),th=coverOf(e);
+    return `<a class="cep2${e.gaiden?" gai":""}" href="#c-${esc(e.id)}"><div class="n">${e.gaiden?"외전":esc(lab.replace("편","").padStart(2,"0"))}${e.gaiden?"":`<small>${esc(lab)}</small>`}</div>
+      <div class="th"${th?` style="background-image:url('${esc(th.u)}');background-position:50% ${+th.y>=0?th.y:50}%"`:""}></div>
+      <div class="t"><b>${esc(e.name)}</b>${e.summary?`<p>${esc(e.summary)}</p>`:""}<div class="m">${ds.length?esc(dt(ds[0]))+(ds.length>1?` – ${esc(dt(ds.at(-1)).slice(5))}`:""):e.lastDay?esc(dt(e.lastDay)):"아직 플레이 전"}${ds.length?` · ${ds.length}세션`:""}${effSys(e)&&sysLabel(effSys(e))!==sysLabel(c.system||"")?` · ${esc(sysLabel(effSys(e)))}`:""}</div></div>
+      ${done?`<span class="st">완주</span>`:e===lastEp||e.gaiden?`<span class="st now">진행 중</span>`:"<span></span>"}</a>`;}).join("");
+  const labs=es.map(e=>e.gaiden?"외전":epLabel(c,e));
+  const pcn=v=>{const m=String(v.x.pc||"").match(/\d+/);return m?+m[0]:99;};
+  const cast=rows.flatMap(r=>r.runs.map(x=>({r,x}))).sort((a,b)=>(b.r.who==="GM")-(a.r.who==="GM")||pcn(a)-pcn(b)||a.r.who.localeCompare(b.r.who,"ko")).map(({r,x})=>`<div class="pc2${r.who==="GM"?" gm":""}" style="--c:${x.c}"><div class="p">${r.who==="GM"?"GM":`${x.pc?esc(x.pc.replace("PC ","PC"))+" · ":""}${esc(r.who)}`}</div>
+      <div class="c">${x.ch?esc(x.ch):`<span class="tip">${r.who==="GM"?"":"캐릭터 이름 없음"}</span>`}</div><div class="eps">${es.map((_,i)=>x.ix.includes(i)?`<i>${esc(labs[i])}</i>`:"").join("")}</div></div>`).join("");
+  const srcs=es.map(e=>({id:e.id,kind:"sc",label:e.gaiden?"외전":epLabel(c,e)||e.name,list:galRaw(e),read:isOpen(e.id),up:false}));
+  const free=S.canAdmin&&S.db?S.scens.filter(x=>!x.camp||!campById(x.camp)).sort((a,b)=>(b.lastDay||"").localeCompare(a.lastDay||"")):[];
+  return `<section class="cphero${cv?"":" noimg"}">${cv?`<img src="${esc(cv.u)}" alt="" style="object-position:50% ${+cv.y>=0?cv.y:30}%">`:""}
+      ${S.canAdmin?`<button id="g-edit" class="cped" title="${W} 수정">✎ 수정</button>`:""}
+      <div class="in"><div class="k"><span>${W}</span>${c.system?`<span class="o">${esc(sysLabel(c.system))}</span>`:""}<span class="o">${c.done?"완주":"진행 중"}</span>${c.fix?`<a class="fx" href="${fixHref(c.fix)}">${esc(c.fix)}</a>`:""}</div>
+      <h1>${esc(c.name)}</h1><div class="sub">${[c.orig,days.length?`${dt(days[0]).slice(0,7)} – ${c.done?dt(days.at(-1)).slice(0,7):"지금"}`:""].filter(Boolean).map(esc).join(" · ")}</div>
+      <div class="stat"><div><b>${main.length}</b><span>편</span></div><div><b>${days.length}</b><span>세션</span></div><div><b>${players}</b><span>플레이어</span></div>${posts?`<div><b>${posts}</b><span>게시물</span></div>`:""}</div>
+      <div class="prog"><i style="width:${es.length?Math.round(fin/es.length*100):0}%"></i></div></div></section>
+    ${c.intro?`<div class="sc-sec cpsec"><h4 data-en="STORY">소개</h4><div class="sc-text">${emoize(esc(c.intro)).replace(/\n/g,"<br>")}</div></div>`:""}
+    <div class="sc-sec cpsec"><h4 data-en="CHAPTERS">편 목록 <span class="tip" style="letter-spacing:0">· 오래된 편부터</span></h4>${chap||`<div class="sc-text empty">아직 편이 없어요.</div>`}</div>
+    ${cast?`<div class="sc-sec cpsec"><h4 data-en="CAST">플레이어 · 캐릭터</h4><div class="cast2">${cast}</div></div>`:""}
+    ${S.db&&posts?galHTML(srcs,{newest:1,title:"모든 편의 게시물",en:"GALLERY"}):""}
+    ${S.canAdmin?`<details class="cpown"${es.length?"":" open"}><summary>${W} 관리 <span class="tip">· 주인만</span></summary>
+      <div class="gadd">${c.done?"":`<a class="btnlike pri" href="#up-${esc(c.id)}">＋ 다음 편 올리기</a>`}
+        ${free.length?`<span class="gadd-ex"><select id="g-addsel"><option value="">이미 있는 세션 넣기…</option>${free.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}${x.system?` · ${esc(sysLabel(x.system))}`:""}</option>`).join("")}</select><label class="chk"><input type="checkbox" id="g-addgai"> 외전</label><button class="ghost" id="g-addgo">넣기</button></span>`:""}</div>
+      <div class="tip" style="margin:6px 0 12px">넣은 세션은 마지막 플레이 날짜 순서에 맞춰 들어가요. 순서는 그 세션의 ✎ 수정 → 캠페인 칸에서 바꿔요.</div>
+      <div class="tip">이 비밀번호 하나로 캠페인의 모든 편이 열려요. 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
+      <div class="pwrow"><code class="pw">${esc(S.secrets?.[c.id]||"…")}</code><button class="pri" id="g-copy">링크+비밀번호 복사</button><button class="ghost" id="g-newpw">새로 만들기</button></div></details>`
+      :!open?`<div class="sc-sec"><h4 data-en="ACCESS">${W} 열기</h4><div class="tip">같이 플레이한 친구에게 받은 ${W} 비밀번호를 넣으면 모든 편의 로그가 열려요.</div>
+      <form id="g-unlock" class="pwrow"><input type="text" id="g-pw" placeholder="${W} 비밀번호" autocomplete="off"><button class="pri">열기</button></form><div class="tip" id="g-msg"></div></div>`:""}`;}
 function campPageHTML(){
   const c=campById(S.gid);
   if(c&&isCamp(c))return campPgHTML(c);
@@ -172,20 +207,7 @@ function campPageHTML(){
       </div></div>
       <div class="sc-sec"><h4 data-en="INTRO">소개</h4><textarea id="g-intro" placeholder="${cm?"언제 어디서 모인 캠프인지 적어 주세요 (선택)":"어떤 캠페인인지 적어 주세요 (선택)"}">${esc(c.intro||"")}</textarea></div>
       ${es.length?"":`<div class="sc-sec"><h4 data-en="DELETE">${W} 지우기</h4><div class="tip" style="margin-bottom:8px">${cm?"탁이":"편이"} 하나도 없을 때만 지울 수 있어요.</div><button class="ghost" id="g-del">이 ${W} 지우기</button></div>`}`
-      :`<div class="ckick"><span class="cbadge">${W}</span></div>
-      ${c.fix?fixLineHTML(c.fix,"campline"):""}<div class="sc-top"><h2>${esc(c.name)}${c.orig?`<span class="orig">${esc(c.orig)}</span>`:""}</h2><span class="scmeta">${campTagHTML(c)}${S.canAdmin?`<button id="g-edit" title="${W} 수정" aria-label="${W} 수정">✎<span class="lbl"> 수정</span></button>`:""}</span></div>`}
-    ${!ed&&c.intro?`<div class="sc-sec"><h4 data-en="INTRO">소개</h4><div class="sc-text">${emoize(esc(c.intro)).replace(/\n/g,"<br>")}</div></div>`:""}
-    ${ed?"":`<div class="sc-sec"><h4 data-en="${cm?"TABLES":"EPISODES"}">${cm?"탁 목록":"시나리오 목록"}</h4>${list.map(e=>epRowHTML(c,e)).join("")||`<div class="sc-text empty">아직 ${cm?"탁이":"편이"} 없어요.</div>`}
-      ${S.canAdmin&&S.db?(()=>{const free=S.scens.filter(x=>!x.camp||!campById(x.camp)).sort((a,b)=>(b.lastDay||"").localeCompare(a.lastDay||""));
-        return `<div class="gadd">${c.done&&!cm?"":`<a class="btnlike pri" href="#up-${esc(c.id)}">${cm?"＋ 탁 올리기":"＋ 다음 시나리오 올리기"}</a>`}
-          ${free.length?`<span class="gadd-ex"><select id="g-addsel"><option value="">이미 있는 세션 넣기…</option>${free.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}${x.system?` · ${esc(sysLabel(x.system))}`:""}</option>`).join("")}</select>${cm?"":`<label class="chk"><input type="checkbox" id="g-addgai"> 외전</label>`}<button class="ghost" id="g-addgo">넣기</button></span>`:""}</div>
-          <div class="tip" style="margin-top:6px">${cm?"넣은 탁은 플레이 날짜 순서로 보여요.":"넣은 세션은 마지막 플레이 날짜 순서에 맞춰 들어가요. 순서는 그 세션의 ✎ 수정 → 캠페인 칸에서 바꿔요."}</div>`;})():""}</div>
-    ${rows.length?`<div class="sc-sec"><h4 data-en="CAST">플레이어별 캐릭터</h4>${rows.map(r=>`<div class="prow"><b>${esc(r.who)}</b><div class="runs">${r.runs.map(x=>`<div class="run"><span class="rc" style="--c:${x.c}">${x.ch?esc(x.ch):`<span class="tip">캐릭터 미정</span>`}</span><span class="rr">${esc(x.r)}</span>${x.pc&&r.who!=="GM"?`<span class="rp">${esc(x.pc)}</span>`:""}</div>`).join("")}${r.miss?`<div class="run off"><span class="rr">${esc(r.miss)} 불참</span></div>`:""}</div></div>`).join("")}</div>`:""}
-    ${S.canAdmin?`<div class="sc-sec"><h4 data-en="ACCESS">${W} 비밀번호 <span class="tip" style="letter-spacing:0">· 주인만 보여요</span></h4>
-      <div class="tip">이 비밀번호 하나로 ${cm?"캠프의 모든 탁이":"캠페인의 모든 편이"} 열려요. 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
-      <div class="pwrow"><code class="pw">${esc(S.secrets?.[c.id]||"…")}</code><button class="pri" id="g-copy">링크+비밀번호 복사</button><button class="ghost" id="g-newpw">새로 만들기</button></div></div>`
-      :!open?`<div class="sc-sec"><h4 data-en="ACCESS">${W} 열기</h4><div class="tip">같이 플레이한 친구에게 받은 ${W} 비밀번호를 넣으면 모든 ${cm?"탁":"편"}의 로그가 열려요.</div>
-      <form id="g-unlock" class="pwrow"><input type="text" id="g-pw" placeholder="${W} 비밀번호" autocomplete="off"><button class="pri">열기</button></form><div class="tip" id="g-msg"></div></div>`:""}`}
+      :campViewHTML(c,es,rows,open)}
     <div class="homefoot"><button class="ghost ownonly" onclick="location.hash=''">← 목록</button><span style="flex:1"></span><span class="authbox"></span></div>
   </div>`;
 }
@@ -264,6 +286,7 @@ function bindCamp(){
   const c=campById(S.gid);renderAuth&&renderAuth();if(!c)return;
   if(isCamp(c)&&!campOpen(c)){const inp=$("#g-pw");if(inp)setTimeout(()=>inp.focus(),0);}
   if(isCamp(c)&&!S.campEdit&&campOpen(c))bindRevs(campSc(c));
+  if(!isCamp(c)&&!S.campEdit&&S.db&&document.querySelector('.campage .galsec'))bindGal(campEps(c).map(e=>({id:e.id,kind:"sc",label:e.gaiden?"외전":epLabel(c,e)||e.name,list:galRaw(e),read:isOpen(e.id),up:false})));
   const e=$("#g-edit");if(e)e.onclick=()=>{S.campEdit=true;render();};
   const x=$("#g-x");if(x)x.onclick=()=>{S.campEdit=false;S.campOg=undefined;render();};
   {const up=$("#g-ogup"),fi=$("#g-ogfile"),pv=$("#g-ogprev"),dl=$("#g-ogdel");
