@@ -1287,3 +1287,18 @@ body.nfmodal-on{overflow:hidden}
 .nfmodal .nav button{flex:none;background:#242424!important;color:#ccc!important;border:0!important;border-radius:999px!important;padding:5px 14px;font-size:13px;box-shadow:inset 3px 0 var(--c)}
 .nfmodal .nav button.on{background:#e5e5e5!important;color:#141414!important}
 @media(max-width:760px){.nfmodal{padding:0;align-items:flex-end}.nfmodal .box{grid-template-columns:1fr;max-height:92vh;border-radius:12px 12px 0 0}.nfmodal .pic{min-height:240px;max-height:300px;border-radius:12px 12px 0 0}.nfmodal .info{padding:22px 20px}.nfmodal h2{font-size:30px}}
+/* 짭플릭스 페어·고정탁 모바일: 그림을 위에 크게 · 출연 줄 */
+.nfcastrow{display:none}
+@media(max-width:760px){
+  .nfx.pair .nfhero{padding-top:250px}.nfx.pair .nfhero .bg{height:330px}
+  .nfx .nfhero::before{background:linear-gradient(rgba(0,0,0,.35),transparent 30%,transparent 170px,#141414 330px)!important}
+  .nfx .nfhero .nfcast{display:none}
+  .nfcastrow{display:block;margin-top:18px}
+  .nfcastr{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .nfcastr button{display:flex;align-items:center;gap:10px;background:#1f1f1f!important;border:0!important;border-radius:6px!important;padding:8px 10px 8px 8px;text-align:left;color:#eee!important;box-shadow:inset 3px 0 var(--c);min-width:0}
+  .nfcastr img,.nfcastr i{width:44px;height:44px;border-radius:50%;object-fit:cover;flex:none;display:grid;place-items:center;background:var(--c);color:#fff;font:900 18px "Noto Sans KR",sans-serif;font-style:normal}
+  .nfcastr span{flex:1;min-width:0}.nfcastr b{display:block;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nfcastr small{display:block;font-size:11.5px;color:#8a8a8a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nfcastr em{font-style:normal;color:#8a8a8a;font-size:18px}
+  .nfx .nfrow{margin-bottom:28px}
+}
+body.axskin .nfcastrow{display:none!important}
