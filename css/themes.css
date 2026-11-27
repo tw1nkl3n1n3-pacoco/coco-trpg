@@ -906,3 +906,104 @@ body.nfskin .nfpf b{font-size:18px}body.nfskin .nfpf small{font-size:12.5px}body
 body.nfskin .nftl .t{font-size:15.5px}body.nfskin .nftl .t small{font-size:12.5px}body.nfskin .nftl .tl li>.d{font-size:14px}
 body.nfskin .nfpplw b{font-size:13px}
 body.nfskin .nfnav{font-size:14px}
+/* 검수 수정 */
+.nfnav .logo,.nfnav a{text-decoration:none!important}
+.nfcd b{bottom:24px!important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.nfcd small{right:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nffoot{flex-wrap:wrap;row-gap:8px}.nffoot>*{white-space:nowrap}.nffoot .authbox{display:flex;gap:10px;flex-wrap:wrap}
+@media(hover:none),(max-width:760px){.nfx .nfcards,.nfx .nfposts .galg,.nfpplw{scrollbar-width:none}.nfx .nfcards::-webkit-scrollbar,.nfx .nfposts .galg::-webkit-scrollbar,.nfpplw::-webkit-scrollbar{display:none}}
+@media(max-width:760px){
+  .nfhome{padding-top:250px}.nfhome .bg{height:380px}
+  .nfsite .nfhome::before{background:linear-gradient(rgba(0,0,0,.45),transparent 25%,transparent 160px,#141414 380px)}
+  .nfsite .nfcards{grid-auto-columns:64%}
+  .nfin h1{font-size:clamp(34px,10vw,48px)!important}
+  body[data-theme=nf] .schero-t{left:5%;right:5%;bottom:8%;max-width:none;flex-wrap:wrap}
+  body[data-theme=nf] .schero-t h2{font-size:clamp(30px,9vw,42px)!important}
+  body[data-theme=nf] .sc-page{padding-left:12px;padding-right:12px}
+  .nftops{grid-template-columns:repeat(5,44%)}
+}
+/* ══════ 어카이브 (사이트 테마 skin=ax): 밝은 회백 바탕 · 흰 판 · 가는 선 · 각진 모서리 · 라임 포인트 · 영문 모노 라벨 ══════ */
+body[data-theme=ax]{--bg:#f2f3f0;--panel:#fff;--panel2:#fafbf7;--line:#dcdfdc;--ink:#14171c;--dim:#6b717b;--faint:#9aa0a8;--acc:#5f7d00;--acc2:#14171c;--sel:#f1fbd0;--play:#eef7d6;--gold:#5f7d00;--ok:#3f8f2a;--bad:#c0392b;
+  --axl:#c8f031;--axm:"Chakra Petch","Noto Sans KR",system-ui,sans-serif;background:#f2f3f0;color:#14171c;font-family:"Noto Sans KR",system-ui,sans-serif}
+body[data-theme=ax] h1,body[data-theme=ax] h2,body[data-theme=ax] h3,body[data-theme=ax] h4{font-family:"Noto Sans KR",system-ui,sans-serif;color:#14171c;font-style:normal;letter-spacing:-.02em}
+body[data-theme=ax] a{color:#14171c}
+body[data-theme=ax] button,body[data-theme=ax] .btnlike,body[data-theme=ax] input,body[data-theme=ax] textarea,body[data-theme=ax] select{border-radius:0}
+body[data-theme=ax] button,body[data-theme=ax] .btnlike{background:#fff;color:#14171c;border:1px solid #dcdfdc}
+body[data-theme=ax] button:hover,body[data-theme=ax] .btnlike:hover{border-color:#14171c}
+body[data-theme=ax] button.pri,body[data-theme=ax] .btnlike.pri{background:#14171c;color:#c8f031;border-color:#14171c;font-weight:700}
+body[data-theme=ax] button.pri:hover{background:#2a2e35}
+body[data-theme=ax] button.ghost,body[data-theme=ax] .ghost{background:transparent;border-color:transparent;color:#6b717b}
+body[data-theme=ax] input,body[data-theme=ax] textarea,body[data-theme=ax] select{background:#fff;border:1px solid #dcdfdc;color:#14171c}
+body[data-theme=ax] .tip{color:#9aa0a8}
+body[data-theme=ax] .notice{border-radius:0;background:#fff;border:1px solid #dcdfdc}
+/* 헤더: 가는 선 + 라임 마름모 */
+body[data-theme=ax] header,body[data-theme=ax] #pbar{background:#f2f3f0;border-bottom:1px solid #dcdfdc;box-shadow:none;--ink:#14171c;--dim:#6b717b;--faint:#9aa0a8;--line:#dcdfdc;--panel:#fff;--panel2:#fafbf7;--acc:#5f7d00;color:#14171c}
+body[data-theme=ax] header h1{display:flex;align-items:center;gap:10px;font-weight:700;color:#14171c!important}
+body[data-theme=ax] header h1::before{content:"";width:16px;height:16px;background:#c8f031;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);flex:none}
+body[data-theme=ax] .pchip{border-radius:0!important;background:#fff!important;color:#6b717b!important;border:1px solid #dcdfdc!important;font-family:var(--axm)}
+body[data-theme=ax] .pchip.on{background:#14171c!important;color:#c8f031!important;border-color:#14171c!important}
+/* 판: 흰 판 · 각진 · 가는 선 */
+body[data-theme=ax] .card,body[data-theme=ax] .sc-sec{background:#fff;border:1px solid #dcdfdc;border-radius:0;box-shadow:none;clip-path:none}
+/* 섹션 제목: 01 · 한글 제목 · ENGLISH (세션 페이지 등) */
+body[data-theme=ax] .sc-page{counter-reset:axs}
+body[data-theme=ax] .sc-sec h4{counter-increment:axs;display:flex;align-items:baseline;gap:10px;font-size:19px;font-weight:700;border:0;padding:0 0 10px;margin:0 0 12px;border-bottom:1px solid #dcdfdc;color:#14171c;letter-spacing:-.02em}
+body[data-theme=ax] .sc-sec h4::before{content:counter(axs,decimal-leading-zero);display:inline!important;position:static!important;font:600 12px var(--axm);letter-spacing:.08em;color:#5f7d00;background:none!important;width:auto;height:auto}
+body[data-theme=ax] .sc-sec h4[data-en]::after{content:attr(data-en);display:inline!important;position:static!important;margin-left:auto;font:600 11px var(--axm);letter-spacing:.12em;color:#9aa0a8;background:none!important;width:auto;height:auto}
+body[data-theme=ax] .sc-sec h4 .tip{font-size:12.5px;font-weight:400}
+/* 세션 첫 화면: 그림 + 흰 제목판 */
+body[data-theme=ax] .schero{border:1px solid #dcdfdc;border-radius:0;margin-top:0;max-height:420px}
+body[data-theme=ax] .schero-t{background:#fff!important;color:#14171c;border-top:1px solid #dcdfdc;padding:16px 20px!important;--ink:#14171c}
+body[data-theme=ax] .schero-t h2{color:#14171c!important;font-size:clamp(28px,4vw,44px)!important;font-weight:700;letter-spacing:-.03em}
+body[data-theme=ax] .schero-t .orig,body[data-theme=ax] .sc-top h2 .orig{color:#6b717b!important;font:500 14px var(--axm);letter-spacing:.04em;display:block;margin-top:4px}
+body[data-theme=ax] .schero-t #scedit,body[data-theme=ax] .schero-t #scbook{background:#fff;color:#14171c;border-color:#dcdfdc}
+body[data-theme=ax] .sc-top{border-bottom:1px solid #dcdfdc;padding:30px 0 16px}
+body[data-theme=ax] .sc-top h2{font-size:clamp(34px,5vw,60px);font-weight:700;letter-spacing:-.04em}
+body[data-theme=ax] .sys[data-th],body[data-theme=ax] .sys{background:#14171c!important;color:#c8f031!important;border:0!important;border-radius:0!important;box-shadow:none!important;clip-path:none!important;font:600 11.5px var(--axm)!important;letter-spacing:.06em!important;padding:2px 9px!important}
+body[data-theme=ax] .nth{background:#14171c!important;color:#c8f031!important;border-radius:0!important;font-family:var(--axm)}
+body[data-theme=ax] .odate,body[data-theme=ax] .day .lbl{font-family:var(--axm);font-weight:600}
+body[data-theme=ax] .day{border-color:#e6e8e5}body[data-theme=ax] .day:hover{background:#fafbf7}
+body[data-theme=ax] .sc-text{font-size:15.5px;line-height:1.85;color:#2a2e35}
+body[data-theme=ax] .campline{color:#6b717b}
+/* 로그: 흰 판 · 이름은 캐릭터 색 · 시간은 모노 */
+body[data-theme=ax] aside{background:#f2f3f0;border-right:1px solid #dcdfdc}
+body[data-theme=ax] aside .foldh{border-radius:0;background:#fff;border:1px solid #dcdfdc}
+body[data-theme=ax] #log{background:#fff;border:1px solid #dcdfdc;border-radius:0;box-shadow:none}
+body[data-theme=ax] #log .who{color:color-mix(in srgb,var(--c) 80%,#000);font-weight:700}
+body[data-theme=ax] #log .ts{font-family:var(--axm);color:#9aa0a8}
+body[data-theme=ax] #log .tx{font-size:16px;line-height:1.8;color:#14171c}
+body[data-theme=ax] #log .row:hover{background:#fafbf7}
+body[data-theme=ax] #log .row.sel{background:#f1fbd0;border-color:#c8f031}
+body[data-theme=ax] #log .row.gm .tx{color:#3b4048;font-style:italic}
+body[data-theme=ax] .gmtag{background:#14171c;color:#c8f031;-webkit-text-fill-color:#c8f031;border-radius:0;font-family:var(--axm)}
+body[data-theme=ax] #log .row.sec .tx{font-weight:700;font-style:normal;color:#14171c}
+body[data-theme=ax] #log .row.sec.l1 .tx{font-size:22px;text-align:left;padding:20px 0 8px;border-bottom:1px solid #dcdfdc}
+body[data-theme=ax] #log .row.sec.l1 .tx .ln::before{content:"▲ CHAPTER";display:block;font:600 11px var(--axm);letter-spacing:.14em;color:#5f7d00;margin-bottom:2px}
+body[data-theme=ax] #log .row.sec.l2 .tx{border-left:4px solid #c8f031;padding-left:10px;font-size:17px}
+body[data-theme=ax] #log .row.dice .tx{background:#fafbf7;border:1px solid #dcdfdc;border-radius:0;clip-path:none;box-shadow:none;color:#14171c;font-family:var(--axm)}
+body[data-theme=ax] #log .row.dice .dr{color:#5f7d00;font-weight:700}
+body[data-theme=ax] .dres{border-radius:0;font-family:var(--axm);font-style:normal}
+body[data-theme=ax] .dres.success{background:#c8f031;color:#14171c}body[data-theme=ax] .dres.critical{background:#14171c;color:#c8f031}body[data-theme=ax] .dres.failure{background:#e6e8e5;color:#3b4048}body[data-theme=ax] .dres.fumble{background:#fff;color:#c0392b;box-shadow:inset 0 0 0 1px #c0392b}
+body[data-theme=ax] #log .row.hand .body{background:#fafbf7;border:1px solid #dcdfdc;border-radius:0;box-shadow:none;clip-path:none}
+body[data-theme=ax] #log .row.hand .hlab{background:#14171c;color:#c8f031;border-radius:0;font-family:var(--axm)}
+body[data-theme=ax] #log button.who,body[data-theme=ax] #log button.ts{background:transparent!important;border-color:transparent!important}
+/* 후기 · 갤러리 글: 흰 종이 */
+body[data-theme=ax] .rvcard{border-radius:0;box-shadow:0 0 0 1px #dcdfdc,8px 8px 0 #c8f031}
+body[data-theme=ax] .glpaper{box-shadow:0 0 0 1px #dcdfdc,8px 8px 0 #c8f031;background:#fff}
+body[data-theme=ax] .txtc{background:#fff;border:1px solid #dcdfdc}
+/* 캠페인 페이지 */
+body[data-theme=ax] .cphero{background:#fff!important;color:#14171c!important;border:1px solid #dcdfdc;border-radius:0!important;box-shadow:none!important}
+body[data-theme=ax] .cphero *{--ink:#14171c}
+body[data-theme=ax] .cphero h1{color:#14171c!important;font-size:clamp(32px,4.6vw,56px);letter-spacing:-.04em}
+body[data-theme=ax] .cphero .n,body[data-theme=ax] .cphero b{font-family:var(--axm);color:#14171c!important}
+body[data-theme=ax] .cep2 .n,body[data-theme=ax] .cpsec .n{font-family:var(--axm)!important;color:#5f7d00!important}
+body[data-theme=ax] .pc2{border-radius:0!important}
+/* 위아래 여백·글자 */
+body[data-theme=ax] .homefoot{border-top:1px solid #dcdfdc}
+@media(max-width:760px){body[data-theme=ax] .sc-sec h4[data-en]::after{display:none!important}}
+body[data-theme=ax] .cphero *:not(img),body[data-theme=ax] .cep2 *:not(img),body[data-theme=ax] .sc-page details,body[data-theme=ax] .pc2 *{border-radius:0!important}
+body[data-theme=ax] .cphero .st,body[data-theme=ax] .cphero span[class]{font-family:var(--axm)}
+body[data-theme=ax] #log .row.gm{background:#f7f8f4}body[data-theme=ax] #log .row.gm:hover{background:#f1f3ec}body[data-theme=ax] #log .row.gm.sel{background:#f1fbd0}
+body[data-theme=ax] #log .row.gm .who{color:#14171c}
+body[data-theme=ax] #log .row .body{border-left-color:#e6e8e5}body[data-theme=ax] #log .row.gm .body{border-left-color:#c8f031}
+body[data-theme=ax] #log .row{border-radius:0}
+@media(max-width:760px){body[data-theme=ax] .sc-top,body[data-theme=nf] .sc-top{flex-wrap:wrap}body[data-theme=ax] .sc-top h2,body[data-theme=nf] .sc-top h2{flex:1 1 100%}}

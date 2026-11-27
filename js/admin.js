@@ -92,8 +92,8 @@ function adminHTML(){
           <input type="text" id="s-icon" value="${isImgIcon(st.icon)?"":esc(st.icon)}" placeholder="예: 🎲" style="width:80px">
           <button type="button" id="s-up">이미지 올리기</button><button type="button" class="ghost" id="s-clr">없애기</button>
           <input type="file" id="s-file" accept="image/*" style="display:none"></div>
-        <label>사이트 테마 · 짭플릭스로 바꿔도 언제든 기본으로 되돌릴 수 있어요</label>
-        <select id="s-skin"><option value=""${st.skin==="nf"?"":" selected"}>기본 (시스템마다 테마)</option><option value="nf"${st.skin==="nf"?" selected":""}>짭플릭스 (사이트 전체 어둡게 · 넷플릭스식)</option></select>
+        <label>사이트 테마 · 짭플릭스·어카이브로 바꿔도 언제든 기본으로 되돌릴 수 있어요</label>
+        <select id="s-skin"><option value=""${st.skin==="nf"?"":" selected"}>기본 (시스템마다 테마)</option><option value="nf"${st.skin==="nf"?" selected":""}>짭플릭스 (사이트 전체 어둡게 · 넷플릭스식)</option><option value="ax"${st.skin==="ax"?" selected":""}>어카이브 (사이트 전체 밝은 기록 보관소)</option></select>
         <label>홈 테마 · 기본 사이트 테마일 때</label><select id="s-home"><option value=""${st.home==="x"?"":" selected"}>기본</option><option value="x"${st.home==="x"?" selected":""}>아카이브 (밝은 플랫 · 3줄 카드)</option></select>
         <label>내 닉네임 · 여러 개면 쉼표로 (예: AA, BB) · 세션마다 이 이름의 플레이어가 자동으로 '나'가 돼요</label>
         <input type="text" id="s-nicks" value="${esc((st.nicks||[]).join(", "))}" placeholder="AA, BB">

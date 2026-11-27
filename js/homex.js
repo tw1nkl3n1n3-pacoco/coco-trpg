@@ -1,6 +1,7 @@
 // 코코 로그방 · 홈 '아카이브' 테마 (관리 → 홈 테마에서 고름 · 기본 홈과 검색·데이터는 같고 모양만 달라요)
 // (js/ 파일들은 한 덩어리처럼 이어서 읽어요 · 순서는 index.html)
-function isHX(){return site().home==="x";}
+function isHX(){return site().skin==="ax"||(site().home==="x"&&site().skin!=="nf");}
+function isAX(){return site().skin==="ax";}
 const HX_COL={wa:"#e8484b",dx:"#e6336f",deco:"#f09a1a",coc:"#14b48a"};
 function hxCol(sc){return HX_COL[themeOf(sc)]||"#8892a0";}
 function hxDot(d){return d?d.replace(/-/g,"."):"";}

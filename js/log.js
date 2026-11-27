@@ -59,6 +59,11 @@ function jgBox(box,bg,acc){const st=document.body.style,on=!!(box&&/^#[0-9a-f]{6
   if(/^#[0-9a-f]{6}$/i.test(c))for(let t=0.1;jgCon(c,box)<3&&t<1;t+=0.1)c=mix(jgCon(acc,box)>=jgCon(bg,box)?acc:bg,tx,t);st.setProperty("--jboxacc",c);}
 function applyTheme(){{const sc=S.cid?scenById(S.cid):S.sid&&S.meta?curScen():S.gid?campById(S.gid):null;if(sc&&gmAb(sc)==="KP")document.body.dataset.kp="1";else delete document.body.dataset.kp;}
 document.body.classList.toggle("own",!!S.canAdmin);
+  // 어카이브(사이트 테마): 리플레이북·페어/고정탁(각자 디자인) 빼고 밝은 기록 보관소 테마
+  const axOn=typeof isAX==="function"&&isAX()&&!S.book&&!S.mbook&&!(S.fix&&!S.sid&&!S.cid&&!S.gid);document.body.classList.toggle("axskin",axOn);
+  if(axOn){if(document.body.dataset.theme!=="ax")document.body.dataset.theme="ax";["--ja","--jb","--jbg","--jacc","--jtx","--jdk","--jdisp","--jhk"].forEach(k=>document.body.style.removeProperty(k));
+    const home=!S.gid&&!S.cid&&!S.sid&&!S.revPage&&!S.postPage&&!S.admin&&!S.up;document.body.classList.toggle("hxhome",home);document.documentElement.classList.toggle("hxhome",home);
+    document.body.dataset.page=S.postPage?"post":S.gid?"scen":S.revPage?"scen":S.cid?"scen":S.sid?"log":S.admin?"admin":S.up?"up":"home";return;}
   // 짭플릭스(사이트 테마): 리플레이북(종이)만 빼고 모두 어두운 nf 테마 · 페어·고정탁은 jg 위에 넷플릭스 화면
   const nfOn=typeof isNF==="function"&&isNF()&&!S.book&&!S.mbook;document.body.classList.toggle("nfskin",nfOn);
   if(nfOn&&!(S.fix&&!S.sid&&!S.cid&&!S.gid)){if(document.body.dataset.theme!=="nf")document.body.dataset.theme="nf";["--ja","--jb","--jbg","--jacc","--jtx","--jdk","--jdisp","--jhk"].forEach(k=>document.body.style.removeProperty(k));document.body.classList.remove("hxhome");document.documentElement.classList.remove("hxhome");
