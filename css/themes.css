@@ -1007,3 +1007,5 @@ body[data-theme=ax] #log .row.gm .who{color:#14171c}
 body[data-theme=ax] #log .row .body{border-left-color:#e6e8e5}body[data-theme=ax] #log .row.gm .body{border-left-color:#c8f031}
 body[data-theme=ax] #log .row{border-radius:0}
 @media(max-width:760px){body[data-theme=ax] .sc-top,body[data-theme=nf] .sc-top{flex-wrap:wrap}body[data-theme=ax] .sc-top h2,body[data-theme=nf] .sc-top h2{flex:1 1 100%}}
+@media(max-width:760px){body[data-theme=ax] .schero-t{flex-wrap:wrap}body[data-theme=ax] .schero-t h2{flex:1 1 100%}}
+body[data-theme=ax] .schero .fxchip,body[data-theme=ax] .schero a[href^="#f-"]{border-radius:0!important}
