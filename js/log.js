@@ -53,7 +53,10 @@ function jgLum(h){const m=String(h||"").match(/^#?([0-9a-f]{6})$/i);if(!m)return
 function jgCon(a,b){const x=jgLum(a),y=jgLum(b);return (Math.max(x,y)+0.05)/(Math.min(x,y)+0.05);}
 function jgBox(box,bg,acc){const st=document.body.style,on=!!(box&&/^#[0-9a-f]{6}$/i.test(box));document.body.classList.toggle("jbox",on);
   if(!on){["--jbox","--jboxtx","--jboxacc"].forEach(k=>st.removeProperty(k));return;}
-  st.setProperty("--jbox",box);st.setProperty("--jboxtx",jgLum(box)>0.3?"#141414":"#f1efe9");st.setProperty("--jboxacc",jgCon(acc,box)>=jgCon(bg,box)?acc:bg);}
+  const tx=jgLum(box)>0.3?"#141414":"#f1efe9";st.setProperty("--jbox",box);st.setProperty("--jboxtx",tx);
+  // 포인트·바탕 둘 다 상자에서 흐리면 글자색 쪽으로 진하게 섞어서 읽히게
+  let c=jgCon(acc,box)>=jgCon(bg,box)?acc:bg;const mix=(a,b,t)=>{const p=x=>parseInt(x.slice(1),16),A=p(a),B=p(b),ch=s=>Math.round(((A>>s)&255)*(1-t)+((B>>s)&255)*t);return "#"+((ch(16)<<16)|(ch(8)<<8)|ch(0)).toString(16).padStart(6,"0");};
+  if(/^#[0-9a-f]{6}$/i.test(c))for(let t=0.1;jgCon(c,box)<3&&t<1;t+=0.1)c=mix(jgCon(acc,box)>=jgCon(bg,box)?acc:bg,tx,t);st.setProperty("--jboxacc",c);}
 function applyTheme(){{const sc=S.cid?scenById(S.cid):S.sid&&S.meta?curScen():S.gid?campById(S.gid):null;if(sc&&gmAb(sc)==="KP")document.body.dataset.kp="1";else delete document.body.dataset.kp;}
 document.body.classList.toggle("own",!!S.canAdmin);
   {const hx=!S.gid&&!S.cid&&!S.sid&&!S.revPage&&!S.postPage&&!S.admin&&!S.up&&!S.book&&!S.mbook&&!S.fix&&isHX();if(document.body.classList.contains("hxhome")!==hx){document.body.classList.toggle("hxhome",hx);document.documentElement.classList.toggle("hxhome",hx);}}
