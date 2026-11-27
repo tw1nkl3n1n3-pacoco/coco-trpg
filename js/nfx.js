@@ -20,8 +20,7 @@ function nfPageHTML(f){const pair=jgPair(f),d=jgDoc(f),fields=d.fields&&d.fields
   const last=data.days.at(-1),lastG=last?data.gs.find(g=>g.days.some(x=>x.day===last)):null,code=fixCode(f)||encodeURIComponent(f);
   const meta=[last?`<span class="new">최근 세션 ${esc(jgDot(last.slice(5)))}</span>`:"",data.days.length?`<span>${esc(jgDot(data.days[0]).slice(0,7))} –</span>`:"",sys?`<span class="bx">${esc(sys)}</span>`:"",`<span>이야기 ${data.stories}</span>`,`<span>세션 ${data.days.length}</span>`,data.days.length?`<span>함께한 날 ${jgDaysSince(data.days[0])}</span>`:""].join("");
   const line=pair?d.rel:d.tag;
-  const right=pair?`<div class="nfduo">${mem.map(m=>m.q.cut?.u?`<div style="--c:${m.c}"><img src="${esc(m.q.cut.u)}" alt=""><b>${esc(m.nm)}</b><small>${esc(m.en)}</small></div>`:"").join("")}</div>`
-    :`<div class="nfcast">${mem.map(m=>`<button type="button" data-nfgo="${esc(m.n)}" style="--c:${m.c}">${m.q.icon?.u?`<img src="${esc(m.q.icon.u)}" alt="">`:`<i>${esc(m.nm.slice(0,1))}</i>`}<b>${esc(m.nm)}</b><small>${esc(m.n)}</small></button>`).join("")}</div>`;
+  const right=`<div class="nfcast">${mem.map(m=>`<button type="button" data-nfgo="${esc(m.n)}" style="--c:${m.c}">${m.q.icon?.u?`<img src="${esc(m.q.icon.u)}" alt="">`:`<i>${esc(m.nm.slice(0,1))}</i>`}<b>${esc(m.nm)}</b><small>${esc(m.n)}</small></button>`).join("")}</div>`;
   const st=nfStories(f,data);
   return `<div class="jgp nfx${pair?" pair":""}">
     <section class="nfhero">${ban?.u?`<img class="bg" src="${esc(ban.u)}" alt="" style="object-position:50% ${+ban.y>=0?+ban.y:40}%">`:`<div class="bg empty"></div>`}
@@ -29,10 +28,10 @@ function nfPageHTML(f){const pair=jgPair(f),d=jgDoc(f),fields=d.fields&&d.fields
         <div class="meta">${meta}</div>${line?`<p>${esc(line)}</p>`:""}
         <div class="btns">${lastG?`<a class="b1" href="#c-${esc(lastG.sc.id)}">▶ 최근 로그</a>`:""}${st.length?`<a class="b2" href="#mb-f-${esc(code)}">📖 리플레이북</a>`:""}</div></div>
       ${right}</section>
-    <div class="nfrow"><h3>${pair?"두 사람":"멤버"}</h3><div class="nfpfs${pair?" two":""}">${mem.map(m=>`<div id="nfm-${esc(m.n)}">${nfCard(m,fields)}</div>`).join("")}</div></div>
     <div class="nfrow"><h3>${pair?"함께한 이야기":"이야기"} <small>오래된 것부터</small>${st.length?`<a href="#mb-f-${esc(code)}">리플레이북 합본 ›</a>`:""}</h3>
       ${st.length?`<div class="nfcards">${st.map(s=>`<a class="nfcd" href="${esc(s.href)}">${s.cv?`<img src="${esc(s.cv)}" alt="" loading="lazy">`:""}${s.tag?`<span class="tp">${esc(s.tag)}</span>`:""}<b>${esc(s.name)}</b><small>${esc(s.sub)}</small><span class="pg"><i style="width:${s.pg}%"></i></span></a>`).join("")}</div>`:`<div class="empty">아직 세션이 없어요</div>`}</div>
-    <div class="nfrow nftl">${jgTimelineHTML(f,data,items)}</div>
+    <div class="nfrow nfsplit"><div><h3>${pair?"두 사람":"멤버"}</h3><div class="nfpfs">${mem.map(m=>`<div id="nfm-${esc(m.n)}">${nfCard(m,fields)}</div>`).join("")}</div></div>
+      <div class="nftl">${jgTimelineHTML(f,data,items)}</div></div>
     <div class="nfrow nfposts">${postsH}</div>
     <div class="nfrow nfend">
       ${S.canAdmin?`<div class="jgtop jgbot"><a class="ghost ownonly" href="#">← 첫 화면</a><a class="ghost" href="#f-${esc(code)}">지금 디자인으로 보기</a><span style="flex:1"></span><button type="button" class="jged" id="jgedit">${S.jgEdit?"✕ 수정 닫기":`✎ ${W} 수정`}</button></div>`:""}
