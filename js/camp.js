@@ -22,7 +22,7 @@ function epStatus(sc){const n=groups().find(g=>g.scen===sc.name)?.days.length||s
 function epRowHTML(c,sc){const cm=isCamp(c),diff=sc.system&&(cm||sysLabel(sc.system)!==sysLabel(c.system||""));
   return `<div class="cep"><span class="en${sc.gaiden&&!cm?" gai":""}">${cm?esc((sc.lastDay||"").slice(5).replace("-","/")):esc(epLabel(c,sc))}</span><a href="#c-${esc(sc.id)}" class="et">${esc(sc.name)}</a>${diff?`<span class="sys" data-th="${themeOf(sc)}">${esc(sysLabel(sc.system))}</span>`:""}${epStatus(sc)}</div>`;}
 // 고정탁: 같은 인선으로 쭉 이어가는 탁에 붙이는 이름 (시나리오·캠페인에 붙여요) · 누르면 첫 화면에서 그 고정탁만
-function fixLineHTML(f,cls="fixline"){return `<div class="${cls}"><a href="#f-${encodeURIComponent(f)}" title="고정탁 ${esc(f)}">${esc(f)}</a></div>`;}
+function fixLineHTML(f,cls="fixline"){return `<div class="${cls}"><a href="${fixHref(f)}" title="고정탁 ${esc(f)}">${esc(f)}</a></div>`;}
 function allFixes(){return [...new Set([...S.scens.map(x=>x.fix),...S.camps.map(x=>x.fix)].map(x=>(x||"").trim()).filter(Boolean))];}
 function fixListHTML(){return `<datalist id="fixlist">${allFixes().map(x=>`<option value="${esc(x)}">`).join("")}</datalist>`;}
 // 아카이브 카드 안의 고정탁 태그(카드 링크 안이라 따로 잡아요) → 고정탁 페이지
@@ -30,11 +30,16 @@ document.addEventListener("click",ev=>{const a=ev.target.closest("[data-fix]");i
 // 고정탁 페이지: 이 고정탁의 시나리오·캠페인 카드(첫 화면과 같은 카드)와 멤버·기간
 // 고정탁 비밀번호: secrets/fx_이름 하나 · 고정탁 안의 모든 세션·캠페인 비밀번호를 이걸로 맞춰요 (주인 브라우저가 자동으로)
 function fixKey(f){return "fx_"+encodeURIComponent(f);}
+// 고정탁·페어 짧은 주소: 사이트 문서 fixIds = {이름: 코드} · #f-코드 (예전 #f-이름 주소도 그대로 열려요)
+function fixCode(f){return (site().fixIds||{})[f]||"";}
+function fixHref(f){return "#f-"+(fixCode(f)||encodeURIComponent(f));}
+function fixByCode(c){const m=site().fixIds||{};return Object.keys(m).find(k=>m[k]===c)||"";}
+function fixFromHash(raw){return fixByCode(raw)||(()=>{try{return decodeURIComponent(raw);}catch(e){return raw;}})();}
 function fixOfScen(sc){return (sc&&(sc.fix||(campOf(sc)&&campOf(sc).fix)))||"";}
 function fixPwIds(f){return [...new Set([...S.scens.filter(x=>(x.fix||"")===f).map(pwOf),...S.camps.filter(c=>(c.fix||"")===f).map(c=>c.id)].filter(Boolean))];}
 function fixCount(f){return S.scens.filter(x=>(x.fix||"")===f&&!(x.camp&&campById(x.camp)&&campById(x.camp).fix===f)).length+S.camps.filter(c=>(c.fix||"")===f).length;}
 function fixOpen(f){if(S.canAdmin)return true;const ids=fixPwIds(f);return ids.length>0&&ids.every(id=>campById(id)?campOpen(campById(id)):isOpen(id));}
-function fixTagsHTML(){const fs=allFixes().sort((a,b)=>a.localeCompare(b,"ko"));return fs.length?`<div class="fxtags">${fs.map(f=>`<a href="#f-${encodeURIComponent(f)}">${esc(f)}<small>${fixCount(f)}</small></a>`).join("")}</div>`:"";}
+function fixTagsHTML(){const fs=allFixes().sort((a,b)=>a.localeCompare(b,"ko"));return fs.length?`<div class="fxtags">${fs.map(f=>`<a href="${fixHref(f)}">${esc(f)}<small>${fixCount(f)}</small></a>`).join("")}</div>`:"";}
 // 멤버가 2명이면 페어(1:1 자캐 관계)으로 불러요
 function fixPeople(f){const ns=new Set();S.scens.filter(x=>fixOfScen(x)===f).forEach(sc=>(sc.sp||[]).forEach(p=>{if(p.chr&&!p.ch||isAnon(p)||/&/.test(p.name||""))return;ns.add(pcSplit(p.name).name);}));return ns;}
 function fixPeopleList(f){const m={};S.scens.filter(x=>fixOfScen(x)===f).forEach(sc=>(sc.sp||[]).forEach(p=>{if(p.chr&&!p.ch||isAnon(p)||/&/.test(p.name||""))return;const n=pcSplit(p.name).name;const o=m[n]=m[n]||{n,c:p.c,ch:new Set()};if(p.ch)o.ch.add(p.ch);}));return Object.values(m);}
@@ -105,7 +110,7 @@ function fixAccHTML(f){if(!S.canAdmin)return "";const W=fixWord(f);
       <div class="tip">이 비밀번호 하나로 ${W} 안의 모든 세션·캠페인이 열려요. ${W}에 묶인 세션은 자동으로 이 비밀번호를 따라가요. 새로 만들면 예전 비밀번호로 연 사람은 다시 잠겨요.</div>
       <div class="pwrow"><code class="pw">${esc(S.secrets?.[fixKey(f)]||"만드는 중…")}</code><button class="pri" id="fxcopy">링크+비밀번호 복사</button><button class="ghost" id="fxnewpw">새로 만들기</button></div></div>`;}
 function bindFixAcc(f){const W=fixWord(f);
-  const fc=$("#fxcopy");if(fc)fc.onclick=()=>copyText(`[${W} ${f}] TRPG 로그\n${location.origin+location.pathname}#f-${encodeURIComponent(f)}\n비밀번호: ${S.secrets?.[fixKey(f)]||""}`,"링크와 비밀번호를 복사했어요");
+  const fc=$("#fxcopy");if(fc)fc.onclick=()=>copyText(`[${W} ${f}] TRPG 로그\n${location.origin+location.pathname}${fixHref(f)}\n비밀번호: ${S.secrets?.[fixKey(f)]||""}`,"링크와 비밀번호를 복사했어요");
   const fn=$("#fxnewpw");if(fn)fn.onclick=()=>confirmBox(`${W} 비밀번호를 새로 만들까요? 안의 모든 세션 비밀번호가 같이 바뀌고, 예전 비밀번호로 연 사람은 다시 잠겨요.`,"새로 만들기",async()=>{try{await S.db.doc("secrets/"+fixKey(f)).set({pw:genPw()});ownerMaintain();toast("새 비밀번호를 만들었어요");}catch(err){writeFail(err);}});}
 function bindFixPage(){homeMasonry();{const m=$("#fxtlmore");if(m)m.onclick=()=>{S.fxTlAll=!S.fxTlAll;render();};}
   {const b=$("#fxcvpos"),box=$("#fxcover"),im=box&&box.querySelector("img");if(b&&im){const fk=fixKey(S.fix);

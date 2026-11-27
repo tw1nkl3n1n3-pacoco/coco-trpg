@@ -36,7 +36,7 @@ const n2=i=>String(i).padStart(2,"0");
 const GAL_T={img:"이미지",txt:"텍스트"};
 function galT(p){return p&&p.t==="txt"?"txt":"img";}
 const galTitle=p=>galT(p)==="txt"?(p.title||""):(p.cap||p.title||"");
-function galLink(p){return `${location.origin+location.pathname}#p-${p.src}~${p.id}`;}
+function galLink(p){const c=p.kind==="fx"?fixCode(decodeURIComponent(String(p.src).slice(3))):"";return `${location.origin+location.pathname}#p-${c||p.src}~${p.id}`;}
 function galCardHTML(p){const t=galT(p),im=galImgs(p),lk=!!p.nolink;
   const media=t==="txt"?`<div class="txtc"><b>${esc(p.title||"제목 없음")}</b><p>${esc(String(p.body||"").slice(0,180))}</p></div>`
     :im.length>1?`<div class="sl">${im.map(q=>`<img src="${esc(q.u||q.o)}" alt="" loading="lazy" decoding="async">`).join("")}</div><span class="pg"><b>1</b>/${im.length}</span><span class="dots">${im.map((_,k)=>`<i class="${k?"":"on"}"></i>`).join("")}</span>`
@@ -275,7 +275,10 @@ function galTxtBox(v,onSave,onDel){const w=document.createElement("div");w.class
     if(await onSave({title:t.slice(0,80),body:b.slice(0,200000),nolink:w.querySelector("#genl").checked})!==false)w.remove();};}
 function galTxtHTML(b){return String(b||"").replace(/\r/g,"").split(/\n\s*\n+/).map(par=>/^\s*(\*\s*){3,}\s*$/.test(par)?`<div class="sep">◆ ◆ ◆</div>`:`<p>${esc(qfix(par.trim())).replace(/\n/g,"<br>")}</p>`).join("");}
 // ---------- 게시물 하나만 보는 페이지 (#p-출처~id) — 비밀번호 없이 · 댓글은 페이지로 들어가서 ----------
-async function openPostPage(key){const [src,id]=key.split("~");S.postPage={key,loading:true};render();
+async function openPostPage(key){let [src,id]=key.split("~");S.postPage={key,loading:true};render();
+  // 짧은 코드면 사이트 정보가 올 때까지 잠깐 기다렸다가 고정탁 키로
+  if(!src.startsWith("fx_")){for(let i=0;i<40&&!S.scensLoaded;i++)await new Promise(r=>setTimeout(r,100));const n=fixByCode(src);if(n)src=fixKey(n);}
+  if(!S.postPage||S.postPage.key!==key)return;
   try{const fx=src.startsWith("fx_"),d=await S.db.doc((fx?"fixes/":"scenarios/")+src).get();
     const data=d.exists?d.data():null,p=data&&galRaw(data).find(x=>x.id===id);
     if(!p){S.postPage={key,err:"게시물을 찾을 수 없어요."};render();return;}
@@ -287,7 +290,7 @@ function postPageTheme(){const P=S.postPage||{};if(!P.p)return "plain";if(P.fx)r
 function postPageHTML(){const P=S.postPage||{};
   if(P.loading)return `<div class="pstpage">${loaderHTML()}</div>`;
   if(P.err)return `<div class="pstpage"><div class="notice bad">${esc(P.err)}</div></div>`;
-  const p=P.p,t=galT(p),IM=galImgs(p),W=P.fx?fixWord(P.name):"세션",go=P.fx?`#f-${encodeURIComponent(P.name)}`:`#c-${P.src}`;
+  const p=P.p,t=galT(p),IM=galImgs(p),W=P.fx?fixWord(P.name):"세션",go=P.fx?fixHref(P.name):`#c-${P.src}`;
   const ft=`<div class="pstft"><a class="pri" href="${go}" data-pstgo>${esc(W)} 페이지로 →</a><span>${esc(W)} 비밀번호로 들어가면 이 게시물의 댓글을 보고 달 수 있어요</span></div>`;
   const head="";
   if(p.nolink)return `<div class="pstpage">${head}<div class="pstlock"><div class="ic">LOCKED</div><p>이 게시물은 링크로 볼 수 없어요</p></div>${ft}</div>`;

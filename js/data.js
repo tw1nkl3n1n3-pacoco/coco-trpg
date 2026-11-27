@@ -23,6 +23,7 @@ function publish(){
   const all=[];Object.values(SUB.sessData).forEach(m=>Object.values(m).forEach(x=>all.push(x)));
   S.sessions=all.sort((a,b)=>String(a.title).localeCompare(String(b.title),"ko",{numeric:true}));
   const cwChanged=refreshCanWrite();
+  if(S.fix&&location.hash.startsWith("#f-")){const r=fixFromHash(location.hash.slice(3));if(r!==S.fix)S.fix=r;}
   if(S.sid){if(cwChanged)render();else{renderSide();renderAllRows(true);renderHeader();}maybeEnsure();if(S.chunksLoaded)loadSecs();}
   else if(!S.importing&&!S.scEdit)render();
   if(S.canAdmin)ownerMaintain();
@@ -86,6 +87,10 @@ async function _ownerMaintain(){
   for(const sc of [...S.scens,...S.camps]){
     if(!S.secrets[sc.id]&&!_pwMade.has(sc.id)){_pwMade.add(sc.id);try{const ex=await S.db.doc("secrets/"+sc.id).get();if(!ex.exists)await S.db.doc("secrets/"+sc.id).set({pw:genPw()});}catch(e){_pwMade.delete(sc.id);}}
   }
+  // 고정탁·페어 짧은 주소 코드
+  if(typeof allFixes==="function"){const m={...(S.site.fixIds||{})},used=new Set(Object.values(m));let ch=false;
+    for(const f of allFixes())if(!m[f]){let c;do{c=genPw().slice(0,6);}while(used.has(c));m[f]=c;used.add(c);ch=true;}
+    if(ch){try{await S.db.doc("scenarios/_site").set({fixIds:m},{merge:true});S.site={...S.site,fixIds:m};}catch(e){}}}
   // 고정탁: 고정탁 비밀번호를 하나 만들고, 고정탁 안의 세션·캠페인 비밀번호를 모두 그걸로 맞춰요
   if(typeof allFixes!=="function")return;
   for(const f of allFixes()){
@@ -142,7 +147,8 @@ function route(){
   if(pid){if(!S.postPage||S.postPage.key!==pid){S.fix=null;S.gid=null;S.revPage=null;S.up=null;S.admin=false;if(S.sid||S.cid){S.cid=null;closeSession();S.sid=null;}openPostPage(pid);}return;}
   if(S.postPage){S.postPage=null;if(!sid&&!cid&&!h.startsWith("f-")&&!h.startsWith("g-")&&!h.startsWith("r-"))render();}
   // 고정탁 페이지 (#f-이름)
-  const fid=h.startsWith("f-")?decodeURIComponent(h.slice(2)):null;
+  const fid=h.startsWith("f-")?fixFromHash(h.slice(2)):null;
+  if(fid&&fixCode(fid)&&h.slice(2)!==fixCode(fid))try{history.replaceState(null,"",fixHref(fid));}catch(e){}
   if(fid){if(S.fix!==fid){S.fix=fid;S.revPage=null;S.gid=null;S.up=null;S.admin=false;if(S.sid||S.cid){S.cid=null;openSession(null);}else render();window.scrollTo(0,0);}return;}
   if(S.fix){S.fix=null;if(!sid&&!cid&&!h)render();}
   if(gid){if(S.gid!==gid||S.revPage){S.revPage=null;S.gid=gid;S.campEdit=false;S.up=null;S.admin=false;if(S.sid||S.cid){S.cid=null;openSession(null);}else render();window.scrollTo(0,0);}return;}
