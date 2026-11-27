@@ -141,7 +141,9 @@ function campRuns(c){
   const es=campEps(c),labs=es.map(e=>epLabel(c,e)),P=new Map();
   es.forEach((e,i)=>{const gk=gmKey(e);(e.sp||[]).forEach(p=>{if(isAnon(p)&&!p.ch&&p.k!==gk)return;if(p.chr&&!p.ch&&p.k!==gk)return;if(/&/.test(p.name||""))return;
     const gm=p.k===gk,q=pcSplit(p.name||""),who=gm?"GM":q.name;if(!who)return;
-    if(!P.has(who))P.set(who,[]);P.get(who).push({i,ch:gm?q.name:(p.ch||""),pc:q.n||"",c:fixC(p.c)});});});
+    if(!P.has(who))P.set(who,[]);P.get(who).push({i,ch:gm?q.name:(p.ch||""),pc:q.n||"",c:fixC(p.c)});
+    // 타이만: GM이 캐릭터도 맡았으면 플레이어 칸에도
+    if(gm&&p.ch&&q.name){if(!P.has(q.name))P.set(q.name,[]);P.get(q.name).push({i,ch:p.ch,pc:q.n||"",c:fixC(p.c)});}});});
   const rng=ix=>{const out=[];let s=null,prev=null;const flush=()=>{if(s==null)return;const a=labs[s],b=labs[prev];out.push(s===prev?a:(/편$/.test(a)&&/편$/.test(b)?`${a.replace("편","")}–${b}`:`${a}–${b}`));};
     ix.forEach(i=>{if(s!=null&&i===prev+1){prev=i;return;}flush();s=i;prev=i;});flush();return out.join(", ");};
   const rows=[...P.entries()].map(([who,list])=>{
