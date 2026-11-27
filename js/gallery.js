@@ -156,7 +156,7 @@ function galLBRefresh(force){
       ${can?`<form class="cin" id="glbf"><input type="text" id="glbnew" maxlength="2000" placeholder="댓글 달기" autocomplete="off"><button class="pri">등록</button></form>`:""}</div>
     <div class="strip">${L.map(x=>{const f=galImgs(x)[0];return `<button type="button" class="${x.id===p.id?"on":""}${galT(x)==="txt"?" tx":""}" data-glbgo="${esc(x.id)}">${galT(x)==="txt"?`<span>${esc((x.title||"T").slice(0,4))}</span>`:`<img src="${esc(f.u||f.o)}" alt="" loading="lazy">${galImgs(x).length>1?`<i>${galImgs(x).length}</i>`:""}`}</button>`;}).join("")}</div>`;
   const nt=ov.querySelector("#glbnew");if(nt&&draft){nt.value=draft;if(focused)nt.focus();}
-  ov.querySelector(".strip .on")?.scrollIntoView({block:"nearest",inline:"center"});
+  {const st=ov.querySelector(".strip"),on=st&&st.querySelector(".on");if(on)st.scrollLeft=on.offsetLeft-st.clientWidth/2+on.offsetWidth/2;}
   // 여러 장은 위→아래로 · 지금 보는 장 표시
   const stg=ov.querySelector(".stage"),ims=[...stg.querySelectorAll(".col img")],ipg=stg.querySelector(".ipg b"),ol=ov.querySelector("#glbo");
   const cur=()=>{if(!ims.length)return;const top=stg.getBoundingClientRect().top+stg.clientHeight*.4;let k=0;ims.forEach((x,j)=>{if(x.getBoundingClientRect().top<top)k=j;});

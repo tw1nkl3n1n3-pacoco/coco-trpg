@@ -1371,3 +1371,15 @@ body[data-theme=jg] .pstft a.pri{color:#111;border-radius:0}
 .pstlock{text-align:center;padding:60px 20px}.pstlock .ic{font:400 44px "Anton","Chakra Petch",sans-serif;color:var(--acc)}.pstlock p{color:var(--dim);margin:6px 0 0}
 body[data-page=post] aside{display:none}body[data-page=post] .wrap{grid-template-columns:1fr}
 .galmenu b{display:inline-block!important}
+
+/* 모바일: 게시물은 전체 화면으로 (웹툰 보듯이) */
+@media(max-width:760px){
+  .glb{background:var(--panel2);backdrop-filter:none}
+  .glb .top{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--panel2) 94%,transparent);backdrop-filter:blur(8px)}
+  .glb .stage{padding:0!important}
+  .glb .col{gap:0}.glb .col img{box-shadow:none;width:100vw;max-width:100vw}
+  .glb .glpaper{max-width:none;margin:0;box-shadow:none;padding:30px 20px 40px;min-height:calc(100vh - 46px)}
+  .glb .strip{order:4!important;border-top:1px solid var(--line)!important}
+  .glb .side{order:3!important}
+  .glb .cl{padding-bottom:8px}
+}

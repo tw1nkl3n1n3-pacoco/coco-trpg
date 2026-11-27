@@ -27,7 +27,7 @@ function jgTimelineHTML(f,data,items){const d=jgDoc(f),tab=S.jgTl||"main",canRec
   const lastOf={};M.forEach(e=>{if(e.type==="s"&&!lastOf[e.g.sc.id])lastOf[e.g.sc.id]=e;});
   const mainLi=list=>{let ym="";return list.map(e=>{const m=e.k.slice(0,7),mh=m!==ym?(ym=m,`<li class="m"><div class="d">${esc(jgDot(m))}</div></li>`):"";const dd=esc(jgDot(e.k.slice(5)));
     if(e.type==="s"){const sc=e.g.sc,done=lastOf[sc.id]===e&&sc.done,open=isOpen(sc.id)&&e.sid;
-      return mh+`<li><div class="d">${dd}</div><div class="t"><a href="${e.sid?`#s-${esc(e.sid)}`:`#c-${esc(sc.id)}`}">${esc(sc.name)}</a> <small>${e.n>1?`${e.i}회차 / ${e.n}`:"1회차"}${effSys(sc)?" · "+esc(sysLabel(effSys(sc))):""}</small>${done?"<em>완주</em>":""}</div></li>`;}
+      return mh+`<li><div class="d">${dd}</div><div class="t"><a href="#c-${esc(sc.id)}">${esc(sc.name)}</a> <small>${e.n>1?`${e.i}회차 / ${e.n}`:"1회차"}${effSys(sc)?" · "+esc(sysLabel(effSys(sc))):""}</small>${done?"<em>완주</em>":""}</div></li>`;}
     if(e.type==="g"){const ims=e.posts.flatMap(p=>galImgs(p).map(q=>({p,q})));
       return mh+`<li><div class="d">${dd}</div><div class="t">갤러리 <small>사진 ${ims.length}장${e.by?" · "+esc(e.by):""}</small></div><div class="th">${ims.slice(0,8).map(x=>`<img src="${esc(x.q.u||x.q.o)}" alt="" loading="lazy" data-gal="${esc(x.p.id)}">`).join("")}${ims.length>8?`<span>+${ims.length-8}</span>`:""}</div></li>`;}
     const p=e.p;
