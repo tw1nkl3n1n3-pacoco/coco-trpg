@@ -1458,3 +1458,36 @@ body.nfskin input[type=checkbox],body.nfskin input[type=radio]{accent-color:#e50
 .nfx .nftl.wide .th.gonly img{width:64px!important;height:64px!important;aspect-ratio:1!important;grid-column:auto!important}
 /* 페어 첫 화면: 배너 글씨와 제목이 겹치지 않게 아래쪽 그라데이션을 진하게 */
 @media(max-width:760px){body:not(.axskin) .nfx .nfhero::before{background:linear-gradient(rgba(0,0,0,.35),transparent 28%,transparent 130px,rgba(20,20,20,.82) 220px,#141414 300px)!important}}
+/* 짭플릭스 검색: 구석 돋보기 + 풀페이지 검색 창 */
+.nfsrchbtn{background:none;border:0;color:#fff;padding:6px;cursor:pointer;display:grid;place-items:center;border-radius:4px}
+.nfsrchbtn:hover{background:rgba(255,255,255,.1)}
+.nfsrch{position:fixed;inset:0;z-index:300;background:rgba(10,10,10,.97);display:none;overflow-y:auto;padding:min(14vh,120px) 20px 40px}
+.nfsrch.on{display:block;animation:nfsrchIn .18s ease-out}
+@keyframes nfsrchIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+body.nfsrch-on{overflow:hidden}
+.nfsrch>.x{position:fixed;right:22px;top:18px;width:42px;height:42px;border-radius:50%;border:0;background:#262626;color:#fff;font-size:18px;cursor:pointer}
+.nfsrch>.x:hover{background:#404040}
+.nfsrch .in{max-width:760px;margin:0 auto}
+.nfsrch .lb{font:800 clamp(26px,4vw,40px) "Noto Sans KR",sans-serif;color:#fff;margin-bottom:18px;letter-spacing:-.02em}
+.nfsrch .hint{margin-top:12px;font-size:12.5px;color:#737373}
+.nfsrch .nfsearchw{width:100%!important}
+.nfsrch .nfsearchw .hsearch input{height:58px!important;font-size:19px!important;padding-left:54px!important;background:#1c1c1c!important;border:1px solid #404040!important;border-radius:6px!important}
+.nfsrch .nfsearchw .hsearch input:focus{border-color:#e5e5e5!important}
+.nfsrch .nfsearchw .hq-ic{width:22px;height:22px;left:18px!important}
+.nfsrch .nfsearchw .hq-drop{position:static!important;margin-top:14px;max-height:none!important;background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important}
+.nfsrch .nfsearchw .hq-sec{padding:4px 0 10px;border-bottom:1px solid #262626}
+.nfsrch .nfsearchw .hq-h{font-size:12px!important;letter-spacing:.12em;text-transform:uppercase;padding:10px 4px 6px!important}
+.nfsrch .nfsearchw .hq-it{padding:10px 10px!important;border-radius:4px;font-size:15px}
+.nfsrch .nfsearchw .hq-foot{border:0!important;padding:12px 4px!important}
+.nfres h3 .clr{margin-left:auto;background:none;border:1px solid #404040;color:#b3b3b3;border-radius:3px;padding:4px 10px;font:500 12.5px "Noto Sans KR",sans-serif;cursor:pointer}
+.nfres h3 .clr:hover{color:#fff;border-color:#808080}
+.nfres h3{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+@media(max-width:760px){.nfsrch{padding:76px 16px 30px}.nfsrch>.x{right:12px;top:12px}.nfsrch .nfsearchw .hsearch input{height:52px!important;font-size:17px!important}.nfres{margin-top:90px}}
+.nfsrch{background:#0d0d0d}
+.nfsrch .nfsearchw .hsearch{position:relative}
+.nfsrch .nfsearchw .hq-ic{top:18px!important;transform:none!important}
+@media(max-width:760px){.nfsrch .nfsearchw .hq-ic{top:15px!important}}
+.nfsrch .nfsearchw:has(.hq-drop)+.hint{display:none}
+.nfsite:has(.nfres) .nfnav{background:#141414!important}
+@media(max-width:760px){.nfres{margin-top:130px!important}}
+.nfnav .nfsrchbtn{background:transparent!important;border:0!important}.nfnav .nfsrchbtn:hover{background:rgba(255,255,255,.12)!important}

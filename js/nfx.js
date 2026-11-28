@@ -116,11 +116,12 @@ function nfHomeHTML(o){const all=o.all.filter(g=>g.sc),byLast=all.slice().sort((
   const ppl=Object.values(P).sort((a,b)=>b.s-a.s);
   return `<div class="nfx nfsite">
     <nav class="nfnav"><a class="logo" href="#">${esc(site().title)}</a><a href="#nfr-recent">세션</a>${camps.length?`<a href="#nfr-camp">캠페인</a>`:""}${fixes.length?`<a href="#nfr-fix">페어 · 고정탁</a>`:""}<span class="sp"></span>
-      <div class="nfsearchw">${o.search||""}</div>
+      ${o.search?`<button type="button" class="nfsrchbtn" data-nfsrch aria-label="검색"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>`:""}
       ${o.can?`<a class="up" href="#up">＋ 세션 올리기</a>`:""}</nav>
+    ${o.search?`<div class="nfsrch${S.nfSrch?" on":""}" role="dialog" aria-label="검색"><button type="button" class="x" data-nfsrchx aria-label="닫기">✕</button><div class="in"><div class="lb">무엇을 찾으세요?</div><div class="nfsearchw">${o.search}</div><div class="hint">제목 · 룰 · 플레이어 · 캐릭터 · 캠페인 · Enter로 결과 전체 보기</div></div></div>`:""}
     ${o.q?"":hero}
     <div class="nfnotice">${o.notices}</div>
-    ${o.q?`<div class="nfrow nfres"><h3>검색 결과 <small>${(o.gs||[]).length+(o.cs||[]).length}</small></h3><div id="sesslist" class="nfresg">${[...(o.gs||[]).map(g=>({k:g.last||"",h:nfGCard(g)})),...(o.cs||[]).map(c=>({k:campKey(c),h:nfCCard(c)}))].sort((a,b)=>b.k.localeCompare(a.k)).map(x=>x.h).join("")||o.emptyMsg}</div></div>`:`<div id="sesslist" hidden></div>`}
+    ${o.q?`<div class="nfrow nfres"><h3>${S.homeQc&&S.homeQc.trim()?`'${esc(S.homeQc.trim())}' `:""}${S.homePerson?`👤 ${esc(S.homePerson)} `:""}검색 결과 <small>${(o.gs||[]).length+(o.cs||[]).length}</small><button type="button" class="clr" data-nfclr>✕ 검색 지우기</button></h3><div id="sesslist" class="nfresg">${[...(o.gs||[]).map(g=>({k:g.last||"",h:nfGCard(g)})),...(o.cs||[]).map(c=>({k:campKey(c),h:nfCCard(c)}))].sort((a,b)=>b.k.localeCompare(a.k)).map(x=>x.h).join("")||o.emptyMsg}</div></div>`:`<div id="sesslist" hidden></div>`}
     <div class="nfhrows"${o.q?" hidden":""}>
     ${nfRow("최근 올라온 세션",recent,{id:"nfr-recent"})}
     ${top5.length>=3?`<div class="nfrow nfhrow"><h3>세션 수 TOP ${top5.length} <small>회차가 많은 이야기</small></h3><div class="nftops">${top5.join("")}</div></div>`:""}
@@ -134,6 +135,21 @@ function nfHomeHTML(o){const all=o.all.filter(g=>g.sc),byLast=all.slice().sort((
 function nfScrollBind(){document.querySelectorAll(".nfscr").forEach(w=>{const sc=w.querySelector(".nfcards,.galg");if(!sc||w.dataset.b)return;w.dataset.b=1;const up=()=>{w.classList.toggle("atl",sc.scrollLeft<4);w.classList.toggle("atr",sc.scrollLeft+sc.clientWidth>=sc.scrollWidth-4);};
   sc.addEventListener("scroll",up,{passive:true});up();w.querySelectorAll("[data-nfarw]").forEach(b=>b.onclick=()=>sc.scrollBy({left:+b.dataset.nfarw*sc.clientWidth*.9,behavior:"smooth"}));});}
 function bindNfHome(){nfScrollBind();
+  // 검색: 구석 돋보기 → 풀페이지 검색 창 (입력·추천은 기본 테마와 같은 부품)
+  const ov=document.querySelector(".nfsrch");
+  const open=()=>{S.nfSrch=true;ov?.classList.add("on");document.body.classList.add("nfsrch-on");setTimeout(()=>{const i=$("#hq");if(i){i.focus();try{i.setSelectionRange(i.value.length,i.value.length);}catch(e){}}},30);};
+  const close=()=>{S.nfSrch=false;S.hqOpen=false;ov?.classList.remove("on");document.body.classList.remove("nfsrch-on");};
+  document.body.classList.toggle("nfsrch-on",!!S.nfSrch);
+  document.querySelectorAll("[data-nfsrch]").forEach(b=>b.onclick=open);
+  document.querySelectorAll("[data-nfsrchx]").forEach(b=>b.onclick=close);
+  if(ov)ov.onclick=e=>{if(e.target===ov)close();};
+  document.querySelectorAll("[data-nfclr]").forEach(b=>b.onclick=()=>{S.homeQ="";S.homeQc="";S.homePerson="";render();});
+  if(!window._nfSrchKey){window._nfSrchKey=1;
+    // Enter로 결과 보기·추천 고르기·Esc로 닫기 (입력칸 자체 처리보다 먼저)
+    document.addEventListener("keydown",e=>{if(!S.nfSrch||!document.querySelector(".nfsrch.on"))return;
+      if(e.key==="Escape"&&!S.hqOpen){e.preventDefault();S.nfSrch=false;document.querySelector(".nfsrch")?.classList.remove("on");document.body.classList.remove("nfsrch-on");}
+      else if(e.key==="Enter"&&e.target.id==="hq"&&!e.isComposing)S.nfSrch=false;},true);
+    window.addEventListener("hashchange",()=>{S.nfSrch=false;document.body.classList.remove("nfsrch-on");});}
   // 검색은 기본 테마와 같은 부품(.hsearch · 드롭다운 · Enter로 결과 · 사람 칩) · 결과만 넷플릭스 카드로
   document.querySelectorAll("[data-nfwho]").forEach(b=>b.onclick=()=>{S.homePerson=b.dataset.nfwho;S.homeQ="";S.homeQc="";render();window.scrollTo({top:0,behavior:"smooth"});});
   document.querySelectorAll('.nfnav a[href^="#nfr-"]').forEach(a=>a.onclick=ev=>{ev.preventDefault();document.getElementById(a.getAttribute("href").slice(1))?.scrollIntoView({behavior:"smooth",block:"start"});});}
